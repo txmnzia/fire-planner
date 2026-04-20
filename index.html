@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIRE Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:    #070a0f;
+  --surf:  #0b0e17;
+  --card:  #0f1320;
+  --dim:   #131829;
+  --bdr:   #1a2236;
+  --bdrs:  #111828;
+  --text:  #dde4f2;
+  --sec:   #7e8faa;
+  --muted: #3a4a62;
+  --s1c:#818cf8; --s2c:#fbbf24; --s3c:#34d399; --s4c:#f472b6; --s5c:#fb923c;
+  --s1a:rgba(129,140,248,.13); --s2a:rgba(251,191,36,.13); --s3a:rgba(52,211,153,.13);
+  --s4a:rgba(244,114,182,.13); --s5a:rgba(251,146,60,.13);
+  --ok:#22c55e; --oka:rgba(34,197,94,.14);
+  --err:#f87171; --erra:rgba(248,113,113,.14);
+  --r:12px; --rs:7px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{height:100%;}
+body{height:100vh;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:3px;}
+
+/* HEADER */
+.hdr{height:50px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--surf);border-bottom:1px solid var(--bdr);z-index:20;}
+.logo{font-weight:700;font-size:15px;letter-spacing:-.4px;display:flex;align-items:center;gap:8px;}
+.logo-tag{font-size:10px;font-weight:400;color:var(--muted);font-family:'DM Mono',monospace;}
+.hdr-right{display:flex;align-items:center;gap:16px;}
+.hdr-port{display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;}
+.hdr-port-lbl{font-size:10px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;}
+.hdr-port-val{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;color:var(--ok);}
+.hdr-time{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);}
+
+/* TAB NAV */
+.tab-nav{height:42px;flex-shrink:0;display:flex;align-items:stretch;background:var(--surf);border-bottom:1px solid var(--bdr);padding:0 20px;gap:2px;z-index:10;}
+.tab-btn{display:flex;align-items:center;gap:7px;padding:0 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:color .15s,border-color .15s;white-space:nowrap;margin-bottom:-1px;}
+.tab-btn:hover{color:var(--sec);}
+.tab-btn.active{color:var(--text);}
+.tab-btn[data-tab="situation"].active{border-bottom-color:var(--sec);}
+.tab-btn[data-tab="scenarios"].active{border-bottom-color:var(--s1c);}
+.tab-btn[data-tab="results"].active{border-bottom-color:var(--s3c);}
+.tab-num{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);background:var(--dim);border:1px solid var(--bdr);border-radius:10px;padding:0 5px;min-width:16px;text-align:center;}
+.tab-btn.active .tab-num{color:var(--text);}
+
+/* PANELS */
+.tab-panels{flex:1;min-height:0;overflow:hidden;}
+.tab-panel{display:none;height:100%;overflow-y:auto;overflow-x:hidden;}
+.tab-panel.active{display:block;}
+
+/* SHARED FORM */
+.field{display:flex;flex-direction:column;gap:4px;}
+.field>label{font-size:12px;color:var(--sec);font-weight:500;display:flex;align-items:center;gap:4px;}
+input[type="date"]{color-scheme:dark;}
+input[type="text"],input[type="number"],input[type="date"],select{width:100%;height:34px;padding:0 10px;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rs);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;outline:none;transition:border-color .15s,background .15s;-moz-appearance:textfield;}
+input:focus,select:focus{border-color:var(--sec);background:var(--dim);}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;}
+select{cursor:pointer;}
+select option{background:var(--card);}
+.unit-wrap{position:relative;}
+.unit-wrap input{padding-right:28px;}
+.unit-wrap .u{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;pointer-events:none;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.field-row .field{margin:0;}
+
+/* SITUATION TAB */
+.sit-body{max-width:860px;margin:0 auto;padding:24px 24px 60px;display:flex;flex-direction:column;gap:28px;}
+.sit-section{display:flex;flex-direction:column;gap:0;}
+.sit-hd{font-size:11px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--muted);padding-bottom:10px;border-bottom:1px solid var(--bdr);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.sit-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;}
+.sit-grid.g3{grid-template-columns:1fr 1fr 1fr;}
+.sit-grid.g1{grid-template-columns:1fr;}
+.sit-full{grid-column:1/-1;}
+.sub-hd{font-size:12px;font-weight:600;color:var(--sec);margin-bottom:10px;margin-top:4px;}
+
+/* upload */
+.upload-btn{width:100%;height:36px;border:1.5px dashed var(--bdr);border-radius:var(--rs);background:transparent;color:var(--sec);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;}
+.upload-btn:hover{border-color:var(--s1c);color:var(--s1c);background:var(--s1a);}
+.upload-btn.loaded{border-style:solid;border-color:var(--ok);color:var(--ok);background:var(--oka);}
+.pb{display:flex;flex-direction:column;gap:3px;margin-top:8px;}
+.pb-row{display:flex;justify-content:space-between;font-size:11px;}
+.pb-row .k{color:var(--muted);}
+.pb-row .v{font-family:'DM Mono',monospace;color:var(--sec);}
+.port-banner{background:var(--dim);border:1px solid var(--bdr);border-radius:var(--r);padding:12px 18px;display:flex;align-items:baseline;justify-content:space-between;margin-top:12px;}
+.port-banner .lbl{font-size:11px;color:var(--sec);text-transform:uppercase;letter-spacing:.5px;}
+.port-banner .val{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--ok);}
+
+/* Withdrawal toggle */
+.wd-toggle{display:flex;gap:6px;}
+.wd-pill{flex:1;display:flex;align-items:center;justify-content:center;padding:6px 8px;border-radius:6px;border:1px solid var(--bdr);background:transparent;font-size:12px;color:var(--sec);cursor:pointer;transition:all .15s;}
+.wd-pill input{display:none;}
+.wd-pill:has(input:checked){background:var(--dim);border-color:var(--s1c);color:var(--text);}
+.wd-pill:hover{border-color:var(--muted);}
+
+/* Info btn */
+.info-btn{background:none;border:none;cursor:help;color:var(--muted);font-size:11px;padding:0 2px;vertical-align:middle;}
+.info-btn:hover{color:var(--sec);}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+.field-disabled{opacity:.35;pointer-events:none;}
+
+/* ── SCENARIOS TAB ── */
+/* Fixed-height panel, cards fill it without scrolling */
+#tab-panel-scenarios{overflow:hidden;}
+.sc-shell{height:100%;display:flex;flex-direction:column;padding:16px;gap:0;box-sizing:border-box;}
+.sc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;flex:1;min-height:0;}
+.sc-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+.sc-card.c1{border-top:2.5px solid var(--s1c);}
+.sc-card.c2{border-top:2.5px solid var(--s2c);}
+.sc-card.c3{border-top:2.5px solid var(--s3c);}
+.sc-card.c4{border-top:2.5px solid var(--s4c);}
+.sc-card.c5{border-top:2.5px solid var(--s5c);}
+
+/* card header: name input */
+.sc-hd{padding:9px 12px;border-bottom:1px solid var(--bdrs);display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.sc-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sc-name{background:transparent;border:none;border-bottom:1px dashed var(--muted);outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;flex:1;min-width:0;cursor:text;transition:border-color .15s;}
+.sc-name:hover{border-bottom-color:var(--sec);}
+.sc-name:focus{border-bottom-style:solid;border-bottom-color:var(--sec);}
+
+/* card body: inputs */
+.sc-bd{padding:10px 12px;display:flex;flex-direction:column;gap:7px;overflow-y:auto;flex:1;min-height:0;}
+.sc-bd::-webkit-scrollbar{width:3px;}
+
+/* age slider */
+.age-ctrl{display:flex;align-items:center;gap:6px;}
+.age-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--bdr);background:var(--dim);color:var(--text);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s;user-select:none;}
+.age-btn:hover{background:var(--bdr);}
+.age-btn:active{transform:scale(.93);}
+input[type="range"]{-webkit-appearance:none;appearance:none;flex:1;height:4px;border-radius:4px;padding:0;border:none;outline:none;background:linear-gradient(to right,currentColor var(--pct,50%),var(--bdr) var(--pct,50%));}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:currentColor;cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 0 1px currentColor;}
+input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:currentColor;cursor:pointer;border:2px solid var(--bg);}
+
+/* feature toggles inside scenario card */
+.sc-toggles{display:flex;flex-direction:column;gap:4px;margin-top:2px;}
+.sc-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--dim);border:1px solid var(--bdr);border-radius:6px;cursor:pointer;transition:border-color .15s;}
+.sc-toggle-row:hover{border-color:var(--muted);}
+.sc-toggle-lbl{font-size:11px;color:var(--sec);display:flex;align-items:center;gap:5px;}
+.sc-toggle-lbl .tog-icon{font-size:12px;}
+/* pill toggle switch */
+.tog-sw{width:30px;height:16px;border-radius:8px;background:var(--bdr);position:relative;transition:background .15s;flex-shrink:0;}
+.tog-sw::after{content:'';position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:var(--muted);transition:transform .15s,background .15s;}
+.tog-sw.on{background:rgba(129,140,248,.35);}
+.tog-sw.on::after{transform:translateX(14px);background:var(--s1c);}
+.tog-sw.on-p{background:rgba(244,114,182,.35);}
+.tog-sw.on-p::after{transform:translateX(14px);background:var(--s4c);}
+.tog-sw.on-prop{background:rgba(251,146,60,.3);}
+.tog-sw.on-prop::after{transform:translateX(14px);background:var(--s5c);}
+.tog-sw.on-child{background:rgba(52,211,153,.3);}
+.tog-sw.on-child::after{transform:translateX(14px);background:var(--s3c);}
+
+/* result section at bottom of card */
+.sc-result{border-top:1px solid var(--bdrs);padding:8px 12px;background:var(--dim);flex-shrink:0;}
+.sc-result-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.sc-result-age{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;}
+.ms-chip{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:600;flex-shrink:0;}
+.ms-chip.ok{background:var(--oka);color:var(--ok);}
+.ms-chip.err{background:var(--erra);color:var(--err);}
+.sc-result-rows{display:flex;flex-direction:column;gap:3px;}
+.sc-result-row{display:flex;justify-content:space-between;align-items:baseline;}
+.sc-result-row .k{font-size:10px;color:var(--sec);}
+.sc-result-row .v{font-family:'DM Mono',monospace;font-size:10px;color:var(--text);}
+.v.ok{color:var(--ok);}
+.v.err{color:var(--err);}
+.v.s1{color:var(--s1c);}
+.v.s2{color:var(--s2c);}
+.v.s3{color:var(--s3c);}
+.v.s4{color:var(--s4c);}
+.v.s5{color:var(--s5c);}
+
+/* RESULTS TAB */
+.res-body{padding:18px;display:flex;flex-direction:column;gap:14px;}
+.chart-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:14px 16px 12px;}
+.chart-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.chart-title{font-size:13px;font-weight:600;color:var(--text);}
+.chart-legend{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sec);}
+.leg-dot{width:7px;height:7px;border-radius:50%;}
+.leg-dash{width:14px;height:0;border-bottom:1.5px dashed;opacity:.5;}
+.alloc-radios{display:flex;align-items:center;gap:5px;}
+.radio-pill{display:flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;cursor:pointer;border:1px solid var(--bdr);background:transparent;font-size:11px;transition:all .15s;}
+.radio-pill input{display:none;}
+.radio-pill:has(input:checked){background:var(--dim);border-color:var(--muted);}
+.radio-pill:hover{border-color:var(--muted);}
+.tbl-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;}
+.tbl-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--bdrs);cursor:pointer;user-select:none;transition:background .15s;}
+.tbl-hdr:hover{background:var(--dim);}
+.tbl-wrap{overflow-x:auto;overflow-y:auto;max-height:340px;transition:max-height .3s ease;}
+.tbl-wrap.collapsed{max-height:0;overflow:hidden;}
+.tbl-lbl-hd{text-align:left!important;width:160px;min-width:160px;position:sticky;left:0;background:var(--dim);z-index:3;}
+.tbl-lbl{text-align:left!important;color:var(--sec)!important;width:160px;min-width:160px;position:sticky;left:0;background:var(--card);z-index:2;font-size:12px;white-space:nowrap;}
+.tbl-yr-acc{width:80px;}
+.tbl-yr-ret{width:80px;background:rgba(129,140,248,.06);}
+.tbl-v{font-family:"DM Mono",monospace;font-size:11px;}
+.dtbl{border-collapse:collapse;font-family:'DM Mono',monospace;font-size:11px;white-space:nowrap;table-layout:fixed;}
+.dtbl thead{position:sticky;top:0;z-index:4;}
+.dtbl th{background:var(--dim);color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:5px 8px;text-align:right;border-bottom:1px solid var(--bdr);}
+.dtbl th:first-child{text-align:left;}
+.dtbl td{padding:4px 8px;text-align:right;border-bottom:1px solid rgba(255,255,255,.03);color:var(--sec);}
+.dtbl td:first-child{text-align:left;color:var(--muted);}
+.dtbl tr:hover td{background:rgba(255,255,255,.025);}
+.dtbl .pos{color:var(--ok);}
+.dtbl .neg{color:var(--err);}
+.dtbl .hi{color:var(--text);font-weight:500;}
+.dtbl .dim{color:var(--muted);}
+.csv-dl-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--bdr);background:var(--dim);color:var(--sec);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:border-color .15s,color .15s;}
+.csv-dl-btn:hover{border-color:var(--sec);color:var(--text);}
+</style>
+</head>
+<body>
+<a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
+
+<header class="hdr" role="banner">
+  <div class="logo">&#x1F525; FIRE Planner <span class="logo-tag">v6.0</span></div>
+  <div class="hdr-right">
+    <span class="hdr-time" id="calcTime">&#x2014;</span>
+    <div class="hdr-port">
+      <span class="hdr-port-lbl">Portfolio</span>
+      <span class="hdr-port-val" id="totalPill">&#x20AC; &#x2014;</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tab-nav" role="tablist" aria-label="App sections">
+  <button class="tab-btn active" role="tab" data-tab="situation" aria-selected="true" onclick="switchTab('situation')">
+    <span>&#x1F4CB;</span> My Situation <span class="tab-num">1</span>
+  </button>
+  <button class="tab-btn" role="tab" data-tab="scenarios" aria-selected="false" onclick="switchTab('scenarios')">
+    <span>&#x1F4CA;</span> Scenarios <span class="tab-num">2</span>
+  </button>
+  <button class="tab-btn" role="tab" data-tab="results" aria-selected="false" onclick="switchTab('results')">
+    <span>&#x2728;</span> Results <span class="tab-num">3</span>
+  </button>
+</nav>
+
+<div class="tab-panels">
+
+<!-- ═══════════════════════════════════════════
+     TAB 1 — MY SITUATION
+═══════════════════════════════════════════ -->
+<div class="tab-panel active" id="tab-panel-situation" role="tabpanel">
+<div class="sit-body">
+
+  <!-- YOUR PORTFOLIO -->
+  <section class="sit-section">
+    <div class="sit-hd">&#x1F4B0; Your Portfolio</div>
+    <div class="sit-grid g1" style="max-width:480px">
+      <div class="field">
+        <label>Import IBKR Activity Statement</label>
+        <button class="upload-btn" id="uploadBtn" onclick="document.getElementById('csvInput').click()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload CSV
+        </button>
+        <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="handleCSV(this)">
+        <div class="pb" id="holdingsList" style="display:none"></div>
+      </div>
+    </div>
+    <div class="sit-grid" style="margin-top:10px;max-width:480px">
+      <div class="field">
+        <label for="cash">Cash &amp; Savings</label>
+        <div class="unit-wrap"><input type="number" id="cash" value="30000" min="0" step="500" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="field">
+        <label for="cashReturn">Cash Interest Rate</label>
+        <div class="unit-wrap"><input type="number" id="cashReturn" value="1" min="0" max="10" step="0.25" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
+      </div>
+    </div>
+    <div style="max-width:480px">
+      <div class="port-banner">
+        <span class="lbl">Total Portfolio</span>
+        <span class="val" id="totalPortfolio">&#x20AC; &#x2014;</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT YOU -->
+  <section class="sit-section">
+    <div class="sit-hd">&#x1F9D1; About You</div>
+    <div class="sit-grid g3" style="max-width:600px">
+      <div class="field">
+        <label for="dob">Date of Birth</label>
+        <input type="date" id="dob" value="1994-03-12" oninput="recalc()" onchange="recalc()">
+      </div>
+      <div class="field">
+        <label for="lifeExp">Life Expectancy</label>
+        <input type="number" id="lifeExp" value="100" min="60" max="120" oninput="recalc()" onchange="recalc()">
+      </div>
+      <div class="field">
+        <label for="baseYear">Plan Start Year</label>
+        <input type="number" id="baseYear" value="2026" min="2020" max="2060" oninput="recalc()" onchange="recalc()">
+      </div>
+    </div>
+  </section>
+
+  <!-- INCOME & SPENDING -->
+  <section class="sit-section">
+    <div class="sit-hd">&#x1F4B3; Income &amp; Spending</div>
+    <div class="sit-grid" style="max-width:600px">
+      <div class="field">
+        <label for="baseIncome">Monthly Net Income (base)</label>
+        <div class="unit-wrap"><input type="number" id="baseIncome" value="6700" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="field">
+        <label for="spendNow">Monthly Spending (now)</label>
+        <div class="unit-wrap"><input type="number" id="spendNow" value="3000" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="field">
+        <label>Withdrawal Strategy</label>
+        <div class="wd-toggle">
+          <label class="wd-pill"><input type="radio" name="wdMode" value="fixed" checked onchange="onWdMode()">Fixed Amount</label>
+          <label class="wd-pill"><input type="radio" name="wdMode" value="swr" onchange="onWdMode()">SWR %</label>
+        </div>
+      </div>
+      <div class="field" id="spendRet_wrap">
+        <label for="spendRet">Monthly Spending (in retirement)</label>
+        <div class="unit-wrap"><input type="number" id="spendRet" value="3000" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="field" id="swr_wrap" style="display:none">
+        <label for="swr">Safe Withdrawal Rate <button type="button" class="info-btn" title="Annual % of portfolio withdrawn. Withdrawal = portfolio × SWR each year.">&#x24D8;</button></label>
+        <div class="unit-wrap"><input type="number" id="swr" value="4" min="0.5" max="20" step="0.25" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARKET ASSUMPTIONS -->
+  <section class="sit-section">
+    <div class="sit-hd">&#x1F4C8; Market Assumptions</div>
+    <div class="sit-grid g3" style="max-width:600px">
+      <div class="field">
+        <label for="stockRet">Stock Return (annual)</label>
+        <div class="unit-wrap"><input type="number" id="stockRet" value="7" min="0" max="20" step="0.5" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
+      </div>
+      <div class="field">
+        <label for="bondRet">Bond Return (annual)</label>
+        <div class="unit-wrap"><input type="number" id="bondRet" value="3" min="0" max="15" step="0.5" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
+      </div>
+      <div class="field">
+        <label for="inflation">Inflation</label>
+        <div class="unit-wrap"><input type="number" id="inflation" value="2" min="0" max="10" step="0.5" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
+      </div>
+      <div class="field">
+        <label for="bondAllocNow">Bond Allocation (today)</label>
+        <div class="unit-wrap"><input type="number" id="bondAllocNow" value="0" min="0" max="100" step="5" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
+      </div>
+      <div class="field">
+        <label for="bondAllocRet">Bond Allocation (at retirement)</label>
+        <div class="unit-wrap"><input type="number" id="bondAllocRet" value="40" min="0" max="100" step="5" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAX -->
+  <section class="sit-section">
+    <div class="sit-hd">&#x1F3DB; Tax &amp; Country</div>
+    <div class="sit-grid" style="max-width:480px">
+      <div class="field">
+        <label for="retCountry">Country of Residence</label>
+        <select id="retCountry" oninput="recalc()" onchange="recalc()">
+          <option value="30" selected>&#x1F1EB;&#x1F1F7; France 30%</option>
+          <option value="28">&#x1F1F5;&#x1F1F9; Portugal 28%</option>
+          <option value="26">&#x1F1EA;&#x1F1F8; Spain 26%</option>
+          <option value="26">&#x1F1E9;&#x1F1EA; Germany 26%</option>
+          <option value="26">&#x1F1EE;&#x1F1F9; Italy 26%</option>
+          <option value="32">&#x1F1F3;&#x1F1F1; Netherlands 32%</option>
+          <option value="0">&#x1F1E7;&#x1F1EA; Belgium 0%</option>
+          <option value="0">&#x1F1F1;&#x1F1FA; Luxembourg 0%</option>
+          <option value="28">&#x1F1E6;&#x1F1F9; Austria 28%</option>
+          <option value="33">&#x1F1EE;&#x1F1EA; Ireland 33%</option>
+          <option value="15">&#x1F1EC;&#x1F1F7; Greece 15%</option>
+          <option value="0">&#x1F1E8;&#x1F1FE; Cyprus 0%</option>
+          <option value="0">&#x1F1F2;&#x1F1F9; Malta 0%</option>
+          <option value="10">&#x1F1ED;&#x1F1F7; Croatia 10%</option>
+          <option value="15">&#x1F1ED;&#x1F1FA; Hungary 15%</option>
+          <option value="10">&#x1F1F7;&#x1F1F4; Romania 10%</option>
+          <option value="10">&#x1F1E7;&#x1F1EC; Bulgaria 10%</option>
+          <option value="19">&#x1F1F5;&#x1F1F1; Poland 19%</option>
+          <option value="25">&#x1F1F8;&#x1F1EE; Slovenia 25%</option>
+          <option value="20">&#x1F1EA;&#x1F1EA; Estonia 20%</option>
+          <option value="20">&#x1F1F1;&#x1F1FB; Latvia 20%</option>
+          <option value="15">&#x1F1F1;&#x1F1F9; Lithuania 15%</option>
+          <option value="19">&#x1F1F8;&#x1F1F0; Slovakia 19%</option>
+          <option value="30">&#x1F1F8;&#x1F1EA; Sweden 30%</option>
+          <option value="27">&#x1F1E9;&#x1F1F0; Denmark 27%</option>
+          <option value="30">&#x1F1EB;&#x1F1EE; Finland 30%</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="gainFrac">Unrealized Gain in Portfolio <button type="button" class="info-btn" title="% of your portfolio that is capital gain. Affects CGT on each withdrawal.">&#x24D8;</button></label>
+        <div class="unit-wrap"><input type="number" id="gainFrac" value="27" min="0" max="100" step="1" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE INCOME -->
+  <section class="sit-section">
+    <div class="sit-hd">&#x1F4E9; Future Income</div>
+    <div class="sub-hd" id="pensionGroupHd">State Pension</div>
+    <div class="sit-grid" style="max-width:480px;margin-bottom:20px">
+      <div class="field">
+        <label for="pensionAmt">Monthly Amount</label>
+        <div class="unit-wrap"><input type="number" id="pensionAmt" value="800" min="0" step="50" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="field">
+        <label for="pensionAge">Starts at Age</label>
+        <input type="number" id="pensionAge" value="67" min="50" max="80" oninput="recalc()" onchange="recalc()">
+      </div>
+    </div>
+    <div class="sub-hd">One-off Windfalls</div>
+    <div style="display:flex;flex-direction:column;gap:8px;max-width:480px">
+      <div class="field-row"><div class="field"><label for="wf0_yr">Year</label><input type="number" id="wf0_yr" value="2030" min="2024" max="2080" oninput="recalc()" onchange="recalc()"></div><div class="field"><label for="wf0_amt">Amount</label><div class="unit-wrap"><input type="number" id="wf0_amt" value="100000" min="0" step="1000" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div></div></div>
+      <div class="field-row"><div class="field"><label for="wf1_yr">Year</label><input type="number" id="wf1_yr" placeholder="e.g. 2032" min="2024" max="2080" oninput="recalc()" onchange="recalc()"></div><div class="field"><label for="wf1_amt">Amount</label><div class="unit-wrap"><input type="number" id="wf1_amt" placeholder="0" min="0" step="1000" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div></div></div>
+      <div class="field-row"><div class="field"><label for="wf2_yr">Year</label><input type="number" id="wf2_yr" placeholder="e.g. 2035" min="2024" max="2080" oninput="recalc()" onchange="recalc()"></div><div class="field"><label for="wf2_amt">Amount</label><div class="unit-wrap"><input type="number" id="wf2_amt" placeholder="0" min="0" step="1000" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div></div></div>
+    </div>
+  </section>
+
+  <!-- PARTNER -->
+  <section class="sit-section">
+    <div class="sit-hd">&#x1F91D; Partner <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:6px;">Enable per scenario</span></div>
+    <div class="sit-grid" style="max-width:600px">
+      <div class="field">
+        <label for="partnerInc">Partner Monthly Income</label>
+        <div class="unit-wrap"><input type="number" id="partnerInc" value="4000" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="field">
+        <label for="partnerRetAge">Partner Retires at Age</label>
+        <input type="number" id="partnerRetAge" value="45" min="25" max="80" oninput="recalc()" onchange="recalc()">
+      </div>
+      <div class="field">
+        <label for="partnerPension">Partner State Pension (monthly)</label>
+        <div class="unit-wrap"><input type="number" id="partnerPension" value="700" min="0" step="50" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="field">
+        <label for="partnerPensionAge">Partner Pension Starts at Age</label>
+        <input type="number" id="partnerPensionAge" value="67" min="50" max="80" oninput="recalc()" onchange="recalc()">
+      </div>
+      <div class="field">
+        <label for="partnerSpendMult">Spending Multiplier with Partner</label>
+        <div class="unit-wrap"><input type="number" id="partnerSpendMult" value="1.5" min="1" max="3" step="0.1" oninput="recalc()" onchange="recalc()"><span class="u">x</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROPERTY -->
+  <section class="sit-section">
+    <div class="sit-hd">&#x1F3E0; Property Purchase <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:6px;">Enable per scenario</span></div>
+    <div class="sit-grid" style="max-width:600px">
+      <div class="field">
+        <label for="propBuyYear">Purchase Year</label>
+        <input type="number" id="propBuyYear" value="2029" min="2024" max="2080" oninput="recalc()" onchange="recalc()">
+      </div>
+      <div class="field">
+        <label for="propPrice">Purchase Price</label>
+        <div class="unit-wrap"><input type="number" id="propPrice" value="400000" min="0" step="5000" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="field">
+        <label for="propDownPct">Down Payment</label>
+        <div class="unit-wrap"><input type="number" id="propDownPct" value="20" min="0" max="100" step="1" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
+      </div>
+      <div class="field">
+        <label for="propTxCostPct">Transaction Costs</label>
+        <div class="unit-wrap"><input type="number" id="propTxCostPct" value="8" min="0" max="20" step="0.5" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
+      </div>
+      <div class="field">
+        <label for="propMortgageRate">Mortgage Rate</label>
+        <div class="unit-wrap"><input type="number" id="propMortgageRate" value="3.5" min="0" max="15" step="0.1" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
+      </div>
+      <div class="field">
+        <label for="propMortgageTerm">Mortgage Term (years)</label>
+        <input type="number" id="propMortgageTerm" value="25" min="5" max="40" oninput="recalc()" onchange="recalc()">
+      </div>
+      <div class="field">
+        <label for="propRentSaved">Rent Saved per Month</label>
+        <div class="unit-wrap"><input type="number" id="propRentSaved" value="1200" min="0" step="50" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHILD -->
+  <section class="sit-section">
+    <div class="sit-hd">&#x1F476; Having a Child <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:6px;">Enable per scenario</span></div>
+    <div class="sit-grid" style="max-width:600px">
+      <div class="field">
+        <label for="childBirthYear">Child's Birth Year</label>
+        <input type="number" id="childBirthYear" value="2027" min="2024" max="2060" oninput="recalc()" onchange="recalc()">
+      </div>
+      <div class="field">
+        <label for="childCostYearly">Annual Cost per Year <button type="button" class="info-btn" title="Total out-of-pocket cost per year: childcare, food, activities, clothing, etc.">&#x24D8;</button></label>
+        <div class="unit-wrap"><input type="number" id="childCostYearly" value="12000" min="0" step="500" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="field">
+        <label for="childCostUntilAge">Dependent Until Age</label>
+        <input type="number" id="childCostUntilAge" value="25" min="10" max="30" oninput="recalc()" onchange="recalc()">
+      </div>
+      <div class="field">
+        <label for="childMaternityMonths">Parental Leave (months) <button type="button" class="info-btn" title="Months of reduced or no income due to parental leave.">&#x24D8;</button></label>
+        <input type="number" id="childMaternityMonths" value="6" min="0" max="24" oninput="recalc()" onchange="recalc()">
+      </div>
+      <div class="field">
+        <label for="childMaternityIncome">Income During Leave</label>
+        <div class="unit-wrap"><input type="number" id="childMaternityIncome" value="2000" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /sit-body -->
+</div><!-- /tab-panel-situation -->
+
+<!-- ═══════════════════════════════════════════
+     TAB 2 — SCENARIOS
+═══════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-panel-scenarios" role="tabpanel">
+<div class="sc-shell">
+<div class="sc-grid">
+
+  <!-- A -->
+  <div class="sc-card c1">
+    <div class="sc-hd">
+      <div class="sc-dot" style="background:var(--s1c)"></div>
+      <input class="sc-name" type="text" id="sc1name" value="Early Retirement" aria-label="Scenario A name" oninput="recalc()" onchange="recalc()">
+    </div>
+    <div class="sc-bd">
+      <div class="field">
+        <label>Retire at age <span id="s1_retDisplay" style="color:var(--s1c);font-family:'DM Mono',monospace;font-weight:700">40</span></label>
+        <div class="age-ctrl">
+          <button class="age-btn" onclick="stepAge(1,-1)" style="color:var(--s1c)" aria-label="Later">&#x2212;</button>
+          <input type="range" id="s1_ret" value="40" min="30" max="75" step="1" oninput="updateAge(1)" onchange="updateAge(1)" style="color:var(--s1c)">
+          <button class="age-btn" onclick="stepAge(1,1)" style="color:var(--s1c)" aria-label="Earlier">&#x2B;</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="s1_inc">Monthly Income Override</label>
+        <div class="unit-wrap"><input type="number" id="s1_inc" placeholder="uses base" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="field">
+        <label for="s1_chgYear">Income Changes in Year</label>
+        <input type="number" id="s1_chgYear" placeholder="none" min="2026" max="2080" oninput="recalc()" onchange="recalc()">
+      </div>
+      <div class="field">
+        <label for="s1_chgInc">New Income After Change</label>
+        <div class="unit-wrap"><input type="number" id="s1_chgInc" placeholder="&#x2014;" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="sc-toggles">
+        <div class="sc-toggle-row" onclick="toggleFeature(1,'partner')">
+          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F91D;</span> With Partner</span>
+          <div class="tog-sw" id="tog1_partner"></div>
+        </div>
+        <div class="sc-toggle-row" onclick="toggleFeature(1,'prop')">
+          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F3E0;</span> Buy Property</span>
+          <div class="tog-sw" id="tog1_prop"></div>
+        </div>
+        <div class="sc-toggle-row" onclick="toggleFeature(1,'child')">
+          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F476;</span> Have a Child</span>
+          <div class="tog-sw" id="tog1_child"></div>
+        </div>
+      </div>
+    </div>
+    <div class="sc-result" id="ms1"></div>
+  </div>
+
+  <!-- B -->
+  <div class="sc-card c2">
+    <div class="sc-hd">
+      <div class="sc-dot" style="background:var(--s2c)"></div>
+      <input class="sc-name" type="text" id="sc2name" value="Standard Path" aria-label="Scenario B name" oninput="recalc()" onchange="recalc()">
+    </div>
+    <div class="sc-bd">
+      <div class="field">
+        <label>Retire at age <span id="s2_retDisplay" style="color:var(--s2c);font-family:'DM Mono',monospace;font-weight:700">45</span></label>
+        <div class="age-ctrl">
+          <button class="age-btn" onclick="stepAge(2,-1)" style="color:var(--s2c)" aria-label="Later">&#x2212;</button>
+          <input type="range" id="s2_ret" value="45" min="30" max="75" step="1" oninput="updateAge(2)" onchange="updateAge(2)" style="color:var(--s2c)">
+          <button class="age-btn" onclick="stepAge(2,1)" style="color:var(--s2c)" aria-label="Earlier">&#x2B;</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="s2_inc">Monthly Income Override</label>
+        <div class="unit-wrap"><input type="number" id="s2_inc" placeholder="uses base" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="field">
+        <label for="s2_chgYear">Income Changes in Year</label>
+        <input type="number" id="s2_chgYear" placeholder="none" min="2026" max="2080" oninput="recalc()" onchange="recalc()">
+      </div>
+      <div class="field">
+        <label for="s2_chgInc">New Income After Change</label>
+        <div class="unit-wrap"><input type="number" id="s2_chgInc" placeholder="&#x2014;" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="sc-toggles">
+        <div class="sc-toggle-row" onclick="toggleFeature(2,'partner')">
+          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F91D;</span> With Partner</span>
+          <div class="tog-sw" id="tog2_partner"></div>
+        </div>
+        <div class="sc-toggle-row" onclick="toggleFeature(2,'prop')">
+          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F3E0;</span> Buy Property</span>
+          <div class="tog-sw" id="tog2_prop"></div>
+        </div>
+        <div class="sc-toggle-row" onclick="toggleFeature(2,'child')">
+          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F476;</span> Have a Child</span>
+          <div class="tog-sw" id="tog2_child"></div>
+        </div>
+      </div>
+    </div>
+    <div class="sc-result" id="ms2"></div>
+  </div>
+
+  <!-- C -->
+  <div class="sc-card c3">
+    <div class="sc-hd">
+      <div class="sc-dot" style="background:var(--s3c)"></div>
+      <input class="sc-name" type="text" id="sc3name" value="Barista FIRE" aria-label="Scenario C name" oninput="recalc()" onchange="recalc()">
+    </div>
+    <div class="sc-bd">
+      <div class="field">
+        <label>Retire at age <span id="s3_retDisplay" style="color:var(--s3c);font-family:'DM Mono',monospace;font-weight:700">50</span></label>
+        <div class="age-ctrl">
+          <button class="age-btn" onclick="stepAge(3,-1)" style="color:var(--s3c)" aria-label="Later">&#x2212;</button>
+          <input type="range" id="s3_ret" value="50" min="30" max="75" step="1" oninput="updateAge(3)" onchange="updateAge(3)" style="color:var(--s3c)">
+          <button class="age-btn" onclick="stepAge(3,1)" style="color:var(--s3c)" aria-label="Earlier">&#x2B;</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="s3_inc">Monthly Income Override</label>
+        <div class="unit-wrap"><input type="number" id="s3_inc" placeholder="uses base" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="field">
+        <label for="s3_chgYear">Income Changes in Year</label>
+        <input type="number" id="s3_chgYear" value="2030" min="2026" max="2080" oninput="recalc()" onchange="recalc()">
+      </div>
+      <div class="field">
+        <label for="s3_chgInc">New Income After Change</label>
+        <div class="unit-wrap"><input type="number" id="s3_chgInc" value="800" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="sc-toggles">
+        <div class="sc-toggle-row" onclick="toggleFeature(3,'partner')">
+          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F91D;</span> With Partner</span>
+          <div class="tog-sw" id="tog3_partner"></div>
+        </div>
+        <div class="sc-toggle-row" onclick="toggleFeature(3,'prop')">
+          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F3E0;</span> Buy Property</span>
+          <div class="tog-sw" id="tog3_prop"></div>
+        </div>
+        <div class="sc-toggle-row" onclick="toggleFeature(3,'child')">
+          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F476;</span> Have a Child</span>
+          <div class="tog-sw" id="tog3_child"></div>
+        </div>
+      </div>
+    </div>
+    <div class="sc-result" id="ms3"></div>
+  </div>
+
+  <!-- D -->
+  <div class="sc-card c4">
+    <div class="sc-hd">
+      <div class="sc-dot" style="background:var(--s4c)"></div>
+      <input class="sc-name" type="text" id="sc4name" value="With Partner" aria-label="Scenario D name" oninput="recalc()" onchange="recalc()">
+    </div>
+    <div class="sc-bd">
+      <div class="field">
+        <label>Retire at age <span id="s4_retDisplay" style="color:var(--s4c);font-family:'DM Mono',monospace;font-weight:700">42</span></label>
+        <div class="age-ctrl">
+          <button class="age-btn" onclick="stepAge(4,-1)" style="color:var(--s4c)" aria-label="Later">&#x2212;</button>
+          <input type="range" id="s4_ret" value="42" min="30" max="75" step="1" oninput="updateAge(4)" onchange="updateAge(4)" style="color:var(--s4c)">
+          <button class="age-btn" onclick="stepAge(4,1)" style="color:var(--s4c)" aria-label="Earlier">&#x2B;</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="s4_inc">Monthly Income Override</label>
+        <div class="unit-wrap"><input type="number" id="s4_inc" placeholder="uses base" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="field">
+        <label for="s4_chgYear">Income Changes in Year</label>
+        <input type="number" id="s4_chgYear" placeholder="none" min="2026" max="2080" oninput="recalc()" onchange="recalc()">
+      </div>
+      <div class="field">
+        <label for="s4_chgInc">New Income After Change</label>
+        <div class="unit-wrap"><input type="number" id="s4_chgInc" placeholder="&#x2014;" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="sc-toggles">
+        <div class="sc-toggle-row" onclick="toggleFeature(4,'partner')">
+          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F91D;</span> With Partner</span>
+          <div class="tog-sw" id="tog4_partner"></div>
+        </div>
+        <div class="sc-toggle-row" onclick="toggleFeature(4,'prop')">
+          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F3E0;</span> Buy Property</span>
+          <div class="tog-sw" id="tog4_prop"></div>
+        </div>
+        <div class="sc-toggle-row" onclick="toggleFeature(4,'child')">
+          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F476;</span> Have a Child</span>
+          <div class="tog-sw" id="tog4_child"></div>
+        </div>
+      </div>
+    </div>
+    <div class="sc-result" id="ms4"></div>
+  </div>
+
+  <!-- E -->
+  <div class="sc-card c5">
+    <div class="sc-hd">
+      <div class="sc-dot" style="background:var(--s5c)"></div>
+      <input class="sc-name" type="text" id="sc5name" value="Everything" aria-label="Scenario E name" oninput="recalc()" onchange="recalc()">
+    </div>
+    <div class="sc-bd">
+      <div class="field">
+        <label>Retire at age <span id="s5_retDisplay" style="color:var(--s5c);font-family:'DM Mono',monospace;font-weight:700">48</span></label>
+        <div class="age-ctrl">
+          <button class="age-btn" onclick="stepAge(5,-1)" style="color:var(--s5c)" aria-label="Later">&#x2212;</button>
+          <input type="range" id="s5_ret" value="48" min="30" max="75" step="1" oninput="updateAge(5)" onchange="updateAge(5)" style="color:var(--s5c)">
+          <button class="age-btn" onclick="stepAge(5,1)" style="color:var(--s5c)" aria-label="Earlier">&#x2B;</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="s5_inc">Monthly Income Override</label>
+        <div class="unit-wrap"><input type="number" id="s5_inc" placeholder="uses base" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="field">
+        <label for="s5_chgYear">Income Changes in Year</label>
+        <input type="number" id="s5_chgYear" placeholder="none" min="2026" max="2080" oninput="recalc()" onchange="recalc()">
+      </div>
+      <div class="field">
+        <label for="s5_chgInc">New Income After Change</label>
+        <div class="unit-wrap"><input type="number" id="s5_chgInc" placeholder="&#x2014;" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
+      </div>
+      <div class="sc-toggles">
+        <div class="sc-toggle-row" onclick="toggleFeature(5,'partner')">
+          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F91D;</span> With Partner</span>
+          <div class="tog-sw" id="tog5_partner"></div>
+        </div>
+        <div class="sc-toggle-row" onclick="toggleFeature(5,'prop')">
+          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F3E0;</span> Buy Property</span>
+          <div class="tog-sw" id="tog5_prop"></div>
+        </div>
+        <div class="sc-toggle-row" onclick="toggleFeature(5,'child')">
+          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F476;</span> Have a Child</span>
+          <div class="tog-sw" id="tog5_child"></div>
+        </div>
+      </div>
+    </div>
+    <div class="sc-result" id="ms5"></div>
+  </div>
+
+</div><!-- /sc-grid -->
+</div><!-- /sc-shell -->
+</div><!-- /tab-panel-scenarios -->
+
+<!-- ═══════════════════════════════════════════
+     TAB 3 — RESULTS
+═══════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-panel-results" role="tabpanel">
+<div class="res-body">
+
+  <div class="chart-card">
+    <div class="chart-top">
+      <div class="chart-title">Portfolio Projection</div>
+      <div class="chart-legend" id="projLegend">
+        <div class="leg-item"><div class="leg-dot" style="background:var(--s1c)"></div><span id="legName0">A</span></div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--s2c)"></div><span id="legName1">B</span></div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--s3c)"></div><span id="legName2">C</span></div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--s4c)"></div><span id="legName3">D</span></div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--s5c)"></div><span id="legName4">E</span></div>
+        <div class="leg-item"><div class="leg-dash" style="border-color:var(--muted)"></div>FIRE Target</div>
+      </div>
+    </div>
+    <div style="position:relative;height:210px"><canvas id="fireChart"></canvas></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-top">
+      <div class="chart-title">Stock / Bond Glide Path</div>
+      <div class="alloc-radios">
+        <label class="radio-pill"><input type="radio" name="allocSc" value="0" checked onchange="onAllocSwitch(0)"><span id="allocLbl0" style="color:var(--s1c)">A</span></label>
+        <label class="radio-pill"><input type="radio" name="allocSc" value="1" onchange="onAllocSwitch(1)"><span id="allocLbl1" style="color:var(--s2c)">B</span></label>
+        <label class="radio-pill"><input type="radio" name="allocSc" value="2" onchange="onAllocSwitch(2)"><span id="allocLbl2" style="color:var(--s3c)">C</span></label>
+        <label class="radio-pill"><input type="radio" name="allocSc" value="3" onchange="onAllocSwitch(3)"><span id="allocLbl3" style="color:var(--s4c)">D</span></label>
+        <label class="radio-pill"><input type="radio" name="allocSc" value="4" onchange="onAllocSwitch(4)"><span id="allocLbl4" style="color:var(--s5c)">E</span></label>
+      </div>
+    </div>
+    <div style="position:relative;height:130px"><canvas id="allocChart"></canvas></div>
+  </div>
+
+  <div class="tbl-card">
+    <div class="tbl-hdr" role="button" tabindex="0" onclick="toggleTable()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTable();}" aria-expanded="true" aria-controls="tblWrap" id="tblToggle">
+      <span style="font-size:13px;font-weight:600;color:var(--text)" id="tblArrow">&#x25BC; Year-by-Year Detail</span>
+      <div style="display:flex;align-items:center;gap:8px" onclick="event.stopPropagation()">
+        <div class="alloc-radios">
+          <label class="radio-pill"><input type="radio" name="tblSc" value="0" checked onchange="onTableSwitch(0)"><span id="tblLbl0" style="color:var(--s1c)">A</span></label>
+          <label class="radio-pill"><input type="radio" name="tblSc" value="1" onchange="onTableSwitch(1)"><span id="tblLbl1" style="color:var(--s2c)">B</span></label>
+          <label class="radio-pill"><input type="radio" name="tblSc" value="2" onchange="onTableSwitch(2)"><span id="tblLbl2" style="color:var(--s3c)">C</span></label>
+          <label class="radio-pill"><input type="radio" name="tblSc" value="3" onchange="onTableSwitch(3)"><span id="tblLbl3" style="color:var(--s4c)">D</span></label>
+          <label class="radio-pill"><input type="radio" name="tblSc" value="4" onchange="onTableSwitch(4)"><span id="tblLbl4" style="color:var(--s5c)">E</span></label>
+        </div>
+        <button class="csv-dl-btn" onclick="downloadCSV()" aria-label="Download CSV">&#x2193;</button>
+      </div>
+    </div>
+    <div class="tbl-wrap" id="tblWrap">
+      <table class="dtbl"><thead><tr id="tblHead"></tr></thead><tbody id="detailTbody"></tbody></table>
+    </div>
+  </div>
+
+</div>
+</div><!-- /tab-panel-results -->
+</div><!-- /tab-panels -->
+
+<script>
+"use strict";
+
+// ── state ──────────────────────────────────────────────────────────────────
+let ibkrTotal = 0, ibkrHoldings = [];
+let chart = null, allocChart = null;
+let allocScIdx = 0, tblScIdx = 0;
+let lastProjs = null, lastGl = null;
+
+// per-scenario feature toggles: features[s][feat] = true/false
+// s = 1..5, feat = 'partner'|'prop'|'child'
+const features = {};
+for (let s = 1; s <= 5; s++) features[s] = { partner: false, prop: false, child: false };
+// defaults: D has partner on, E has all on
+features[4].partner = true;
+features[5].partner = true;
+features[5].prop    = true;
+features[5].child   = true;
+
+// ── helpers ────────────────────────────────────────────────────────────────
+const el = id => document.getElementById(id);
+
+function numVal(id, fallback) {
+  const v = parseFloat(el(id).value);
+  return isNaN(v) ? (fallback !== undefined ? fallback : 0) : v;
+}
+
+function optVal(id) {
+  const e = el(id); if (!e) return null;
+  const v = e.value.trim();
+  if (!v || v === "none") return null;
+  const n = parseFloat(v); return isNaN(n) ? null : n;
+}
+
+// income for scenario s: use override if filled, else global base
+function incomeFor(s) {
+  const ov = el("s" + s + "_inc");
+  if (ov && ov.value.trim() !== "") {
+    const v = parseFloat(ov.value);
+    if (!isNaN(v)) return v;
+  }
+  return numVal("baseIncome", 6700);
+}
+
+function fmt(n) {
+  if (n === null || n === undefined || isNaN(n)) return "\u2014";
+  return n.toLocaleString("fr-FR", { minimumFractionDigits:0, maximumFractionDigits:0 });
+}
+function eur(n) { return "\u20ac" + fmt(n); }
+function fmtK(n) {
+  if (n === null || n === undefined || isNaN(n)) return "\u2014";
+  const abs = Math.abs(n);
+  return "\u20ac" + (abs >= 1e6 ? (abs/1e6).toFixed(2)+"M" : abs >= 1e3 ? (abs/1e3).toFixed(1)+"k" : String(Math.round(abs)));
+}
+
+// ── IBKR CSV ────────────────────────────────────────────────────────────────
+function parseLine(line) {
+  const cols = []; let cur = "", inQ = false;
+  for (const c of line) {
+    if (c === '"') { inQ = !inQ; continue; }
+    if (c === "," && !inQ) { cols.push(cur.trim()); cur = ""; continue; }
+    cur += c;
+  }
+  cols.push(cur.trim()); return cols;
+}
+
+function handleCSV(input) {
+  if (!input.files.length) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.split("\n").map(l => l.trim()).filter(Boolean);
+    ibkrTotal = 0; ibkrHoldings = [];
+    for (const line of lines) {
+      const c = parseLine(line);
+      if (c.length < 3) continue;
+      if (c[0]==="Net Asset Value"&&c[1]==="Data"&&c[2].trim()==="Total") { const v=parseFloat(c[6]); if (!isNaN(v)) ibkrTotal=v; }
+      if (c[0]==="Open Positions"&&c[1]==="Data"&&c[2]==="Summary") { const sym=c[5]||"",qty=parseFloat(c[6])||0,val=parseFloat(c[11])||0; if(sym) ibkrHoldings.push({sym,qty,val}); }
+    }
+    const btn = el("uploadBtn");
+    btn.classList.add("loaded");
+    btn.innerHTML = "\u2713 Loaded \u2014 " + ibkrHoldings.length + " positions";
+    const list = el("holdingsList");
+    list.style.display = "flex"; list.style.flexDirection = "column"; list.style.gap = "3px";
+    let h = ibkrHoldings.map(p=>'<div class="pb-row"><span class="k">'+p.sym+" \u00d7"+p.qty+'</span><span class="v">'+eur(p.val)+"</span></div>").join("");
+    h += '<div style="height:1px;background:var(--bdr);margin:4px 0"></div>';
+    h += '<div class="pb-row"><span class="k" style="color:var(--sec)">IBKR Total</span><span class="v" style="color:var(--text)">'+eur(ibkrTotal)+"</span></div>";
+    list.innerHTML = h;
+    recalc();
+  };
+  reader.readAsText(input.files[0]);
+}
+
+// ── TAB SWITCHING ──────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll(".tab-btn").forEach(b => {
+    const a = b.dataset.tab === name;
+    b.classList.toggle("active", a);
+    b.setAttribute("aria-selected", a);
+  });
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("active", p.id==="tab-panel-"+name));
+  if (name==="results") setTimeout(()=>{ if(chart)chart.resize(); if(allocChart)allocChart.resize(); }, 50);
+}
+
+// ── FEATURE TOGGLES ────────────────────────────────────────────────────────
+function toggleFeature(s, feat) {
+  features[s][feat] = !features[s][feat];
+  updateToggleUI();
+  recalc();
+}
+
+function updateToggleUI() {
+  for (let s = 1; s <= 5; s++) {
+    const sw_p  = el("tog"+s+"_partner");
+    const sw_pr = el("tog"+s+"_prop");
+    const sw_c  = el("tog"+s+"_child");
+    if (sw_p)  { sw_p.className  = "tog-sw" + (features[s].partner ? " on-p"    : ""); }
+    if (sw_pr) { sw_pr.className = "tog-sw" + (features[s].prop    ? " on-prop" : ""); }
+    if (sw_c)  { sw_c.className  = "tog-sw" + (features[s].child   ? " on-child": ""); }
+  }
+}
+
+// ── GLOBALS ────────────────────────────────────────────────────────────────
+function currentAgeFromDOB() {
+  const s = el("dob").value; if (!s) return 32;
+  const dob = new Date(s), ref = new Date(numVal("baseYear",2026),0,1);
+  let age = ref.getFullYear() - dob.getFullYear();
+  const m = ref.getMonth() - dob.getMonth();
+  if (m < 0 || (m===0 && ref.getDate()<dob.getDate())) age--;
+  return Math.max(0, age);
+}
+
+function getWindfalls() {
+  const wfs = [];
+  for (let i = 0; i < 3; i++) {
+    const ye=el("wf"+i+"_yr"), ae=el("wf"+i+"_amt"); if(!ye||!ae) continue;
+    const yr=parseInt(ye.value), amt=parseFloat(ae.value);
+    if (!isNaN(yr)&&!isNaN(amt)&&amt>0) wfs.push({yr,amt});
+  }
+  return wfs;
+}
+
+function getGlobals() {
+  const bondNow = numVal("bondAllocNow",0)/100;
+  const sel = el("retCountry");
+  const taxRate = sel ? (parseFloat(sel.value)||0)/100 : 0.30;
+  return {
+    currentAge:   currentAgeFromDOB(),
+    lifeExp:      numVal("lifeExp",100),
+    baseYear:     numVal("baseYear",2026),
+    spendNow:     numVal("spendNow",3000),
+    spendRet:     numVal("spendRet",3000),
+    inflation:    numVal("inflation",2)/100,
+    gainFrac:     numVal("gainFrac",27)/100,
+    stockRet:     numVal("stockRet",7)/100,
+    bondRet:      numVal("bondRet",3)/100,
+    stockAlloc:   1-bondNow,
+    bondAllocRet: numVal("bondAllocRet",40)/100,
+    taxRate,
+    pensionAmt:   numVal("pensionAmt",800),
+    pensionAge:   numVal("pensionAge",67),
+    cash:         numVal("cash",0),
+    cashReturn:   numVal("cashReturn",1)/100,
+    windfalls:    getWindfalls(),
+    wdMode:       (document.querySelector('input[name="wdMode"]:checked')||{value:'fixed'}).value,
+    swr:          numVal("swr",4)/100,
+    // global partner config
+    partnerInc:        numVal("partnerInc",4000),
+    partnerRetAge:     numVal("partnerRetAge",45),
+    partnerPension:    numVal("partnerPension",700),
+    partnerPensionAge: numVal("partnerPensionAge",67),
+    partnerSpendMult:  numVal("partnerSpendMult",1.5),
+    // global property config
+    propBuyYear:      optVal("propBuyYear") || numVal("propBuyYear",2029),
+    propPrice:        numVal("propPrice",400000),
+    propDownPct:      numVal("propDownPct",20)/100,
+    propTxCostPct:    numVal("propTxCostPct",8)/100,
+    propMortgageRate: numVal("propMortgageRate",3.5)/100,
+    propMortgageTerm: numVal("propMortgageTerm",25),
+    propRentSaved:    numVal("propRentSaved",1200),
+    // global child config
+    childBirthYear:      numVal("childBirthYear",2027),
+    childCostYearly:     numVal("childCostYearly",12000),
+    childCostUntilAge:   numVal("childCostUntilAge",25),
+    childMaternityMonths:numVal("childMaternityMonths",6),
+    childMaternityIncome:numVal("childMaternityIncome",2000),
+  };
+}
+
+function getScenario(s, gl) {
+  const feat = features[s];
+  return {
+    id:       s,
+    retAge:   numVal("s"+s+"_ret", 38+(s-1)*4),
+    income:   incomeFor(s),
+    chgYear:  optVal("s"+s+"_chgYear"),
+    chgInc:   optVal("s"+s+"_chgInc"),
+    // feature flags
+    hasPartner: feat.partner,
+    hasProp:    feat.prop,
+    hasChild:   feat.child,
+  };
+}
+
+// ── MATH ───────────────────────────────────────────────────────────────────
+function portReturnAt(gl, age, retAge) {
+  const sNow=gl.stockAlloc, sRet=1-gl.bondAllocRet;
+  let sf;
+  if (age<=gl.currentAge) sf=sNow;
+  else if (age>=retAge) sf=sRet;
+  else sf=sNow+(sRet-sNow)*(age-gl.currentAge)/Math.max(1,retAge-gl.currentAge);
+  return sf*gl.stockRet+(1-sf)*gl.bondRet;
+}
+
+function annuityPV(C,r,g,n) {
+  if (n<=0) return 0;
+  if (Math.abs(r-g)<0.0001) return C*n;
+  return C*(1-Math.pow((1+g)/(1+r),n))/(r-g);
+}
+
+function computeFireTarget(fromAge, sc, gl, taxMult) {
+  if (fromAge>=gl.lifeExp) return 0;
+  const tFrom    = fromAge-gl.currentAge;
+  // effective retirement spending: partner multiplier increases it, child costs are time-limited
+  const baseSpend = gl.spendRet * (sc.hasPartner ? gl.partnerSpendMult : 1);
+  const spendNom  = baseSpend*12*Math.pow(1+gl.inflation,tFrom);
+  const pensionNom= gl.pensionAmt*12*Math.pow(1+gl.inflation,tFrom);
+  const rFrom     = portReturnAt(gl,fromAge,sc.retAge);
+
+  if (gl.wdMode==="swr") {
+    const pensionOffset = fromAge>=gl.pensionAge ? pensionNom : 0;
+    let partnerPenOff = 0;
+    if (sc.hasPartner && fromAge>=gl.partnerPensionAge) partnerPenOff = gl.partnerPension*12*Math.pow(1+gl.inflation,tFrom);
+    const annualFromPort = Math.max(0,spendNom-pensionOffset-partnerPenOff);
+    return gl.swr>0 ? Math.round(annualFromPort/gl.swr) : 0;
+  }
+
+  if (fromAge>=gl.pensionAge) {
+    const n   = Math.max(0,gl.lifeExp-fromAge);
+    const netW= Math.max(0,spendNom-pensionNom)*taxMult;
+    return Math.round(annuityPV(netW,rFrom,gl.inflation,n));
+  }
+  const n1  = gl.pensionAge-fromAge;
+  const pv1 = annuityPV(spendNom*taxMult,rFrom,gl.inflation,n1);
+  const tPen= gl.pensionAge-gl.currentAge;
+  const spendAtPen = baseSpend*12*Math.pow(1+gl.inflation,tPen);
+  const penAtPen   = gl.pensionAmt*12*Math.pow(1+gl.inflation,tPen);
+  const netAtPen   = Math.max(0,spendAtPen-penAtPen)*taxMult;
+  const n2         = Math.max(0,gl.lifeExp-gl.pensionAge);
+  const pv2AtPen   = annuityPV(netAtPen,rFrom,gl.inflation,n2);
+  const pv2        = pv2AtPen/Math.pow(1+rFrom,n1);
+  return Math.round(pv1+pv2);
+}
+
+function project(sc, gl) {
+  const startPort = ibkrTotal;
+  let cashVal     = gl.cash;
+  const startYear = gl.baseYear;
+  const endYear   = startYear+(gl.lifeExp-gl.currentAge);
+  const retYear   = startYear+(sc.retAge-gl.currentAge);
+  const years=[],values=[],fireNums=[],allocations=[],rows=[];
+  let portfolio = startPort;
+  let costBasis = startPort*(1-gl.gainFrac);
+  const fireTaxMult = 1/Math.max(0.001,1-gl.gainFrac*gl.taxRate);
+  const fireAtRetirement = computeFireTarget(sc.retAge,sc,gl,fireTaxMult);
+
+  // mortgage amortisation
+  let monthlyMortgage = 0;
+  if (sc.hasProp && gl.propMortgageRate>0 && gl.propPrice>0) {
+    const principal = gl.propPrice*(1-gl.propDownPct);
+    const mr = gl.propMortgageRate/12, nm = gl.propMortgageTerm*12;
+    monthlyMortgage = principal*mr*Math.pow(1+mr,nm)/(Math.pow(1+mr,nm)-1);
+  }
+
+  // child cost helper: annual cost in year yr
+  function childCostInYear(yr) {
+    if (!sc.hasChild) return 0;
+    const childAge = yr - gl.childBirthYear;
+    if (childAge < 0 || childAge >= gl.childCostUntilAge) return 0;
+    const t = yr - startYear;
+    return gl.childCostYearly * Math.pow(1+gl.inflation, t);
+  }
+
+  // income helper: handles parental leave
+  function incomeInYear(yr, baseAnnInc) {
+    if (!sc.hasChild) return baseAnnInc;
+    const birthYr = gl.childBirthYear;
+    if (yr !== birthYr) return baseAnnInc;
+    // In birth year: months of leave at reduced income, rest at full
+    const leaveMonths = Math.min(12, gl.childMaternityMonths);
+    const fullMonths  = 12 - leaveMonths;
+    const monthlyBase = baseAnnInc / 12;
+    return fullMonths * monthlyBase + leaveMonths * gl.childMaternityIncome;
+  }
+
+  for (let yr = startYear; yr <= endYear; yr++) {
+    const age  = gl.currentAge+(yr-startYear);
+    const r    = portReturnAt(gl,age,sc.retAge);
+    const t    = yr-startYear;
+    const infl = Math.pow(1+gl.inflation,t);
+    const baseSpend = gl.spendRet*(sc.hasPartner ? gl.partnerSpendMult : 1);
+    const annRetSpend = baseSpend*12*infl;
+
+    const sNow=gl.stockAlloc, sRet=1-gl.bondAllocRet;
+    const sf = age>=sc.retAge ? sRet : sNow+(sRet-sNow)*Math.max(0,Math.min(1,t/Math.max(1,sc.retAge-gl.currentAge)));
+    allocations.push(Math.round(sf*100));
+
+    let fireNum;
+    if (yr<retYear) {
+      fireNum = fireAtRetirement;
+    } else {
+      if (gl.wdMode==="swr") {
+        fireNum = fireAtRetirement;
+      } else {
+        const gainFracNow = portfolio>0 ? Math.max(0,Math.min(1,(portfolio-costBasis)/portfolio)) : 0;
+        const postTaxMult = 1/Math.max(0.001,1-gainFracNow*gl.taxRate);
+        fireNum = computeFireTarget(age,sc,gl,postTaxMult);
+      }
+    }
+    fireNums.push(fireNum);
+
+    const windfall = (gl.windfalls||[]).filter(w=>w.yr===yr).reduce((s,w)=>s+w.amt,0);
+    const portfolioBefore=portfolio, cashBefore=cashVal;
+    const portGrowth=Math.round(portfolio*r), cashGrowth=Math.round(cashVal*gl.cashReturn);
+    const row={yr,age,phase:yr<retYear?"acc":"ret",portReturn:portGrowth,cashReturn:cashGrowth,windfall,
+      income:0,spending:0,netFlow:0,pension:0,withdrawal:0,taxPaid:0,childCost:0,
+      cashVal:cashBefore,mortgagePayment:0,rentSavings:0,extraCost:0,partnerPension:0};
+
+    if (yr<retYear) {
+      let annInc = sc.income*12*infl;
+      if (sc.chgYear!==null && yr>=sc.chgYear && sc.chgInc!==null) annInc=sc.chgInc*12*infl;
+      annInc = incomeInYear(yr, annInc);
+      // partner income until partner retires
+      if (sc.hasPartner && age < gl.partnerRetAge) annInc += gl.partnerInc*12*infl;
+      const annSpendNow = gl.spendNow*12*infl*(sc.hasPartner ? gl.partnerSpendMult : 1);
+      const childCost   = childCostInYear(yr);
+      // property
+      let extraCost=0, mortgageAnn=0, rentSavingsAnn=0;
+      if (sc.hasProp) {
+        if (yr===gl.propBuyYear) { extraCost=gl.propPrice*(gl.propDownPct+gl.propTxCostPct); row.extraCost=extraCost; }
+        if (yr>=gl.propBuyYear && yr<gl.propBuyYear+gl.propMortgageTerm) { mortgageAnn=monthlyMortgage*12; row.mortgagePayment=Math.round(mortgageAnn); }
+        if (yr>=gl.propBuyYear) { rentSavingsAnn=gl.propRentSaved*12*infl; row.rentSavings=Math.round(rentSavingsAnn); }
+      }
+      const netFlow = annInc-annSpendNow-childCost-extraCost-mortgageAnn+rentSavingsAnn;
+      cashVal = cashVal*(1+gl.cashReturn);
+      portfolio = Math.max(0,portfolio*(1+r)+netFlow+windfall);
+      if (netFlow>0) costBasis+=netFlow;
+      costBasis+=windfall;
+      if (netFlow<0 && portfolioBefore>0) {
+        const pag=portfolioBefore*(1+r)+windfall;
+        const fd=pag>0?Math.min(1,-netFlow/pag):0;
+        costBasis=Math.max(0,costBasis*(1-fd));
+      }
+      row.income=Math.round(annInc); row.spending=Math.round(annSpendNow); row.childCost=Math.round(childCost); row.netFlow=Math.round(netFlow);
+
+    } else {
+      cashVal=cashVal*(1+gl.cashReturn);
+      const portAfterGrowth=portfolio*(1+r)+windfall;
+      if (windfall>0) costBasis+=windfall;
+      const gainFracNow=portAfterGrowth>0?Math.max(0,Math.min(1,(portAfterGrowth-costBasis)/portAfterGrowth)):0;
+      let gross, netNeeded, pAnn=0;
+
+      if (gl.wdMode==="swr") {
+        gross=portAfterGrowth*gl.swr;
+        netNeeded=gross*(1-gainFracNow*gl.taxRate);
+        row.spending=Math.round(netNeeded);
+      } else {
+        let targetSpend=annRetSpend;
+        const childCost=childCostInYear(yr);
+        targetSpend+=childCost; row.childCost=Math.round(childCost);
+        if (age>=gl.pensionAge) { pAnn=gl.pensionAmt*12*infl; targetSpend=Math.max(0,targetSpend-pAnn); }
+        let partnerPensionAnn=0;
+        if (sc.hasPartner&&age>=gl.partnerPensionAge) { partnerPensionAnn=gl.partnerPension*12*infl; targetSpend=Math.max(0,targetSpend-partnerPensionAnn); }
+        netNeeded=targetSpend;
+        gross=netNeeded>0?netNeeded/Math.max(0.001,1-gainFracNow*gl.taxRate):0;
+        row.spending=Math.round(annRetSpend); row.partnerPension=Math.round(partnerPensionAnn);
+      }
+      portfolio=Math.max(0,portAfterGrowth-gross);
+      const fractionSold=portAfterGrowth>0?Math.min(1,gross/portAfterGrowth):0;
+      costBasis=Math.max(0,costBasis*(1-fractionSold));
+      if (age>=gl.pensionAge) pAnn=gl.pensionAmt*12*infl;
+      row.pension=Math.round(pAnn); row.withdrawal=Math.round(gross); row.taxPaid=Math.round(gross-Math.max(0,netNeeded));
+    }
+
+    years.push(yr); values.push(portfolioBefore+cashBefore); rows.push(row);
+  }
+  return {years,values,fireNums,retYear,allocations,rows};
+}
+
+// ── MILESTONE RENDER ───────────────────────────────────────────────────────
+const SC_COLORS=["s1","s2","s3","s4","s5"];
+
+function renderMilestone(idx, sc, gl, proj) {
+  const retIdx  = proj.retYear-gl.baseYear;
+  const portRet = proj.values[Math.min(retIdx,proj.values.length-1)]||0;
+  const fireRet = proj.fireNums[Math.min(retIdx,proj.fireNums.length-1)]||0;
+  const surplus = portRet-fireRet, ok=surplus>=0, cc=SC_COLORS[idx-1];
+  const fireTaxMult = 1/Math.max(0.001,1-gl.gainFrac*gl.taxRate);
+  const fireAtRet   = computeFireTarget(sc.retAge,sc,gl,fireTaxMult);
+  const rAccum      = portReturnAt(gl,gl.currentAge,sc.retAge);
+  const coastNow    = fireAtRet/Math.pow(1+rAccum,Math.max(0,sc.retAge-gl.currentAge));
+  const coasting    = (ibkrTotal+gl.cash)>=coastNow;
+  let depletionYear=null;
+  for (let i=Math.max(0,retIdx);i<proj.values.length;i++) { if(proj.values[i]<=0){depletionYear=proj.years[i];break;} }
+
+  const depRow = depletionYear
+    ? '<div class="sc-result-row"><span class="k">Runs out</span><span class="v err">'+depletionYear+' (age '+(gl.currentAge+depletionYear-gl.baseYear)+')</span></div>'
+    : '<div class="sc-result-row"><span class="k">Survives to</span><span class="v ok">age '+gl.lifeExp+'+</span></div>';
+  const surpRow = ok
+    ? '<div class="sc-result-row"><span class="k">Surplus</span><span class="v ok">+'+eur(surplus)+'</span></div>'
+    : '<div class="sc-result-row"><span class="k">Gap</span><span class="v err">'+eur(surplus)+'</span></div>';
+  const scName = getScenarioName(idx-1);
+  el("ms"+idx).innerHTML =
+    '<div class="sc-result-head">'+
+      '<div class="sc-result-age" style="color:var(--'+cc+'c)">'+scName+' &middot; Age '+sc.retAge+'</div>'+
+      '<div class="ms-chip '+(ok?'ok':'err')+'">'+(ok?'\u2713 On Track':'\u00d7 Gap')+'</div>'+
+    '</div>'+
+    '<div class="sc-result-rows">'+
+      '<div class="sc-result-row"><span class="k">FIRE Number</span><span class="v '+cc+'">'+eur(fireRet)+'</span></div>'+
+      '<div class="sc-result-row"><span class="k">Portfolio at Ret.</span><span class="v '+cc+'">'+eur(portRet)+'</span></div>'+
+      surpRow+
+      '<div class="sc-result-row"><span class="k">Coast Number</span><span class="v '+(coasting?'ok':'')+'">'+eur(coastNow)+(coasting?' \u2713':'')+'</span></div>'+
+      depRow+
+    '</div>';
+}
+
+// ── CHARTS ─────────────────────────────────────────────────────────────────
+const COLORS      = ["#818cf8","#fbbf24","#34d399","#f472b6","#fb923c"];
+const COLORS_FADE = ["rgba(129,140,248,.5)","rgba(251,191,36,.5)","rgba(52,211,153,.5)","rgba(244,114,182,.5)","rgba(251,146,60,.5)"];
+const ALPHAS      = ["rgba(129,140,248,.07)","rgba(251,191,36,.07)","rgba(52,211,153,.07)","rgba(244,114,182,.07)","rgba(251,146,60,.07)"];
+const GC = {g:"rgba(255,255,255,.035)",t:"#3a4a62",f:{family:"'DM Mono',monospace",size:10}};
+
+function makeRetPlugin(projs, gl) {
+  return { id:"retLabels", afterDatasetsDraw(ch) {
+    const c2=ch.ctx, xs=ch.scales.x, ys=ch.scales.y; if (!xs||!ys) return;
+    projs.forEach((proj,i)=>{
+      const li=ch.data.labels.indexOf(proj.retYear); if(li<0) return;
+      const meta=ch.getDatasetMeta(i*2); if(!meta||!meta.data||!meta.data[li]) return;
+      const pt=meta.data[li];
+      const label="retire "+(gl.currentAge+proj.retYear-gl.baseYear);
+      c2.save(); c2.font="600 9px 'DM Mono',monospace";
+      const tw=c2.measureText(label).width,px=5,bh=14;
+      const bx=pt.x-tw/2-px, by=pt.y-20;
+      c2.fillStyle="rgba(10,13,24,.88)"; c2.beginPath(); c2.roundRect(bx,by,tw+px*2,bh,3); c2.fill();
+      c2.strokeStyle=COLORS_FADE[i]; c2.lineWidth=1; c2.stroke();
+      c2.fillStyle=COLORS[i]; c2.textAlign="center"; c2.textBaseline="middle";
+      c2.fillText(label,pt.x,by+bh/2);
+      c2.beginPath(); c2.arc(pt.x,pt.y,3,0,Math.PI*2); c2.fillStyle=COLORS[i]; c2.fill();
+      c2.restore();
+    });
+  }};
+}
+
+function buildChart(projs,gl) {
+  const labels=projs[0].years, ctx=el("fireChart").getContext("2d"), ds=[];
+  projs.forEach((proj,i)=>{
+    ds.push({label:"Scenario "+String.fromCharCode(65+i),data:proj.values,borderColor:COLORS[i],backgroundColor:ALPHAS[i],borderWidth:2,pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:3-i});
+    ds.push({label:"__f"+i,data:proj.fireNums,borderColor:COLORS[i],borderWidth:1,borderDash:[4,4],pointRadius:0,tension:.35,fill:false,order:6});
+  });
+  if (chart) chart.destroy();
+  chart=new Chart(ctx,{type:"line",data:{labels,datasets:ds},plugins:[makeRetPlugin(projs,gl)],options:{
+    responsive:true,maintainAspectRatio:false,animation:{duration:300},interaction:{mode:"index",intersect:false},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",titleFont:{family:"'DM Sans'",size:11},bodyFont:{family:"'DM Mono'",size:11},padding:10,filter:item=>!item.dataset.label.startsWith("__"),callbacks:{title:items=>"Entering "+items[0].label,label:c=>" "+c.dataset.label+": \u20ac"+fmt(c.raw)}}},
+    scales:{x:{grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},y:{grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,callback:v=>v>=1e6?"\u20ac"+(v/1e6).toFixed(1)+"M":v>=1e3?"\u20ac"+(v/1e3).toFixed(0)+"k":"\u20ac"+v}}}
+  }});
+}
+
+function buildAllocChart(projs,gl) {
+  const proj=projs[allocScIdx],color=COLORS[allocScIdx],fade=COLORS_FADE[allocScIdx];
+  const inv=proj.values.map((v,i)=>Math.max(0,v-(proj.rows[i]?(proj.rows[i].cashVal||0):0)));
+  const sv=inv.map((v,i)=>Math.round(v*proj.allocations[i]/100));
+  const bv=inv.map((v,i)=>Math.round(v*(100-proj.allocations[i])/100));
+  const step=Math.max(1,Math.floor(proj.years.length/40));
+  const fY=proj.years.filter((_,i)=>i%step===0);
+  const fS=sv.filter((_,i)=>i%step===0), fB=bv.filter((_,i)=>i%step===0);
+  const retIdx=fY.indexOf(proj.retYear);
+  const retPl={id:"retLabelAlloc",afterDatasetsDraw(ch){
+    if(retIdx<0) return; const c2=ch.ctx,xs=ch.scales.x,ys=ch.scales.y; if(!xs||!ys) return;
+    const xPx=xs.getPixelForValue(retIdx),yPx=ys.getPixelForValue(fS[retIdx]+fB[retIdx]);
+    const label="retire "+(gl.currentAge+proj.retYear-gl.baseYear);
+    c2.save(); c2.font="600 9px 'DM Mono',monospace";
+    const tw=c2.measureText(label).width,px=5,bh=14;
+    const bx=xPx-tw/2-px,by=yPx-bh-5;
+    c2.fillStyle="rgba(10,13,24,.88)"; c2.beginPath(); c2.roundRect(bx,by,tw+px*2,bh,3); c2.fill();
+    c2.strokeStyle="rgba(255,255,255,.4)"; c2.lineWidth=1; c2.stroke();
+    c2.fillStyle="#dde4f2"; c2.textAlign="center"; c2.textBaseline="middle";
+    c2.fillText(label,xPx,by+bh/2); c2.restore();
+  }};
+  const ctx2=el("allocChart").getContext("2d");
+  if (allocChart) allocChart.destroy();
+  allocChart=new Chart(ctx2,{type:"bar",data:{labels:fY,datasets:[
+    {label:"Stocks",data:fS,backgroundColor:color,stack:"alloc",borderWidth:0,barPercentage:1,categoryPercentage:1},
+    {label:"Bonds", data:fB,backgroundColor:fade, stack:"alloc",borderWidth:0,barPercentage:1,categoryPercentage:1},
+  ]},plugins:[retPl],options:{
+    responsive:true,maintainAspectRatio:false,animation:{duration:200},interaction:{mode:"index",intersect:false},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",titleFont:{family:"'DM Sans'",size:11},bodyFont:{family:"'DM Mono'",size:11},padding:10,callbacks:{label:c=>" "+c.dataset.label+": \u20ac"+fmt(c.raw)}}},
+    scales:{x:{stacked:true,grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},y:{stacked:true,grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,maxTicksLimit:5,callback:v=>v>=1e6?"\u20ac"+(v/1e6).toFixed(1)+"M":v>=1e3?"\u20ac"+(v/1e3).toFixed(0)+"k":"\u20ac"+v}}}
+  }});
+}
+
+// ── TABLE ──────────────────────────────────────────────────────────────────
+function renderTable(projs,gl) {
+  const proj=projs[tblScIdx], thead=el("tblHead"), tbody=el("detailTbody");
+  if (!thead||!tbody||!proj||!proj.rows||!proj.rows.length) return;
+  const rows=proj.rows, retIdx=proj.retYear-gl.baseYear;
+  let hdr='<th class="tbl-lbl-hd">Metric</th>';
+  rows.forEach((row,i)=>{ const cls=i>=retIdx?"tbl-yr-ret":"tbl-yr-acc"; hdr+='<th class="'+cls+'">'+row.yr+'<br><span style="opacity:.5;font-weight:400">'+row.age+'</span></th>'; });
+  thead.innerHTML=hdr;
+  const money=(v,cls,pre)=>(!v&&v!==0)||v===0?'<td class="dim tbl-v">\u2014</td>':'<td class="'+cls+' tbl-v">'+(pre||'')+fmtK(Math.abs(v))+'</td>';
+  const pct=v=>'<td class="dim tbl-v">'+v+'%</td>';
+  const ROWS=[
+    ['Net Worth',         (r,i)=>money(proj.values[i],'hi','')],
+    ['  Cash',            (r,i)=>money(r.cashVal,'','')],
+    ['  Stocks',          (r,i)=>money(Math.round((proj.values[i]-r.cashVal)*proj.allocations[i]/100),'','')],
+    ['  Bonds',           (r,i)=>money((proj.values[i]-r.cashVal)-Math.round((proj.values[i]-r.cashVal)*proj.allocations[i]/100),'','')],
+    ['  Stock %',         (r,i)=>pct(proj.allocations[i])],
+    ['Income',            (r,i)=>money(r.income,'pos','+')],
+    ['Windfall',          (r,i)=>money(r.windfall,'pos','+')],
+    ['Spending',          (r,i)=>money(r.spending,'neg','-')],
+    ['Child Costs',       (r,i)=>money(r.childCost>0?r.childCost:null,'neg','-')],
+    ['Net Flow',          (r,i)=>money(r.netFlow,r.netFlow>=0?'pos':'neg',r.netFlow>0?'+':r.netFlow<0?'-':'')],
+    ['Market Return',     (r,i)=>money(r.portReturn,'pos','+')],
+    ['Pension',           (r,i)=>money(r.pension,'pos','+')],
+    ['Partner Pension',   (r,i)=>money(r.partnerPension>0?r.partnerPension:null,'pos','+')],
+    ['Withdrawal',        (r,i)=>money(r.withdrawal,'neg','-')],
+    ['Capital Gain Tax',  (r,i)=>money(r.taxPaid>0?r.taxPaid:0,'neg','-')],
+    ['Mortgage',          (r,i)=>money(r.mortgagePayment>0?r.mortgagePayment:null,'neg','-')],
+    ['Rent Saved',        (r,i)=>money(r.rentSavings>0?r.rentSavings:null,'pos','+')],
+    ['Purchase Cost',     (r,i)=>money(r.extraCost>0?r.extraCost:null,'neg','-')],
+  ];
+  let body='';
+  ROWS.forEach(([label,fn])=>{
+    body+='<tr><td class="tbl-lbl">'+label+'</td>';
+    rows.forEach((row,i)=>{ body+=fn(row,i); });
+    body+='</tr>';
+  });
+  tbody.innerHTML=body;
+}
+
+// ── AGE SLIDER ─────────────────────────────────────────────────────────────
+function updateAge(s) {
+  const inp=el("s"+s+"_ret"), disp=el("s"+s+"_retDisplay");
+  const min=parseInt(inp.min),max=parseInt(inp.max),val=parseInt(inp.value);
+  inp.style.setProperty("--pct",((val-min)/(max-min)*100).toFixed(1)+"%");
+  disp.textContent=val; recalc();
+}
+function stepAge(s,delta) {
+  const inp=el("s"+s+"_ret");
+  inp.value=Math.min(parseInt(inp.max),Math.max(parseInt(inp.min),parseInt(inp.value)+delta));
+  updateAge(s);
+}
+
+// ── TABLE TOGGLE ───────────────────────────────────────────────────────────
+function toggleTable() {
+  const wrap=el("tblWrap"),arrow=el("tblArrow"),toggle=el("tblToggle");
+  wrap.classList.toggle("collapsed");
+  const c=wrap.classList.contains("collapsed");
+  if(arrow)  arrow.textContent=(c?"\u25B6":"\u25BC")+" Year-by-Year Detail";
+  if(toggle) toggle.setAttribute("aria-expanded",!c);
+}
+
+// ── CSV DOWNLOAD ───────────────────────────────────────────────────────────
+function downloadCSV() {
+  if (!lastProjs||!lastGl) return;
+  const proj=lastProjs[tblScIdx],gl=lastGl;
+  if (!proj||!proj.rows||!proj.rows.length) return;
+  const rows=proj.rows;
+  const METRICS=['Net Worth','Stocks','Bonds','Income','Windfall','Spending','Child Costs','Net Flow','Market Return','Pension','Withdrawal','Capital Gain Tax'];
+  const getData=(mi,row,i)=>{
+    const v=proj.values[i],alloc=proj.allocations[i];
+    switch(mi){
+      case 0:return v; case 1:return Math.round((v-(row.cashVal||0))*alloc/100); case 2:return v-Math.round(v*alloc/100);
+      case 3:return row.income||0; case 4:return row.windfall||0; case 5:return row.spending?-row.spending:0;
+      case 6:return row.childCost||0; case 7:return row.netFlow||0; case 8:return row.portReturn||0;
+      case 9:return row.pension||0; case 10:return row.withdrawal?-row.withdrawal:0; case 11:return row.taxPaid>0?-row.taxPaid:0;
+    } return '';
+  };
+  let csv='Metric,'+rows.map(r=>r.yr).join(',')+'\nAge,'+rows.map(r=>r.age).join(',')+'\n';
+  METRICS.forEach((label,mi)=>{
+    csv+=label+','+rows.map((row,i)=>{ const v=getData(mi,row,i); return typeof v==='string'?v:(v||0); }).join(',')+'\n';
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download='fire_'+String.fromCharCode(65+tblScIdx)+'.csv'; a.click(); URL.revokeObjectURL(url);
+}
+
+// ── WD MODE ────────────────────────────────────────────────────────────────
+function onWdMode() {
+  const mode=(document.querySelector('input[name="wdMode"]:checked')||{value:'fixed'}).value;
+  const sw=el("spendRet_wrap"), sr=el("swr_wrap");
+  if(mode==="swr"){if(sw)sw.classList.add("field-disabled");if(sr)sr.style.display="";}
+  else{if(sw)sw.classList.remove("field-disabled");if(sr)sr.style.display="none";}
+  recalc();
+}
+
+// ── LABELS ─────────────────────────────────────────────────────────────────
+function getScenarioName(idx) {
+  const ids=["sc1name","sc2name","sc3name","sc4name","sc5name"],letters=["A","B","C","D","E"];
+  const inp=el(ids[idx]); const name=inp?inp.value.trim():""; return name||letters[idx];
+}
+
+function updateLabels() {
+  for (let i=0;i<5;i++) {
+    const name=getScenarioName(i);
+    ["legName","allocLbl","tblLbl"].forEach(p=>{ const e=el(p+i); if(e) e.textContent=name; });
+  }
+  const sel=el("retCountry"), hd=el("pensionGroupHd");
+  if (sel&&hd) {
+    const txt=(sel.options[sel.selectedIndex]||{text:""}).text;
+    const match=txt.replace(/[\uD800-\uDFFF]{2}/g,"").replace(/[^\x20-\x7E]/g,"").trim().replace(/\s+\d+%$/,"").trim();
+    hd.textContent=(match||"State")+" Pension";
+  }
+}
+
+function onAllocSwitch(idx){allocScIdx=idx;if(lastProjs&&lastGl)buildAllocChart(lastProjs,lastGl);}
+function onTableSwitch(idx) {tblScIdx =idx;if(lastProjs&&lastGl)renderTable(lastProjs,lastGl);}
+
+// ── RECALC ──────────────────────────────────────────────────────────────────
+function recalc() {
+  const gl=getGlobals();
+  const port=ibkrTotal+gl.cash;
+  el("totalPortfolio").textContent=eur(port);
+  el("totalPill").textContent=eur(port);
+  el("calcTime").textContent=new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  const scenarios=[1,2,3,4,5].map(s=>getScenario(s,gl));
+  const projs=scenarios.map(sc=>project(sc,gl));
+  scenarios.forEach((sc,i)=>renderMilestone(i+1,sc,gl,projs[i]));
+  lastProjs=projs; lastGl=gl;
+  buildChart(projs,gl); buildAllocChart(projs,gl); renderTable(projs,gl);
+  updateLabels();
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded",()=>{
+  for (let s=1;s<=5;s++) updateAge(s);
+  onWdMode();
+  updateToggleUI();
+  recalc();
+});
+</script>
+</body>
+</html>
