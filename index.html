@@ -327,6 +327,33 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   /* My Situation: ensure last fields clear iOS bottom toolbar */
   .sit-body{padding-bottom:max(60px, calc(40px + env(safe-area-inset-bottom)));}
 }
+
+/* ── GITHUB SYNC ── */
+.sync-btn{width:28px;height:28px;border-radius:var(--rs);border:1px solid var(--bdr);background:var(--dim);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s,background .15s;flex-shrink:0;}
+.sync-btn:hover{border-color:var(--sec);color:var(--sec);}
+.sync-btn[data-state="ok"]{color:var(--ok);border-color:rgba(34,197,94,.3);background:var(--oka);}
+.sync-btn[data-state="error"]{color:var(--err);border-color:rgba(248,113,113,.3);}
+.sync-btn[data-state="syncing"] svg{animation:spin .9s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.sync-overlay{position:fixed;inset:0;background:rgba(7,10,15,.85);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.sync-modal{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:22px 24px;max-width:420px;width:100%;display:flex;flex-direction:column;gap:14px;}
+.sync-modal-hd{display:flex;align-items:center;justify-content:space-between;}
+.sync-modal-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.sync-modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0;line-height:1;transition:color .15s;}
+.sync-modal-close:hover{color:var(--text);}
+.sync-modal p{font-size:12px;color:var(--sec);line-height:1.6;margin:0;}
+.sync-gh-link{font-size:12px;color:var(--s1c);text-decoration:none;display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--s1a);border-radius:var(--rs);border:1px solid rgba(129,140,248,.2);transition:background .15s;}
+.sync-gh-link:hover{background:rgba(129,140,248,.2);}
+.sync-divider{height:1px;background:var(--bdr);}
+.sync-connect-btn{width:100%;height:38px;background:var(--s1c);border:none;border-radius:var(--rs);color:#0f1320;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;}
+.sync-connect-btn:hover{opacity:.85;}
+.sync-connect-btn:disabled{opacity:.5;cursor:not-allowed;}
+.sync-error{font-size:12px;color:var(--err);margin:0;}
+.sync-status-row{display:flex;align-items:center;gap:8px;}
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--ok);}
+.sync-info{font-size:11px;color:var(--muted);}
+.sync-disconnect-btn{background:transparent;border:1px solid var(--bdr);border-radius:var(--rs);color:var(--sec);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;padding:7px 14px;transition:border-color .15s,color .15s;align-self:flex-start;}
+.sync-disconnect-btn:hover{border-color:var(--err);color:var(--err);}
 </style>
 </head>
 <body>
@@ -336,6 +363,9 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   <div class="logo">&#x1F525; FIRE Planner <span class="logo-tag">v6.0</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
+    <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync to GitHub Gist" data-state="idle">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+    </button>
     <div class="hdr-port">
       <span class="hdr-port-lbl">Portfolio</span>
       <span class="hdr-port-val" id="totalPill">&#x20AC; &#x2014;</span>
@@ -929,6 +959,46 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 </div>
 </div><!-- /tab-panel-results -->
 </div><!-- /tab-panels -->
+
+<!-- ── GITHUB SYNC MODAL ── -->
+<div class="sync-overlay" id="syncOverlay" style="display:none" onclick="if(event.target===this)closeSyncModal()" role="dialog" aria-modal="true" aria-labelledby="syncModalTitle">
+  <div class="sync-modal">
+    <div class="sync-modal-hd">
+      <span class="sync-modal-title" id="syncModalTitle">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        GitHub Sync
+      </span>
+      <button class="sync-modal-close" onclick="closeSyncModal()" aria-label="Close">&#x2715;</button>
+    </div>
+
+    <!-- Connected view -->
+    <div id="syncConnectedView" style="display:none">
+      <div class="sync-status-row">
+        <div class="sync-dot"></div>
+        <span style="font-size:13px;color:var(--text)" id="syncStatusText">Synced</span>
+      </div>
+      <p>Your data auto-saves every few seconds. Open the app on any device and enter the same token to access your settings.</p>
+      <div class="sync-info" id="syncLastTime"></div>
+      <button class="sync-disconnect-btn" onclick="disconnectSync()">Disconnect</button>
+    </div>
+
+    <!-- Connect form -->
+    <div id="syncConnectView">
+      <p>Paste a GitHub Personal Access Token with <strong style="color:var(--text)">gist</strong> scope. Your settings will auto-save as a secret Gist and load automatically on any device with the same token.</p>
+      <a class="sync-gh-link" href="https://github.com/settings/tokens/new?scopes=gist&description=FIRE+Planner+Sync" target="_blank" rel="noopener noreferrer">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Create token on GitHub (gist scope pre-selected)
+      </a>
+      <div class="sync-divider"></div>
+      <div class="field">
+        <label for="syncPatInput">Personal Access Token</label>
+        <input type="password" id="syncPatInput" placeholder="ghp_&#x2026;" autocomplete="off" onkeydown="if(event.key==='Enter')connectSync()">
+      </div>
+      <p class="sync-error" id="syncError" style="display:none"></p>
+      <button class="sync-connect-btn" id="syncConnectBtn" onclick="connectSync()">Connect &amp; Sync</button>
+    </div>
+  </div>
+</div>
 
 <script>
 "use strict";
@@ -1585,6 +1655,168 @@ function updateLabels() {
 function onAllocSwitch(idx){allocScIdx=idx;if(lastProjs&&lastGl)buildAllocChart(lastProjs,lastGl);}
 function onTableSwitch(idx) {tblScIdx =idx;if(lastProjs&&lastGl)renderTable(lastProjs,lastGl);}
 
+// ── GITHUB GIST SYNC ────────────────────────────────────────────────────────
+const SYNC_FIELDS = [
+  'cash','cashReturn',
+  'dob','lifeExp','baseYear',
+  'baseIncome','spendNow','spendRet','swr',
+  'stockRet','bondRet','inflation','bondAllocNow','bondAllocRet',
+  'retCountry','gainFrac',
+  'pensionAmt','pensionAge',
+  'wf0_yr','wf0_amt','wf1_yr','wf1_amt','wf2_yr','wf2_amt',
+  'partnerInc','partnerRetAge','partnerPension','partnerPensionAge','partnerSpendMult',
+  'propBuyYear','propPrice','propDownPct','propTxCostPct','propMortgageRate','propMortgageTerm','propRentSaved',
+  'childBirthYear','childCostYearly','childCostUntilAge','childMaternityMonths','childMaternityIncome',
+  'sc1name','sc2name','sc3name','sc4name','sc5name',
+  's1_ret','s2_ret','s3_ret','s4_ret','s5_ret',
+  's1_inc','s2_inc','s3_inc','s4_inc','s5_inc',
+  's1_chgYear','s2_chgYear','s3_chgYear','s4_chgYear','s5_chgYear',
+  's1_chgInc','s2_chgInc','s3_chgInc','s4_chgInc','s5_chgInc',
+];
+
+let syncPat     = localStorage.getItem('fire_pat')     || '';
+let syncGistId  = localStorage.getItem('fire_gist_id') || '';
+let syncTimer   = null;
+let isSyncLoad  = false;  // prevents save loop during applyState
+let lastSynced  = null;
+
+function ghHeaders(pat) {
+  return { Authorization: `token ${pat || syncPat}`, 'Content-Type': 'application/json' };
+}
+
+function collectState() {
+  const fields = {};
+  SYNC_FIELDS.forEach(id => { const e = el(id); if (e) fields[id] = e.value; });
+  const wdEl = document.querySelector('input[name="wdMode"]:checked');
+  const feat = {};
+  for (let s = 1; s <= 5; s++) feat[s] = { ...features[s] };
+  return { v: 1, fields, wdMode: wdEl ? wdEl.value : 'fixed', features: feat };
+}
+
+function applyState(data) {
+  if (!data || data.v !== 1) return;
+  Object.entries(data.fields || {}).forEach(([id, val]) => { const e = el(id); if (e) e.value = val; });
+  const radio = document.querySelector(`input[name="wdMode"][value="${data.wdMode}"]`);
+  if (radio) radio.checked = true;
+  for (let s = 1; s <= 5; s++) { if (data.features?.[s]) features[s] = { ...data.features[s] }; }
+  for (let s = 1; s <= 5; s++) updateAge(s);
+  onWdMode(); updateToggleUI();
+  isSyncLoad = true; recalc(); isSyncLoad = false;
+}
+
+async function syncSave() {
+  if (!syncPat) return;
+  setSyncStatus('syncing');
+  const payload = { files: { 'fire-planner.json': { content: JSON.stringify(collectState(), null, 2) } } };
+  try {
+    let res;
+    if (syncGistId) {
+      res = await fetch(`https://api.github.com/gists/${syncGistId}`, {
+        method: 'PATCH', headers: ghHeaders(), body: JSON.stringify(payload),
+      });
+      if (res.status === 404) { syncGistId = ''; localStorage.removeItem('fire_gist_id'); return syncSave(); }
+    } else {
+      res = await fetch('https://api.github.com/gists', {
+        method: 'POST', headers: ghHeaders(),
+        body: JSON.stringify({ ...payload, description: 'FIRE Planner – auto-saved data', public: false }),
+      });
+    }
+    if (!res.ok) throw new Error(res.status);
+    const json = await res.json();
+    if (!syncGistId) { syncGistId = json.id; localStorage.setItem('fire_gist_id', syncGistId); }
+    lastSynced = new Date();
+    setSyncStatus('ok');
+  } catch { setSyncStatus('error'); }
+}
+
+async function syncLoad(pat, gistId) {
+  const p = pat || syncPat, g = gistId || syncGistId;
+  if (!p || !g) return false;
+  const res = await fetch(`https://api.github.com/gists/${g}`, { headers: ghHeaders(p) });
+  if (!res.ok) return false;
+  const json = await res.json();
+  const content = json.files?.['fire-planner.json']?.content;
+  if (!content) return false;
+  applyState(JSON.parse(content));
+  lastSynced = new Date();
+  return true;
+}
+
+async function findGist(pat) {
+  const stored = localStorage.getItem('fire_gist_id');
+  if (stored) return stored;
+  const res = await fetch('https://api.github.com/gists?per_page=100', { headers: ghHeaders(pat) });
+  if (!res.ok) return null;
+  const list = await res.json();
+  const found = list.find(g => g.files?.['fire-planner.json']);
+  return found ? found.id : null;
+}
+
+function scheduleSave() {
+  if (!syncPat || isSyncLoad) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncSave, 2500);
+}
+
+function setSyncStatus(status) {
+  const btn = el('syncBtn');
+  if (btn) btn.dataset.state = status;
+  const txt  = el('syncStatusText');
+  const last = el('syncLastTime');
+  if (txt) {
+    txt.textContent =
+      status === 'syncing' ? 'Syncing…' :
+      status === 'ok'      ? 'Synced' :
+      status === 'error'   ? 'Sync error — check token' :
+                             'Connected';
+  }
+  if (last && lastSynced) last.textContent = 'Last synced: ' + lastSynced.toLocaleTimeString();
+}
+
+function openSyncModal() {
+  const connected = !!syncPat;
+  el('syncConnectedView').style.display = connected ? '' : 'none';
+  el('syncConnectView').style.display   = connected ? 'none' : '';
+  if (!connected) { el('syncPatInput').value = ''; el('syncError').style.display = 'none'; }
+  if (connected) setSyncStatus('idle');
+  el('syncOverlay').style.display = 'flex';
+  if (!connected) setTimeout(() => el('syncPatInput').focus(), 50);
+}
+
+function closeSyncModal() { el('syncOverlay').style.display = 'none'; }
+
+async function connectSync() {
+  const pat = el('syncPatInput').value.trim();
+  const errEl = el('syncError'), btn = el('syncConnectBtn');
+  if (!pat) { errEl.textContent = 'Please paste a token.'; errEl.style.display = ''; return; }
+  btn.disabled = true; btn.textContent = 'Connecting…'; errEl.style.display = 'none';
+  try {
+    const vRes = await fetch('https://api.github.com/user', { headers: ghHeaders(pat) });
+    if (!vRes.ok) throw new Error('Invalid token or missing gist permission.');
+    syncPat = pat; localStorage.setItem('fire_pat', syncPat);
+    setSyncStatus('syncing');
+    const gid = await findGist(pat);
+    if (gid) {
+      syncGistId = gid; localStorage.setItem('fire_gist_id', syncGistId);
+      await syncLoad();
+    } else {
+      await syncSave();
+    }
+    closeSyncModal();
+  } catch(e) {
+    errEl.textContent = e.message || 'Connection failed.';
+    errEl.style.display = '';
+    btn.disabled = false; btn.textContent = 'Connect & Sync';
+  }
+}
+
+function disconnectSync() {
+  syncPat = ''; syncGistId = '';
+  localStorage.removeItem('fire_pat'); localStorage.removeItem('fire_gist_id');
+  setSyncStatus('idle');
+  closeSyncModal();
+}
+
 // ── RECALC ──────────────────────────────────────────────────────────────────
 function recalc() {
   const gl=getGlobals();
@@ -1599,6 +1831,7 @@ function recalc() {
   buildChart(projs,gl); buildAllocChart(projs,gl); renderTable(projs,gl);
   updateLabels();
   renderSummaryTiles(projs,gl,scenarios);
+  scheduleSave();
 }
 
 // ── INIT ───────────────────────────────────────────────────────────────────
@@ -1607,6 +1840,19 @@ document.addEventListener("DOMContentLoaded",()=>{
   onWdMode();
   updateToggleUI();
   recalc();
+  // Initialise sync: if a PAT is stored, load from Gist on startup
+  (async () => {
+    if (!syncPat) { setSyncStatus('idle'); return; }
+    setSyncStatus('syncing');
+    try {
+      if (!syncGistId) {
+        const gid = await findGist(syncPat);
+        if (gid) { syncGistId = gid; localStorage.setItem('fire_gist_id', syncGistId); }
+      }
+      const loaded = syncGistId ? await syncLoad() : false;
+      setSyncStatus(loaded ? 'ok' : 'idle');
+    } catch { setSyncStatus('error'); }
+  })();
   // Sync scenario nav dots with horizontal scroll position
   const scGrid = document.querySelector('.sc-grid');
   if (scGrid) {
