@@ -219,9 +219,10 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .sc-nav-dot{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:none;background:transparent;cursor:pointer;padding:0;border-radius:50%;-webkit-tap-highlight-color:transparent;}
 .sc-nav-dot::after{content:'';display:block;width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.3;transition:opacity .2s ease,transform .2s ease;}
 .sc-nav-dot.active::after{opacity:1;transform:scale(1.3);}
-.sc-summary-row{display:none;overflow-x:auto;gap:10px;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.sc-summary-row{display:none;overflow-x:auto;gap:0;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;}
 .sc-summary-row::-webkit-scrollbar{display:none;}
-.sc-summary-tile{flex:0 0 calc(100vw - 24px);background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:4px;}
+.sc-summary-tile{flex:0 0 calc(100vw - 24px);background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:4px;scroll-snap-align:start;margin-right:10px;}
+.sc-summary-tile:last-child{margin-right:0;}
 
 /* ══════════════════════════════════════════════════════════
    MOBILE (≤ 767px) — touch-first responsive layout
@@ -304,9 +305,12 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   .leg-item{font-size:10px;gap:4px;}
   .leg-dot{width:6px;height:6px;}
 
-  /* Scenario-picker pills: larger touch targets */
+  /* Scenario-picker pills: fixed equal size, letter-only labels */
   .alloc-radios{gap:4px;}
-  .radio-pill{padding:7px 11px;font-size:12px;min-height:36px;justify-content:center;}
+  .radio-pill{width:36px;min-width:36px;height:36px;padding:0;font-size:12px;justify-content:center;align-items:center;}
+  /* Hide dynamic name text, show fixed letter via ::before */
+  .alloc-radios .radio-pill span[data-ltr]{font-size:0;}
+  .alloc-radios .radio-pill span[data-ltr]::before{content:attr(data-ltr);font-size:12px;}
 
   /* Table */
   .tbl-hdr{padding:12px 14px;min-height:52px;}
@@ -893,11 +897,11 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
     <div class="chart-top">
       <div class="chart-title">Stock / Bond Glide Path</div>
       <div class="alloc-radios">
-        <label class="radio-pill"><input type="radio" name="allocSc" value="0" checked onchange="onAllocSwitch(0)"><span id="allocLbl0" style="color:var(--s1c)">A</span></label>
-        <label class="radio-pill"><input type="radio" name="allocSc" value="1" onchange="onAllocSwitch(1)"><span id="allocLbl1" style="color:var(--s2c)">B</span></label>
-        <label class="radio-pill"><input type="radio" name="allocSc" value="2" onchange="onAllocSwitch(2)"><span id="allocLbl2" style="color:var(--s3c)">C</span></label>
-        <label class="radio-pill"><input type="radio" name="allocSc" value="3" onchange="onAllocSwitch(3)"><span id="allocLbl3" style="color:var(--s4c)">D</span></label>
-        <label class="radio-pill"><input type="radio" name="allocSc" value="4" onchange="onAllocSwitch(4)"><span id="allocLbl4" style="color:var(--s5c)">E</span></label>
+        <label class="radio-pill"><input type="radio" name="allocSc" value="0" checked onchange="onAllocSwitch(0)"><span id="allocLbl0" style="color:var(--s1c)" data-ltr="A">A</span></label>
+        <label class="radio-pill"><input type="radio" name="allocSc" value="1" onchange="onAllocSwitch(1)"><span id="allocLbl1" style="color:var(--s2c)" data-ltr="B">B</span></label>
+        <label class="radio-pill"><input type="radio" name="allocSc" value="2" onchange="onAllocSwitch(2)"><span id="allocLbl2" style="color:var(--s3c)" data-ltr="C">C</span></label>
+        <label class="radio-pill"><input type="radio" name="allocSc" value="3" onchange="onAllocSwitch(3)"><span id="allocLbl3" style="color:var(--s4c)" data-ltr="D">D</span></label>
+        <label class="radio-pill"><input type="radio" name="allocSc" value="4" onchange="onAllocSwitch(4)"><span id="allocLbl4" style="color:var(--s5c)" data-ltr="E">E</span></label>
       </div>
     </div>
     <div class="alloc-canvas-wrap" style="position:relative;height:130px"><canvas id="allocChart"></canvas></div>
@@ -908,11 +912,11 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
       <span style="font-size:13px;font-weight:600;color:var(--text)" id="tblArrow">&#x25BC; Year-by-Year Detail</span>
       <div style="display:flex;align-items:center;gap:8px" onclick="event.stopPropagation()">
         <div class="alloc-radios">
-          <label class="radio-pill"><input type="radio" name="tblSc" value="0" checked onchange="onTableSwitch(0)"><span id="tblLbl0" style="color:var(--s1c)">A</span></label>
-          <label class="radio-pill"><input type="radio" name="tblSc" value="1" onchange="onTableSwitch(1)"><span id="tblLbl1" style="color:var(--s2c)">B</span></label>
-          <label class="radio-pill"><input type="radio" name="tblSc" value="2" onchange="onTableSwitch(2)"><span id="tblLbl2" style="color:var(--s3c)">C</span></label>
-          <label class="radio-pill"><input type="radio" name="tblSc" value="3" onchange="onTableSwitch(3)"><span id="tblLbl3" style="color:var(--s4c)">D</span></label>
-          <label class="radio-pill"><input type="radio" name="tblSc" value="4" onchange="onTableSwitch(4)"><span id="tblLbl4" style="color:var(--s5c)">E</span></label>
+          <label class="radio-pill"><input type="radio" name="tblSc" value="0" checked onchange="onTableSwitch(0)"><span id="tblLbl0" style="color:var(--s1c)" data-ltr="A">A</span></label>
+          <label class="radio-pill"><input type="radio" name="tblSc" value="1" onchange="onTableSwitch(1)"><span id="tblLbl1" style="color:var(--s2c)" data-ltr="B">B</span></label>
+          <label class="radio-pill"><input type="radio" name="tblSc" value="2" onchange="onTableSwitch(2)"><span id="tblLbl2" style="color:var(--s3c)" data-ltr="C">C</span></label>
+          <label class="radio-pill"><input type="radio" name="tblSc" value="3" onchange="onTableSwitch(3)"><span id="tblLbl3" style="color:var(--s4c)" data-ltr="D">D</span></label>
+          <label class="radio-pill"><input type="radio" name="tblSc" value="4" onchange="onTableSwitch(4)"><span id="tblLbl4" style="color:var(--s5c)" data-ltr="E">E</span></label>
         </div>
         <button class="csv-dl-btn" onclick="downloadCSV()" aria-label="Download CSV">&#x2193;</button>
       </div>
