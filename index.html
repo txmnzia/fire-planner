@@ -1840,13 +1840,13 @@ document.addEventListener("DOMContentLoaded",()=>{
   onWdMode();
   updateToggleUI();
   recalc();
-  // Initialise sync: if a PAT is stored, load from Gist on startup
+  // Initialise sync: show login prompt on first visit, otherwise auto-load
   (async () => {
-    if (!syncPat) { setSyncStatus('idle'); return; }
+    if (!syncName) { openSyncModal(); return; }
     setSyncStatus('syncing');
     try {
       if (!syncGistId) {
-        const gid = await findGist(syncPat);
+        const gid = await findGist(syncName);
         if (gid) { syncGistId = gid; localStorage.setItem('fire_gist_id', syncGistId); }
       }
       const loaded = syncGistId ? await syncLoad() : false;
