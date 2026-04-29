@@ -349,11 +349,11 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .sync-connect-btn:hover{opacity:.85;}
 .sync-connect-btn:disabled{opacity:.5;cursor:not-allowed;}
 .sync-error{font-size:12px;color:var(--err);margin:0;}
-.sync-status-row{display:flex;align-items:center;gap:8px;}
-.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--ok);}
 .sync-info{font-size:11px;color:var(--muted);}
-.sync-disconnect-btn{background:transparent;border:1px solid var(--bdr);border-radius:var(--rs);color:var(--sec);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;padding:7px 14px;transition:border-color .15s,color .15s;align-self:flex-start;}
-.sync-disconnect-btn:hover{border-color:var(--err);color:var(--err);}
+.sync-secondary-btn{background:transparent;border:1px solid var(--bdr);border-radius:var(--rs);color:var(--sec);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;padding:7px 14px;transition:border-color .15s,color .15s;}
+.sync-secondary-btn:hover{border-color:var(--sec);background:rgba(129,140,248,.08);}
+.sync-secondary-btn.danger:hover{border-color:var(--err);color:var(--err);}
+.sync-name-lbl{font-size:10px;color:var(--muted);max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1;}
 </style>
 </head>
 <body>
@@ -363,8 +363,9 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   <div class="logo">&#x1F525; FIRE Planner <span class="logo-tag">v6.0</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
-    <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync to GitHub Gist" data-state="idle">
+    <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+      <span class="sync-name-lbl" id="syncNameLbl"></span>
     </button>
     <div class="hdr-port">
       <span class="hdr-port-lbl">Portfolio</span>
@@ -973,29 +974,23 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
     <!-- Connected view -->
     <div id="syncConnectedView" style="display:none">
-      <div class="sync-status-row">
-        <div class="sync-dot"></div>
-        <span style="font-size:13px;color:var(--text)" id="syncStatusText">Synced</span>
-      </div>
-      <p>Your data auto-saves every few seconds. Open the app on any device and enter the same token to access your settings.</p>
+      <p>Synced as <strong id="syncNameDisplay" style="color:var(--text)"></strong></p>
       <div class="sync-info" id="syncLastTime"></div>
-      <button class="sync-disconnect-btn" onclick="disconnectSync()">Disconnect</button>
+      <div class="sync-actions" style="margin-top:12px;display:flex;gap:8px">
+        <button class="sync-secondary-btn" onclick="showChangeName()">Change name</button>
+        <button class="sync-secondary-btn danger" onclick="disconnectSync()">Disconnect</button>
+      </div>
     </div>
 
-    <!-- Connect form -->
+    <!-- Name form (first connect or change) -->
     <div id="syncConnectView">
-      <p>Paste a GitHub Personal Access Token with <strong style="color:var(--text)">gist</strong> scope. Your settings will auto-save as a secret Gist and load automatically on any device with the same token.</p>
-      <a class="sync-gh-link" href="https://github.com/settings/tokens/new?scopes=gist&description=FIRE+Planner+Sync" target="_blank" rel="noopener noreferrer">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-        Create token on GitHub (gist scope pre-selected)
-      </a>
-      <div class="sync-divider"></div>
+      <p>Choose a sync name — any word you&#x2019;ll remember. Use the same name on another device to access your data.</p>
       <div class="field">
-        <label for="syncPatInput">Personal Access Token</label>
-        <input type="password" id="syncPatInput" placeholder="ghp_&#x2026;" autocomplete="off" onkeydown="if(event.key==='Enter')connectSync()">
+        <label for="syncNameInput">Sync name</label>
+        <input type="text" id="syncNameInput" placeholder="e.g. alice" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')connectSync()">
       </div>
       <p class="sync-error" id="syncError" style="display:none"></p>
-      <button class="sync-connect-btn" id="syncConnectBtn" onclick="connectSync()">Connect &amp; Sync</button>
+      <button class="sync-connect-btn" id="syncConnectBtn" onclick="connectSync()">Save &amp; Sync</button>
     </div>
   </div>
 </div>
@@ -1674,15 +1669,15 @@ const SYNC_FIELDS = [
   's1_chgInc','s2_chgInc','s3_chgInc','s4_chgInc','s5_chgInc',
 ];
 
-let syncPat     = localStorage.getItem('fire_pat')     || '';
-let syncGistId  = localStorage.getItem('fire_gist_id') || '';
-let syncTimer   = null;
-let isSyncLoad  = false;  // prevents save loop during applyState
-let lastSynced  = null;
-
-function ghHeaders(pat) {
-  return { Authorization: `token ${pat || syncPat}`, 'Content-Type': 'application/json' };
-}
+const GIST_PAT    = 'PASTE_YOUR_GIST_PAT_HERE'; // replace with a PAT that has gist scope
+const GIST_PREFIX = 'fire-planner';
+let syncName   = localStorage.getItem('fire_sync_name') || '';
+let syncGistId = localStorage.getItem('fire_gist_id')   || '';
+let syncTimer  = null;
+let isSyncLoad = false;
+let lastSynced = null;
+const ghHeaders = () => ({ Authorization: `token ${GIST_PAT}`, 'Content-Type': 'application/json' });
+const gistDesc  = name => `${GIST_PREFIX}:${name}`;
 
 function collectState() {
   const fields = {};
@@ -1705,7 +1700,7 @@ function applyState(data) {
 }
 
 async function syncSave() {
-  if (!syncPat) return;
+  if (!syncName) return;
   setSyncStatus('syncing');
   const payload = { files: { 'fire-planner.json': { content: JSON.stringify(collectState(), null, 2) } } };
   try {
@@ -1718,7 +1713,7 @@ async function syncSave() {
     } else {
       res = await fetch('https://api.github.com/gists', {
         method: 'POST', headers: ghHeaders(),
-        body: JSON.stringify({ ...payload, description: 'FIRE Planner – auto-saved data', public: false }),
+        body: JSON.stringify({ ...payload, description: gistDesc(syncName), public: false }),
       });
     }
     if (!res.ok) throw new Error(res.status);
@@ -1729,10 +1724,9 @@ async function syncSave() {
   } catch { setSyncStatus('error'); }
 }
 
-async function syncLoad(pat, gistId) {
-  const p = pat || syncPat, g = gistId || syncGistId;
-  if (!p || !g) return false;
-  const res = await fetch(`https://api.github.com/gists/${g}`, { headers: ghHeaders(p) });
+async function syncLoad() {
+  if (!syncGistId) return false;
+  const res = await fetch(`https://api.github.com/gists/${syncGistId}`, { headers: ghHeaders() });
   if (!res.ok) return false;
   const json = await res.json();
   const content = json.files?.['fire-planner.json']?.content;
@@ -1742,18 +1736,21 @@ async function syncLoad(pat, gistId) {
   return true;
 }
 
-async function findGist(pat) {
-  const stored = localStorage.getItem('fire_gist_id');
-  if (stored) return stored;
-  const res = await fetch('https://api.github.com/gists?per_page=100', { headers: ghHeaders(pat) });
-  if (!res.ok) return null;
-  const list = await res.json();
-  const found = list.find(g => g.files?.['fire-planner.json']);
-  return found ? found.id : null;
+async function findGist(name) {
+  const desc = gistDesc(name);
+  for (let page = 1; page <= 5; page++) {
+    const res = await fetch(`https://api.github.com/gists?per_page=100&page=${page}`, { headers: ghHeaders() });
+    if (!res.ok) return null;
+    const list = await res.json();
+    if (!list.length) return null;
+    const found = list.find(g => g.description === desc);
+    if (found) return found.id;
+  }
+  return null;
 }
 
 function scheduleSave() {
-  if (!syncPat || isSyncLoad) return;
+  if (!syncName || isSyncLoad) return;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(syncSave, 2500);
 }
@@ -1761,41 +1758,47 @@ function scheduleSave() {
 function setSyncStatus(status) {
   const btn = el('syncBtn');
   if (btn) btn.dataset.state = status;
-  const txt  = el('syncStatusText');
+  const lbl  = el('syncNameLbl');
   const last = el('syncLastTime');
-  if (txt) {
-    txt.textContent =
-      status === 'syncing' ? 'Syncing…' :
-      status === 'ok'      ? 'Synced' :
-      status === 'error'   ? 'Sync error — check token' :
-                             'Connected';
-  }
+  if (lbl) lbl.textContent = syncName;
   if (last && lastSynced) last.textContent = 'Last synced: ' + lastSynced.toLocaleTimeString();
 }
 
 function openSyncModal() {
-  const connected = !!syncPat;
+  const connected = !!syncName;
   el('syncConnectedView').style.display = connected ? '' : 'none';
   el('syncConnectView').style.display   = connected ? 'none' : '';
-  if (!connected) { el('syncPatInput').value = ''; el('syncError').style.display = 'none'; }
-  if (connected) setSyncStatus('idle');
+  if (connected) {
+    el('syncNameDisplay').textContent = syncName;
+    if (lastSynced) el('syncLastTime').textContent = 'Last synced: ' + lastSynced.toLocaleTimeString();
+  } else {
+    el('syncNameInput').value = '';
+    el('syncError').style.display = 'none';
+  }
   el('syncOverlay').style.display = 'flex';
-  if (!connected) setTimeout(() => el('syncPatInput').focus(), 50);
+  if (!connected) setTimeout(() => el('syncNameInput').focus(), 50);
+}
+
+function showChangeName() {
+  el('syncConnectedView').style.display = 'none';
+  el('syncConnectView').style.display   = '';
+  el('syncNameInput').value = syncName;
+  el('syncError').style.display = 'none';
+  setTimeout(() => el('syncNameInput').focus(), 50);
 }
 
 function closeSyncModal() { el('syncOverlay').style.display = 'none'; }
 
 async function connectSync() {
-  const pat = el('syncPatInput').value.trim();
+  const name  = el('syncNameInput').value.trim().toLowerCase().replace(/\s+/g, '-');
   const errEl = el('syncError'), btn = el('syncConnectBtn');
-  if (!pat) { errEl.textContent = 'Please paste a token.'; errEl.style.display = ''; return; }
+  if (!name) { errEl.textContent = 'Please enter a sync name.'; errEl.style.display = ''; return; }
   btn.disabled = true; btn.textContent = 'Connecting…'; errEl.style.display = 'none';
   try {
-    const vRes = await fetch('https://api.github.com/user', { headers: ghHeaders(pat) });
-    if (!vRes.ok) throw new Error('Invalid token or missing gist permission.');
-    syncPat = pat; localStorage.setItem('fire_pat', syncPat);
+    if (name !== syncName) { syncGistId = ''; localStorage.removeItem('fire_gist_id'); }
+    syncName = name; localStorage.setItem('fire_sync_name', syncName);
     setSyncStatus('syncing');
-    const gid = await findGist(pat);
+    const gid = await findGist(name);
     if (gid) {
       syncGistId = gid; localStorage.setItem('fire_gist_id', syncGistId);
       await syncLoad();
@@ -1806,13 +1809,13 @@ async function connectSync() {
   } catch(e) {
     errEl.textContent = e.message || 'Connection failed.';
     errEl.style.display = '';
-    btn.disabled = false; btn.textContent = 'Connect & Sync';
+    btn.disabled = false; btn.textContent = 'Save & Sync';
   }
 }
 
 function disconnectSync() {
-  syncPat = ''; syncGistId = '';
-  localStorage.removeItem('fire_pat'); localStorage.removeItem('fire_gist_id');
+  syncName = ''; syncGistId = '';
+  localStorage.removeItem('fire_sync_name'); localStorage.removeItem('fire_gist_id');
   setSyncStatus('idle');
   closeSyncModal();
 }
