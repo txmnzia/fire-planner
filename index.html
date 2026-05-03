@@ -1231,10 +1231,75 @@ function computeFireTarget(fromAge, sc, gl, taxMult) {
     return gl.swr>0 ? Math.round(annualFromPort/gl.swr) : 0;
   }
 
+  // PV of partner pension income (credit against FIRE target) — DCF mode only
+  function partnerPenCredit() {
+    if (!sc.hasPartner || gl.partnerPensionAge >= gl.lifeExp) return 0;
+    const penStartAge = Math.max(fromAge, gl.partnerPensionAge);
+    const nDelay  = penStartAge - fromAge;
+    const tPS     = penStartAge - gl.currentAge;
+    const ppAtStart = gl.partnerPension*12*Math.pow(1+gl.inflation,tPS);
+    const nPen    = Math.max(0, gl.lifeExp - penStartAge);
+    if (nPen <= 0) return 0;
+    const pvAtStart = annuityPV(ppAtStart*taxMult, rFrom, gl.inflation, nPen);
+    return pvAtStart / Math.pow(1+rFrom, nDelay);
+  }
+
+  // PV of child costs (increases FIRE target) — DCF mode only
+  function childCostPV() {
+    if (!sc.hasChild) return 0;
+    const fromYear     = gl.baseYear + tFrom;
+    const childEndYear = gl.childBirthYear + gl.childCostUntilAge;
+    const costStartYear = Math.max(fromYear, gl.childBirthYear);
+    const nChild = Math.max(0, childEndYear - costStartYear);
+    if (nChild <= 0) return 0;
+    const nDelay   = costStartYear - fromYear;
+    const tCS      = costStartYear - gl.baseYear;
+    const costAtStart = gl.childCostYearly * Math.pow(1+gl.inflation, tCS);
+    const pvAtStart = annuityPV(costAtStart*taxMult, rFrom, gl.inflation, nChild);
+    return pvAtStart / Math.pow(1+rFrom, nDelay);
+  }
+
+  // Net PV of property cash flows during retirement (increases FIRE target if mortgage > rent savings)
+  function propNetPV() {
+    if (!sc.hasProp) return 0;
+    const fromYear = gl.baseYear + tFrom;
+    let pv = 0;
+    // one-time purchase cost if property is bought during retirement
+    if (gl.propBuyYear >= fromYear) {
+      const nDelayPurch = gl.propBuyYear - fromYear;
+      const purchaseCost = gl.propPrice * (gl.propDownPct + gl.propTxCostPct);
+      pv += (purchaseCost * taxMult) / Math.pow(1+rFrom, nDelayPurch);
+    }
+    // ongoing mortgage payments (flat, g=0) — active from max(propBuyYear, fromYear) to propBuyYear+mortgageTerm
+    const mortgageEndYear = gl.propBuyYear + gl.propMortgageTerm;
+    const mortgStartYear  = Math.max(gl.propBuyYear, fromYear);
+    const nMortgage = Math.max(0, mortgageEndYear - mortgStartYear);
+    if (nMortgage > 0 && gl.propMortgageRate > 0 && gl.propPrice > 0) {
+      const principal = gl.propPrice * (1 - gl.propDownPct);
+      const mr = gl.propMortgageRate/12, nm = gl.propMortgageTerm*12;
+      const monthlyMtg = principal*mr*Math.pow(1+mr,nm)/(Math.pow(1+mr,nm)-1);
+      const annualMtg  = monthlyMtg * 12;
+      const nDelayMtg  = mortgStartYear - fromYear;
+      const pvMtg = annuityPV(annualMtg*taxMult, rFrom, 0, nMortgage);
+      pv += pvMtg / Math.pow(1+rFrom, nDelayMtg);
+    }
+    // rent savings (inflation-growing) — active from max(propBuyYear, fromYear) until lifeExp
+    const rentStartYear = Math.max(gl.propBuyYear, fromYear);
+    const nRent = Math.max(0, gl.lifeExp - (gl.currentAge + (rentStartYear - gl.baseYear)));
+    if (nRent > 0) {
+      const tRS       = rentStartYear - gl.baseYear;
+      const rentAtStart = gl.propRentSaved*12*Math.pow(1+gl.inflation, tRS);
+      const nDelayRent  = rentStartYear - fromYear;
+      const pvRent = annuityPV(rentAtStart*taxMult, rFrom, gl.inflation, nRent);
+      pv -= pvRent / Math.pow(1+rFrom, nDelayRent);
+    }
+    return pv;
+  }
+
   if (fromAge>=gl.pensionAge) {
     const n   = Math.max(0,gl.lifeExp-fromAge);
     const netW= Math.max(0,spendNom-pensionNom)*taxMult;
-    return Math.round(annuityPV(netW,rFrom,gl.inflation,n));
+    return Math.round(Math.max(0, annuityPV(netW,rFrom,gl.inflation,n) + childCostPV() + propNetPV() - partnerPenCredit()));
   }
   const n1  = gl.pensionAge-fromAge;
   const pv1 = annuityPV(spendNom*taxMult,rFrom,gl.inflation,n1);
@@ -1245,7 +1310,7 @@ function computeFireTarget(fromAge, sc, gl, taxMult) {
   const n2         = Math.max(0,gl.lifeExp-gl.pensionAge);
   const pv2AtPen   = annuityPV(netAtPen,rFrom,gl.inflation,n2);
   const pv2        = pv2AtPen/Math.pow(1+rFrom,n1);
-  return Math.round(pv1+pv2);
+  return Math.round(Math.max(0, pv1+pv2 + childCostPV() + propNetPV() - partnerPenCredit()));
 }
 
 function project(sc, gl) {
@@ -1326,8 +1391,9 @@ function project(sc, gl) {
       let annInc = sc.income*12*infl;
       if (sc.chgYear!==null && yr>=sc.chgYear && sc.chgInc!==null) annInc=sc.chgInc*12*infl;
       annInc = incomeInYear(yr, annInc);
-      // partner income until partner retires
+      // partner income until partner retires; partner pension once they reach pension age
       if (sc.hasPartner && age < gl.partnerRetAge) annInc += gl.partnerInc*12*infl;
+      if (sc.hasPartner && age >= gl.partnerPensionAge) { const ppAcc=gl.partnerPension*12*infl; annInc+=ppAcc; row.partnerPension=Math.round(ppAcc); }
       const annSpendNow = gl.spendNow*12*infl*(sc.hasPartner ? gl.partnerSpendMult : 1);
       const childCost   = childCostInYear(yr);
       // property
@@ -1354,7 +1420,17 @@ function project(sc, gl) {
       const portAfterGrowth=portfolio*(1+r)+windfall;
       if (windfall>0) costBasis+=windfall;
       const gainFracNow=portAfterGrowth>0?Math.max(0,Math.min(1,(portAfterGrowth-costBasis)/portAfterGrowth)):0;
-      let gross, netNeeded, pAnn=0;
+      // pension income — computed once, used in both withdrawal modes and display
+      const pAnn = age>=gl.pensionAge ? gl.pensionAmt*12*infl : 0;
+      let gross, netNeeded;
+
+      // property cash flows continue into retirement
+      let mortgageAnnRet=0, rentSavingsAnnRet=0;
+      if (sc.hasProp) {
+        if (yr===gl.propBuyYear) { row.extraCost=gl.propPrice*(gl.propDownPct+gl.propTxCostPct); }
+        if (yr>=gl.propBuyYear && yr<gl.propBuyYear+gl.propMortgageTerm) { mortgageAnnRet=monthlyMortgage*12; row.mortgagePayment=Math.round(mortgageAnnRet); }
+        if (yr>=gl.propBuyYear) { rentSavingsAnnRet=gl.propRentSaved*12*infl; row.rentSavings=Math.round(rentSavingsAnnRet); }
+      }
 
       if (gl.wdMode==="swr") {
         gross=portAfterGrowth*gl.swr;
@@ -1364,7 +1440,10 @@ function project(sc, gl) {
         let targetSpend=annRetSpend;
         const childCost=childCostInYear(yr);
         targetSpend+=childCost; row.childCost=Math.round(childCost);
-        if (age>=gl.pensionAge) { pAnn=gl.pensionAmt*12*infl; targetSpend=Math.max(0,targetSpend-pAnn); }
+        targetSpend+=mortgageAnnRet;
+        targetSpend=Math.max(0,targetSpend-rentSavingsAnnRet);
+        if (yr===gl.propBuyYear&&sc.hasProp) targetSpend+=row.extraCost; // one-time purchase cost in retirement
+        if (pAnn>0) targetSpend=Math.max(0,targetSpend-pAnn);
         let partnerPensionAnn=0;
         if (sc.hasPartner&&age>=gl.partnerPensionAge) { partnerPensionAnn=gl.partnerPension*12*infl; targetSpend=Math.max(0,targetSpend-partnerPensionAnn); }
         netNeeded=targetSpend;
@@ -1374,7 +1453,6 @@ function project(sc, gl) {
       portfolio=Math.max(0,portAfterGrowth-gross);
       const fractionSold=portAfterGrowth>0?Math.min(1,gross/portAfterGrowth):0;
       costBasis=Math.max(0,costBasis*(1-fractionSold));
-      if (age>=gl.pensionAge) pAnn=gl.pensionAmt*12*infl;
       row.pension=Math.round(pAnn); row.withdrawal=Math.round(gross); row.taxPaid=Math.round(gross-Math.max(0,netNeeded));
     }
 
@@ -1393,8 +1471,10 @@ function renderMilestone(idx, sc, gl, proj) {
   const surplus = portRet-fireRet, ok=surplus>=0, cc=SC_COLORS[idx-1];
   const fireTaxMult = 1/Math.max(0.001,1-gl.gainFrac*gl.taxRate);
   const fireAtRet   = computeFireTarget(sc.retAge,sc,gl,fireTaxMult);
-  const rAccum      = portReturnAt(gl,gl.currentAge,sc.retAge);
-  const coastNow    = fireAtRet/Math.pow(1+rAccum,Math.max(0,sc.retAge-gl.currentAge));
+  const nAccum      = Math.max(0,sc.retAge-gl.currentAge);
+  let growthFactor  = 1;
+  for (let i=0;i<nAccum;i++) growthFactor*=(1+portReturnAt(gl,gl.currentAge+i,sc.retAge));
+  const coastNow    = growthFactor>0 ? fireAtRet/growthFactor : fireAtRet;
   const coasting    = (ibkrTotal+gl.cash)>=coastNow;
   let depletionYear=null;
   for (let i=Math.max(0,retIdx);i<proj.values.length;i++) { if(proj.values[i]<=0){depletionYear=proj.years[i];break;} }
@@ -1604,7 +1684,7 @@ function downloadCSV() {
   const getData=(mi,row,i)=>{
     const v=proj.values[i],alloc=proj.allocations[i];
     switch(mi){
-      case 0:return v; case 1:return Math.round((v-(row.cashVal||0))*alloc/100); case 2:return v-Math.round(v*alloc/100);
+      case 0:return v; case 1:return Math.round((v-(row.cashVal||0))*alloc/100); case 2:{const inv=v-(row.cashVal||0);return inv-Math.round(inv*alloc/100);}
       case 3:return row.income||0; case 4:return row.windfall||0; case 5:return row.spending?-row.spending:0;
       case 6:return row.childCost||0; case 7:return row.netFlow||0; case 8:return row.portReturn||0;
       case 9:return row.pension||0; case 10:return row.withdrawal?-row.withdrawal:0; case 11:return row.taxPaid>0?-row.taxPaid:0;
