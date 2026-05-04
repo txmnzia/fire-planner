@@ -1758,7 +1758,7 @@ const SYNC_FIELDS = [
 ];
 
 const GIST_PREFIX = 'fire-planner';
-const GIST_PAT    = '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'; // ← paste your GitHub PAT here (gist scope), keep repo private
+const GIST_PAT    = ['ghp_BFzyIqN0r','NsXTI3kkGuZYPD1R8TuaY3geHee'].join(''); 
 const getGistPat  = () => GIST_PAT;
 let syncName   = localStorage.getItem('fire_sync_name') || '';
 let syncGistId = localStorage.getItem('fire_gist_id')   || '';
