@@ -977,9 +977,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
       <p>Synced as <strong id="syncNameDisplay" style="color:var(--text)"></strong></p>
       <div class="sync-info" id="syncLastTime"></div>
       <div id="syncPatWarning" style="display:none;margin-top:8px;font-size:12px;color:var(--err);background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);border-radius:var(--rs);padding:8px 10px;line-height:1.5">
-        ⚠ Sync token not configured. Run this once in your browser console:<br>
-        <code style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text)">localStorage.setItem('fire_dev_pat','ghp_…')</code><br>
-        then reload the page.
+        ⚠ Sync token not set. Edit <code style="font-family:'DM Mono',monospace;font-size:11px">GIST_PAT</code> in index.html and redeploy.
       </div>
       <div class="sync-actions" style="margin-top:12px;display:flex;gap:8px">
         <button class="sync-secondary-btn" onclick="showChangeName()">Change name</button>
@@ -1755,9 +1753,8 @@ const SYNC_FIELDS = [
 ];
 
 const GIST_PREFIX = 'fire-planner';
-// PAT is never committed — set once in your browser console:
-//   localStorage.setItem('fire_dev_pat', 'ghp_yourtoken')
-const getGistPat  = () => localStorage.getItem('fire_dev_pat') || '';
+const GIST_PAT    = 'REPLACE_WITH_YOUR_PAT'; // ← paste your GitHub PAT here (gist scope), keep repo private
+const getGistPat  = () => GIST_PAT;
 let syncName   = localStorage.getItem('fire_sync_name') || '';
 let syncGistId = localStorage.getItem('fire_gist_id')   || '';
 let syncTimer  = null;
