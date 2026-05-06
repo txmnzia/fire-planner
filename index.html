@@ -69,14 +69,14 @@ select option{background:var(--card);}
 .unit-wrap{position:relative;}
 .unit-wrap input{padding-right:28px;}
 .unit-wrap .u{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;pointer-events:none;}
-.field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end;}
 .field-row .field{margin:0;}
 
 /* SITUATION TAB */
 .sit-body{max-width:860px;margin:0 auto;padding:24px 24px 60px;display:flex;flex-direction:column;gap:28px;}
 .sit-section{display:flex;flex-direction:column;gap:0;}
 .sit-hd{font-size:11px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--muted);padding-bottom:10px;border-bottom:1px solid var(--bdr);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
-.sit-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;}
+.sit-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;align-items:end;}
 .sit-grid.g3{grid-template-columns:1fr 1fr 1fr;}
 .sit-grid.g1{grid-template-columns:1fr;}
 .sit-full{grid-column:1/-1;}
@@ -324,8 +324,13 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   /* CSV button: larger touch target */
   .csv-dl-btn{width:36px;height:36px;font-size:15px;}
 
-  /* My Situation: ensure last fields clear iOS bottom toolbar */
-  .sit-body{padding-bottom:max(60px, calc(40px + env(safe-area-inset-bottom)));}
+  /* My Situation: tighter side padding + clear iOS bottom toolbar */
+  .sit-body{padding-left:16px;padding-right:16px;padding-bottom:max(60px, calc(40px + env(safe-area-inset-bottom)));}
+
+  /* Situation grids: collapse 3-col to 2-col on narrow screens */
+  .sit-grid.g3{grid-template-columns:1fr 1fr;}
+  /* Tighter grid gaps on mobile */
+  .sit-grid{gap:14px 14px;}
 }
 
 /* ── GITHUB SYNC ── */
