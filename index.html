@@ -1323,8 +1323,8 @@ function computeFireTarget(fromAge, sc, gl, taxMult) {
 }
 
 function project(sc, gl) {
-  const startPort = ibkrTotal + gl.cash;
-  let cashVal     = 0;
+  const startPort = ibkrTotal;
+  let cashVal     = gl.cash;
   const startYear = gl.baseYear;
   const endYear   = startYear+(gl.lifeExp-gl.currentAge);
   const retYear   = startYear+(sc.retAge-gl.currentAge);
@@ -1459,13 +1459,18 @@ function project(sc, gl) {
         gross=netNeeded>0?netNeeded/Math.max(0.001,1-gainFracNow*gl.taxRate):0;
         row.spending=Math.round(annRetSpend); row.partnerPension=Math.round(partnerPensionAnn);
       }
-      portfolio=Math.max(0,portAfterGrowth-gross);
+      if (gross<=portAfterGrowth) {
+        portfolio=portAfterGrowth-gross;
+      } else {
+        cashVal=Math.max(0,cashVal-(gross-portAfterGrowth));
+        portfolio=0;
+      }
       const fractionSold=portAfterGrowth>0?Math.min(1,gross/portAfterGrowth):0;
       costBasis=Math.max(0,costBasis*(1-fractionSold));
       row.pension=Math.round(pAnn); row.withdrawal=Math.round(gross); row.taxPaid=Math.round(gross-Math.max(0,netNeeded));
     }
 
-    years.push(yr); values.push(portfolioBefore); rows.push(row);
+    years.push(yr); values.push(portfolioBefore+cashBefore); rows.push(row);
   }
   return {years,values,fireNums,retYear,allocations,rows};
 }
