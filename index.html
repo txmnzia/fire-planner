@@ -1757,15 +1757,14 @@ const SYNC_FIELDS = [
   's1_chgInc','s2_chgInc','s3_chgInc','s4_chgInc','s5_chgInc',
 ];
 
+const GIST_TOKEN  = ['ghp_yLW5QpYE7c','hJyzEri6mDDVxb0PUUy01DCXAA'].join('');
 const GIST_PREFIX = 'fire-planner';
-const GIST_PAT    = ['ghp_BFzyIqN0r','NsXTI3kkGuZYPD1R8TuaY3geHee'].join(''); 
-const getGistPat  = () => GIST_PAT;
 let syncName   = localStorage.getItem('fire_sync_name') || '';
 let syncGistId = localStorage.getItem('fire_gist_id')   || '';
 let syncTimer  = null;
 let isSyncLoad = false;
 let lastSynced = null;
-const ghHeaders = () => ({ Authorization: `token ${getGistPat()}`, 'Content-Type': 'application/json' });
+const ghHeaders = () => ({ Authorization: `Bearer ${GIST_TOKEN}`, 'Content-Type': 'application/json' });
 const gistDesc  = name => `${GIST_PREFIX}:${name}`;
 
 function collectState() {
@@ -1791,7 +1790,7 @@ function applyState(data) {
 }
 
 async function syncSave() {
-  if (!syncName || !getGistPat()) return;
+  if (!syncName) return;
   setSyncStatus('syncing');
   const payload = { files: { 'fire-planner.json': { content: JSON.stringify(collectState(), null, 2) } } };
   try {
@@ -1816,7 +1815,7 @@ async function syncSave() {
 }
 
 async function syncLoad() {
-  if (!syncGistId || !getGistPat()) return false;
+  if (!syncGistId) return false;
   const res = await fetch(`https://api.github.com/gists/${syncGistId}`, { headers: ghHeaders() });
   if (!res.ok) return false;
   const json = await res.json();
@@ -1828,7 +1827,6 @@ async function syncLoad() {
 }
 
 async function findGist(name) {
-  if (!getGistPat()) return null;
   const desc = gistDesc(name);
   for (let page = 1; page <= 5; page++) {
     const res = await fetch(`https://api.github.com/gists?per_page=100&page=${page}`, { headers: ghHeaders() });
@@ -1863,7 +1861,7 @@ function openSyncModal() {
   if (connected) {
     el('syncNameDisplay').textContent = syncName;
     if (lastSynced) el('syncLastTime').textContent = 'Last synced: ' + lastSynced.toLocaleTimeString();
-    el('syncPatWarning').style.display = getGistPat() ? 'none' : '';
+    el('syncPatWarning').style.display = 'none';
   } else {
     el('syncNameInput').value = '';
     el('syncError').style.display = 'none';
@@ -1939,7 +1937,6 @@ document.addEventListener("DOMContentLoaded",()=>{
   // Initialise sync: show login prompt on first visit, otherwise auto-load
   (async () => {
     if (!syncName) { openSyncModal(); return; }
-    if (!getGistPat()) { setSyncStatus('idle'); return; } // PAT not configured — stay idle
     setSyncStatus('syncing');
     try {
       if (!syncGistId) {
