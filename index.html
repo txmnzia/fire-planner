@@ -1074,15 +1074,22 @@ function handleCSV(input) {
   reader.onload = e => {
     const lines = e.target.result.split("\n").map(l => l.trim()).filter(Boolean);
     ibkrTotal = 0; ibkrHoldings = [];
-    let ibkrCash = 0;
+    const EQUITY_CATS = new Set(["Stocks","Stock","Equity","Equities"]);
+    const navExtras = {};
     for (const line of lines) {
       const c = parseLine(line);
       if (c.length < 3) continue;
       if (c[0]==="Open Positions"&&c[1]==="Data"&&c[2]==="Summary") { const sym=c[5]||"",qty=parseFloat(c[6])||0,val=parseFloat(c[11])||0; if(sym) ibkrHoldings.push({sym,qty,val}); }
-      if (c[0]==="Net Asset Value"&&c[1]==="Data"&&c[2].trim()==="Cash") { const v=parseFloat(c[6]); if (!isNaN(v)) ibkrCash=v; }
+      if (c[0]==="Net Asset Value"&&c[1]==="Data") {
+        const cat=c[2]?.trim(), v=parseFloat(c[6]);
+        if (isNaN(v)||!cat) continue;
+        if (cat==="Total") { ibkrTotal=v; continue; }
+        if (!EQUITY_CATS.has(cat) && Math.abs(v)>0.01) navExtras[cat]=(navExtras[cat]||0)+v;
+      }
     }
-    if (Math.abs(ibkrCash) > 0.01) ibkrHoldings.push({sym:"Cash", qty:null, val:ibkrCash});
-    ibkrTotal = ibkrHoldings.reduce((sum, h) => sum + h.val, 0);
+    // Append non-equity NAV items (Cash, Dividends Receivable, etc.) after positions
+    const cashFirst = Object.entries(navExtras).sort(([a],[b])=> a==="Cash"?-1:b==="Cash"?1:a.localeCompare(b));
+    for (const [cat,val] of cashFirst) ibkrHoldings.push({sym:cat, qty:null, val});
     renderHoldings();
     recalc();
   };
