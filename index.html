@@ -219,10 +219,11 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .sc-nav-dot{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:none;background:transparent;cursor:pointer;padding:0;border-radius:50%;-webkit-tap-highlight-color:transparent;}
 .sc-nav-dot::after{content:'';display:block;width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.3;transition:opacity .2s ease,transform .2s ease;}
 .sc-nav-dot.active::after{opacity:1;transform:scale(1.3);}
-.sc-summary-row{display:none;overflow-x:auto;gap:0;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;}
+.sc-summary-row{display:flex;overflow-x:auto;gap:8px;padding:0 0 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;}
 .sc-summary-row::-webkit-scrollbar{display:none;}
-.sc-summary-tile{flex:0 0 calc(100vw - 24px);background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:4px;scroll-snap-align:start;margin-right:10px;}
-.sc-summary-tile:last-child{margin-right:0;}
+.sc-summary-tile{flex:0 0 158px;background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:4px;scroll-snap-align:start;cursor:pointer;transition:border-color .15s,background .15s;}
+.sc-summary-tile:hover{border-color:var(--sec);}
+.sc-summary-tile.active{background:var(--dim);border-color:var(--sec);}
 
 /* ══════════════════════════════════════════════════════════
    MOBILE (≤ 767px) — touch-first responsive layout
@@ -292,8 +293,8 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   /* ── RESULTS ── */
   .res-body{padding:12px;padding-bottom:max(24px, calc(12px + env(safe-area-inset-bottom)));gap:12px;}
 
-  /* Summary tiles: show on mobile */
-  .sc-summary-row{display:flex!important;}
+  /* Summary tiles: full-width swipeable cards on mobile */
+  .sc-summary-tile{flex:0 0 calc(100vw - 32px);}
 
   /* Taller charts (override inline style via !important) */
   .proj-canvas-wrap{height:260px!important;}
@@ -918,12 +919,8 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
     <div class="chart-top">
       <div class="chart-title">Portfolio Projection</div>
       <div class="chart-legend" id="projLegend">
-        <div class="leg-item"><div class="leg-dot" style="background:var(--s1c)"></div><span id="legName0">A</span></div>
-        <div class="leg-item"><div class="leg-dot" style="background:var(--s2c)"></div><span id="legName1">B</span></div>
-        <div class="leg-item"><div class="leg-dot" style="background:var(--s3c)"></div><span id="legName2">C</span></div>
-        <div class="leg-item"><div class="leg-dot" style="background:var(--s4c)"></div><span id="legName3">D</span></div>
-        <div class="leg-item"><div class="leg-dot" style="background:var(--s5c)"></div><span id="legName4">E</span></div>
-        <div class="leg-item"><div class="leg-dash" style="border-color:var(--muted)"></div>FIRE Target</div>
+        <div class="leg-item"><div class="leg-dot" id="projLegDot" style="background:var(--s1c)"></div><span id="projLegName">A</span></div>
+        <div class="leg-item"><div class="leg-dash" id="projLegDash" style="border-color:var(--s1c)"></div><span>FIRE Target</span></div>
       </div>
     </div>
     <div class="proj-canvas-wrap" style="position:relative;height:210px"><canvas id="fireChart"></canvas></div>
@@ -932,13 +929,6 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   <div class="chart-card">
     <div class="chart-top">
       <div class="chart-title">Stock / Bond Glide Path</div>
-      <div class="alloc-radios">
-        <label class="radio-pill"><input type="radio" name="allocSc" value="0" checked onchange="onAllocSwitch(0)"><span id="allocLbl0" style="color:var(--s1c)" data-ltr="A">A</span></label>
-        <label class="radio-pill"><input type="radio" name="allocSc" value="1" onchange="onAllocSwitch(1)"><span id="allocLbl1" style="color:var(--s2c)" data-ltr="B">B</span></label>
-        <label class="radio-pill"><input type="radio" name="allocSc" value="2" onchange="onAllocSwitch(2)"><span id="allocLbl2" style="color:var(--s3c)" data-ltr="C">C</span></label>
-        <label class="radio-pill"><input type="radio" name="allocSc" value="3" onchange="onAllocSwitch(3)"><span id="allocLbl3" style="color:var(--s4c)" data-ltr="D">D</span></label>
-        <label class="radio-pill"><input type="radio" name="allocSc" value="4" onchange="onAllocSwitch(4)"><span id="allocLbl4" style="color:var(--s5c)" data-ltr="E">E</span></label>
-      </div>
     </div>
     <div class="alloc-canvas-wrap" style="position:relative;height:130px"><canvas id="allocChart"></canvas></div>
   </div>
@@ -946,16 +936,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   <div class="tbl-card">
     <div class="tbl-hdr" role="button" tabindex="0" onclick="toggleTable()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTable();}" aria-expanded="true" aria-controls="tblWrap" id="tblToggle">
       <span style="font-size:13px;font-weight:600;color:var(--text)" id="tblArrow">&#x25BC; Year-by-Year Detail</span>
-      <div style="display:flex;align-items:center;gap:8px" onclick="event.stopPropagation()">
-        <div class="alloc-radios">
-          <label class="radio-pill"><input type="radio" name="tblSc" value="0" checked onchange="onTableSwitch(0)"><span id="tblLbl0" style="color:var(--s1c)" data-ltr="A">A</span></label>
-          <label class="radio-pill"><input type="radio" name="tblSc" value="1" onchange="onTableSwitch(1)"><span id="tblLbl1" style="color:var(--s2c)" data-ltr="B">B</span></label>
-          <label class="radio-pill"><input type="radio" name="tblSc" value="2" onchange="onTableSwitch(2)"><span id="tblLbl2" style="color:var(--s3c)" data-ltr="C">C</span></label>
-          <label class="radio-pill"><input type="radio" name="tblSc" value="3" onchange="onTableSwitch(3)"><span id="tblLbl3" style="color:var(--s4c)" data-ltr="D">D</span></label>
-          <label class="radio-pill"><input type="radio" name="tblSc" value="4" onchange="onTableSwitch(4)"><span id="tblLbl4" style="color:var(--s5c)" data-ltr="E">E</span></label>
-        </div>
-        <button class="csv-dl-btn" onclick="downloadCSV()" aria-label="Download CSV">&#x2193;</button>
-      </div>
+      <button class="csv-dl-btn" onclick="downloadCSV();event.stopPropagation();" aria-label="Download CSV">&#x2193;</button>
     </div>
     <div class="tbl-wrap" id="tblWrap">
       <table class="dtbl"><thead><tr id="tblHead"></tr></thead><tbody id="detailTbody"></tbody></table>
@@ -1009,8 +990,8 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 // ── state ──────────────────────────────────────────────────────────────────
 let ibkrTotal = 0, ibkrHoldings = [];
 let chart = null, allocChart = null;
-let allocScIdx = 0, tblScIdx = 0;
-let lastProjs = null, lastGl = null;
+let activeScIdx = 0;
+let lastProjs = null, lastGl = null, lastScenarios = null;
 
 // per-scenario feature toggles: features[s][feat] = true/false
 // s = 1..5, feat = 'partner'|'prop'|'child'
@@ -1541,13 +1522,14 @@ function makeRetPlugin(projs, gl) {
 }
 
 function buildChart(projs,gl) {
-  const labels=projs[0].years, ctx=el("fireChart").getContext("2d"), ds=[];
-  projs.forEach((proj,i)=>{
-    ds.push({label:"Scenario "+String.fromCharCode(65+i),data:proj.values,borderColor:COLORS[i],backgroundColor:ALPHAS[i],borderWidth:2,pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:3-i});
-    ds.push({label:"__f"+i,data:proj.fireNums,borderColor:COLORS[i],borderWidth:1,borderDash:[4,4],pointRadius:0,tension:.35,fill:false,order:6});
-  });
+  const proj=projs[activeScIdx], color=COLORS[activeScIdx], alpha=ALPHAS[activeScIdx];
+  const labels=proj.years, ctx=el("fireChart").getContext("2d");
+  const ds=[
+    {label:"Portfolio",data:proj.values,borderColor:color,backgroundColor:alpha,borderWidth:2.5,pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:1},
+    {label:"__fire",data:proj.fireNums,borderColor:color,borderWidth:1.5,borderDash:[4,4],pointRadius:0,tension:.35,fill:false,order:2}
+  ];
   if (chart) chart.destroy();
-  chart=new Chart(ctx,{type:"line",data:{labels,datasets:ds},plugins:[makeRetPlugin(projs,gl)],options:{
+  chart=new Chart(ctx,{type:"line",data:{labels,datasets:ds},plugins:[makeRetPlugin([proj],gl)],options:{
     responsive:true,maintainAspectRatio:false,animation:{duration:300},interaction:{mode:"index",intersect:false},
     plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",titleFont:{family:"'DM Sans'",size:11},bodyFont:{family:"'DM Mono'",size:11},padding:10,filter:item=>!item.dataset.label.startsWith("__"),callbacks:{title:items=>"Entering "+items[0].label,label:c=>" "+c.dataset.label+": \u20ac"+fmt(c.raw)}}},
     scales:{x:{grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},y:{grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,callback:v=>v>=1e6?"\u20ac"+(v/1e6).toFixed(1)+"M":v>=1e3?"\u20ac"+(v/1e3).toFixed(0)+"k":"\u20ac"+v}}}
@@ -1555,7 +1537,7 @@ function buildChart(projs,gl) {
 }
 
 function buildAllocChart(projs,gl) {
-  const proj=projs[allocScIdx],color=COLORS[allocScIdx],fade=COLORS_FADE[allocScIdx];
+  const proj=projs[activeScIdx],color=COLORS[activeScIdx],fade=COLORS_FADE[activeScIdx];
   const inv=proj.values.map((v,i)=>Math.max(0,v-(proj.rows[i]?(proj.rows[i].cashVal||0):0)));
   const sv=inv.map((v,i)=>Math.round(v*proj.allocations[i]/100));
   const bv=inv.map((v,i)=>Math.round(v*(100-proj.allocations[i])/100));
@@ -1589,7 +1571,7 @@ function buildAllocChart(projs,gl) {
 
 // ── TABLE ──────────────────────────────────────────────────────────────────
 function renderTable(projs,gl) {
-  const proj=projs[tblScIdx], thead=el("tblHead"), tbody=el("detailTbody");
+  const proj=projs[activeScIdx], thead=el("tblHead"), tbody=el("detailTbody");
   if (!thead||!tbody||!proj||!proj.rows||!proj.rows.length) return;
   const rows=proj.rows, retIdx=proj.retYear-gl.baseYear;
   let hdr='<th class="tbl-lbl-hd">Metric</th>';
@@ -1652,7 +1634,7 @@ function renderSummaryTiles(projs, gl, scenarios) {
     const fireRet = proj.fireNums[Math.min(retIdx, proj.fireNums.length - 1)] || 0;
     const ok = portRet >= fireRet;
     html +=
-      '<div class="sc-summary-tile" style="border-top:2.5px solid var(--'+cv+')">' +
+      '<div class="sc-summary-tile'+(i===activeScIdx?' active':'')+'" style="border-top:2.5px solid var(--'+cv+')" onclick="setActiveScenario('+i+')">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:4px">' +
           '<span style="font-size:13px;font-weight:700;color:var(--'+cv+')">'+name+'</span>' +
           '<span class="ms-chip '+(ok?'ok':'err')+'">'+(ok?'✓ On Track':'× Gap')+'</span>' +
@@ -1690,7 +1672,7 @@ function toggleTable() {
 // ── CSV DOWNLOAD ───────────────────────────────────────────────────────────
 function downloadCSV() {
   if (!lastProjs||!lastGl) return;
-  const proj=lastProjs[tblScIdx],gl=lastGl;
+  const proj=lastProjs[activeScIdx],gl=lastGl;
   if (!proj||!proj.rows||!proj.rows.length) return;
   const rows=proj.rows;
   const METRICS=['Net Worth','Stocks','Bonds','Income','Windfall','Spending','Child Costs','Net Flow','Market Return','Pension','Withdrawal','Capital Gain Tax'];
@@ -1709,7 +1691,7 @@ function downloadCSV() {
   });
   const blob=new Blob([csv],{type:'text/csv'});
   const url=URL.createObjectURL(blob), a=document.createElement('a');
-  a.href=url; a.download='fire_'+String.fromCharCode(65+tblScIdx)+'.csv'; a.click(); URL.revokeObjectURL(url);
+  a.href=url; a.download='fire_'+String.fromCharCode(65+activeScIdx)+'.csv'; a.click(); URL.revokeObjectURL(url);
 }
 
 // ── WD MODE ────────────────────────────────────────────────────────────────
@@ -1728,10 +1710,12 @@ function getScenarioName(idx) {
 }
 
 function updateLabels() {
-  for (let i=0;i<5;i++) {
-    const name=getScenarioName(i);
-    ["legName","allocLbl","tblLbl"].forEach(p=>{ const e=el(p+i); if(e) e.textContent=name; });
-  }
+  const cv=['var(--s1c)','var(--s2c)','var(--s3c)','var(--s4c)','var(--s5c)'][activeScIdx];
+  const name=getScenarioName(activeScIdx);
+  const dot=el('projLegDot'),lbl=el('projLegName'),dash=el('projLegDash');
+  if(dot) dot.style.background=cv;
+  if(lbl) lbl.textContent=name;
+  if(dash) dash.style.borderColor=cv;
   const sel=el("retCountry"), hd=el("pensionGroupHd");
   if (sel&&hd) {
     const txt=(sel.options[sel.selectedIndex]||{text:""}).text;
@@ -1740,8 +1724,16 @@ function updateLabels() {
   }
 }
 
-function onAllocSwitch(idx){allocScIdx=idx;if(lastProjs&&lastGl)buildAllocChart(lastProjs,lastGl);}
-function onTableSwitch(idx) {tblScIdx =idx;if(lastProjs&&lastGl)renderTable(lastProjs,lastGl);}
+function setActiveScenario(idx) {
+  activeScIdx = idx;
+  updateLabels();
+  if (lastProjs && lastGl && lastScenarios) {
+    renderSummaryTiles(lastProjs, lastGl, lastScenarios);
+    buildChart(lastProjs, lastGl);
+    buildAllocChart(lastProjs, lastGl);
+    renderTable(lastProjs, lastGl);
+  }
+}
 
 // ── GITHUB GIST SYNC ────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
@@ -1926,7 +1918,7 @@ function recalc() {
   const scenarios=[1,2,3,4,5].map(s=>getScenario(s,gl));
   const projs=scenarios.map(sc=>project(sc,gl));
   scenarios.forEach((sc,i)=>renderMilestone(i+1,sc,gl,projs[i]));
-  lastProjs=projs; lastGl=gl;
+  lastProjs=projs; lastGl=gl; lastScenarios=scenarios;
   buildChart(projs,gl); buildAllocChart(projs,gl); renderTable(projs,gl);
   updateLabels();
   renderSummaryTiles(projs,gl,scenarios);
@@ -1963,6 +1955,21 @@ document.addEventListener("DOMContentLoaded",()=>{
         if (!cards.length) return;
         const cardW = cards[0].offsetWidth;
         updateScNav(Math.min(4, Math.max(0, Math.round(scGrid.scrollLeft / cardW))));
+      }, 80);
+    }, { passive: true });
+  }
+  // Sync active scenario when user swipes the summary-tile carousel in Results
+  const summaryRow = el('scSummaryRow');
+  if (summaryRow) {
+    let sr;
+    summaryRow.addEventListener('scroll', () => {
+      clearTimeout(sr);
+      sr = setTimeout(() => {
+        const tiles = summaryRow.querySelectorAll('.sc-summary-tile');
+        if (!tiles.length) return;
+        const tileW = tiles[0].offsetWidth + 8; // 8 = gap
+        const newIdx = Math.min(4, Math.max(0, Math.round(summaryRow.scrollLeft / tileW)));
+        if (newIdx !== activeScIdx) setActiveScenario(newIdx);
       }, 80);
     }, { passive: true });
   }
