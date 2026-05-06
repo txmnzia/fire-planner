@@ -1054,11 +1054,15 @@ function parseLine(line) {
 function renderHoldings() {
   const btn = el("uploadBtn");
   if (!ibkrHoldings.length && ibkrTotal === 0) return;
+  const posCount = ibkrHoldings.filter(p => p.qty !== null).length;
   btn.classList.add("loaded");
-  btn.innerHTML = "\u2713 Loaded \u2014 " + ibkrHoldings.length + " positions";
+  btn.innerHTML = "\u2713 Loaded \u2014 " + posCount + " positions";
   const list = el("holdingsList");
   list.style.display = "flex"; list.style.flexDirection = "column"; list.style.gap = "3px";
-  let h = ibkrHoldings.map(p=>'<div class="pb-row"><span class="k">'+p.sym+" \u00d7"+p.qty+'</span><span class="v">'+eur(p.val)+"</span></div>").join("");
+  let h = ibkrHoldings.map(p => p.qty !== null
+    ? '<div class="pb-row"><span class="k">'+p.sym+" \u00d7"+p.qty+'</span><span class="v">'+eur(p.val)+"</span></div>"
+    : '<div class="pb-row"><span class="k">'+p.sym+'</span><span class="v">'+eur(p.val)+"</span></div>"
+  ).join("");
   h += '<div style="height:1px;background:var(--bdr);margin:4px 0"></div>';
   h += '<div class="pb-row"><span class="k" style="color:var(--sec)">IBKR Total</span><span class="v" style="color:var(--text)">'+eur(ibkrTotal)+"</span></div>";
   list.innerHTML = h;
@@ -1070,11 +1074,14 @@ function handleCSV(input) {
   reader.onload = e => {
     const lines = e.target.result.split("\n").map(l => l.trim()).filter(Boolean);
     ibkrTotal = 0; ibkrHoldings = [];
+    let ibkrCash = 0;
     for (const line of lines) {
       const c = parseLine(line);
       if (c.length < 3) continue;
       if (c[0]==="Open Positions"&&c[1]==="Data"&&c[2]==="Summary") { const sym=c[5]||"",qty=parseFloat(c[6])||0,val=parseFloat(c[11])||0; if(sym) ibkrHoldings.push({sym,qty,val}); }
+      if (c[0]==="Net Asset Value"&&c[1]==="Data"&&c[2].trim()==="Cash") { const v=parseFloat(c[6]); if (!isNaN(v)) ibkrCash=v; }
     }
+    if (Math.abs(ibkrCash) > 0.01) ibkrHoldings.push({sym:"Cash", qty:null, val:ibkrCash});
     ibkrTotal = ibkrHoldings.reduce((sum, h) => sum + h.val, 0);
     renderHoldings();
     recalc();
