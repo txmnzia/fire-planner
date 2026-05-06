@@ -60,6 +60,7 @@ body{height:100vh;display:flex;flex-direction:column;overflow:hidden;background:
 /* SHARED FORM */
 .field{display:flex;flex-direction:column;gap:4px;}
 .field>label{font-size:12px;color:var(--sec);font-weight:500;display:flex;align-items:center;gap:4px;}
+.sit-grid .field>label,.field-row .field>label{min-height:36px;align-items:flex-start;}
 input[type="date"]{color-scheme:dark;}
 input[type="text"],input[type="number"],input[type="date"],select{width:100%;height:34px;padding:0 10px;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rs);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;outline:none;transition:border-color .15s,background .15s;-moz-appearance:textfield;}
 input:focus,select:focus{border-color:var(--sec);background:var(--dim);}
@@ -456,7 +457,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
     <div class="sit-hd">&#x1F4B3; Income &amp; Spending</div>
     <div class="sit-grid" style="max-width:600px">
       <div class="field">
-        <label for="baseIncome">Monthly Net Income (base)</label>
+        <label for="baseIncome">Monthly Income (net)</label>
         <div class="unit-wrap"><input type="number" id="baseIncome" value="6700" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="field">
@@ -471,7 +472,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
         </div>
       </div>
       <div class="field" id="spendRet_wrap">
-        <label for="spendRet">Monthly Spending (in retirement)</label>
+        <label for="spendRet">Monthly Spending (retirement)</label>
         <div class="unit-wrap"><input type="number" id="spendRet" value="3000" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="field" id="swr_wrap" style="display:none">
@@ -556,11 +557,11 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
     <div class="sub-hd" id="pensionGroupHd">State Pension</div>
     <div class="sit-grid" style="max-width:480px;margin-bottom:20px">
       <div class="field">
-        <label for="pensionAmt">Monthly Amount</label>
+        <label for="pensionAmt">Pension Amount (gross)</label>
         <div class="unit-wrap"><input type="number" id="pensionAmt" value="800" min="0" step="50" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="field">
-        <label for="pensionAge">Starts at Age</label>
+        <label for="pensionAge">Pension Age</label>
         <input type="number" id="pensionAge" value="67" min="50" max="80" oninput="recalc()" onchange="recalc()">
       </div>
     </div>
@@ -577,19 +578,19 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
     <div class="sit-hd">&#x1F91D; Partner <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:6px;">Enable per scenario</span></div>
     <div class="sit-grid" style="max-width:600px">
       <div class="field">
-        <label for="partnerInc">Partner Monthly Income</label>
+        <label for="partnerInc">Partner Monthly Income (net)</label>
         <div class="unit-wrap"><input type="number" id="partnerInc" value="4000" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="field">
-        <label for="partnerRetAge">Partner Retires at Age</label>
+        <label for="partnerRetAge">Partner Retirement Age</label>
         <input type="number" id="partnerRetAge" value="45" min="25" max="80" oninput="recalc()" onchange="recalc()">
       </div>
       <div class="field">
-        <label for="partnerPension">Partner State Pension (monthly)</label>
+        <label for="partnerPension">Partner Pension Amount (gross)</label>
         <div class="unit-wrap"><input type="number" id="partnerPension" value="700" min="0" step="50" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="field">
-        <label for="partnerPensionAge">Partner Pension Starts at Age</label>
+        <label for="partnerPensionAge">Partner Pension Age</label>
         <input type="number" id="partnerPensionAge" value="67" min="50" max="80" oninput="recalc()" onchange="recalc()">
       </div>
       <div class="field">
@@ -643,7 +644,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
         <input type="number" id="childBirthYear" value="2027" min="2024" max="2060" oninput="recalc()" onchange="recalc()">
       </div>
       <div class="field">
-        <label for="childCostYearly">Annual Cost per Year <button type="button" class="info-btn" title="Total out-of-pocket cost per year: childcare, food, activities, clothing, etc.">&#x24D8;</button></label>
+        <label for="childCostYearly">Annual Child Cost <button type="button" class="info-btn" title="Total out-of-pocket cost per year: childcare, food, activities, clothing, etc.">&#x24D8;</button></label>
         <div class="unit-wrap"><input type="number" id="childCostYearly" value="12000" min="0" step="500" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="field">
@@ -655,7 +656,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
         <input type="number" id="childMaternityMonths" value="6" min="0" max="24" oninput="recalc()" onchange="recalc()">
       </div>
       <div class="field">
-        <label for="childMaternityIncome">Income During Leave</label>
+        <label for="childMaternityIncome">Income During Leave (net)</label>
         <div class="unit-wrap"><input type="number" id="childMaternityIncome" value="2000" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
     </div>
@@ -694,15 +695,15 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
         </div>
       </div>
       <div class="field">
-        <label for="s1_inc">Monthly Income Override</label>
+        <label for="s1_inc">Income Override (net)</label>
         <div class="unit-wrap"><input type="number" id="s1_inc" placeholder="uses base" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="field">
-        <label for="s1_chgYear">Income Changes in Year</label>
+        <label for="s1_chgYear">Income Change Year</label>
         <input type="number" id="s1_chgYear" placeholder="none" min="2026" max="2080" oninput="recalc()" onchange="recalc()">
       </div>
       <div class="field">
-        <label for="s1_chgInc">New Income After Change</label>
+        <label for="s1_chgInc">New Income (net)</label>
         <div class="unit-wrap"><input type="number" id="s1_chgInc" placeholder="&#x2014;" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="sc-toggles">
@@ -739,15 +740,15 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
         </div>
       </div>
       <div class="field">
-        <label for="s2_inc">Monthly Income Override</label>
+        <label for="s2_inc">Income Override (net)</label>
         <div class="unit-wrap"><input type="number" id="s2_inc" placeholder="uses base" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="field">
-        <label for="s2_chgYear">Income Changes in Year</label>
+        <label for="s2_chgYear">Income Change Year</label>
         <input type="number" id="s2_chgYear" placeholder="none" min="2026" max="2080" oninput="recalc()" onchange="recalc()">
       </div>
       <div class="field">
-        <label for="s2_chgInc">New Income After Change</label>
+        <label for="s2_chgInc">New Income (net)</label>
         <div class="unit-wrap"><input type="number" id="s2_chgInc" placeholder="&#x2014;" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="sc-toggles">
@@ -784,15 +785,15 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
         </div>
       </div>
       <div class="field">
-        <label for="s3_inc">Monthly Income Override</label>
+        <label for="s3_inc">Income Override (net)</label>
         <div class="unit-wrap"><input type="number" id="s3_inc" placeholder="uses base" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="field">
-        <label for="s3_chgYear">Income Changes in Year</label>
+        <label for="s3_chgYear">Income Change Year</label>
         <input type="number" id="s3_chgYear" value="2030" min="2026" max="2080" oninput="recalc()" onchange="recalc()">
       </div>
       <div class="field">
-        <label for="s3_chgInc">New Income After Change</label>
+        <label for="s3_chgInc">New Income (net)</label>
         <div class="unit-wrap"><input type="number" id="s3_chgInc" value="800" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="sc-toggles">
@@ -829,15 +830,15 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
         </div>
       </div>
       <div class="field">
-        <label for="s4_inc">Monthly Income Override</label>
+        <label for="s4_inc">Income Override (net)</label>
         <div class="unit-wrap"><input type="number" id="s4_inc" placeholder="uses base" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="field">
-        <label for="s4_chgYear">Income Changes in Year</label>
+        <label for="s4_chgYear">Income Change Year</label>
         <input type="number" id="s4_chgYear" placeholder="none" min="2026" max="2080" oninput="recalc()" onchange="recalc()">
       </div>
       <div class="field">
-        <label for="s4_chgInc">New Income After Change</label>
+        <label for="s4_chgInc">New Income (net)</label>
         <div class="unit-wrap"><input type="number" id="s4_chgInc" placeholder="&#x2014;" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="sc-toggles">
@@ -874,15 +875,15 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
         </div>
       </div>
       <div class="field">
-        <label for="s5_inc">Monthly Income Override</label>
+        <label for="s5_inc">Income Override (net)</label>
         <div class="unit-wrap"><input type="number" id="s5_inc" placeholder="uses base" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="field">
-        <label for="s5_chgYear">Income Changes in Year</label>
+        <label for="s5_chgYear">Income Change Year</label>
         <input type="number" id="s5_chgYear" placeholder="none" min="2026" max="2080" oninput="recalc()" onchange="recalc()">
       </div>
       <div class="field">
-        <label for="s5_chgInc">New Income After Change</label>
+        <label for="s5_chgInc">New Income (net)</label>
         <div class="unit-wrap"><input type="number" id="s5_chgInc" placeholder="&#x2014;" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="sc-toggles">
