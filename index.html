@@ -1073,9 +1073,9 @@ function handleCSV(input) {
     for (const line of lines) {
       const c = parseLine(line);
       if (c.length < 3) continue;
-      if (c[0]==="Net Asset Value"&&c[1]==="Data"&&c[2].trim()==="Total") { const v=parseFloat(c[6]); if (!isNaN(v)) ibkrTotal=v; }
       if (c[0]==="Open Positions"&&c[1]==="Data"&&c[2]==="Summary") { const sym=c[5]||"",qty=parseFloat(c[6])||0,val=parseFloat(c[11])||0; if(sym) ibkrHoldings.push({sym,qty,val}); }
     }
+    ibkrTotal = ibkrHoldings.reduce((sum, h) => sum + h.val, 0);
     renderHoldings();
     recalc();
   };
