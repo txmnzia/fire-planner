@@ -1942,11 +1942,10 @@ function disconnectSync() {
 // ── RECALC ──────────────────────────────────────────────────────────────────
 function updateMultPreview() {
   const now=numVal("spendNow",3000), ret=numVal("spendRet",3000), mult=numVal("partnerSpendMult",1.5);
-  const fmt=v=>'€'+Math.round(v).toLocaleString();
-  const eq=(base,m)=>fmt(base)+' × '+m+' = '+fmt(base*m);
+  const fmt=v=>'€'+Math.round(v*mult).toLocaleString()+'/mo';
   const pn=el("multPreviewNow"), pr=el("multPreviewRet");
-  if(pn) pn.textContent=eq(now,mult);
-  if(pr) pr.textContent=eq(ret,mult);
+  if(pn) pn.textContent=fmt(now);
+  if(pr) pr.textContent=fmt(ret);
 }
 
 function recalc() {
