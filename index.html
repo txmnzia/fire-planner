@@ -81,6 +81,10 @@ select option{background:var(--card);}
 .sit-grid.g3{grid-template-columns:1fr 1fr 1fr;}
 .sit-grid.g1{grid-template-columns:1fr;}
 .sit-full{grid-column:1/-1;}
+.mult-preview{background:var(--dim);border:1px solid var(--bdr);border-radius:var(--rs);padding:5px 10px;display:flex;flex-direction:column;gap:3px;min-height:36px;justify-content:center;}
+.mult-preview-row{display:flex;justify-content:space-between;align-items:center;gap:6px;}
+.mult-preview-lbl{font-size:10px;color:var(--muted);font-weight:500;flex-shrink:0;}
+.mult-preview-eq{font-family:'DM Mono',monospace;font-size:10px;color:var(--sec);text-align:right;}
 .sub-hd{font-size:12px;font-weight:600;color:var(--sec);margin-bottom:10px;margin-top:4px;}
 
 /* upload */
@@ -596,6 +600,13 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
       <div class="field">
         <label for="partnerSpendMult">Spending Multiplier with Partner</label>
         <div class="unit-wrap"><input type="number" id="partnerSpendMult" value="1.5" min="1" max="3" step="0.1" oninput="recalc()" onchange="recalc()"><span class="u">x</span></div>
+      </div>
+      <div class="field">
+        <label>Combined Monthly Spending</label>
+        <div class="mult-preview">
+          <div class="mult-preview-row"><span class="mult-preview-lbl">Now</span><span class="mult-preview-eq" id="multPreviewNow"></span></div>
+          <div class="mult-preview-row"><span class="mult-preview-lbl">Retirement</span><span class="mult-preview-eq" id="multPreviewRet"></span></div>
+        </div>
       </div>
     </div>
   </section>
@@ -1929,8 +1940,18 @@ function disconnectSync() {
 }
 
 // ── RECALC ──────────────────────────────────────────────────────────────────
+function updateMultPreview() {
+  const now=numVal("spendNow",3000), ret=numVal("spendRet",3000), mult=numVal("partnerSpendMult",1.5);
+  const fmt=v=>'€'+Math.round(v).toLocaleString();
+  const eq=(base,m)=>fmt(base)+' × '+m+' = '+fmt(base*m);
+  const pn=el("multPreviewNow"), pr=el("multPreviewRet");
+  if(pn) pn.textContent=eq(now,mult);
+  if(pr) pr.textContent=eq(ret,mult);
+}
+
 function recalc() {
   const gl=getGlobals();
+  updateMultPreview();
   const port=ibkrTotal+gl.cash;
   el("totalPortfolio").textContent=eur(port);
   el("totalPill").textContent=eur(port);
