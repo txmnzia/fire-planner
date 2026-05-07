@@ -1942,7 +1942,7 @@ function disconnectSync() {
 function updateMultPreview() {
   const now=numVal("spendNow",3000), ret=numVal("spendRet",3000), mult=numVal("partnerSpendMult",1.5);
   const pn=el("multPreviewNow");
-  if(pn) pn.textContent='€'+Math.round(now*mult).toLocaleString()+'/mo';
+  if(pn) pn.textContent='€'+Math.round(now*mult).toLocaleString();
 }
 
 function recalc() {
