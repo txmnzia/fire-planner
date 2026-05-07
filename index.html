@@ -604,8 +604,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
       <div class="field">
         <label>Combined Monthly Spending</label>
         <div class="mult-preview">
-          <div class="mult-preview-row"><span class="mult-preview-lbl">Now</span><span class="mult-preview-eq" id="multPreviewNow"></span></div>
-          <div class="mult-preview-row"><span class="mult-preview-lbl">Retirement</span><span class="mult-preview-eq" id="multPreviewRet"></span></div>
+          <div class="mult-preview-row"><span class="mult-preview-eq" id="multPreviewNow"></span></div>
         </div>
       </div>
     </div>
@@ -1942,10 +1941,8 @@ function disconnectSync() {
 // ── RECALC ──────────────────────────────────────────────────────────────────
 function updateMultPreview() {
   const now=numVal("spendNow",3000), ret=numVal("spendRet",3000), mult=numVal("partnerSpendMult",1.5);
-  const fmt=v=>'€'+Math.round(v*mult).toLocaleString()+'/mo';
-  const pn=el("multPreviewNow"), pr=el("multPreviewRet");
-  if(pn) pn.textContent=fmt(now);
-  if(pr) pr.textContent=fmt(ret);
+  const pn=el("multPreviewNow");
+  if(pn) pn.textContent='€'+Math.round(now*mult).toLocaleString()+'/mo';
 }
 
 function recalc() {
