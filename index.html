@@ -1728,7 +1728,7 @@ function downloadCSV() {
 function onWdMode() {
   const mode=(document.querySelector('input[name="wdMode"]:checked')||{value:'fixed'}).value;
   const sw=el("spendRet_wrap"), sr=el("swr_wrap");
-  if(mode==="swr"){if(sw)sw.classList.add("field-disabled");if(sr)sr.style.display="";}
+  if(mode==="swr"){if(sw)sw.classList.remove("field-disabled");if(sr)sr.style.display="";}
   else{if(sw)sw.classList.remove("field-disabled");if(sr)sr.style.display="none";}
   recalc();
 }
