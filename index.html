@@ -1513,10 +1513,11 @@ function renderMilestone(idx, sc, gl, proj) {
     const investAtRet = Math.max(0, portRet - cashAtRet);
     const netMonthly = Math.round(investAtRet * gl.swr * (1 - gl.gainFrac * gl.taxRate) / 12);
     const ok = !depletionYear;
+    const incomeOk = netMonthly >= gl.spendRet;
     headChip = '<div class="ms-chip '+(ok?'ok':'err')+'">'+(ok?'\u2713 Lasts':'\u00d7 Depletes')+'</div>';
     innerRows =
       '<div class="sc-result-row"><span class="k">Portfolio at Ret.</span><span class="v '+cc+'">'+eur(portRet)+'</span></div>'+
-      '<div class="sc-result-row"><span class="k">Monthly Income</span><span class="v ok">'+eur(netMonthly)+'/mo</span></div>'+
+      '<div class="sc-result-row"><span class="k">Monthly Income</span><span class="v '+(incomeOk?'ok':'err')+'">'+eur(netMonthly)+'/mo</span></div>'+
       coastRow+depRow;
   } else {
     const fireRet = proj.fireNums[Math.min(retIdx,proj.fireNums.length-1)]||0;
@@ -1686,8 +1687,9 @@ function renderSummaryTiles(projs, gl, scenarios) {
       let depletionYear = null;
       for (let j=Math.max(0,retIdx);j<proj.values.length;j++) { if(proj.values[j]<=0){depletionYear=proj.years[j];break;} }
       const ok = !depletionYear;
+      const incomeOk = netMonthly >= gl.spendRet;
       chip = '<span class="ms-chip '+(ok?'ok':'err')+'">'+(ok?'✓ Lasts':'× Depletes')+'</span>';
-      metric = eur(netMonthly)+'/mo';
+      metric = '<span style="color:var(--'+(incomeOk?'ok':'err')+')">'+eur(netMonthly)+'/mo</span>';
       metricLabel = 'monthly income';
     } else {
       const fireRet = proj.fireNums[Math.min(retIdx, proj.fireNums.length - 1)] || 0;
@@ -1703,7 +1705,7 @@ function renderSummaryTiles(projs, gl, scenarios) {
           chip+
         '</div>' +
         '<div style="font-size:10px;color:var(--sec)">Retire age '+sc.retAge+'</div>' +
-        '<div style="font-size:12px;color:var(--text);font-family:\'DM Mono\',monospace;margin-top:4px">'+metric+'</div>' +
+        '<div style="font-size:12px;font-family:\'DM Mono\',monospace;margin-top:4px">'+metric+'</div>' +
         '<div style="font-size:10px;color:var(--muted)">'+metricLabel+'</div>' +
       '</div>';
   });
