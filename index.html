@@ -373,7 +373,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">&#x1F525; FIRE Planner <span class="logo-tag">v6.1</span></div>
+  <div class="logo">&#x1F525; FIRE Planner <span class="logo-tag">v6.2</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -549,10 +549,6 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
           <option value="27">&#x1F1E9;&#x1F1F0; Denmark 27%</option>
           <option value="30">&#x1F1EB;&#x1F1EE; Finland 30%</option>
         </select>
-      </div>
-      <div class="field">
-        <label for="gainFrac">Unrealized Gain in Portfolio <button type="button" class="info-btn" title="% of your portfolio that is capital gain. Affects CGT on each withdrawal.">&#x24D8;</button></label>
-        <div class="unit-wrap"><input type="number" id="gainFrac" value="27" min="0" max="100" step="1" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
       </div>
     </div>
   </section>
@@ -1001,7 +997,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 "use strict";
 
 // ── state ──────────────────────────────────────────────────────────────────
-let ibkrTotal = 0, ibkrHoldings = [];
+let ibkrTotal = 0, ibkrHoldings = [], ibkrGainFrac = null;
 let chart = null, allocChart = null;
 let activeScIdx = 0;
 let lastProjs = null, lastGl = null, lastScenarios = null;
@@ -1116,8 +1112,7 @@ function handleCSV(input) {
     if (costBasisValid && equityCostBasis > 0 && ibkrTotal > 0) {
       const totalCostBasis = equityCostBasis + nonEquityValue; // cash/bonds have no gain
       const autoGainFrac = Math.max(0, Math.min(99, Math.round((ibkrTotal - totalCostBasis) / ibkrTotal * 100)));
-      const gfEl = el("gainFrac");
-      if (gfEl) gfEl.value = autoGainFrac;
+      ibkrGainFrac = autoGainFrac;
     }
     renderHoldings();
     recalc();
@@ -1185,7 +1180,7 @@ function getGlobals() {
     spendNow:     numVal("spendNow",3000),
     spendRet:     numVal("spendRet",3000),
     inflation:    numVal("inflation",2)/100,
-    gainFrac:     numVal("gainFrac",27)/100,
+    gainFrac:     (ibkrGainFrac !== null ? ibkrGainFrac : 27) / 100,
     stockRet:     numVal("stockRet",7)/100,
     bondRet:      numVal("bondRet",3)/100,
     stockAlloc:   1-bondNow,
@@ -1864,7 +1859,7 @@ const SYNC_FIELDS = [
   'dob','lifeExp','baseYear',
   'baseIncome','spendNow','spendRet','swr',
   'stockRet','bondRet','inflation','bondAllocNow','bondAllocRet',
-  'retCountry','gainFrac',
+  'retCountry',
   'pensionAmt','pensionAge',
   'wf0_yr','wf0_amt','wf1_yr','wf1_amt','wf2_yr','wf2_amt',
   'partnerInc','partnerRetAge','partnerPension','partnerPensionAge','partnerSpendMult',
