@@ -1727,7 +1727,7 @@ function renderSummaryTiles(projs, gl, scenarios) {
       const ok = !depletionYear;
       const incomeOk = netMonthly >= targetMonthly;
       chip = '<span class="ms-chip '+(ok?'ok':'err')+'">'+(ok?'✓ Lasts':'× Depletes')+'</span>';
-      metric = '<span style="color:var(--'+(incomeOk?'ok':'err')+')">'+eur(netMonthly)+'/mo</span>';
+      metric = '<span style="color:var(--'+(incomeOk?'ok':'err')+')">'+eur(netMonthly)+'/mo <span class="tgt">/ '+eur(targetMonthly)+' target</span></span>';
       metricLabel = 'monthly income';
     } else {
       const fireRet = proj.fireNums[Math.min(retIdx, proj.fireNums.length - 1)] || 0;
