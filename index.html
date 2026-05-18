@@ -1088,10 +1088,19 @@ function handleCSV(input) {
     ibkrTotal = 0; ibkrHoldings = [];
     const EQUITY_CATS = new Set(["Stocks","Stock","Equity","Equities"]);
     const navExtras = {};
+    let equityCostBasis = 0, costBasisValid = true;
     for (const line of lines) {
       const c = parseLine(line);
       if (c.length < 3) continue;
-      if (c[0]==="Open Positions"&&c[1]==="Data"&&c[2]==="Summary") { const sym=c[5]||"",qty=parseFloat(c[6])||0,val=parseFloat(c[11])||0; if(sym) ibkrHoldings.push({sym,qty,val}); }
+      if (c[0]==="Open Positions"&&c[1]==="Data"&&c[2]==="Summary") {
+        const sym=c[5]||"", qty=parseFloat(c[6])||0, val=parseFloat(c[11])||0;
+        const costPrice = parseFloat(c[8]);
+        if (sym) {
+          ibkrHoldings.push({sym,qty,val});
+          if (!isNaN(costPrice) && costPrice > 0) equityCostBasis += qty * costPrice;
+          else costBasisValid = false;
+        }
+      }
       if (c[0]==="Net Asset Value"&&c[1]==="Data") {
         const cat=c[2]?.trim(), v=parseFloat(c[6]);
         if (isNaN(v)||!cat) continue;
@@ -1099,9 +1108,17 @@ function handleCSV(input) {
         if (!EQUITY_CATS.has(cat) && Math.abs(v)>0.01) navExtras[cat]=(navExtras[cat]||0)+v;
       }
     }
-    // Append non-equity NAV items (Cash, Dividends Receivable, etc.) after positions
+    // Append non-equity NAV items (Cash, etc.) after positions
     const cashFirst = Object.entries(navExtras).sort(([a],[b])=> a==="Cash"?-1:b==="Cash"?1:a.localeCompare(b));
-    for (const [cat,val] of cashFirst) ibkrHoldings.push({sym:cat, qty:null, val});
+    let nonEquityValue = 0;
+    for (const [cat,val] of cashFirst) { ibkrHoldings.push({sym:cat, qty:null, val}); nonEquityValue += val; }
+    // Auto-fill unrealised gain fraction from cost basis data
+    if (costBasisValid && equityCostBasis > 0 && ibkrTotal > 0) {
+      const totalCostBasis = equityCostBasis + nonEquityValue; // cash/bonds have no gain
+      const autoGainFrac = Math.max(0, Math.min(99, Math.round((ibkrTotal - totalCostBasis) / ibkrTotal * 100)));
+      const gfEl = el("gainFrac");
+      if (gfEl) gfEl.value = autoGainFrac;
+    }
     renderHoldings();
     recalc();
   };
