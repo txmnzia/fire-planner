@@ -175,6 +175,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .sc-result-row .v{font-family:'DM Mono',monospace;font-size:10px;color:var(--text);}
 .v.ok{color:var(--ok);}
 .v.err{color:var(--err);}
+.tgt{font-size:9px;opacity:.55;font-weight:400;}
 .v.s1{color:var(--s1c);}
 .v.s2{color:var(--s2c);}
 .v.s3{color:var(--s3c);}
@@ -1511,13 +1512,32 @@ function renderMilestone(idx, sc, gl, proj) {
   if (gl.wdMode === 'swr') {
     const cashAtRet = (proj.rows[Math.min(retIdx,proj.rows.length-1)]||{}).cashVal||0;
     const investAtRet = Math.max(0, portRet - cashAtRet);
-    const netMonthly = Math.round(investAtRet * gl.swr * (1 - gl.gainFrac * gl.taxRate) / 12);
+    const swrPortfolio = Math.round(investAtRet * gl.swr * (1 - gl.gainFrac * gl.taxRate) / 12);
+    const nAccum = Math.max(0, sc.retAge - gl.currentAge);
+    const inflAtRet = Math.pow(1 + gl.inflation, nAccum);
+    // pension & partner pension income active at retirement
+    const pensionMonthly = sc.retAge >= gl.pensionAge ? Math.round(gl.pensionAmt * inflAtRet) : 0;
+    const partnerPensionMonthly = (sc.hasPartner && sc.retAge >= gl.partnerPensionAge)
+      ? Math.round(gl.partnerPension * inflAtRet) : 0;
+    const netMonthly = swrPortfolio + pensionMonthly + partnerPensionMonthly;
+    // target spending at retirement: inflation-adjusted, partner multiplier, child costs
+    const partnerMult = sc.hasPartner ? gl.partnerSpendMult : 1;
+    const baseTargetMonthly = gl.spendRet * partnerMult * inflAtRet;
+    const retYear = gl.baseYear + nAccum;
+    let childMonthlyAtRet = 0;
+    if (sc.hasChild) {
+      const childAgeAtRet = retYear - gl.childBirthYear;
+      if (childAgeAtRet >= 0 && childAgeAtRet < gl.childCostUntilAge) {
+        childMonthlyAtRet = (gl.childCostYearly / 12) * inflAtRet;
+      }
+    }
+    const targetMonthly = Math.round(baseTargetMonthly + childMonthlyAtRet);
     const ok = !depletionYear;
-    const incomeOk = netMonthly >= gl.spendRet;
+    const incomeOk = netMonthly >= targetMonthly;
     headChip = '<div class="ms-chip '+(ok?'ok':'err')+'">'+(ok?'\u2713 Lasts':'\u00d7 Depletes')+'</div>';
     innerRows =
       '<div class="sc-result-row"><span class="k">Portfolio at Ret.</span><span class="v '+cc+'">'+eur(portRet)+'</span></div>'+
-      '<div class="sc-result-row"><span class="k">Monthly Income</span><span class="v '+(incomeOk?'ok':'err')+'">'+eur(netMonthly)+'/mo</span></div>'+
+      '<div class="sc-result-row"><span class="k">Monthly Income</span><span class="v '+(incomeOk?'ok':'err')+'">'+eur(netMonthly)+'/mo <span class="tgt">/ '+eur(targetMonthly)+' target</span></span></div>'+
       coastRow+depRow;
   } else {
     const fireRet = proj.fireNums[Math.min(retIdx,proj.fireNums.length-1)]||0;
