@@ -969,26 +969,28 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
     <!-- Connected view -->
     <div id="syncConnectedView" style="display:none">
-      <p>Synced as <strong id="syncNameDisplay" style="color:var(--text)"></strong></p>
+      <p style="margin:0 0 4px">Synced as <strong id="syncNameDisplay" style="color:var(--text)"></strong></p>
       <div class="sync-info" id="syncLastTime"></div>
-      <div id="syncPatWarning" style="display:none;margin-top:8px;font-size:12px;color:var(--err);background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);border-radius:var(--rs);padding:8px 10px;line-height:1.5">
-        ⚠ Sync token not set. Edit <code style="font-family:'DM Mono',monospace;font-size:11px">GIST_PAT</code> in index.html and redeploy.
-      </div>
       <div class="sync-actions" style="margin-top:12px;display:flex;gap:8px">
-        <button class="sync-secondary-btn" onclick="showChangeName()">Change name</button>
+        <button class="sync-secondary-btn" onclick="syncNow()">Sync now</button>
         <button class="sync-secondary-btn danger" onclick="disconnectSync()">Disconnect</button>
       </div>
     </div>
 
-    <!-- Name form (first connect or change) -->
+    <!-- Device flow view -->
+    <div id="syncDeviceView" style="display:none">
+      <p style="font-size:12px;color:var(--sec);line-height:1.6;margin:0 0 10px">Open the link below and enter the code to authorize:</p>
+      <a id="syncDeviceUri" href="https://github.com/login/device" target="_blank" rel="noopener" class="sync-gh-link">github.com/login/device ↗</a>
+      <div id="syncDeviceCode" style="font-family:'DM Mono',monospace;font-size:26px;font-weight:700;letter-spacing:6px;color:var(--text);text-align:center;padding:18px 0 10px"></div>
+      <p class="sync-info" style="text-align:center;margin:0 0 12px">Waiting for authorization…</p>
+      <button class="sync-secondary-btn" style="width:100%" onclick="cancelDeviceFlow()">Cancel</button>
+    </div>
+
+    <!-- Connect view -->
     <div id="syncConnectView">
-      <p>Choose a sync name — any word you&#x2019;ll remember. Use the same name on another device to access your data.</p>
-      <div class="field">
-        <label for="syncNameInput">Sync name</label>
-        <input type="text" id="syncNameInput" placeholder="e.g. alice" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')connectSync()">
-      </div>
-      <p class="sync-error" id="syncError" style="display:none"></p>
-      <button class="sync-connect-btn" id="syncConnectBtn" onclick="connectSync()">Save &amp; Sync</button>
+      <p style="font-size:12px;color:var(--sec);line-height:1.6;margin:0 0 12px">Connect your GitHub account to sync your settings across devices. Data is saved as a private Gist in your account.</p>
+      <p class="sync-error" id="syncError" style="display:none;margin:0 0 10px"></p>
+      <button class="sync-connect-btn" onclick="startDeviceFlow()">Connect with GitHub</button>
     </div>
   </div>
 </div>
@@ -1872,15 +1874,17 @@ const SYNC_FIELDS = [
   's1_chgInc','s2_chgInc','s3_chgInc','s4_chgInc','s5_chgInc',
 ];
 
-const GIST_TOKEN  = ['ghp_yLW5QpYE7c','hJyzEri6mDDVxb0PUUy01DCXAA'].join('');
-const GIST_PREFIX = 'fire-planner';
-let syncName   = localStorage.getItem('fire_sync_name') || '';
-let syncGistId = localStorage.getItem('fire_gist_id')   || '';
-let syncTimer  = null;
-let isSyncLoad = false;
-let lastSynced = null;
-const ghHeaders = () => ({ Authorization: `Bearer ${GIST_TOKEN}`, 'Content-Type': 'application/json' });
-const gistDesc  = name => `${GIST_PREFIX}:${name}`;
+const GITHUB_CLIENT_ID = 'Ov23liyEDhPPr01HRqCv';
+const GIST_DESC = 'fire-planner';
+let oauthToken  = localStorage.getItem('fire_oauth_token')  || '';
+let ghLogin     = localStorage.getItem('fire_github_login') || '';
+let syncGistId  = localStorage.getItem('fire_gist_id')      || '';
+let syncTimer   = null;
+let isSyncLoad  = false;
+let lastSynced  = null;
+let devicePollTimer = null;
+
+const ghHeaders = () => ({ Authorization: `Bearer ${oauthToken}`, 'Content-Type': 'application/json' });
 
 function collectState() {
   const fields = {};
@@ -1905,9 +1909,9 @@ function applyState(data) {
 }
 
 async function syncSave() {
-  if (!syncName) return;
+  if (!oauthToken) return;
   setSyncStatus('syncing');
-  const payload = { files: { 'fire-planner.json': { content: JSON.stringify(collectState(), null, 2) } } };
+  const payload = { description: GIST_DESC, files: { 'fire-planner.json': { content: JSON.stringify(collectState(), null, 2) } } };
   try {
     let res;
     if (syncGistId) {
@@ -1915,11 +1919,13 @@ async function syncSave() {
         method: 'PATCH', headers: ghHeaders(), body: JSON.stringify(payload),
       });
       if (res.status === 404) { syncGistId = ''; localStorage.removeItem('fire_gist_id'); return syncSave(); }
+      if (res.status === 401) { handleTokenExpired(); return; }
     } else {
       res = await fetch('https://api.github.com/gists', {
         method: 'POST', headers: ghHeaders(),
-        body: JSON.stringify({ ...payload, description: gistDesc(syncName), public: false }),
+        body: JSON.stringify({ ...payload, public: false }),
       });
+      if (res.status === 401) { handleTokenExpired(); return; }
     }
     if (!res.ok) throw new Error(res.status);
     const json = await res.json();
@@ -1932,6 +1938,7 @@ async function syncSave() {
 async function syncLoad() {
   if (!syncGistId) return false;
   const res = await fetch(`https://api.github.com/gists/${syncGistId}`, { headers: ghHeaders() });
+  if (res.status === 401) { handleTokenExpired(); return false; }
   if (!res.ok) return false;
   const json = await res.json();
   const content = json.files?.['fire-planner.json']?.content;
@@ -1941,21 +1948,22 @@ async function syncLoad() {
   return true;
 }
 
-async function findGist(name) {
-  const desc = gistDesc(name);
+// Finds the fire-planner Gist — matches exact desc or legacy "fire-planner:name" pattern.
+// If a legacy Gist is found its description is updated to the canonical value.
+async function findGist() {
   for (let page = 1; page <= 5; page++) {
     const res = await fetch(`https://api.github.com/gists?per_page=100&page=${page}`, { headers: ghHeaders() });
     if (!res.ok) return null;
     const list = await res.json();
     if (!list.length) return null;
-    const found = list.find(g => g.description === desc);
+    const found = list.find(g => g.description === GIST_DESC || g.description?.startsWith('fire-planner:'));
     if (found) return found.id;
   }
   return null;
 }
 
 function scheduleSave() {
-  if (!syncName || isSyncLoad) return;
+  if (!oauthToken || isSyncLoad) return;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(syncSave, 2500);
 }
@@ -1963,65 +1971,125 @@ function scheduleSave() {
 function setSyncStatus(status) {
   const btn = el('syncBtn');
   if (btn) btn.dataset.state = status;
-  const lbl  = el('syncNameLbl');
+  const lbl = el('syncNameLbl');
+  if (lbl) lbl.textContent = ghLogin ? '@' + ghLogin : '';
   const last = el('syncLastTime');
-  if (lbl) lbl.textContent = syncName;
   if (last && lastSynced) last.textContent = 'Last synced: ' + lastSynced.toLocaleTimeString();
 }
 
+function handleTokenExpired() {
+  oauthToken = ''; ghLogin = '';
+  localStorage.removeItem('fire_oauth_token');
+  localStorage.removeItem('fire_github_login');
+  setSyncStatus('error');
+}
+
 function openSyncModal() {
-  const connected = !!syncName;
+  const connected = !!oauthToken;
   el('syncConnectedView').style.display = connected ? '' : 'none';
+  el('syncDeviceView').style.display    = 'none';
   el('syncConnectView').style.display   = connected ? 'none' : '';
   if (connected) {
-    el('syncNameDisplay').textContent = syncName;
-    if (lastSynced) el('syncLastTime').textContent = 'Last synced: ' + lastSynced.toLocaleTimeString();
-    el('syncPatWarning').style.display = 'none';
+    el('syncNameDisplay').textContent = '@' + ghLogin;
+    const last = el('syncLastTime');
+    if (last && lastSynced) last.textContent = 'Last synced: ' + lastSynced.toLocaleTimeString();
   } else {
-    el('syncNameInput').value = '';
     el('syncError').style.display = 'none';
   }
   el('syncOverlay').style.display = 'flex';
-  if (!connected) setTimeout(() => el('syncNameInput').focus(), 50);
 }
 
-function showChangeName() {
-  el('syncConnectedView').style.display = 'none';
-  el('syncConnectView').style.display   = '';
-  el('syncNameInput').value = syncName;
-  el('syncError').style.display = 'none';
-  setTimeout(() => el('syncNameInput').focus(), 50);
+function closeSyncModal() {
+  cancelDeviceFlow();
+  el('syncOverlay').style.display = 'none';
 }
 
-function closeSyncModal() { el('syncOverlay').style.display = 'none'; }
-
-async function connectSync() {
-  const name  = el('syncNameInput').value.trim().toLowerCase().replace(/\s+/g, '-');
-  const errEl = el('syncError'), btn = el('syncConnectBtn');
-  if (!name) { errEl.textContent = 'Please enter a sync name.'; errEl.style.display = ''; return; }
-  btn.disabled = true; btn.textContent = 'Connecting…'; errEl.style.display = 'none';
+async function startDeviceFlow() {
+  el('syncConnectView').style.display = 'none';
+  el('syncDeviceView').style.display  = '';
+  el('syncError').style.display       = 'none';
+  el('syncDeviceCode').textContent    = '…';
   try {
-    if (name !== syncName) { syncGistId = ''; localStorage.removeItem('fire_gist_id'); }
-    syncName = name; localStorage.setItem('fire_sync_name', syncName);
-    setSyncStatus('syncing');
-    const gid = await findGist(name);
-    if (gid) {
-      syncGistId = gid; localStorage.setItem('fire_gist_id', syncGistId);
-      await syncLoad();
-    } else {
-      await syncSave();
-    }
-    closeSyncModal();
-  } catch(e) {
-    errEl.textContent = e.message || 'Connection failed.';
-    errEl.style.display = '';
-    btn.disabled = false; btn.textContent = 'Save & Sync';
+    const res = await fetch('https://github.com/login/device/code', {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: GITHUB_CLIENT_ID, scope: 'gist' }),
+    });
+    const data = await res.json();
+    el('syncDeviceCode').textContent = data.user_code;
+    el('syncDeviceUri').href = data.verification_uri;
+    pollDeviceFlow(data.device_code, data.interval || 5);
+  } catch {
+    showDeviceError('Failed to reach GitHub. Check your connection.');
   }
 }
 
+function pollDeviceFlow(deviceCode, interval) {
+  devicePollTimer = setInterval(async () => {
+    try {
+      const res = await fetch('https://github.com/login/oauth/access_token', {
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: GITHUB_CLIENT_ID, device_code: deviceCode,
+          grant_type: 'urn:ietf:params:oauth:grant-type:device_code' }),
+      });
+      const data = await res.json();
+      if (data.access_token) {
+        clearInterval(devicePollTimer); devicePollTimer = null;
+        oauthToken = data.access_token;
+        localStorage.setItem('fire_oauth_token', oauthToken);
+        await onOAuthConnected();
+      } else if (data.error === 'slow_down') {
+        clearInterval(devicePollTimer); devicePollTimer = null;
+        pollDeviceFlow(deviceCode, interval + 5);
+      } else if (data.error && data.error !== 'authorization_pending') {
+        clearInterval(devicePollTimer); devicePollTimer = null;
+        showDeviceError('Authorization failed: ' + (data.error_description || data.error));
+      }
+    } catch { /* network blip — keep polling */ }
+  }, interval * 1000);
+}
+
+function cancelDeviceFlow() {
+  if (devicePollTimer) { clearInterval(devicePollTimer); devicePollTimer = null; }
+  el('syncDeviceView').style.display    = 'none';
+  el('syncConnectView').style.display   = oauthToken ? 'none' : '';
+  el('syncConnectedView').style.display = oauthToken ? '' : 'none';
+}
+
+function showDeviceError(msg) {
+  el('syncDeviceView').style.display  = 'none';
+  el('syncConnectView').style.display = '';
+  el('syncError').textContent = msg;
+  el('syncError').style.display = '';
+}
+
+async function onOAuthConnected() {
+  try {
+    const res = await fetch('https://api.github.com/user', { headers: ghHeaders() });
+    if (res.ok) { const u = await res.json(); ghLogin = u.login; localStorage.setItem('fire_github_login', ghLogin); }
+  } catch {}
+  setSyncStatus('syncing');
+  const gid = await findGist();
+  if (gid) {
+    syncGistId = gid; localStorage.setItem('fire_gist_id', syncGistId);
+    await syncLoad();
+  } else {
+    await syncSave();
+  }
+  el('syncDeviceView').style.display    = 'none';
+  el('syncConnectView').style.display   = 'none';
+  el('syncConnectedView').style.display = '';
+  el('syncNameDisplay').textContent = '@' + ghLogin;
+}
+
+async function syncNow() { await syncSave(); }
+
 function disconnectSync() {
-  syncName = ''; syncGistId = '';
-  localStorage.removeItem('fire_sync_name'); localStorage.removeItem('fire_gist_id');
+  oauthToken = ''; ghLogin = ''; syncGistId = '';
+  localStorage.removeItem('fire_oauth_token');
+  localStorage.removeItem('fire_github_login');
+  localStorage.removeItem('fire_gist_id');
   setSyncStatus('idle');
   closeSyncModal();
 }
@@ -2056,13 +2124,13 @@ document.addEventListener("DOMContentLoaded",()=>{
   onWdMode();
   updateToggleUI();
   recalc();
-  // Initialise sync: show login prompt on first visit, otherwise auto-load
+  // Initialise sync: prompt on first visit, otherwise auto-load
   (async () => {
-    if (!syncName) { openSyncModal(); return; }
+    if (!oauthToken) { openSyncModal(); return; }
     setSyncStatus('syncing');
     try {
       if (!syncGistId) {
-        const gid = await findGist(syncName);
+        const gid = await findGist();
         if (gid) { syncGistId = gid; localStorage.setItem('fire_gist_id', syncGistId); }
       }
       const loaded = syncGistId ? await syncLoad() : false;
