@@ -2140,7 +2140,7 @@ function recalc() {
 // ── LOCK SCREEN ─────────────────────────────────────────────────────────────
 function unlock() {
   const val = document.getElementById('lockInput').value;
-  if (val === 'Retraite') {
+  if (val === 'retraite') {
     sessionStorage.setItem('unlocked', '1');
     document.getElementById('lockScreen').classList.add('hidden');
     document.getElementById('lockInput').value = '';
