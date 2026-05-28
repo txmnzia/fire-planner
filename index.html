@@ -367,9 +367,26 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .sync-secondary-btn:hover{border-color:var(--sec);background:rgba(129,140,248,.08);}
 .sync-secondary-btn.danger:hover{border-color:var(--err);color:var(--err);}
 .sync-name-lbl{font-size:10px;color:var(--muted);max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1;}
+#lockScreen{position:fixed;inset:0;z-index:9999;background:#0a0d18;display:flex;align-items:center;justify-content:center;}
+#lockScreen.hidden{display:none;}
+.lock-box{background:#0f1320;border:1px solid #1a2236;border-radius:12px;padding:36px 32px;width:100%;max-width:320px;display:flex;flex-direction:column;gap:16px;align-items:center;}
+.lock-box h2{margin:0;font-size:18px;color:var(--text);font-weight:700;letter-spacing:.5px;}
+.lock-box input{width:100%;box-sizing:border-box;background:#080b14;border:1px solid #1a2236;border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:16px;padding:10px 14px;outline:none;text-align:center;letter-spacing:2px;}
+.lock-box input:focus{border-color:var(--s1c);}
+.lock-box button{width:100%;height:38px;background:var(--s1c);border:none;border-radius:8px;color:#0f1320;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+.lock-box button:hover{opacity:.85;}
+.lock-err{font-size:12px;color:var(--err);min-height:16px;}
 </style>
 </head>
 <body>
+<div id="lockScreen">
+  <div class="lock-box">
+    <h2>🔥 FIRE Planner</h2>
+    <input type="password" id="lockInput" placeholder="Password" onkeydown="if(event.key==='Enter')unlock()">
+    <button onclick="unlock()">Unlock</button>
+    <span class="lock-err" id="lockErr"></span>
+  </div>
+</div>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
@@ -1963,7 +1980,9 @@ async function findGist() {
 }
 
 function scheduleSave() {
-  if (!oauthToken || isSyncLoad) return;
+  if (isSyncLoad) return;
+  localStorage.setItem('fire_state', JSON.stringify(collectState()));
+  if (!oauthToken) return;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(syncSave, 2500);
 }
@@ -2118,15 +2137,41 @@ function recalc() {
   scheduleSave();
 }
 
+// ── LOCK SCREEN ─────────────────────────────────────────────────────────────
+function unlock() {
+  const val = document.getElementById('lockInput').value;
+  if (val === 'Retraite') {
+    sessionStorage.setItem('unlocked', '1');
+    document.getElementById('lockScreen').classList.add('hidden');
+    document.getElementById('lockInput').value = '';
+  } else {
+    const err = document.getElementById('lockErr');
+    err.textContent = 'Wrong password.';
+    setTimeout(() => { err.textContent = ''; }, 2000);
+  }
+}
+
 // ── INIT ───────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded",()=>{
+  // Lock screen
+  if (sessionStorage.getItem('unlocked') === '1') {
+    document.getElementById('lockScreen').classList.add('hidden');
+  } else {
+    setTimeout(() => document.getElementById('lockInput').focus(), 100);
+  }
+
   for (let s=1;s<=5;s++) updateAge(s);
   onWdMode();
   updateToggleUI();
-  recalc();
-  // Initialise sync: prompt on first visit, otherwise auto-load
+
+  // Load from localStorage first (instant, no network)
+  const saved = localStorage.getItem('fire_state');
+  if (saved) { try { applyState(JSON.parse(saved)); } catch {} }
+  else recalc();
+
+  // Background Gist sync (best-effort, non-blocking)
   (async () => {
-    if (!oauthToken) { openSyncModal(); return; }
+    if (!oauthToken) { setSyncStatus('idle'); return; }
     setSyncStatus('syncing');
     try {
       if (!syncGistId) {
