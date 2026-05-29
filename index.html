@@ -2142,12 +2142,19 @@ function recalc() {
 }
 
 // ── LOCK SCREEN ─────────────────────────────────────────────────────────────
+function loadState() {
+  const saved = localStorage.getItem('fire_state');
+  if (saved) { try { applyState(JSON.parse(saved)); return; } catch {} }
+  applyState(SAM_STATE);
+}
+
 function unlock() {
   const val = document.getElementById('lockInput').value;
   if (val === 'retraite') {
     sessionStorage.setItem('unlocked', '1');
     document.getElementById('lockScreen').classList.add('hidden');
     document.getElementById('lockInput').value = '';
+    loadState();
   } else {
     const err = document.getElementById('lockErr');
     err.textContent = 'Wrong password.';
@@ -2169,9 +2176,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   updateToggleUI();
 
   // Load state: localStorage if available, otherwise fall back to baked data
-  const saved = localStorage.getItem('fire_state');
-  if (saved) { try { applyState(JSON.parse(saved)); } catch { applyState(SAM_STATE); } }
-  else { applyState(SAM_STATE); }
+  loadState();
 
   // Background Gist sync (best-effort, non-blocking)
   (async () => {
