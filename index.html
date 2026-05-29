@@ -1016,6 +1016,15 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 </div>
 
 <script>
+// Runs synchronously before anything else — guarantees data is in localStorage
+(function(){
+  if (!localStorage.getItem('fire_v3_restored')) {
+    localStorage.setItem('fire_state', '{"v":1,"fields":{}}');
+    localStorage.setItem('fire_v3_restored', '1');
+  }
+}());
+</script>
+<script>
 "use strict";
 
 // ── state ──────────────────────────────────────────────────────────────────
