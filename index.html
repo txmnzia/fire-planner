@@ -2171,12 +2171,13 @@ document.addEventListener("DOMContentLoaded",()=>{
     setTimeout(() => document.getElementById('lockInput').focus(), 100);
   }
 
+  // Load state first — before updateAge/onWdMode which trigger recalc/scheduleSave
+  // and would write empty defaults to localStorage before we get a chance to restore
+  loadState();
+
   for (let s=1;s<=5;s++) updateAge(s);
   onWdMode();
   updateToggleUI();
-
-  // Load state: localStorage if available, otherwise fall back to baked data
-  loadState();
 
   // Background Gist sync (best-effort, non-blocking)
   (async () => {
