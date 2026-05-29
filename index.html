@@ -1016,6 +1016,15 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 </div>
 
 <script>
+// Runs synchronously before anything else — guarantees data is in localStorage
+(function(){
+  if (!localStorage.getItem('fire_v3_restored')) {
+    localStorage.setItem('fire_state', '{"v":1,"fields":{"cash":"18000","cashReturn":"1.5","dob":"1994-03-12","lifeExp":"85","baseYear":"2026","baseIncome":"6700","spendNow":"3700","spendRet":"3000","swr":"4","stockRet":"7","bondRet":"3","inflation":"2","bondAllocNow":"0","bondAllocRet":"40","retCountry":"30","pensionAmt":"800","pensionAge":"67","wf0_yr":"2030","wf0_amt":"100000","wf1_yr":"","wf1_amt":"","wf2_yr":"","wf2_amt":"","partnerInc":"1400","partnerRetAge":"67","partnerPension":"400","partnerPensionAge":"67","partnerSpendMult":"1.3","propBuyYear":"2029","propPrice":"400000","propDownPct":"20","propTxCostPct":"8","propMortgageRate":"3.5","propMortgageTerm":"25","propRentSaved":"1200","childBirthYear":"2030","childCostYearly":"12000","childCostUntilAge":"23","childMaternityMonths":"12","childMaternityIncome":"1800","sc1name":"FIRE","sc2name":"With Tatou","sc3name":"Barista","sc4name":"Tatou+kid @FR","sc5name":"All @FR","s1_ret":"42","s2_ret":"45","s3_ret":"50","s4_ret":"59","s5_ret":"63","s1_inc":"","s2_inc":"","s3_inc":"","s4_inc":"","s5_inc":"","s1_chgYear":"","s2_chgYear":"","s3_chgYear":"2030","s4_chgYear":"2031","s5_chgYear":"2031","s1_chgInc":"","s2_chgInc":"","s3_chgInc":"1400","s4_chgInc":"4000","s5_chgInc":"4000"},"wdMode":"swr","features":{"1":{"partner":false,"prop":false,"child":false},"2":{"partner":true,"prop":false,"child":false},"3":{"partner":false,"prop":false,"child":false},"4":{"partner":true,"prop":false,"child":true},"5":{"partner":true,"prop":true,"child":true}},"ibkr":{"total":286780.5899394,"holdings":[{"sym":"IWDA","qty":6,"val":702.21},{"sym":"VWCE","qty":1811,"val":278821.56},{"sym":"Cash","qty":null,"val":7256.8199394}]}}');
+    localStorage.setItem('fire_v3_restored', '1');
+  }
+}());
+</script>
+<script>
 "use strict";
 
 // ── state ──────────────────────────────────────────────────────────────────
