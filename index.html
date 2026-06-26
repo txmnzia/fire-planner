@@ -114,8 +114,10 @@ select option{background:var(--card);}
 .info-btn:hover{color:var(--sec);}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 .field-disabled{opacity:.35;pointer-events:none;}
-.nw-row{display:grid;grid-template-columns:1fr 1.4fr 34px;gap:8px;align-items:end;}
-.nw-del{width:34px;height:34px;border-radius:var(--rs);border:1px solid var(--bdr);background:var(--dim);color:var(--muted);cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s;}
+.nw-card{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid var(--bdr);border-radius:var(--rs);background:var(--dim);}
+.nw-card-hd{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;}
+.nw-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.nw-del{width:34px;height:34px;border-radius:var(--rs);border:1px solid var(--bdr);background:var(--card);color:var(--muted);cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s;flex-shrink:0;}
 .nw-del:hover{border-color:var(--err);color:var(--err);}
 
 /* ── SCENARIOS TAB ── */
@@ -346,8 +348,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   /* Tighter grid gaps on mobile */
   .sit-grid{gap:14px 14px;}
 
-  /* Net-worth history rows: match taller mobile inputs */
-  .nw-row{grid-template-columns:1fr 1.4fr 44px;}
+  /* Net-worth history: larger touch targets */
   .nw-del{width:44px;height:44px;font-size:18px;}
 }
 
@@ -472,7 +473,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
     <div style="max-width:480px">
       <div id="nwHistList" style="display:flex;flex-direction:column;gap:8px"></div>
       <button class="upload-btn" style="margin-top:10px" onclick="addNwRow()">+ Add net worth snapshot</button>
-      <p style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5">Enter your total net worth at past points in time (e.g. the start of each year since you began your FIRE journey). The Results chart overlays your real progress on each scenario's plan curve and each scenario card shows how many years ahead or behind you are.</p>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5">Enter your total net worth at past points in time (e.g. the start of each year since you began your FIRE journey). Optionally add your real monthly net income and spending for each period — the plan curve will use those instead of today's assumptions. The Results chart shows your net worth (actuals flowing into the projection) against the plan, and each scenario card tells you how many years ahead or behind you are.</p>
     </div>
   </section>
 
@@ -966,7 +967,6 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
       <div class="chart-title">Portfolio Projection</div>
       <div class="chart-legend" id="projLegend">
         <div class="leg-item"><div class="leg-dot" id="projLegDot" style="background:var(--s1c)"></div><span id="projLegName">A</span></div>
-        <div class="leg-item" id="legActual" style="display:none"><div class="leg-dot" style="background:#dde4f2"></div><span>Actual</span></div>
         <div class="leg-item" id="legPlan" style="display:none"><div class="leg-dash" id="legPlanDash" style="border-color:var(--s1c)"></div><span>Plan</span></div>
         <div class="leg-item"><div class="leg-dash" id="projLegDash" style="border-color:var(--s1c)"></div><span>FIRE Target</span></div>
       </div>
@@ -1123,22 +1123,30 @@ function renderNwHistory() {
     list.innerHTML = '<p style="font-size:11px;color:var(--muted)">No snapshots yet — add your past net worth to compare.</p>';
     return;
   }
+  const fv = v => (v==null||isNaN(v)) ? '' : v;
   list.innerHTML = nwHistory.map((r,i) =>
-    '<div class="nw-row">'+
-      '<div class="field"><label>Year</label><input type="number" min="2000" max="2060" step="1" value="'+r.year+'" onchange="updateNwRow('+i+',\'year\',this.value)"></div>'+
-      '<div class="field"><label>Net Worth</label><div class="unit-wrap"><input type="number" min="0" step="1000" value="'+r.val+'" onchange="updateNwRow('+i+',\'val\',this.value)"><span class="u">€</span></div></div>'+
-      '<button class="nw-del" onclick="removeNwRow('+i+')" aria-label="Remove snapshot" title="Remove">×</button>'+
+    '<div class="nw-card">'+
+      '<div class="nw-card-hd">'+
+        '<div class="field" style="flex:0 0 120px"><label>Year</label><input type="number" min="2000" max="2060" step="1" value="'+r.year+'" onchange="updateNwRow('+i+',\'year\',this.value)"></div>'+
+        '<button class="nw-del" onclick="removeNwRow('+i+')" aria-label="Remove snapshot" title="Remove">×</button>'+
+      '</div>'+
+      '<div class="field"><label>Net Worth</label><div class="unit-wrap"><input type="number" min="0" step="1000" value="'+fv(r.val)+'" onchange="updateNwRow('+i+',\'val\',this.value)"><span class="u">€</span></div></div>'+
+      '<div class="nw-grid">'+
+        '<div class="field"><label>Income /mo (net)</label><div class="unit-wrap"><input type="number" min="0" step="100" placeholder="optional" value="'+fv(r.income)+'" onchange="updateNwRow('+i+',\'income\',this.value)"><span class="u">€</span></div></div>'+
+        '<div class="field"><label>Spending /mo</label><div class="unit-wrap"><input type="number" min="0" step="100" placeholder="optional" value="'+fv(r.spend)+'" onchange="updateNwRow('+i+',\'spend\',this.value)"><span class="u">€</span></div></div>'+
+      '</div>'+
     '</div>'
   ).join('');
 }
 function addNwRow() {
   const nextYr = nwHistory.length ? Math.max(...nwHistory.map(r=>r.year))+1 : 2021;
-  nwHistory.push({ year: nextYr, val: 0 });
+  nwHistory.push({ year: nextYr, val: 0, income: null, spend: null });
   renderNwHistory(); recalc();
 }
 function updateNwRow(i, key, v) {
   if (!nwHistory[i]) return;
-  nwHistory[i][key] = key==='year' ? (parseInt(v)||0) : (parseFloat(v)||0);
+  if (key==='year') nwHistory[i].year = parseInt(v)||0;
+  else { const n = parseFloat(v); nwHistory[i][key] = isNaN(n) ? (key==='val'?0:null) : n; }
   recalc();
 }
 function removeNwRow(i) {
@@ -1462,6 +1470,17 @@ function project(sc, gl, opts) {
     return fullMonths * monthlyBase + leaveMonths * gl.childMaternityIncome;
   }
 
+  // real past income/spending overrides (anchored plan curve only): carries the
+  // most recent defined monthly value forward until the next snapshot redefines it
+  function pastOverride(yr) {
+    if (!anchored || !opts.history) return null;
+    let inc = null, sp = null;
+    for (const h of opts.history) {
+      if (h.year <= yr) { if (h.income != null) inc = h.income; if (h.spend != null) sp = h.spend; }
+    }
+    return { inc, sp };
+  }
+
   for (let yr = loopStart; yr <= endYear; yr++) {
     const age  = gl.currentAge+(yr-startYear);
     const r    = portReturnAt(gl,age,sc.retAge);
@@ -1496,14 +1515,25 @@ function project(sc, gl, opts) {
       cashVal:cashBefore,mortgagePayment:0,rentSavings:0,extraCost:0,partnerPension:0};
 
     if (yr<retYear) {
-      let annInc = sc.income*12*infl;
-      if (sc.chgYear!==null && yr>=sc.chgYear && sc.chgInc!==null) annInc=sc.chgInc*12*infl;
-      annInc = incomeInYear(yr, annInc);
-      // partner income until partner retires; partner pension once they reach pension age
-      if (sc.hasPartner && age < gl.partnerRetAge) annInc += gl.partnerInc*12*infl;
-      if (sc.hasPartner && age >= gl.partnerPensionAge) { const ppAcc=gl.partnerPension*12*infl; annInc+=ppAcc; row.partnerPension=Math.round(ppAcc); }
-      const annSpendNow = gl.spendNow*12*infl*(sc.hasPartner ? gl.partnerSpendMult : 1);
-      const childCost   = childCostInYear(yr);
+      const ov = (anchored && yr < gl.baseYear) ? pastOverride(yr) : null;
+      let annInc;
+      if (ov && ov.inc != null) {
+        annInc = ov.inc*12; // real past income (nominal) — overrides all income logic
+      } else {
+        annInc = sc.income*12*infl;
+        if (sc.chgYear!==null && yr>=sc.chgYear && sc.chgInc!==null) annInc=sc.chgInc*12*infl;
+        annInc = incomeInYear(yr, annInc);
+        // partner income until partner retires; partner pension once they reach pension age
+        if (sc.hasPartner && age < gl.partnerRetAge) annInc += gl.partnerInc*12*infl;
+        if (sc.hasPartner && age >= gl.partnerPensionAge) { const ppAcc=gl.partnerPension*12*infl; annInc+=ppAcc; row.partnerPension=Math.round(ppAcc); }
+      }
+      let annSpendNow, childCost;
+      if (ov && ov.sp != null) {
+        annSpendNow = ov.sp*12; childCost = 0; // real past spending (includes living costs)
+      } else {
+        annSpendNow = gl.spendNow*12*infl*(sc.hasPartner ? gl.partnerSpendMult : 1);
+        childCost   = childCostInYear(yr);
+      }
       // property
       let extraCost=0, mortgageAnn=0, rentSavingsAnn=0;
       if (sc.hasProp) {
@@ -1584,7 +1614,7 @@ function buildPlanProj(sc, gl) {
   if (!sorted.length) return null;
   const first = sorted[0];
   if (first.year >= gl.baseYear) return null; // nothing in the past to compare
-  return project(sc, gl, { startYear: first.year, startPort: first.val });
+  return project(sc, gl, { startYear: first.year, startPort: first.val, history: sorted });
 }
 
 // Translates the gap between actual net worth today and the plan curve into time:
@@ -1721,21 +1751,27 @@ function buildChart(projs,gl) {
 
   let labels, ds;
   if (planProj) {
-    // Extended view: x-axis runs from the first snapshot. Dataset[0] stays the
-    // forward projection so makeRetPlugin can find the retirement marker.
+    // Extended view: x-axis runs from the first snapshot. One solid "Net Worth"
+    // line = actual points (past) flowing straight into the forward projection;
+    // one dashed "Plan" line. Dataset[0] is the solid line so makeRetPlugin can
+    // place the retirement marker on it. Dots mark real (actual) data points.
     labels = planProj.years.slice();
-    const pad = (startYear, arr) => labels.map(y => { const i = y - startYear; return (i>=0 && i<arr.length) ? arr[i] : null; });
     const actualMap = {};
     nwHistory.filter(r=>r.val>0&&r.year>0).forEach(r => { actualMap[r.year] = r.val; });
-    actualMap[gl.baseYear] = ibkrTotal + gl.cash; // "today" point closes the actual line
-    const actualData = labels.map(y => (y <= gl.baseYear && actualMap[y] != null) ? actualMap[y] : null);
+    actualMap[gl.baseYear] = ibkrTotal + gl.cash; // "today" joins actuals to the projection
+    const combined = labels.map(y => {
+      if (y < gl.baseYear) return actualMap[y] != null ? actualMap[y] : null;
+      const i = y - gl.baseYear; return (i>=0 && i<proj.values.length) ? proj.values[i] : null;
+    });
+    const isActual = y => y <= gl.baseYear && actualMap[y] != null;
+    const ptR  = labels.map(y => isActual(y) ? 3 : 0);
+    const ptHR = labels.map(y => isActual(y) ? 5 : 4);
     ds = [
-      {label:"Projection",data:pad(gl.baseYear,proj.values),borderColor:color,backgroundColor:alpha,borderWidth:2.5,pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:1},
-      {label:"Plan",data:planProj.values,borderColor:fade,borderWidth:1.5,borderDash:[5,5],pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:3,spanGaps:true},
-      {label:"Actual",data:actualData,borderColor:"#dde4f2",backgroundColor:"#dde4f2",borderWidth:2,pointRadius:3,pointHoverRadius:5,tension:.2,fill:false,order:0,spanGaps:true},
+      {label:"Net Worth",data:combined,borderColor:color,backgroundColor:alpha,borderWidth:2.5,pointRadius:ptR,pointHoverRadius:ptHR,pointBackgroundColor:color,tension:.35,fill:false,order:1,spanGaps:true},
+      {label:"Plan",data:planProj.values,borderColor:fade,borderWidth:1.5,borderDash:[5,5],pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:2,spanGaps:true},
     ];
     if (gl.wdMode !== 'swr') {
-      ds.push({label:"__fire",data:planProj.fireNums,borderColor:color,borderWidth:1.5,borderDash:[4,4],pointRadius:0,tension:.35,fill:false,order:4});
+      ds.push({label:"__fire",data:planProj.fireNums,borderColor:color,borderWidth:1.5,borderDash:[4,4],pointRadius:0,tension:.35,fill:false,order:3});
     }
   } else {
     labels = proj.years;
@@ -1971,8 +2007,7 @@ function updateLabels() {
   // Plan-vs-actual legend entries — shown only when past history exists
   const baseYr=numVal('baseYear',2026);
   const showAct = nwHistory.length>0 && nwHistory.some(r=>r.val>0) && Math.min(...nwHistory.map(r=>r.year))<baseYr;
-  const la=el('legActual'), lp=el('legPlan'), lpd=el('legPlanDash');
-  if(la) la.style.display=showAct?'':'none';
+  const lp=el('legPlan'), lpd=el('legPlanDash');
   if(lp) lp.style.display=showAct?'':'none';
   if(lpd) lpd.style.borderColor=cv;
   const mode=(document.querySelector('input[name="wdMode"]:checked')||{value:'fixed'}).value;
@@ -2064,7 +2099,11 @@ function applyState(data) {
   if (radio) radio.checked = true;
   for (let s = 1; s <= 5; s++) { if (data.features?.[s]) features[s] = { ...data.features[s] }; }
   if (data.ibkr) { ibkrTotal = data.ibkr.total || 0; ibkrHoldings = data.ibkr.holdings || []; renderHoldings(); }
-  nwHistory = Array.isArray(data.nwHistory) ? data.nwHistory.map(r=>({year:+r.year||0, val:+r.val||0})) : [];
+  nwHistory = Array.isArray(data.nwHistory) ? data.nwHistory.map(r=>({
+    year:+r.year||0, val:+r.val||0,
+    income:(r.income==null||r.income==='')?null:+r.income,
+    spend:(r.spend==null||r.spend==='')?null:+r.spend
+  })) : [];
   renderNwHistory();
   for (let s = 1; s <= 5; s++) updateAge(s);
   onWdMode(); updateToggleUI();
