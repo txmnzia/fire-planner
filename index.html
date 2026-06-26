@@ -1908,7 +1908,7 @@ const GIST_DESC = 'fire-planner';
 const GH_KEY = 'fire-planner-sync-v1';
 const encTok = t => JSON.stringify(Array.from(t, (c, i) => c.charCodeAt(0) ^ GH_KEY.charCodeAt(i % GH_KEY.length)));
 const decTok = a => a.map((n, i) => String.fromCharCode(n ^ GH_KEY.charCodeAt(i % GH_KEY.length))).join('');
-const GH_TOK_OBF = [];   // ← paste encTok('your_token') output here
+const GH_TOK_OBF = [1,1,2,58,127,18,8,86,40,7,29,3,95,28,63,89,84,97,51,0,41,57,71,15,125,5,27,8,22,57,50,29,101,6,73,28,80,116,33,95];   // ← paste encTok('your_token') output here
 
 let oauthToken  = GH_TOK_OBF.length ? decTok(GH_TOK_OBF) : '';
 let ghLogin     = localStorage.getItem('fire_github_login') || '';
