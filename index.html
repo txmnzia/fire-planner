@@ -114,6 +114,9 @@ select option{background:var(--card);}
 .info-btn:hover{color:var(--sec);}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 .field-disabled{opacity:.35;pointer-events:none;}
+.nw-row{display:grid;grid-template-columns:1fr 1.4fr 34px;gap:8px;align-items:end;}
+.nw-del{width:34px;height:34px;border-radius:var(--rs);border:1px solid var(--bdr);background:var(--dim);color:var(--muted);cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s;}
+.nw-del:hover{border-color:var(--err);color:var(--err);}
 
 /* ── SCENARIOS TAB ── */
 /* Fixed-height panel, cards fill it without scrolling */
@@ -342,6 +345,10 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   .sit-grid.g3{grid-template-columns:1fr 1fr;}
   /* Tighter grid gaps on mobile */
   .sit-grid{gap:14px 14px;}
+
+  /* Net-worth history rows: match taller mobile inputs */
+  .nw-row{grid-template-columns:1fr 1.4fr 44px;}
+  .nw-del{width:44px;height:44px;font-size:18px;}
 }
 
 /* ── GITHUB SYNC ── */
@@ -456,6 +463,16 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
         <span class="lbl">Total Portfolio</span>
         <span class="val" id="totalPortfolio">&#x20AC; &#x2014;</span>
       </div>
+    </div>
+  </section>
+
+  <!-- NET WORTH HISTORY -->
+  <section class="sit-section">
+    <div class="sit-hd">📈 Net Worth History <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:6px;">Compare plan vs actuals</span></div>
+    <div style="max-width:480px">
+      <div id="nwHistList" style="display:flex;flex-direction:column;gap:8px"></div>
+      <button class="upload-btn" style="margin-top:10px" onclick="addNwRow()">+ Add net worth snapshot</button>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5">Enter your total net worth at past points in time (e.g. the start of each year since you began your FIRE journey). The Results chart overlays your real progress on each scenario's plan curve and each scenario card shows how many years ahead or behind you are.</p>
     </div>
   </section>
 
@@ -949,6 +966,8 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
       <div class="chart-title">Portfolio Projection</div>
       <div class="chart-legend" id="projLegend">
         <div class="leg-item"><div class="leg-dot" id="projLegDot" style="background:var(--s1c)"></div><span id="projLegName">A</span></div>
+        <div class="leg-item" id="legActual" style="display:none"><div class="leg-dot" style="background:#dde4f2"></div><span>Actual</span></div>
+        <div class="leg-item" id="legPlan" style="display:none"><div class="leg-dash" id="legPlanDash" style="border-color:var(--s1c)"></div><span>Plan</span></div>
         <div class="leg-item"><div class="leg-dash" id="projLegDash" style="border-color:var(--s1c)"></div><span>FIRE Target</span></div>
       </div>
     </div>
@@ -1018,6 +1037,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
 // ── state ──────────────────────────────────────────────────────────────────
 let ibkrTotal = 0, ibkrHoldings = [], ibkrGainFrac = null;
+let nwHistory = []; // [{year,val}] manual net-worth snapshots for plan-vs-actual
 let chart = null, allocChart = null;
 let activeScIdx = 0;
 let lastProjs = null, lastGl = null, lastScenarios = null;
@@ -1094,6 +1114,35 @@ function renderHoldings() {
   h += '<div style="height:1px;background:var(--bdr);margin:4px 0"></div>';
   h += '<div class="pb-row"><span class="k" style="color:var(--sec)">IBKR Total</span><span class="v" style="color:var(--text)">'+eur(ibkrTotal)+"</span></div>";
   list.innerHTML = h;
+}
+
+// ── NET WORTH HISTORY (plan vs actual) ───────────────────────────────────────
+function renderNwHistory() {
+  const list = el('nwHistList'); if (!list) return;
+  if (!nwHistory.length) {
+    list.innerHTML = '<p style="font-size:11px;color:var(--muted)">No snapshots yet — add your past net worth to compare.</p>';
+    return;
+  }
+  list.innerHTML = nwHistory.map((r,i) =>
+    '<div class="nw-row">'+
+      '<div class="field"><label>Year</label><input type="number" min="2000" max="2060" step="1" value="'+r.year+'" onchange="updateNwRow('+i+',\'year\',this.value)"></div>'+
+      '<div class="field"><label>Net Worth</label><div class="unit-wrap"><input type="number" min="0" step="1000" value="'+r.val+'" onchange="updateNwRow('+i+',\'val\',this.value)"><span class="u">€</span></div></div>'+
+      '<button class="nw-del" onclick="removeNwRow('+i+')" aria-label="Remove snapshot" title="Remove">×</button>'+
+    '</div>'
+  ).join('');
+}
+function addNwRow() {
+  const nextYr = nwHistory.length ? Math.max(...nwHistory.map(r=>r.year))+1 : 2021;
+  nwHistory.push({ year: nextYr, val: 0 });
+  renderNwHistory(); recalc();
+}
+function updateNwRow(i, key, v) {
+  if (!nwHistory[i]) return;
+  nwHistory[i][key] = key==='year' ? (parseInt(v)||0) : (parseFloat(v)||0);
+  recalc();
+}
+function removeNwRow(i) {
+  nwHistory.splice(i,1); renderNwHistory(); recalc();
 }
 
 function handleCSV(input) {
@@ -1366,10 +1415,16 @@ function computeFireTarget(fromAge, sc, gl, taxMult) {
   return Math.round(Math.max(0, pv1+pv2 + childCostPV() + propNetPV() - partnerPenCredit()));
 }
 
-function project(sc, gl) {
-  const startPort = ibkrTotal;
-  let cashVal     = gl.cash;
+function project(sc, gl, opts) {
+  opts = opts || {};
+  // When anchored (startPort given) the projection is re-based at a past point
+  // for plan-vs-actual comparison: treat the snapshot as all-portfolio (no cash),
+  // and run the loop from startYear. All age/inflation math stays relative to baseYear.
+  const anchored  = opts.startPort != null;
+  const startPort = anchored ? opts.startPort : ibkrTotal;
+  let cashVal     = anchored ? 0 : gl.cash;
   const startYear = gl.baseYear;
+  const loopStart = opts.startYear != null ? opts.startYear : gl.baseYear;
   const endYear   = startYear+(gl.lifeExp-gl.currentAge);
   const retYear   = startYear+(sc.retAge-gl.currentAge);
   const years=[],values=[],fireNums=[],allocations=[],rows=[];
@@ -1407,7 +1462,7 @@ function project(sc, gl) {
     return fullMonths * monthlyBase + leaveMonths * gl.childMaternityIncome;
   }
 
-  for (let yr = startYear; yr <= endYear; yr++) {
+  for (let yr = loopStart; yr <= endYear; yr++) {
     const age  = gl.currentAge+(yr-startYear);
     const r    = portReturnAt(gl,age,sc.retAge);
     const t    = yr-startYear;
@@ -1519,6 +1574,35 @@ function project(sc, gl) {
   return {years,values,fireNums,retYear,allocations,rows};
 }
 
+// ── PLAN vs ACTUAL ───────────────────────────────────────────────────────────
+// Builds the "plan" curve: the projection re-anchored at the earliest net-worth
+// snapshot, grown forward with the scenario's assumptions. Returns null when
+// there is no usable past history to compare against.
+function buildPlanProj(sc, gl) {
+  if (!nwHistory.length) return null;
+  const sorted = nwHistory.filter(r => r.val > 0 && r.year > 0).sort((a,b)=>a.year-b.year);
+  if (!sorted.length) return null;
+  const first = sorted[0];
+  if (first.year >= gl.baseYear) return null; // nothing in the past to compare
+  return project(sc, gl, { startYear: first.year, startPort: first.val });
+}
+
+// Translates the gap between actual net worth today and the plan curve into time:
+// the year the plan reaches today's actual value, minus today. Positive = ahead.
+function computePlanMetric(planProj, gl, actualNow) {
+  const ys = planProj.years, vs = planProj.values;
+  let crossYear = null;
+  for (let i = 0; i < vs.length - 1; i++) {
+    const a = vs[i], b = vs[i+1];
+    if ((a <= actualNow && actualNow <= b) || (a >= actualNow && actualNow >= b)) {
+      const frac = b !== a ? (actualNow - a) / (b - a) : 0;
+      crossYear = ys[i] + frac; break;
+    }
+  }
+  if (crossYear === null) crossYear = actualNow > vs[vs.length-1] ? ys[ys.length-1] : ys[0];
+  return { yearsAhead: crossYear - gl.baseYear };
+}
+
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
 
@@ -1585,12 +1669,21 @@ function renderMilestone(idx, sc, gl, proj) {
       surpRow+coastRow+depRow;
   }
 
+  let planRow = '';
+  const planProj = buildPlanProj(sc, gl);
+  if (planProj) {
+    const ya = computePlanMetric(planProj, gl, ibkrTotal + gl.cash).yearsAhead;
+    const ahead = ya >= 0, absY = Math.abs(ya), onPlan = absY < 0.05;
+    const txt = onPlan ? 'on plan' : absY.toFixed(1) + ' yrs ' + (ahead ? 'ahead' : 'behind');
+    planRow = '<div class="sc-result-row"><span class="k">vs Plan</span><span class="v '+(onPlan?'':(ahead?'ok':'err'))+'">'+(onPlan?'':(ahead?'▲ ':'▼ '))+txt+'</span></div>';
+  }
+
   el("ms"+idx).innerHTML =
     '<div class="sc-result-head">'+
       '<div class="sc-result-age" style="color:var(--'+cc+'c)">'+scName+' &middot; Age '+sc.retAge+'</div>'+
       headChip+
     '</div>'+
-    '<div class="sc-result-rows">'+innerRows+'</div>';
+    '<div class="sc-result-rows">'+innerRows+planRow+'</div>';
 }
 
 // ── CHARTS ─────────────────────────────────────────────────────────────────
@@ -1621,13 +1714,37 @@ function makeRetPlugin(projs, gl) {
 }
 
 function buildChart(projs,gl) {
-  const proj=projs[activeScIdx], color=COLORS[activeScIdx], alpha=ALPHAS[activeScIdx];
-  const labels=proj.years, ctx=el("fireChart").getContext("2d");
-  const ds=[
-    {label:"Portfolio",data:proj.values,borderColor:color,backgroundColor:alpha,borderWidth:2.5,pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:1},
-  ];
-  if (gl.wdMode !== 'swr') {
-    ds.push({label:"__fire",data:proj.fireNums,borderColor:color,borderWidth:1.5,borderDash:[4,4],pointRadius:0,tension:.35,fill:false,order:2});
+  const proj=projs[activeScIdx], color=COLORS[activeScIdx], alpha=ALPHAS[activeScIdx], fade=COLORS_FADE[activeScIdx];
+  const ctx=el("fireChart").getContext("2d");
+  const sc = lastScenarios ? lastScenarios[activeScIdx] : null;
+  const planProj = sc ? buildPlanProj(sc, gl) : null;
+
+  let labels, ds;
+  if (planProj) {
+    // Extended view: x-axis runs from the first snapshot. Dataset[0] stays the
+    // forward projection so makeRetPlugin can find the retirement marker.
+    labels = planProj.years.slice();
+    const pad = (startYear, arr) => labels.map(y => { const i = y - startYear; return (i>=0 && i<arr.length) ? arr[i] : null; });
+    const actualMap = {};
+    nwHistory.filter(r=>r.val>0&&r.year>0).forEach(r => { actualMap[r.year] = r.val; });
+    actualMap[gl.baseYear] = ibkrTotal + gl.cash; // "today" point closes the actual line
+    const actualData = labels.map(y => (y <= gl.baseYear && actualMap[y] != null) ? actualMap[y] : null);
+    ds = [
+      {label:"Projection",data:pad(gl.baseYear,proj.values),borderColor:color,backgroundColor:alpha,borderWidth:2.5,pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:1},
+      {label:"Plan",data:planProj.values,borderColor:fade,borderWidth:1.5,borderDash:[5,5],pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:3,spanGaps:true},
+      {label:"Actual",data:actualData,borderColor:"#dde4f2",backgroundColor:"#dde4f2",borderWidth:2,pointRadius:3,pointHoverRadius:5,tension:.2,fill:false,order:0,spanGaps:true},
+    ];
+    if (gl.wdMode !== 'swr') {
+      ds.push({label:"__fire",data:planProj.fireNums,borderColor:color,borderWidth:1.5,borderDash:[4,4],pointRadius:0,tension:.35,fill:false,order:4});
+    }
+  } else {
+    labels = proj.years;
+    ds = [
+      {label:"Portfolio",data:proj.values,borderColor:color,backgroundColor:alpha,borderWidth:2.5,pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:1},
+    ];
+    if (gl.wdMode !== 'swr') {
+      ds.push({label:"__fire",data:proj.fireNums,borderColor:color,borderWidth:1.5,borderDash:[4,4],pointRadius:0,tension:.35,fill:false,order:2});
+    }
   }
   if (chart) chart.destroy();
   chart=new Chart(ctx,{type:"line",data:{labels,datasets:ds},plugins:[makeRetPlugin([proj],gl)],options:{
@@ -1851,6 +1968,13 @@ function updateLabels() {
   if(dot) dot.style.background=cv;
   if(lbl) lbl.textContent=name;
   if(dash) dash.style.borderColor=cv;
+  // Plan-vs-actual legend entries — shown only when past history exists
+  const baseYr=numVal('baseYear',2026);
+  const showAct = nwHistory.length>0 && nwHistory.some(r=>r.val>0) && Math.min(...nwHistory.map(r=>r.year))<baseYr;
+  const la=el('legActual'), lp=el('legPlan'), lpd=el('legPlanDash');
+  if(la) la.style.display=showAct?'':'none';
+  if(lp) lp.style.display=showAct?'':'none';
+  if(lpd) lpd.style.borderColor=cv;
   const mode=(document.querySelector('input[name="wdMode"]:checked')||{value:'fixed'}).value;
   const fireLegItem=dash?dash.closest('.leg-item'):null;
   if(fireLegItem) fireLegItem.style.display=mode==='swr'?'none':'';
@@ -1928,6 +2052,7 @@ function collectState() {
   const feat = {};
   for (let s = 1; s <= 5; s++) feat[s] = { ...features[s] };
   return { v: 1, fields, wdMode: wdEl ? wdEl.value : 'fixed', features: feat,
+    nwHistory: nwHistory,
     ibkr: { total: ibkrTotal, holdings: ibkrHoldings } };
 }
 
@@ -1939,6 +2064,8 @@ function applyState(data) {
   if (radio) radio.checked = true;
   for (let s = 1; s <= 5; s++) { if (data.features?.[s]) features[s] = { ...data.features[s] }; }
   if (data.ibkr) { ibkrTotal = data.ibkr.total || 0; ibkrHoldings = data.ibkr.holdings || []; renderHoldings(); }
+  nwHistory = Array.isArray(data.nwHistory) ? data.nwHistory.map(r=>({year:+r.year||0, val:+r.val||0})) : [];
+  renderNwHistory();
   for (let s = 1; s <= 5; s++) updateAge(s);
   onWdMode(); updateToggleUI();
   isSyncLoad = true; recalc(); isSyncLoad = false;
