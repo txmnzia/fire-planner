@@ -1883,20 +1883,32 @@ function renderSummaryTiles(projs, gl, scenarios) {
     const sc = scenarios[i], cv = CV[i], name = getScenarioName(i);
     const retIdx = proj.retYear - gl.baseYear;
     const portRet = proj.values[Math.min(retIdx, proj.values.length - 1)] || 0;
-    let chip, metric, metricLabel;
+    const retYear = gl.baseYear + Math.max(0, sc.retAge - gl.currentAge);
+
+    // vs plan: gap between when the actual and plan trajectories reach FIRE
+    let vsPlanRow = '';
+    const planProj = buildPlanProj(sc, gl);
+    if (planProj) {
+      const ac = fireCrossYear(proj, proj.fireTarget), pc = fireCrossYear(planProj, proj.fireTarget);
+      if (ac && pc) {
+        const d = pc - ac, n = Math.abs(d), onPlan = d === 0, ahead = d > 0;
+        const txt = onPlan ? 'on plan' : n + 'y ' + (ahead ? 'before' : 'after') + ' plan';
+        vsPlanRow = '<div class="sc-result-row"><span class="k">vs Plan</span><span class="v '+(onPlan?'':(ahead?'ok':'err'))+'">'+(onPlan?'':(ahead?'▲ ':'▼ '))+txt+'</span></div>';
+      }
+    }
+
+    let chip, metricRow;
     if (gl.wdMode === 'swr') {
       const cashAtRet = (proj.rows[Math.min(retIdx, proj.rows.length-1)]||{}).cashVal||0;
       const investAtRet = Math.max(0, portRet - cashAtRet);
       const swrPortfolio = Math.round(investAtRet * gl.swr * (1 - gl.gainFrac * gl.taxRate) / 12);
-      const nAccum = Math.max(0, sc.retAge - gl.currentAge);
-      const inflAtRet = Math.pow(1 + gl.inflation, nAccum);
+      const inflAtRet = Math.pow(1 + gl.inflation, Math.max(0, sc.retAge - gl.currentAge));
       const pensionMonthly = sc.retAge >= gl.pensionAge ? Math.round(gl.pensionAmt * inflAtRet) : 0;
       const partnerPensionMonthly = (sc.hasPartner && sc.retAge >= gl.partnerPensionAge)
         ? Math.round(gl.partnerPension * inflAtRet) : 0;
       const netMonthly = swrPortfolio + pensionMonthly + partnerPensionMonthly;
       const partnerMult = sc.hasPartner ? gl.partnerSpendMult : 1;
       const baseTargetMonthly = gl.spendRet * partnerMult * inflAtRet;
-      const retYear = gl.baseYear + nAccum;
       let childMonthlyAtRet = 0;
       if (sc.hasChild) {
         const childAgeAtRet = retYear - gl.childBirthYear;
@@ -1910,24 +1922,25 @@ function renderSummaryTiles(projs, gl, scenarios) {
       const ok = !depletionYear;
       const incomeOk = netMonthly >= targetMonthly;
       chip = '<span class="ms-chip '+(ok?'ok':'err')+'">'+(ok?'✓ Lasts':'× Depletes')+'</span>';
-      metric = '<span style="color:var(--'+(incomeOk?'ok':'err')+')">'+eur(netMonthly)+'/mo <span class="tgt">/ '+eur(targetMonthly)+'</span></span>';
-      metricLabel = 'monthly income';
+      metricRow = '<div class="sc-result-row"><span class="k">Monthly income</span><span class="v '+(incomeOk?'ok':'err')+'">'+eur(netMonthly)+' <span class="tgt">/ '+eur(targetMonthly)+'</span></span></div>';
     } else {
       const fireRet = proj.fireTarget;
       const ok = portRet >= fireRet;
       chip = '<span class="ms-chip '+(ok?'ok':'err')+'">'+(ok?'✓ On Track':'× Gap')+'</span>';
-      metric = eur(portRet);
-      metricLabel = 'portfolio at ret.';
+      metricRow = '<div class="sc-result-row"><span class="k">FIRE Number</span><span class="v">'+eur(fireRet)+'</span></div>';
     }
     html +=
       '<div class="sc-summary-tile'+(i===activeScIdx?' active':'')+'" style="border-top:2.5px solid var(--'+cv+')" onclick="setActiveScenario('+i+')">' +
         '<div class="tile-hd">' +
           '<span style="font-size:13px;font-weight:700;color:var(--'+cv+')">'+name+'</span>' +
-          chip+
+          chip +
         '</div>' +
-        '<div style="font-size:10px;color:var(--sec)">Retire age '+sc.retAge+'</div>' +
-        '<div style="font-size:12px;font-family:\'DM Mono\',monospace;margin-top:4px">'+metric+'</div>' +
-        '<div style="font-size:10px;color:var(--muted)">'+metricLabel+'</div>' +
+        '<div class="sc-result-rows" style="margin-top:6px">' +
+          '<div class="sc-result-row"><span class="k">Retire age</span><span class="v">'+sc.retAge+' &middot; '+retYear+'</span></div>' +
+          vsPlanRow +
+          metricRow +
+          '<div class="sc-result-row"><span class="k">NW at retirement</span><span class="v">'+eur(portRet)+'</span></div>' +
+        '</div>' +
       '</div>';
   });
   row.innerHTML = html;
@@ -2000,11 +2013,12 @@ function updateLabels() {
   const name=getScenarioName(activeScIdx);
   const dot=el('projLegDot'),lbl=el('projLegName'),dash=el('projLegDash');
   if(dot) dot.style.background=cv;
-  if(lbl) lbl.textContent=name;
   if(dash) dash.style.borderColor=FIRE_LINE; // FIRE Target legend uses the neutral reference colour
   // Plan-vs-actual legend entries — shown only when past history exists
   const baseYr=numVal('baseYear',2026);
   const showAct = nwHistory.length>0 && nwHistory.some(r=>r.val>0) && Math.min(...nwHistory.map(r=>r.year))<baseYr;
+  // the solid line is your actuals → projection; label it "Actuals" once history exists
+  if(lbl) lbl.textContent = showAct ? 'Actuals' : name;
   const lp=el('legPlan'), lpd=el('legPlanDash');
   if(lp) lp.style.display=showAct?'':'none';
   if(lpd) lpd.style.borderColor=cv;
@@ -2027,6 +2041,12 @@ function setActiveScenario(idx) {
     buildChart(lastProjs, lastGl);
     buildAllocChart(lastProjs, lastGl);
     renderTable(lastProjs, lastGl);
+    // keep the summary-tile carousel in sync so the whole Results view matches
+    const sumRow = el('scSummaryRow');
+    if (sumRow) {
+      const tiles = sumRow.querySelectorAll('.sc-summary-tile');
+      if (tiles[idx]) sumRow.scrollTo({ left: tiles[idx].offsetLeft, behavior: 'smooth' });
+    }
   }
 }
 
