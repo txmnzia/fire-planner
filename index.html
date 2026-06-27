@@ -78,12 +78,11 @@ select option{background:var(--card);}
 .field-row .field{margin:0;}
 
 /* SITUATION TAB */
-.sit-body{max-width:860px;margin:0 auto;padding:24px 24px 60px;display:flex;flex-direction:column;gap:28px;}
+.sit-body{max-width:none;margin:0;padding:24px 28px 60px;display:flex;flex-direction:column;gap:28px;}
 .sit-section{display:flex;flex-direction:column;gap:0;}
 .sit-hd{font-size:11px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--muted);padding-bottom:10px;border-bottom:1px solid var(--bdr);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
-.sit-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;align-items:end;}
-.sit-grid.g3{grid-template-columns:1fr 1fr 1fr;}
-.sit-grid.g1{grid-template-columns:1fr;}
+.sit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px 18px;align-items:end;}
+.sit-grid.g1{grid-template-columns:minmax(0,360px);}
 .sit-full{grid-column:1/-1;}
 .mult-preview{background:var(--dim);border:1px solid var(--bdr);border-radius:var(--rs);padding:5px 10px;display:flex;flex-direction:column;gap:3px;min-height:36px;justify-content:center;}
 .mult-preview-row{display:flex;justify-content:space-between;align-items:center;gap:6px;}
@@ -378,10 +377,8 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   /* My Situation: tighter side padding + clear iOS bottom toolbar */
   .sit-body{padding-left:16px;padding-right:16px;padding-bottom:max(60px, calc(40px + env(safe-area-inset-bottom)));}
 
-  /* Situation grids: collapse 3-col to 2-col on narrow screens */
-  .sit-grid.g3{grid-template-columns:1fr 1fr;}
-  /* Tighter grid gaps on mobile */
-  .sit-grid{gap:14px 14px;}
+  /* Situation grids: single column on narrow screens */
+  .sit-grid{grid-template-columns:1fr;gap:14px 14px;}
 
   /* Net-worth history: larger touch targets */
   .nw-del{width:44px;height:44px;font-size:18px;}
@@ -427,7 +424,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 <body>
 <div id="lockScreen">
   <div class="lock-box">
-    <h2>🔥 FIRE Planner</h2>
+    <h2>FIRE Planner</h2>
     <input type="password" id="lockInput" placeholder="Password" onkeydown="if(event.key==='Enter')unlock()">
     <button onclick="unlock()">Unlock</button>
     <span class="lock-err" id="lockErr"></span>
@@ -436,7 +433,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">&#x1F525; FIRE Planner <span class="logo-tag">v6.4</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v6.4</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -452,16 +449,16 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
 <nav class="tab-nav" role="tablist" aria-label="App sections">
   <button class="tab-btn active" role="tab" data-tab="situation" aria-selected="true" onclick="switchTab('situation')">
-    <span>&#x1F4CB;</span> My Situation <span class="tab-num">1</span>
+    <span class="tab-num">1</span> My Situation
   </button>
   <button class="tab-btn" role="tab" data-tab="scenarios" aria-selected="false" onclick="switchTab('scenarios')">
-    <span>&#x1F4CA;</span> Scenarios <span class="tab-num">2</span>
+    <span class="tab-num">2</span> Scenarios
   </button>
   <button class="tab-btn" role="tab" data-tab="results" aria-selected="false" onclick="switchTab('results')">
-    <span>&#x2728;</span> Results <span class="tab-num">3</span>
+    <span class="tab-num">3</span> Results
   </button>
   <button class="tab-btn" role="tab" data-tab="montecarlo" aria-selected="false" onclick="switchTab('montecarlo')">
-    <span>&#x1F3B2;</span> Monte Carlo <span class="tab-num">4</span>
+    <span class="tab-num">4</span> Monte Carlo
   </button>
 </nav>
 
@@ -475,8 +472,8 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
   <!-- YOUR PORTFOLIO -->
   <section class="sit-section">
-    <div class="sit-hd">&#x1F4B0; Your Portfolio</div>
-    <div class="sit-grid g1" style="max-width:480px">
+    <div class="sit-hd">Your Portfolio</div>
+    <div class="sit-grid g1">
       <div class="field">
         <label>Import IBKR Activity Statement</label>
         <button class="upload-btn" id="uploadBtn" onclick="document.getElementById('csvInput').click()">
@@ -487,7 +484,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
         <div class="pb" id="holdingsList" style="display:none"></div>
       </div>
     </div>
-    <div class="sit-grid" style="margin-top:10px;max-width:480px">
+    <div class="sit-grid" style="margin-top:10px">
       <div class="field">
         <label for="cash">Cash &amp; Savings</label>
         <div class="unit-wrap"><input type="number" id="cash" value="30000" min="0" step="500" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
@@ -497,7 +494,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
         <div class="unit-wrap"><input type="number" id="cashReturn" value="1" min="0" max="10" step="0.25" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
       </div>
     </div>
-    <div style="max-width:480px">
+    <div style="max-width:480px;margin-top:10px">
       <div class="port-banner">
         <span class="lbl">Total Portfolio</span>
         <span class="val" id="totalPortfolio">&#x20AC; &#x2014;</span>
@@ -507,9 +504,9 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
   <!-- NET WORTH HISTORY -->
   <section class="sit-section">
-    <div class="sit-hd">📈 Net Worth History <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:6px;">Compare plan vs actuals</span></div>
-    <div style="max-width:480px">
-      <div id="nwHistList" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="sit-hd">Net Worth History <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:6px;">Compare plan vs actuals</span></div>
+    <div style="max-width:760px">
+      <div id="nwHistList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px"></div>
       <button class="upload-btn" style="margin-top:10px" onclick="addNwRow()">+ Add net worth snapshot</button>
       <p style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5">Enter your total net worth at past points in time (e.g. the start of each year since you began your FIRE journey). Optionally add your real monthly net income and spending for each period — the plan curve will use those instead of today's assumptions. The Results chart shows your net worth (actuals flowing into the projection) against the plan, and each scenario card tells you how many years ahead or behind you are.</p>
     </div>
@@ -517,8 +514,8 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
   <!-- ABOUT YOU -->
   <section class="sit-section">
-    <div class="sit-hd">&#x1F9D1; About You</div>
-    <div class="sit-grid g3" style="max-width:600px">
+    <div class="sit-hd">About You</div>
+    <div class="sit-grid">
       <div class="field">
         <label for="dob">Date of Birth</label>
         <input type="date" id="dob" value="1994-03-12" oninput="recalc()" onchange="recalc()">
@@ -536,8 +533,8 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
   <!-- INCOME & SPENDING -->
   <section class="sit-section">
-    <div class="sit-hd">&#x1F4B3; Income &amp; Spending</div>
-    <div class="sit-grid" style="max-width:600px">
+    <div class="sit-hd">Income &amp; Spending</div>
+    <div class="sit-grid">
       <div class="field">
         <label for="baseIncome">Monthly Income (net)</label>
         <div class="unit-wrap"><input type="number" id="baseIncome" value="6700" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
@@ -566,8 +563,8 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
   <!-- MARKET ASSUMPTIONS -->
   <section class="sit-section">
-    <div class="sit-hd">&#x1F4C8; Market Assumptions</div>
-    <div class="sit-grid g3" style="max-width:600px">
+    <div class="sit-hd">Market Assumptions</div>
+    <div class="sit-grid">
       <div class="field">
         <label for="stockRet">Stock Return (annual)</label>
         <div class="unit-wrap"><input type="number" id="stockRet" value="7" min="0" max="20" step="0.5" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
@@ -593,8 +590,8 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
   <!-- TAX -->
   <section class="sit-section">
-    <div class="sit-hd">&#x1F3DB; Tax &amp; Country</div>
-    <div class="sit-grid" style="max-width:480px">
+    <div class="sit-hd">Tax &amp; Country</div>
+    <div class="sit-grid">
       <div class="field">
         <label for="retCountry">Country of Residence</label>
         <select id="retCountry" oninput="recalc()" onchange="recalc()">
@@ -631,9 +628,9 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
   <!-- FUTURE INCOME -->
   <section class="sit-section">
-    <div class="sit-hd">&#x1F4E9; Future Income</div>
+    <div class="sit-hd">Future Income</div>
     <div class="sub-hd" id="pensionGroupHd">State Pension</div>
-    <div class="sit-grid" style="max-width:480px;margin-bottom:20px">
+    <div class="sit-grid" style="margin-bottom:20px">
       <div class="field">
         <label for="pensionAmt">Pension Amount (gross)</label>
         <div class="unit-wrap"><input type="number" id="pensionAmt" value="800" min="0" step="50" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
@@ -644,7 +641,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
       </div>
     </div>
     <div class="sub-hd">One-off Windfalls</div>
-    <div style="display:flex;flex-direction:column;gap:8px;max-width:480px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px 18px">
       <div class="field-row"><div class="field"><label for="wf0_yr">Year</label><input type="number" id="wf0_yr" value="2030" min="2024" max="2080" oninput="recalc()" onchange="recalc()"></div><div class="field"><label for="wf0_amt">Amount</label><div class="unit-wrap"><input type="number" id="wf0_amt" value="100000" min="0" step="1000" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div></div></div>
       <div class="field-row"><div class="field"><label for="wf1_yr">Year</label><input type="number" id="wf1_yr" placeholder="e.g. 2032" min="2024" max="2080" oninput="recalc()" onchange="recalc()"></div><div class="field"><label for="wf1_amt">Amount</label><div class="unit-wrap"><input type="number" id="wf1_amt" placeholder="0" min="0" step="1000" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div></div></div>
       <div class="field-row"><div class="field"><label for="wf2_yr">Year</label><input type="number" id="wf2_yr" placeholder="e.g. 2035" min="2024" max="2080" oninput="recalc()" onchange="recalc()"></div><div class="field"><label for="wf2_amt">Amount</label><div class="unit-wrap"><input type="number" id="wf2_amt" placeholder="0" min="0" step="1000" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div></div></div>
@@ -653,8 +650,8 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
   <!-- PARTNER -->
   <section class="sit-section">
-    <div class="sit-hd">&#x1F91D; Partner <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:6px;">Enable per scenario</span></div>
-    <div class="sit-grid" style="max-width:600px">
+    <div class="sit-hd">Partner <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:6px;">Enable per scenario</span></div>
+    <div class="sit-grid">
       <div class="field">
         <label for="partnerInc">Partner Monthly Income (net)</label>
         <div class="unit-wrap"><input type="number" id="partnerInc" value="4000" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
@@ -686,8 +683,8 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
   <!-- PROPERTY -->
   <section class="sit-section">
-    <div class="sit-hd">&#x1F3E0; Property Purchase <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:6px;">Enable per scenario</span></div>
-    <div class="sit-grid" style="max-width:600px">
+    <div class="sit-hd">Property Purchase <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:6px;">Enable per scenario</span></div>
+    <div class="sit-grid">
       <div class="field">
         <label for="propBuyYear">Purchase Year</label>
         <input type="number" id="propBuyYear" value="2029" min="2024" max="2080" oninput="recalc()" onchange="recalc()">
@@ -721,8 +718,8 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
   <!-- CHILD -->
   <section class="sit-section">
-    <div class="sit-hd">&#x1F476; Having a Child <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:6px;">Enable per scenario</span></div>
-    <div class="sit-grid" style="max-width:600px">
+    <div class="sit-hd">Having a Child <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:6px;">Enable per scenario</span></div>
+    <div class="sit-grid">
       <div class="field">
         <label for="childBirthYear">Child's Birth Year</label>
         <input type="number" id="childBirthYear" value="2027" min="2024" max="2060" oninput="recalc()" onchange="recalc()">
