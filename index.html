@@ -52,6 +52,7 @@ body{height:100vh;display:flex;flex-direction:column;overflow:hidden;background:
 .tab-btn[data-tab="situation"].active{border-bottom-color:var(--sec);}
 .tab-btn[data-tab="scenarios"].active{border-bottom-color:var(--s1c);}
 .tab-btn[data-tab="results"].active{border-bottom-color:var(--s3c);}
+.tab-btn[data-tab="montecarlo"].active{border-bottom-color:var(--s4c);}
 .tab-num{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);background:var(--dim);border:1px solid var(--bdr);border-radius:10px;padding:0 5px;min-width:16px;text-align:center;}
 .tab-btn.active .tab-num{color:var(--text);}
 
@@ -228,6 +229,39 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .dtbl .dim{color:var(--muted);}
 .csv-dl-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--bdr);background:var(--dim);color:var(--sec);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:border-color .15s,color .15s;}
 .csv-dl-btn:hover{border-color:var(--sec);color:var(--text);}
+
+/* ── MONTE CARLO TAB ── */
+.mc-body{padding:18px;display:flex;flex-direction:column;gap:14px;}
+.mc-controls{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:12px 16px;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;}
+.mc-ctl{display:flex;flex-direction:column;gap:4px;}
+.mc-ctl label{font-size:10px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;}
+.mc-ctl select{background:var(--dim);border:1px solid var(--bdr);border-radius:var(--rs);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:6px 8px;cursor:pointer;}
+.mc-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:var(--sec);user-select:none;}
+.mc-toggle input{accent-color:var(--s4c);width:15px;height:15px;cursor:pointer;}
+.mc-run-btn{margin-left:auto;background:var(--s4a);border:1px solid var(--s4c);color:var(--s4c);font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;padding:8px 20px;border-radius:var(--rs);cursor:pointer;transition:background .15s;white-space:nowrap;}
+.mc-run-btn:hover{background:rgba(244,114,182,.22);}
+.mc-run-btn:disabled{opacity:.5;cursor:default;}
+.mc-status{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);align-self:center;}
+.mc-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+.mc-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:12px;cursor:pointer;transition:border-color .15s,background .15s;border-top:3px solid var(--cc,var(--bdr));}
+.mc-card:hover{border-color:var(--sec);}
+.mc-card.active{background:var(--dim);border-color:var(--sec);}
+.mc-card-name{font-size:11px;font-weight:600;color:var(--sec);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px;}
+.mc-card-rate{font-family:'DM Mono',monospace;font-size:24px;font-weight:500;line-height:1;}
+.mc-card-sub{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:5px;}
+.mc-card-bar{height:4px;border-radius:2px;background:var(--dim);margin-top:8px;overflow:hidden;}
+.mc-card-bar>div{height:100%;border-radius:2px;}
+.mc-rate-hi{color:var(--ok);} .mc-rate-mid{color:var(--s2c);} .mc-rate-lo{color:var(--err);}
+.mc-bar-hi{background:var(--ok);} .mc-bar-mid{background:var(--s2c);} .mc-bar-lo{background:var(--err);}
+.mc-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.mc-tile{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:12px 14px;}
+.mc-tile-lbl{font-size:10px;color:var(--muted);letter-spacing:.3px;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.mc-tile-val{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--text);}
+.mc-tile-val.muted{color:var(--muted);font-size:14px;}
+.mc-tile-note{font-size:10px;color:var(--muted);margin-top:4px;}
+.mc-modenote{font-size:11px;color:var(--s2c);background:var(--s2a);border:1px solid rgba(251,191,36,.25);border-radius:var(--rs);padding:8px 12px;line-height:1.5;}
+.mc-empty{text-align:center;color:var(--muted);font-size:13px;padding:40px 20px;}
+.mc-info{font-size:11px;color:var(--muted);line-height:1.5;background:var(--card);border:1px solid var(--bdrs);border-radius:var(--r);padding:12px 14px;}
 
 /* ── MOBILE-ONLY COMPONENTS (hidden on desktop) ── */
 .sc-nav{display:none;justify-content:center;align-items:center;gap:4px;padding:10px 0 2px;flex-shrink:0;}
@@ -425,6 +459,9 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   </button>
   <button class="tab-btn" role="tab" data-tab="results" aria-selected="false" onclick="switchTab('results')">
     <span>&#x2728;</span> Results <span class="tab-num">3</span>
+  </button>
+  <button class="tab-btn" role="tab" data-tab="montecarlo" aria-selected="false" onclick="switchTab('montecarlo')">
+    <span>&#x1F3B2;</span> Monte Carlo <span class="tab-num">4</span>
   </button>
 </nav>
 
@@ -994,6 +1031,77 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
 </div>
 </div><!-- /tab-panel-results -->
+
+<!-- ════════════════════════════════════════════════════════════
+     TAB 4 — MONTE CARLO
+════════════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-panel-montecarlo" role="tabpanel">
+<div class="mc-body">
+
+  <div class="mc-controls">
+    <div class="mc-ctl">
+      <label for="mcSims">Simulations</label>
+      <select id="mcSims" onchange="scheduleSave()">
+        <option value="500">500</option>
+        <option value="1000" selected>1,000</option>
+        <option value="2500">2,500</option>
+        <option value="5000">5,000</option>
+      </select>
+    </div>
+    <div class="mc-ctl">
+      <label for="mcBlock">Block length</label>
+      <select id="mcBlock" onchange="scheduleSave()">
+        <option value="1">1 year</option>
+        <option value="3">3 years</option>
+        <option value="5" selected>5 years</option>
+        <option value="10">10 years</option>
+      </select>
+    </div>
+    <label class="mc-toggle"><input type="checkbox" id="mcRecenter" checked onchange="scheduleSave()"> Recenter to my return assumptions</label>
+    <span class="mc-status" id="mcStatus"></span>
+    <button class="mc-run-btn" id="mcRunBtn" onclick="runMonteCarloUI()">&#x25B6; Run simulation</button>
+  </div>
+
+  <div class="mc-cards" id="mcCards"></div>
+  <div class="mc-modenote" id="mcModeNote" style="display:none"></div>
+
+  <div id="mcDetail" style="display:none">
+    <div class="mc-tiles" id="mcTiles"></div>
+
+    <div class="chart-card" style="margin-top:14px">
+      <div class="chart-top">
+        <div class="chart-title" id="mcFanTitle">Outcome Range Over Time</div>
+        <div class="chart-legend">
+          <div class="leg-item"><div class="leg-dot" style="background:var(--s4c)"></div><span>Median</span></div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--s4a);border:1px solid var(--s4c)"></div><span>10th–90th pct</span></div>
+          <div class="leg-item"><div class="leg-line" style="border-color:var(--sec)"></div><span>FIRE Target</span></div>
+        </div>
+      </div>
+      <div style="position:relative;height:240px"><canvas id="mcFanChart"></canvas></div>
+    </div>
+
+    <div class="chart-card" style="margin-top:14px">
+      <div class="chart-top">
+        <div class="chart-title">Distribution of Ending Net Worth <span style="color:var(--muted);font-weight:400">(real, today's €)</span></div>
+      </div>
+      <div style="position:relative;height:160px"><canvas id="mcHistChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="mc-empty" id="mcEmpty">Run a simulation to see how your scenarios hold up across thousands of market histories.</div>
+
+  <div class="mc-info">
+    <strong>Method:</strong> historical block bootstrap. Each path stitches random blocks of consecutive
+    real market years (MSCI World developed-markets total returns + a global government-bond proxy, 1970–2024),
+    preserving real crashes, recoveries and stock/bond co-movement. With recentering on, history's
+    volatility and sequencing are kept but the average return is re-anchored to your own stock/bond
+    assumptions. Inflation is held at your fixed input. <strong>Success</strong> = portfolio never depleted
+    before life expectancy. Spending-swing, larger-end and smaller-end figures compare each path against its
+    own inflation-adjusted value at retirement.
+  </div>
+
+</div>
+</div><!-- /tab-panel-montecarlo -->
 </div><!-- /tab-panels -->
 
 <!-- ── GITHUB SYNC MODAL ── -->
@@ -1042,6 +1150,9 @@ let nwHistory = []; // [{year,val}] manual net-worth snapshots for plan-vs-actua
 let chart = null, allocChart = null;
 let activeScIdx = 0;
 let lastProjs = null, lastGl = null, lastScenarios = null;
+// Monte Carlo tab state
+let mcFanChart = null, mcHistChart = null;
+let mcResults = null, mcActiveIdx = 0, mcGl = null;
 
 // per-scenario feature toggles: features[s][feat] = true/false
 // s = 1..5, feat = 'partner'|'prop'|'child'
@@ -1207,6 +1318,7 @@ function switchTab(name) {
   });
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("active", p.id==="tab-panel-"+name));
   if (name==="results") setTimeout(()=>{ if(chart)chart.resize(); if(allocChart)allocChart.resize(); }, 50);
+  if (name==="montecarlo") setTimeout(()=>{ if(mcFanChart)mcFanChart.resize(); if(mcHistChart)mcHistChart.resize(); }, 50);
 }
 
 // ── FEATURE TOGGLES ────────────────────────────────────────────────────────
@@ -1484,7 +1596,6 @@ function project(sc, gl, opts) {
 
   for (let yr = loopStart; yr <= endYear; yr++) {
     const age  = gl.currentAge+(yr-startYear);
-    const r    = portReturnAt(gl,age,sc.retAge);
     const t    = yr-startYear;
     const infl = Math.pow(1+gl.inflation,t);
     const baseSpend = gl.spendRet*(sc.hasPartner ? gl.partnerSpendMult : 1);
@@ -1493,6 +1604,12 @@ function project(sc, gl, opts) {
     const sNow=gl.stockAlloc, sRet=1-gl.bondAllocRet;
     const sf = age>=sc.retAge ? sRet : sNow+(sRet-sNow)*Math.max(0,Math.min(1,t/Math.max(1,sc.retAge-gl.currentAge)));
     allocations.push(Math.round(sf*100));
+    // Monte Carlo: when a sampled return sequence is injected (opts.returnSeq),
+    // blend the drawn stock/bond returns by this year's glide-path allocation.
+    // Otherwise fall back to the deterministic glide-path return — unchanged.
+    const r = (opts.returnSeq && opts.returnSeq[t])
+      ? sf*opts.returnSeq[t].stock + (1-sf)*opts.returnSeq[t].bond
+      : portReturnAt(gl,age,sc.retAge);
 
     let fireNum;
     if (yr<retYear) {
@@ -1575,6 +1692,14 @@ function project(sc, gl, opts) {
         gross=portAfterGrowth*gl.swr;
         netNeeded=gross*(1-gainFracNow*gl.taxRate);
         row.spending=Math.round(netNeeded);
+        // Income-adequacy bookkeeping (used by Monte Carlo): does the SWR draw,
+        // plus pensions, actually cover the full inflation-adjusted spending need?
+        // The one-time property purchase lump is excluded — only ongoing living costs.
+        let partnerPensionAnn=0;
+        if (sc.hasPartner&&age>=gl.partnerPensionAge) partnerPensionAnn=gl.partnerPension*12*infl;
+        row.partnerPension=Math.round(partnerPensionAnn);
+        row.swrIncome=Math.round(netNeeded+pAnn+partnerPensionAnn);
+        row.swrTarget=Math.round(Math.max(0, annRetSpend+childCostInYear(yr)+mortgageAnnRet-rentSavingsAnnRet));
       } else {
         let targetSpend=annRetSpend;
         const childCost=childCostInYear(yr);
@@ -1627,6 +1752,293 @@ function fireCrossYear(proj, target) {
     if (proj.values[i] >= target) return proj.years[i];
   }
   return null;
+}
+
+// ── MONTE CARLO ENGINE ───────────────────────────────────────────────────────
+// Historical block-bootstrap simulation. Each simulated path is built by stitching
+// together random blocks of *consecutive* historical years drawn from the MSCI World
+// (developed markets, gross, USD) annual total returns and a global government-bond
+// proxy, 1970–2024. Sampling stock & bond from the same historical year preserves
+// their real co-movement. With recentering ON (default) each draw keeps history's
+// deviation from its own mean but is re-anchored to the user's assumed stockRet/
+// bondRet — so volatility, fat tails and crash-then-recovery sequencing stay real
+// while the average return matches the plan's own assumptions. Inflation is kept
+// deterministic (the user's inflation input) for v1.
+//
+// NOTE: these are *approximate* annual total returns compiled from public sources,
+// chosen to reproduce realistic year-to-year dynamics rather than exact index levels.
+// Replace the arrays below to plug in your own return history (stock & bond must
+// stay aligned by year, same length).
+const MC_HIST_START_YEAR = 1970;
+const MC_HIST_STOCK = [
+  -0.020, 0.184, 0.225,-0.152,-0.255, 0.336, 0.145, 0.047, 0.182, 0.127, // 1970-79
+   0.257,-0.048, 0.113, 0.233, 0.047, 0.418, 0.428, 0.168, 0.239, 0.172, // 1980-89
+  -0.170, 0.183,-0.052, 0.231, 0.051, 0.213, 0.135, 0.158, 0.243, 0.249, // 1990-99
+  -0.132,-0.168,-0.199, 0.331, 0.147, 0.095, 0.201, 0.090,-0.407, 0.300, // 2000-09
+   0.118,-0.055, 0.158, 0.267, 0.049,-0.009, 0.075, 0.224,-0.087, 0.277, // 2010-19
+   0.159, 0.218,-0.181, 0.238, 0.187,                                    // 2020-24
+];
+const MC_HIST_BOND = [
+   0.169, 0.087, 0.052, 0.037, 0.020, 0.036, 0.156, 0.030, 0.014, 0.019, // 1970-79
+   0.027, 0.063, 0.326, 0.084, 0.152, 0.221, 0.153, 0.028, 0.079, 0.145, // 1980-89
+   0.090, 0.160, 0.074, 0.098,-0.029, 0.185, 0.036, 0.097, 0.087,-0.008, // 1990-99
+   0.116, 0.084, 0.103, 0.041, 0.043, 0.024, 0.043, 0.070, 0.052, 0.059, // 2000-09
+   0.065, 0.078, 0.042,-0.020, 0.060, 0.005, 0.026, 0.035, 0.000, 0.087, // 2010-19
+   0.075,-0.015,-0.130, 0.055, 0.013,                                    // 2020-24
+];
+
+function mcMean(a){ let s=0; for (const x of a) s+=x; return s/a.length; }
+
+// Seedable PRNG (mulberry32) → runs are reproducible for identical inputs.
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Build one bootstrapped return path covering year-offsets 0..len as
+// [{stock,bond}, …], stitching random blocks of `blockLen` consecutive
+// historical years (wrapping at the end of the dataset), optionally recentered.
+function mcBuildPath(rng, len, blockLen, recenter, stockMean, bondMean, hStockMean, hBondMean){
+  const N = MC_HIST_STOCK.length;
+  const seq = new Array(len+1);
+  let i = 0;
+  while (i <= len) {
+    const start = Math.floor(rng()*N);
+    for (let b=0; b<blockLen && i<=len; b++, i++){
+      const idx = (start+b)%N;
+      let s = MC_HIST_STOCK[idx], bd = MC_HIST_BOND[idx];
+      if (recenter){ s = stockMean + (s - hStockMean); bd = bondMean + (bd - hBondMean); }
+      seq[i] = { stock:s, bond:bd };
+    }
+  }
+  return seq;
+}
+
+// Linear-interpolated percentile from an ascending-sorted array.
+function mcPct(sorted, p){
+  if (!sorted.length) return 0;
+  const idx = (sorted.length-1)*p, lo = Math.floor(idx), hi = Math.ceil(idx);
+  return lo===hi ? sorted[lo] : sorted[lo] + (sorted[hi]-sorted[lo])*(idx-lo);
+}
+
+// Run the full Monte Carlo across all scenarios. The same set of bootstrapped
+// return paths is reused for every scenario so differences reflect the plan, not
+// sampling noise. Returns one result object per scenario.
+function runMonteCarlo(scenarios, gl, cfg){
+  const N = cfg.sims, blockLen = cfg.blockLen, recenter = cfg.recenter, floor = cfg.floor||0;
+  const horizon = Math.max(1, gl.lifeExp - gl.currentAge);   // year-offsets per path
+  const nYears  = horizon + 1;
+  const hStockMean = mcMean(MC_HIST_STOCK), hBondMean = mcMean(MC_HIST_BOND);
+  const rng = mulberry32(cfg.seed != null ? cfg.seed : 0x1F1E33);
+  const paths = new Array(N);
+  for (let p=0;p<N;p++) paths[p] = mcBuildPath(rng, horizon, blockLen, recenter, gl.stockRet, gl.bondRet, hStockMean, hBondMean);
+
+  const swr = gl.wdMode === 'swr';
+  return scenarios.map(sc => {
+    const retIdx = Math.max(0, Math.min(horizon, sc.retAge - gl.currentAge));
+    const byYear = Array.from({length:nYears}, () => new Float64Array(N));
+    const endVals = new Float64Array(N);
+    let successes=0, largeEnd=0, smallEnd=0, volatileN=0;
+    let shortfallYearSum=0, fundedYearSum=0;     // SWR income-adequacy
+    const nRetYears = Math.max(1, nYears - retIdx);
+    for (let p=0;p<N;p++){
+      const proj = project(sc, gl, { returnSeq: paths[p] });
+      const vals = proj.values, rows = proj.rows;
+      const realFire = vals[retIdx] / Math.pow(1+gl.inflation, retIdx);
+      let survived = true, hadSwing = false, prevRealSpend = null, shortYears = 0;
+      for (let y=0;y<nYears;y++){
+        const v = vals[y]!=null ? vals[y] : 0;
+        byYear[y][p] = v;
+        if (y>=retIdx && v<=floor) survived = false;
+        if (swr && y>=retIdx && rows[y]){
+          const realSpend = rows[y].spending / Math.pow(1+gl.inflation, y);
+          if (prevRealSpend!=null && prevRealSpend>0 && Math.abs(realSpend-prevRealSpend)/prevRealSpend > 0.25) hadSwing = true;
+          prevRealSpend = realSpend;
+          // income adequacy: SWR draw + pensions vs full spending need that year
+          if (rows[y].swrTarget>0 && rows[y].swrIncome < rows[y].swrTarget) shortYears++;
+        }
+      }
+      const realEnd = (vals[nYears-1]!=null?vals[nYears-1]:0) / Math.pow(1+gl.inflation, nYears-1);
+      endVals[p] = realEnd;
+      if (survived) successes++;
+      if (realFire>0){ if (realEnd>=2*realFire) largeEnd++; if (realEnd<=0.5*realFire) smallEnd++; }
+      if (hadSwing) volatileN++;
+      shortfallYearSum += shortYears;
+      fundedYearSum += (nRetYears - shortYears);
+    }
+    const bands = {p10:[],p25:[],p50:[],p75:[],p90:[]};
+    for (let y=0;y<nYears;y++){
+      const arr = Array.from(byYear[y]).sort((a,b)=>a-b);
+      bands.p10.push(mcPct(arr,0.10)); bands.p25.push(mcPct(arr,0.25));
+      bands.p50.push(mcPct(arr,0.50)); bands.p75.push(mcPct(arr,0.75));
+      bands.p90.push(mcPct(arr,0.90));
+    }
+    const endSorted = Array.from(endVals).sort((a,b)=>a-b);
+    return {
+      retYear: gl.baseYear+retIdx, retIdx,
+      successRate: successes/N,
+      volatilePct: swr ? volatileN/N : null,
+      // SWR income adequacy: share of retirement years funded (income ≥ full
+      // spending target), and the expected number of months below target per
+      // simulation (avg shortfall years × 12). Funded-share is used over a
+      // "≥1 short year" frequency, which saturates near 100% over a long horizon.
+      fundedRate: swr ? fundedYearSum/(N*nRetYears) : null,
+      monthsUnderwater: swr ? (shortfallYearSum/N)*12 : null,
+      largeEndPct: largeEnd/N, smallEndPct: smallEnd/N,
+      medianEnd: mcPct(endSorted,0.5), p10End: mcPct(endSorted,0.10), p90End: mcPct(endSorted,0.90),
+      endVals: endSorted, bands,
+      years: Array.from({length:nYears}, (_,y)=> gl.baseYear+y),
+    };
+  });
+}
+
+// ── MONTE CARLO UI ───────────────────────────────────────────────────────────
+function mcEsc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function mcRateClass(rate){ return rate>=0.9?'hi':rate>=0.75?'mid':'lo'; }
+const MC_RATE_COLOR={hi:'var(--ok)',mid:'var(--s2c)',lo:'var(--err)'};
+
+function runMonteCarloUI(){
+  const btn=el('mcRunBtn'); if(!btn) return;
+  el('mcStatus').textContent='Running…'; btn.disabled=true;
+  // Yield a frame so the "Running…" label paints before the blocking compute.
+  requestAnimationFrame(()=>setTimeout(()=>{
+    try {
+      const gl=getGlobals();
+      const scenarios=[1,2,3,4,5].map(s=>getScenario(s,gl));
+      const cfg={ sims:parseInt(el('mcSims').value)||1000,
+                  blockLen:parseInt(el('mcBlock').value)||5,
+                  recenter:el('mcRecenter').checked };
+      const t0=performance.now();
+      const results=runMonteCarlo(scenarios,gl,cfg);
+      const fireTaxMult=1/Math.max(0.001,1-gl.gainFrac*gl.taxRate);
+      results.forEach((r,i)=>{
+        r.name=getScenarioName(i); r.color=COLORS[i]; r.fade=COLORS_FADE[i]; r.alpha=ALPHAS[i];
+        r.fireTarget=computeFireTarget(scenarios[i].retAge,scenarios[i],gl,fireTaxMult);
+      });
+      mcResults=results; mcGl=gl;
+      if (mcActiveIdx>=results.length) mcActiveIdx=0;
+      el('mcStatus').textContent=cfg.sims.toLocaleString('en-US')+' paths · '+Math.round(performance.now()-t0)+' ms';
+      el('mcEmpty').style.display='none'; el('mcDetail').style.display='block';
+      renderMcCards(); selectMcScenario(mcActiveIdx);
+    } catch(e){ el('mcStatus').textContent='Error: '+e.message; console.error(e); }
+    finally { btn.disabled=false; }
+  },0));
+}
+
+// The headline rate shown on each card. In Fixed mode it is depletion-based
+// survival; in SWR mode (where the portfolio can't deplete) it is the share of
+// simulations whose income covered the full spending target every year.
+function mcCardStat(r, swr){
+  return swr
+    ? { rate: r.fundedRate,  sub: 'retirement income on target' }
+    : { rate: r.successRate, sub: 'survival to '+mcGl.lifeExp };
+}
+
+function renderMcCards(){
+  const wrap=el('mcCards'); if(!wrap||!mcResults) return;
+  const swr=mcGl.wdMode==='swr';
+  wrap.innerHTML=mcResults.map((r,i)=>{
+    const st=mcCardStat(r,swr), pct=Math.round(st.rate*100), cls=mcRateClass(st.rate);
+    return '<div class="mc-card'+(i===mcActiveIdx?' active':'')+'" style="--cc:'+r.color+'" onclick="selectMcScenario('+i+')">'
+      +'<div class="mc-card-name" style="color:'+r.color+'">'+mcEsc(r.name)+'</div>'
+      +'<div class="mc-card-rate mc-rate-'+cls+'">'+pct+'%</div>'
+      +'<div class="mc-card-sub">'+st.sub+'</div>'
+      +'<div class="mc-card-bar"><div class="mc-bar-'+cls+'" style="width:'+pct+'%"></div></div>'
+      +'</div>';
+  }).join('');
+  const note=el('mcModeNote');
+  if (note){
+    if (swr){
+      note.style.display='block';
+      note.innerHTML='<strong>SWR mode:</strong> withdrawals are a fixed % of the portfolio, so it mathematically can’t hit zero — depletion-based survival is ~100% by construction. These cards instead show the <strong>share of retirement years</strong> in which your withdrawals (plus pensions) actually <strong>covered your full spending target</strong> — the figure that exposes sequence-of-returns risk. Switch to Fixed-Amount mode for a classic depletion-based survival rate.';
+    } else {
+      note.style.display='none';
+    }
+  }
+}
+
+function selectMcScenario(i){
+  mcActiveIdx=i;
+  document.querySelectorAll('#mcCards .mc-card').forEach((c,idx)=>c.classList.toggle('active',idx===i));
+  renderMcDetail();
+}
+
+function mcTile(lbl,valHtml,note,muted){
+  return '<div class="mc-tile"><div class="mc-tile-lbl">'+lbl+'</div>'
+    +'<div class="mc-tile-val'+(muted?' muted':'')+'">'+valHtml+'</div>'
+    +'<div class="mc-tile-note">'+note+'</div></div>';
+}
+
+// Months below target shown as e.g. "0", "7 mo" or "1 yr 4 mo".
+function mcFmtMonths(m){
+  const tot=Math.round(m); if(tot<=0) return '0';
+  const y=Math.floor(tot/12), mo=tot%12;
+  return (y?y+' yr'+(mo?' ':''):'')+(mo||!y?mo+' mo':'');
+}
+
+function renderMcDetail(){
+  if(!mcResults) return;
+  const r=mcResults[mcActiveIdx];
+  const swr=mcGl.wdMode==='swr';
+  const t=[];
+  if (swr){
+    // SWR: the portfolio can't deplete, so income adequacy is the live risk.
+    const fundClr=MC_RATE_COLOR[mcRateClass(r.fundedRate)];
+    t.push(mcTile('Income on target','<span style="color:'+fundClr+'">'+Math.round(r.fundedRate*100)+'%</span>','share of retirement years funded'));
+    t.push(mcTile('Time below target',mcFmtMonths(r.monthsUnderwater),'expected months income < spending'));
+    t.push(mcTile('Volatile spending',Math.round(r.volatilePct*100)+'%','paths with a >25% real YoY swing'));
+    t.push(mcTile('Smaller end portfolio',Math.round(r.smallEndPct*100)+'%','real ending ≤ ½ value at retirement'));
+  } else {
+    const rc=MC_RATE_COLOR[mcRateClass(r.successRate)];
+    t.push(mcTile('Success rate','<span style="color:'+rc+'">'+Math.round(r.successRate*100)+'%</span>','never depleted before age '+mcGl.lifeExp));
+    t.push(mcTile('Median ending value',fmtK(r.medianEnd),'real, today’s € (P10 '+fmtK(r.p10End)+')'));
+    t.push(mcTile('Larger end portfolio',Math.round(r.largeEndPct*100)+'%','real ending ≥ 2× value at retirement'));
+    t.push(mcTile('Smaller end portfolio',Math.round(r.smallEndPct*100)+'%','real ending ≤ ½ value at retirement'));
+  }
+  el('mcTiles').innerHTML=t.join('');
+  el('mcFanTitle').textContent='Outcome Range Over Time — '+r.name;
+  buildMcFanChart(r); buildMcHistChart(r);
+}
+
+const MC_Y_TICK=v=>v>=1e6?"€"+(v/1e6).toFixed(1)+"M":v>=1e3?"€"+(v/1e3).toFixed(0)+"k":"€"+Math.round(v);
+
+function buildMcFanChart(r){
+  const ctx=el('mcFanChart').getContext('2d'); const labels=r.years;
+  const band18=r.fade.replace('.5)','.2)');   // darker inner-band fill from the fade colour
+  const mk=(data,opt)=>Object.assign({data,pointRadius:0,pointHoverRadius:0,borderWidth:0,tension:.3,fill:false},opt);
+  const ds=[
+    mk(r.bands.p10,{label:'10th pct',borderColor:'transparent'}),
+    mk(r.bands.p90,{label:'90th pct',borderColor:'transparent',backgroundColor:r.alpha,fill:'-1'}),
+    mk(r.bands.p25,{label:'p25',borderColor:'transparent'}),
+    mk(r.bands.p75,{label:'p75',borderColor:'transparent',backgroundColor:band18,fill:'-1'}),
+    mk(r.bands.p50,{label:'Median',borderColor:r.color,borderWidth:2.5}),
+    mk(labels.map(()=>r.fireTarget),{label:'FIRE Target',borderColor:FIRE_LINE,borderWidth:1.5,borderDash:[5,5]}),
+  ];
+  const shown=new Set(['10th pct','Median','90th pct','FIRE Target']);
+  if(mcFanChart) mcFanChart.destroy();
+  mcFanChart=new Chart(ctx,{type:'line',data:{labels,datasets:ds},options:{
+    responsive:true,maintainAspectRatio:false,animation:{duration:250},interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",titleFont:{family:"'DM Sans'",size:11},bodyFont:{family:"'DM Mono'",size:11},padding:10,filter:i=>shown.has(i.dataset.label),callbacks:{title:items=>items[0].label,label:c=>" "+c.dataset.label+": €"+fmt(c.raw)}}},
+    scales:{x:{grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},y:{min:0,grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,callback:MC_Y_TICK}}}
+  }});
+}
+
+function buildMcHistChart(r){
+  const ctx=el('mcHistChart').getContext('2d'); const vals=r.endVals, n=vals.length||1;
+  const hi=Math.max(1,mcPct(vals,0.95)), nb=24, buckets=new Array(nb).fill(0);
+  for(const v of vals){ let b=Math.floor((Math.max(0,v)/hi)*nb); if(b>=nb)b=nb-1; if(b<0)b=0; buckets[b]++; }
+  const labels=buckets.map((_,i)=>fmtK((i+0.5)*hi/nb));
+  const colors=buckets.map((_,i)=> i===0?'rgba(248,113,113,.75)':r.color);
+  if(mcHistChart) mcHistChart.destroy();
+  mcHistChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data:buckets,backgroundColor:colors,borderWidth:0,barPercentage:1,categoryPercentage:.96}]},options:{
+    responsive:true,maintainAspectRatio:false,animation:{duration:200},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",bodyFont:{family:"'DM Mono'",size:11},padding:10,callbacks:{title:items=>"≈"+items[0].label,label:c=>" "+c.raw+" of "+n+" paths ("+Math.round(c.raw/n*100)+"%)"}}},
+    scales:{x:{grid:{display:false},ticks:{color:GC.t,font:GC.f,maxTicksLimit:8}},y:{grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,maxTicksLimit:4}}}
+  }});
 }
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
@@ -2067,6 +2479,7 @@ const SYNC_FIELDS = [
   's1_inc','s2_inc','s3_inc','s4_inc','s5_inc',
   's1_chgYear','s2_chgYear','s3_chgYear','s4_chgYear','s5_chgYear',
   's1_chgInc','s2_chgInc','s3_chgInc','s4_chgInc','s5_chgInc',
+  'mcSims','mcBlock',
 ];
 
 const SAM_STATE = {"v":1,"fields":{"cash":"18000","cashReturn":"1.5","dob":"1994-03-12","lifeExp":"85","baseYear":"2026","baseIncome":"6700","spendNow":"3700","spendRet":"3000","swr":"4","stockRet":"7","bondRet":"3","inflation":"2","bondAllocNow":"0","bondAllocRet":"40","retCountry":"30","pensionAmt":"800","pensionAge":"67","wf0_yr":"2030","wf0_amt":"100000","wf1_yr":"","wf1_amt":"","wf2_yr":"","wf2_amt":"","partnerInc":"1400","partnerRetAge":"67","partnerPension":"400","partnerPensionAge":"67","partnerSpendMult":"1.3","propBuyYear":"2029","propPrice":"400000","propDownPct":"20","propTxCostPct":"8","propMortgageRate":"3.5","propMortgageTerm":"25","propRentSaved":"1200","childBirthYear":"2030","childCostYearly":"12000","childCostUntilAge":"23","childMaternityMonths":"12","childMaternityIncome":"1800","sc1name":"FIRE","sc2name":"With Tatou","sc3name":"Barista","sc4name":"Tatou+kid @FR","sc5name":"All @FR","s1_ret":"42","s2_ret":"45","s3_ret":"50","s4_ret":"59","s5_ret":"63","s1_inc":"","s2_inc":"","s3_inc":"","s4_inc":"","s5_inc":"","s1_chgYear":"","s2_chgYear":"","s3_chgYear":"2030","s4_chgYear":"2031","s5_chgYear":"2031","s1_chgInc":"","s2_chgInc":"","s3_chgInc":"1400","s4_chgInc":"4000","s5_chgInc":"4000"},"wdMode":"swr","features":{"1":{"partner":false,"prop":false,"child":false},"2":{"partner":true,"prop":false,"child":false},"3":{"partner":false,"prop":false,"child":false},"4":{"partner":true,"prop":false,"child":true},"5":{"partner":true,"prop":true,"child":true}},"ibkr":{"total":286780.5899394,"holdings":[{"sym":"IWDA","qty":6,"val":702.21},{"sym":"VWCE","qty":1811,"val":278821.56},{"sym":"Cash","qty":null,"val":7256.8199394}]}};
@@ -2104,8 +2517,10 @@ function collectState() {
   const wdEl = document.querySelector('input[name="wdMode"]:checked');
   const feat = {};
   for (let s = 1; s <= 5; s++) feat[s] = { ...features[s] };
+  const mcRe = el('mcRecenter');
   return { v: 1, fields, wdMode: wdEl ? wdEl.value : 'fixed', features: feat,
     nwHistory: nwHistory,
+    mc: { recenter: mcRe ? mcRe.checked : true },
     ibkr: { total: ibkrTotal, holdings: ibkrHoldings } };
 }
 
@@ -2115,6 +2530,7 @@ function applyState(data) {
   Object.entries(data.fields || {}).forEach(([id, val]) => { const e = el(id); if (e) e.value = val; });
   const radio = document.querySelector(`input[name="wdMode"][value="${data.wdMode}"]`);
   if (radio) radio.checked = true;
+  const mcRe = el('mcRecenter'); if (mcRe && data.mc) mcRe.checked = data.mc.recenter !== false;
   for (let s = 1; s <= 5; s++) { if (data.features?.[s]) features[s] = { ...data.features[s] }; }
   if (data.ibkr) { ibkrTotal = data.ibkr.total || 0; ibkrHoldings = data.ibkr.holdings || []; renderHoldings(); }
   nwHistory = Array.isArray(data.nwHistory) ? data.nwHistory.map(r=>({
