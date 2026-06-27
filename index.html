@@ -1692,6 +1692,14 @@ function project(sc, gl, opts) {
         gross=portAfterGrowth*gl.swr;
         netNeeded=gross*(1-gainFracNow*gl.taxRate);
         row.spending=Math.round(netNeeded);
+        // Income-adequacy bookkeeping (used by Monte Carlo): does the SWR draw,
+        // plus pensions, actually cover the full inflation-adjusted spending need?
+        // The one-time property purchase lump is excluded — only ongoing living costs.
+        let partnerPensionAnn=0;
+        if (sc.hasPartner&&age>=gl.partnerPensionAge) partnerPensionAnn=gl.partnerPension*12*infl;
+        row.partnerPension=Math.round(partnerPensionAnn);
+        row.swrIncome=Math.round(netNeeded+pAnn+partnerPensionAnn);
+        row.swrTarget=Math.round(Math.max(0, annRetSpend+childCostInYear(yr)+mortgageAnnRet-rentSavingsAnnRet));
       } else {
         let targetSpend=annRetSpend;
         const childCost=childCostInYear(yr);
@@ -1835,11 +1843,13 @@ function runMonteCarlo(scenarios, gl, cfg){
     const byYear = Array.from({length:nYears}, () => new Float64Array(N));
     const endVals = new Float64Array(N);
     let successes=0, largeEnd=0, smallEnd=0, volatileN=0;
+    let shortfallYearSum=0, fundedYearSum=0;     // SWR income-adequacy
+    const nRetYears = Math.max(1, nYears - retIdx);
     for (let p=0;p<N;p++){
       const proj = project(sc, gl, { returnSeq: paths[p] });
       const vals = proj.values, rows = proj.rows;
       const realFire = vals[retIdx] / Math.pow(1+gl.inflation, retIdx);
-      let survived = true, hadSwing = false, prevRealSpend = null;
+      let survived = true, hadSwing = false, prevRealSpend = null, shortYears = 0;
       for (let y=0;y<nYears;y++){
         const v = vals[y]!=null ? vals[y] : 0;
         byYear[y][p] = v;
@@ -1848,6 +1858,8 @@ function runMonteCarlo(scenarios, gl, cfg){
           const realSpend = rows[y].spending / Math.pow(1+gl.inflation, y);
           if (prevRealSpend!=null && prevRealSpend>0 && Math.abs(realSpend-prevRealSpend)/prevRealSpend > 0.25) hadSwing = true;
           prevRealSpend = realSpend;
+          // income adequacy: SWR draw + pensions vs full spending need that year
+          if (rows[y].swrTarget>0 && rows[y].swrIncome < rows[y].swrTarget) shortYears++;
         }
       }
       const realEnd = (vals[nYears-1]!=null?vals[nYears-1]:0) / Math.pow(1+gl.inflation, nYears-1);
@@ -1855,6 +1867,8 @@ function runMonteCarlo(scenarios, gl, cfg){
       if (survived) successes++;
       if (realFire>0){ if (realEnd>=2*realFire) largeEnd++; if (realEnd<=0.5*realFire) smallEnd++; }
       if (hadSwing) volatileN++;
+      shortfallYearSum += shortYears;
+      fundedYearSum += (nRetYears - shortYears);
     }
     const bands = {p10:[],p25:[],p50:[],p75:[],p90:[]};
     for (let y=0;y<nYears;y++){
@@ -1868,6 +1882,12 @@ function runMonteCarlo(scenarios, gl, cfg){
       retYear: gl.baseYear+retIdx, retIdx,
       successRate: successes/N,
       volatilePct: swr ? volatileN/N : null,
+      // SWR income adequacy: share of retirement years funded (income ≥ full
+      // spending target), and the expected number of months below target per
+      // simulation (avg shortfall years × 12). Funded-share is used over a
+      // "≥1 short year" frequency, which saturates near 100% over a long horizon.
+      fundedRate: swr ? fundedYearSum/(N*nRetYears) : null,
+      monthsUnderwater: swr ? (shortfallYearSum/N)*12 : null,
       largeEndPct: largeEnd/N, smallEndPct: smallEnd/N,
       medianEnd: mcPct(endSorted,0.5), p10End: mcPct(endSorted,0.10), p90End: mcPct(endSorted,0.90),
       endVals: endSorted, bands,
@@ -1909,22 +1929,32 @@ function runMonteCarloUI(){
   },0));
 }
 
+// The headline rate shown on each card. In Fixed mode it is depletion-based
+// survival; in SWR mode (where the portfolio can't deplete) it is the share of
+// simulations whose income covered the full spending target every year.
+function mcCardStat(r, swr){
+  return swr
+    ? { rate: r.fundedRate,  sub: 'retirement income on target' }
+    : { rate: r.successRate, sub: 'survival to '+mcGl.lifeExp };
+}
+
 function renderMcCards(){
   const wrap=el('mcCards'); if(!wrap||!mcResults) return;
+  const swr=mcGl.wdMode==='swr';
   wrap.innerHTML=mcResults.map((r,i)=>{
-    const pct=Math.round(r.successRate*100), cls=mcRateClass(r.successRate);
+    const st=mcCardStat(r,swr), pct=Math.round(st.rate*100), cls=mcRateClass(st.rate);
     return '<div class="mc-card'+(i===mcActiveIdx?' active':'')+'" style="--cc:'+r.color+'" onclick="selectMcScenario('+i+')">'
       +'<div class="mc-card-name" style="color:'+r.color+'">'+mcEsc(r.name)+'</div>'
       +'<div class="mc-card-rate mc-rate-'+cls+'">'+pct+'%</div>'
-      +'<div class="mc-card-sub">survival to '+mcGl.lifeExp+'</div>'
+      +'<div class="mc-card-sub">'+st.sub+'</div>'
       +'<div class="mc-card-bar"><div class="mc-bar-'+cls+'" style="width:'+pct+'%"></div></div>'
       +'</div>';
   }).join('');
   const note=el('mcModeNote');
   if (note){
-    if (mcGl.wdMode==='swr'){
+    if (swr){
       note.style.display='block';
-      note.innerHTML='<strong>SWR mode:</strong> withdrawals are a fixed % of the portfolio, so it mathematically can’t hit zero — success is ~100% by construction. The real risk here is the <strong>smaller-end portfolio</strong> and <strong>volatile-spending</strong> figures below. Switch to Fixed-Amount withdrawal mode for a meaningful depletion-based success rate.';
+      note.innerHTML='<strong>SWR mode:</strong> withdrawals are a fixed % of the portfolio, so it mathematically can’t hit zero — depletion-based survival is ~100% by construction. These cards instead show the <strong>share of retirement years</strong> in which your withdrawals (plus pensions) actually <strong>covered your full spending target</strong> — the figure that exposes sequence-of-returns risk. Switch to Fixed-Amount mode for a classic depletion-based survival rate.';
     } else {
       note.style.display='none';
     }
@@ -1943,16 +1973,32 @@ function mcTile(lbl,valHtml,note,muted){
     +'<div class="mc-tile-note">'+note+'</div></div>';
 }
 
+// Months below target shown as e.g. "0", "7 mo" or "1 yr 4 mo".
+function mcFmtMonths(m){
+  const tot=Math.round(m); if(tot<=0) return '0';
+  const y=Math.floor(tot/12), mo=tot%12;
+  return (y?y+' yr'+(mo?' ':''):'')+(mo||!y?mo+' mo':'');
+}
+
 function renderMcDetail(){
   if(!mcResults) return;
   const r=mcResults[mcActiveIdx];
-  const rc=MC_RATE_COLOR[mcRateClass(r.successRate)];
+  const swr=mcGl.wdMode==='swr';
   const t=[];
-  t.push(mcTile('Success rate','<span style="color:'+rc+'">'+Math.round(r.successRate*100)+'%</span>','never depleted before age '+mcGl.lifeExp));
-  if(r.volatilePct==null) t.push(mcTile('Volatile spending','n/a','SWR withdrawal mode only',true));
-  else t.push(mcTile('Volatile spending',Math.round(r.volatilePct*100)+'%','paths with a >25% real spending swing'));
-  t.push(mcTile('Larger end portfolio',Math.round(r.largeEndPct*100)+'%','real ending ≥ 2× value at retirement'));
-  t.push(mcTile('Smaller end portfolio',Math.round(r.smallEndPct*100)+'%','real ending ≤ ½ value at retirement'));
+  if (swr){
+    // SWR: the portfolio can't deplete, so income adequacy is the live risk.
+    const fundClr=MC_RATE_COLOR[mcRateClass(r.fundedRate)];
+    t.push(mcTile('Income on target','<span style="color:'+fundClr+'">'+Math.round(r.fundedRate*100)+'%</span>','share of retirement years funded'));
+    t.push(mcTile('Time below target',mcFmtMonths(r.monthsUnderwater),'expected months income < spending'));
+    t.push(mcTile('Volatile spending',Math.round(r.volatilePct*100)+'%','paths with a >25% real YoY swing'));
+    t.push(mcTile('Smaller end portfolio',Math.round(r.smallEndPct*100)+'%','real ending ≤ ½ value at retirement'));
+  } else {
+    const rc=MC_RATE_COLOR[mcRateClass(r.successRate)];
+    t.push(mcTile('Success rate','<span style="color:'+rc+'">'+Math.round(r.successRate*100)+'%</span>','never depleted before age '+mcGl.lifeExp));
+    t.push(mcTile('Median ending value',fmtK(r.medianEnd),'real, today’s € (P10 '+fmtK(r.p10End)+')'));
+    t.push(mcTile('Larger end portfolio',Math.round(r.largeEndPct*100)+'%','real ending ≥ 2× value at retirement'));
+    t.push(mcTile('Smaller end portfolio',Math.round(r.smallEndPct*100)+'%','real ending ≤ ½ value at retirement'));
+  }
   el('mcTiles').innerHTML=t.join('');
   el('mcFanTitle').textContent='Outcome Range Over Time — '+r.name;
   buildMcFanChart(r); buildMcHistChart(r);

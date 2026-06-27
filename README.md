@@ -627,16 +627,22 @@ Runs are reproducible (seeded RNG) — identical inputs give identical results. 
 
 ### Metrics reported
 
-For each scenario:
+The headline metric on each scenario card depends on the withdrawal mode, because the two modes fail in completely different ways:
 
-| Metric | Definition |
-|--------|------------|
-| **Success rate** | % of paths where net worth never hits zero before life expectancy. *In SWR mode this is ~100% by construction* — a percentage-of-portfolio withdrawal can never fully deplete the portfolio — so the risk shows up in the metrics below. In **Fixed-Amount** mode it is a true depletion-based survival probability. |
-| **Volatile spending** | % of paths with at least one retirement year where **real** spending swings more than **25%** vs the prior year. *SWR mode only* — in Fixed mode spending is constant in real terms by design (shown as n/a). |
-| **Larger end portfolio** | % of paths whose **real** ending net worth is **≥ 2×** that same path's inflation-adjusted value at retirement. |
-| **Smaller end portfolio** | % of paths whose **real** ending net worth is **≤ ½** that same path's inflation-adjusted value at retirement. |
+- **Fixed-Amount mode** — withdrawals are a fixed real amount, so the portfolio *can* run out. The headline is a true **depletion-based survival rate**.
+- **SWR mode** — withdrawals are a fixed % of the portfolio, so it can never fully deplete (survival is ~100% by construction). The headline is instead **income adequacy**: in a bad market sequence a 4% draw on a shrunken portfolio may no longer cover your spending. This is where sequence-of-returns risk actually bites.
 
-All end-portfolio comparisons are **per-path** (each path versus its own value at FIRE, which is itself random) and in **real (today's €)** terms.
+| Metric | Mode | Definition |
+|--------|------|------------|
+| **Success rate** | Fixed | % of paths where net worth never hits zero before life expectancy. |
+| **Income on target** | SWR | Share of all retirement years (across all paths) in which income — SWR withdrawal **plus** state & partner pension — covered your full inflation-adjusted spending target. Used instead of a "≥ 1 short year" frequency, which saturates near 100% over a multi-decade retirement. |
+| **Time below target** | SWR | Expected number of months per simulation where income falls short of the full spending target (average shortfall years × 12). Annual resolution. |
+| **Volatile spending** | SWR | % of paths with at least one retirement year where **real** spending swings more than **25%** vs the prior year. (In Fixed mode spending is constant in real terms by design, so this does not apply.) |
+| **Larger end portfolio** | Fixed | % of paths whose **real** ending net worth is **≥ 2×** that same path's inflation-adjusted value at retirement. |
+| **Smaller end portfolio** | both | % of paths whose **real** ending net worth is **≤ ½** that same path's inflation-adjusted value at retirement. |
+| **Median ending value** | Fixed | Median **real** ending net worth across all paths (with the 10th-percentile shown alongside). |
+
+The spending target for the SWR income metrics is the full inflation-adjusted living cost that year (retirement spending + child costs + mortgage − rent saved); a one-time property purchase lump is excluded. All end-portfolio comparisons are **per-path** (each path versus its own value at FIRE, which is itself random) and in **real (today's €)** terms.
 
 ### Visuals
 
