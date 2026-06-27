@@ -1074,7 +1074,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
         <div class="chart-legend">
           <div class="leg-item"><div class="leg-dot" style="background:var(--s4c)"></div><span>Median</span></div>
           <div class="leg-item"><div class="leg-dot" style="background:var(--s4a);border:1px solid var(--s4c)"></div><span>10th–90th pct</span></div>
-          <div class="leg-item"><div class="leg-line" style="border-color:var(--sec)"></div><span>FIRE Target</span></div>
+          <div class="leg-item"><div class="leg-line" style="border-color:var(--sec)"></div><span id="mcFanRefLabel">FIRE Target</span></div>
         </div>
       </div>
       <div style="position:relative;height:240px"><canvas id="mcFanChart"></canvas></div>
@@ -1082,7 +1082,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
     <div class="chart-card" style="margin-top:14px">
       <div class="chart-top">
-        <div class="chart-title">Distribution of Ending Net Worth <span style="color:var(--muted);font-weight:400">(real, today's €)</span></div>
+        <div class="chart-title" id="mcHistTitle">Distribution of Ending Net Worth <span style="color:var(--muted);font-weight:400">(real, today's €)</span></div>
       </div>
       <div style="position:relative;height:160px"><canvas id="mcHistChart"></canvas></div>
     </div>
@@ -1840,35 +1840,43 @@ function runMonteCarlo(scenarios, gl, cfg){
   const swr = gl.wdMode === 'swr';
   return scenarios.map(sc => {
     const retIdx = Math.max(0, Math.min(horizon, sc.retAge - gl.currentAge));
-    const byYear = Array.from({length:nYears}, () => new Float64Array(N));
-    const endVals = new Float64Array(N);
-    let successes=0, largeEnd=0, smallEnd=0, volatileN=0;
-    let shortfallYearSum=0, fundedYearSum=0;     // SWR income-adequacy
     const nRetYears = Math.max(1, nYears - retIdx);
+    const byYear = Array.from({length:nYears}, () => new Float64Array(N));      // net worth bands
+    const byRatio = swr ? Array.from({length:nRetYears}, () => new Float64Array(N)) : null; // funding-ratio bands
+    const endVals = new Float64Array(N);
+    const coverage = swr ? new Float64Array(N) : null;   // per-path average funding ratio
+    const worstYr  = swr ? new Float64Array(N) : null;   // per-path leanest single-year ratio
+    let successes=0, largeEnd=0, smallEnd=0;
+    let shortfallYearSum=0, fundedYearSum=0, condShortSum=0, condShortCount=0;   // SWR income-adequacy
     for (let p=0;p<N;p++){
       const proj = project(sc, gl, { returnSeq: paths[p] });
       const vals = proj.values, rows = proj.rows;
       const realFire = vals[retIdx] / Math.pow(1+gl.inflation, retIdx);
-      let survived = true, hadSwing = false, prevRealSpend = null, shortYears = 0;
+      let survived = true, shortYears = 0, ratioSum = 0, ratioCount = 0, minRatio = Infinity;
       for (let y=0;y<nYears;y++){
         const v = vals[y]!=null ? vals[y] : 0;
         byYear[y][p] = v;
         if (y>=retIdx && v<=floor) survived = false;
         if (swr && y>=retIdx && rows[y]){
-          const realSpend = rows[y].spending / Math.pow(1+gl.inflation, y);
-          if (prevRealSpend!=null && prevRealSpend>0 && Math.abs(realSpend-prevRealSpend)/prevRealSpend > 0.25) hadSwing = true;
-          prevRealSpend = realSpend;
-          // income adequacy: SWR draw + pensions vs full spending need that year
-          if (rows[y].swrTarget>0 && rows[y].swrIncome < rows[y].swrTarget) shortYears++;
+          // funding ratio = portfolio income (SWR draw + pensions) ÷ full annual budget
+          const tgt = rows[y].swrTarget, inc = rows[y].swrIncome;
+          const ratio = tgt>0 ? inc/tgt : 1;
+          byRatio[y-retIdx][p] = ratio;
+          ratioSum += ratio; ratioCount++;
+          if (ratio < minRatio) minRatio = ratio;
+          if (tgt>0 && inc<tgt){ shortYears++; condShortSum += ratio; condShortCount++; }
         }
       }
       const realEnd = (vals[nYears-1]!=null?vals[nYears-1]:0) / Math.pow(1+gl.inflation, nYears-1);
       endVals[p] = realEnd;
       if (survived) successes++;
       if (realFire>0){ if (realEnd>=2*realFire) largeEnd++; if (realEnd<=0.5*realFire) smallEnd++; }
-      if (hadSwing) volatileN++;
-      shortfallYearSum += shortYears;
-      fundedYearSum += (nRetYears - shortYears);
+      if (swr){
+        shortfallYearSum += shortYears;
+        fundedYearSum += (nRetYears - shortYears);
+        coverage[p] = ratioCount>0 ? ratioSum/ratioCount : 1;
+        worstYr[p]  = ratioCount>0 ? minRatio : 1;
+      }
     }
     const bands = {p10:[],p25:[],p50:[],p75:[],p90:[]};
     for (let y=0;y<nYears;y++){
@@ -1877,17 +1885,34 @@ function runMonteCarlo(scenarios, gl, cfg){
       bands.p50.push(mcPct(arr,0.50)); bands.p75.push(mcPct(arr,0.75));
       bands.p90.push(mcPct(arr,0.90));
     }
+    let ratioBands=null, coverageSorted=null, worstSorted=null;
+    if (swr){
+      ratioBands = {p10:[],p25:[],p50:[],p75:[],p90:[]};
+      for (let ry=0;ry<nRetYears;ry++){
+        const arr = Array.from(byRatio[ry]).sort((a,b)=>a-b);
+        ratioBands.p10.push(mcPct(arr,0.10)); ratioBands.p25.push(mcPct(arr,0.25));
+        ratioBands.p50.push(mcPct(arr,0.50)); ratioBands.p75.push(mcPct(arr,0.75));
+        ratioBands.p90.push(mcPct(arr,0.90));
+      }
+      coverageSorted = Array.from(coverage).sort((a,b)=>a-b);
+      worstSorted    = Array.from(worstYr).sort((a,b)=>a-b);
+    }
     const endSorted = Array.from(endVals).sort((a,b)=>a-b);
     return {
       retYear: gl.baseYear+retIdx, retIdx,
       successRate: successes/N,
-      volatilePct: swr ? volatileN/N : null,
-      // SWR income adequacy: share of retirement years funded (income ≥ full
-      // spending target), and the expected number of months below target per
-      // simulation (avg shortfall years × 12). Funded-share is used over a
+      // SWR income adequacy. Funded-share (income ≥ budget) is used over a
       // "≥1 short year" frequency, which saturates near 100% over a long horizon.
-      fundedRate: swr ? fundedYearSum/(N*nRetYears) : null,
-      monthsUnderwater: swr ? (shortfallYearSum/N)*12 : null,
+      // Depth is captured by typical/conditional/worst-year funding ratios.
+      fundedRate:    swr ? fundedYearSum/(N*nRetYears) : null,
+      yearsBelowAvg: swr ? shortfallYearSum/N : null,
+      retYearsTotal: swr ? nRetYears : null,
+      typicalCoverage: swr ? mcPct(coverageSorted,0.5) : null,
+      condShortDepth:  swr ? (condShortCount>0 ? condShortSum/condShortCount : 1) : null,
+      worstYearP10:    swr ? mcPct(worstSorted,0.10) : null,
+      coverageDist:    swr ? coverageSorted : null,
+      ratioBands,
+      ratioYears: swr ? Array.from({length:nRetYears},(_,k)=> gl.baseYear+retIdx+k) : null,
       largeEndPct: largeEnd/N, smallEndPct: smallEnd/N,
       medianEnd: mcPct(endSorted,0.5), p10End: mcPct(endSorted,0.10), p90End: mcPct(endSorted,0.90),
       endVals: endSorted, bands,
@@ -1934,7 +1959,7 @@ function runMonteCarloUI(){
 // simulations whose income covered the full spending target every year.
 function mcCardStat(r, swr){
   return swr
-    ? { rate: r.fundedRate,  sub: 'retirement income on target' }
+    ? { rate: r.fundedRate,  sub: 'retirement years on budget' }
     : { rate: r.successRate, sub: 'survival to '+mcGl.lifeExp };
 }
 
@@ -1954,7 +1979,7 @@ function renderMcCards(){
   if (note){
     if (swr){
       note.style.display='block';
-      note.innerHTML='<strong>SWR mode:</strong> withdrawals are a fixed % of the portfolio, so it mathematically can’t hit zero — depletion-based survival is ~100% by construction. These cards instead show the <strong>share of retirement years</strong> in which your withdrawals (plus pensions) actually <strong>covered your full spending target</strong> — the figure that exposes sequence-of-returns risk. Switch to Fixed-Amount mode for a classic depletion-based survival rate.';
+      note.innerHTML='<strong>SWR mode:</strong> withdrawals are a fixed % of the portfolio, so it mathematically can’t hit zero — depletion-based survival is ~100% by construction. The real question is <strong>budget adequacy</strong>: how often, and by how much, the withdrawal (plus pensions) falls short of your full yearly spending budget. The cards show the share of retirement years on budget; click one for how deep the shortfalls go. Switch to Fixed-Amount mode for a classic depletion-based survival rate.';
     } else {
       note.style.display='none';
     }
@@ -1973,25 +1998,19 @@ function mcTile(lbl,valHtml,note,muted){
     +'<div class="mc-tile-note">'+note+'</div></div>';
 }
 
-// Months below target shown as e.g. "0", "7 mo" or "1 yr 4 mo".
-function mcFmtMonths(m){
-  const tot=Math.round(m); if(tot<=0) return '0';
-  const y=Math.floor(tot/12), mo=tot%12;
-  return (y?y+' yr'+(mo?' ':''):'')+(mo||!y?mo+' mo':'');
-}
-
 function renderMcDetail(){
   if(!mcResults) return;
   const r=mcResults[mcActiveIdx];
   const swr=mcGl.wdMode==='swr';
   const t=[];
   if (swr){
-    // SWR: the portfolio can't deplete, so income adequacy is the live risk.
+    // SWR: the portfolio can't deplete, so budget adequacy is the live risk.
+    // Frequency (how often short) + depth (how far short) of the funding ratio.
     const fundClr=MC_RATE_COLOR[mcRateClass(r.fundedRate)];
-    t.push(mcTile('Income on target','<span style="color:'+fundClr+'">'+Math.round(r.fundedRate*100)+'%</span>','share of retirement years funded'));
-    t.push(mcTile('Time below target',mcFmtMonths(r.monthsUnderwater),'expected months income < spending'));
-    t.push(mcTile('Volatile spending',Math.round(r.volatilePct*100)+'%','paths with a >25% real YoY swing'));
-    t.push(mcTile('Smaller end portfolio',Math.round(r.smallEndPct*100)+'%','real ending ≤ ½ value at retirement'));
+    t.push(mcTile('Years under budget','<span style="color:'+fundClr+'">'+Math.round(r.yearsBelowAvg)+' / '+r.retYearsTotal+'</span>','avg retirement yrs income < budget'));
+    t.push(mcTile('Typical funding',Math.round(r.typicalCoverage*100)+'%','median sim: % of budget funded'));
+    t.push(mcTile('When short, you fund',Math.round(r.condShortDepth*100)+'%','avg coverage in under-budget yrs'));
+    t.push(mcTile('Worst year (1-in-10)',Math.round(r.worstYearP10*100)+'%','leanest year in a bad path'));
   } else {
     const rc=MC_RATE_COLOR[mcRateClass(r.successRate)];
     t.push(mcTile('Success rate','<span style="color:'+rc+'">'+Math.round(r.successRate*100)+'%</span>','never depleted before age '+mcGl.lifeExp));
@@ -2000,43 +2019,79 @@ function renderMcDetail(){
     t.push(mcTile('Smaller end portfolio',Math.round(r.smallEndPct*100)+'%','real ending ≤ ½ value at retirement'));
   }
   el('mcTiles').innerHTML=t.join('');
-  el('mcFanTitle').textContent='Outcome Range Over Time — '+r.name;
-  buildMcFanChart(r); buildMcHistChart(r);
+  el('mcFanTitle').textContent=(swr?'Budget Coverage Over Retirement — ':'Outcome Range Over Time — ')+r.name;
+  if (el('mcFanRefLabel')) el('mcFanRefLabel').textContent = swr ? 'Budget (100%)' : 'FIRE Target';
+  if (el('mcHistTitle')) el('mcHistTitle').innerHTML = swr
+    ? 'Distribution of Budget Coverage <span style="color:var(--muted);font-weight:400">(avg % of budget funded per sim)</span>'
+    : 'Distribution of Ending Net Worth <span style="color:var(--muted);font-weight:400">(real, today’s €)</span>';
+  buildMcFanChart(r, swr); buildMcHistChart(r, swr);
 }
 
 const MC_Y_TICK=v=>v>=1e6?"€"+(v/1e6).toFixed(1)+"M":v>=1e3?"€"+(v/1e3).toFixed(0)+"k":"€"+Math.round(v);
+const MC_PCT_TICK=v=>Math.round(v*100)+"%";
 
-function buildMcFanChart(r){
-  const ctx=el('mcFanChart').getContext('2d'); const labels=r.years;
-  const band18=r.fade.replace('.5)','.2)');   // darker inner-band fill from the fade colour
+// Fan chart. In SWR mode it plots the funding ratio (income ÷ budget) over the
+// retirement years with a reference line at 100%; otherwise net worth over time
+// with the FIRE target line.
+function buildMcFanChart(r, swr){
+  const ctx=el('mcFanChart').getContext('2d');
+  const labels = swr ? r.ratioYears : r.years;
+  const bands  = swr ? r.ratioBands : r.bands;
+  const refData= swr ? labels.map(()=>1) : labels.map(()=>r.fireTarget);
+  const refLbl = swr ? 'Budget (100%)' : 'FIRE Target';
+  const band18 = r.fade.replace('.5)','.2)');   // darker inner-band fill from the fade colour
   const mk=(data,opt)=>Object.assign({data,pointRadius:0,pointHoverRadius:0,borderWidth:0,tension:.3,fill:false},opt);
   const ds=[
-    mk(r.bands.p10,{label:'10th pct',borderColor:'transparent'}),
-    mk(r.bands.p90,{label:'90th pct',borderColor:'transparent',backgroundColor:r.alpha,fill:'-1'}),
-    mk(r.bands.p25,{label:'p25',borderColor:'transparent'}),
-    mk(r.bands.p75,{label:'p75',borderColor:'transparent',backgroundColor:band18,fill:'-1'}),
-    mk(r.bands.p50,{label:'Median',borderColor:r.color,borderWidth:2.5}),
-    mk(labels.map(()=>r.fireTarget),{label:'FIRE Target',borderColor:FIRE_LINE,borderWidth:1.5,borderDash:[5,5]}),
+    mk(bands.p10,{label:'10th pct',borderColor:'transparent'}),
+    mk(bands.p90,{label:'90th pct',borderColor:'transparent',backgroundColor:r.alpha,fill:'-1'}),
+    mk(bands.p25,{label:'p25',borderColor:'transparent'}),
+    mk(bands.p75,{label:'p75',borderColor:'transparent',backgroundColor:band18,fill:'-1'}),
+    mk(bands.p50,{label:'Median',borderColor:r.color,borderWidth:2.5}),
+    mk(refData,{label:refLbl,borderColor:FIRE_LINE,borderWidth:1.5,borderDash:[5,5]}),
   ];
-  const shown=new Set(['10th pct','Median','90th pct','FIRE Target']);
+  const shown=new Set(['10th pct','Median','90th pct',refLbl]);
+  const valFmt = swr ? (v=>Math.round(v*100)+"%") : (v=>"€"+fmt(v));
   if(mcFanChart) mcFanChart.destroy();
   mcFanChart=new Chart(ctx,{type:'line',data:{labels,datasets:ds},options:{
     responsive:true,maintainAspectRatio:false,animation:{duration:250},interaction:{mode:'index',intersect:false},
-    plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",titleFont:{family:"'DM Sans'",size:11},bodyFont:{family:"'DM Mono'",size:11},padding:10,filter:i=>shown.has(i.dataset.label),callbacks:{title:items=>items[0].label,label:c=>" "+c.dataset.label+": €"+fmt(c.raw)}}},
-    scales:{x:{grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},y:{min:0,grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,callback:MC_Y_TICK}}}
+    plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",titleFont:{family:"'DM Sans'",size:11},bodyFont:{family:"'DM Mono'",size:11},padding:10,filter:i=>shown.has(i.dataset.label),callbacks:{title:items=>items[0].label,label:c=>" "+c.dataset.label+": "+valFmt(c.raw)}}},
+    scales:{x:{grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},y:{min:0,grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,callback: swr?MC_PCT_TICK:MC_Y_TICK}}}
   }});
 }
 
-function buildMcHistChart(r){
-  const ctx=el('mcHistChart').getContext('2d'); const vals=r.endVals, n=vals.length||1;
-  const hi=Math.max(1,mcPct(vals,0.95)), nb=24, buckets=new Array(nb).fill(0);
+// Histogram. SWR: distribution of each sim's average budget coverage (funding
+// ratio), with the 100% line marked. Otherwise: distribution of ending net worth.
+function buildMcHistChart(r, swr){
+  const ctx=el('mcHistChart').getContext('2d');
+  const vals = swr ? r.coverageDist : r.endVals, n=vals.length||1;
+  const nb=24;
+  // Coverage axis spans 0..max(120%, P98) so the 100% line sits inside the chart;
+  // net-worth axis spans 0..P95.
+  const hi = swr ? Math.max(1.2, mcPct(vals,0.98)) : Math.max(1, mcPct(vals,0.95));
+  const buckets=new Array(nb).fill(0);
   for(const v of vals){ let b=Math.floor((Math.max(0,v)/hi)*nb); if(b>=nb)b=nb-1; if(b<0)b=0; buckets[b]++; }
-  const labels=buckets.map((_,i)=>fmtK((i+0.5)*hi/nb));
-  const colors=buckets.map((_,i)=> i===0?'rgba(248,113,113,.75)':r.color);
+  const labels=buckets.map((_,i)=> swr ? Math.round(((i+0.5)*hi/nb)*100)+"%" : fmtK((i+0.5)*hi/nb));
+  // SWR: colour buckets by adequacy (green ≥100%, amber ≥80%, red below).
+  // Net worth: highlight the depleted (leftmost) bucket in red.
+  const colors=buckets.map((_,i)=>{
+    if (!swr) return i===0?'rgba(248,113,113,.75)':r.color;
+    const center=(i+0.5)*hi/nb;
+    return center>=1 ? 'rgba(34,197,94,.8)' : center>=0.8 ? 'rgba(251,191,36,.8)' : 'rgba(248,113,113,.8)';
+  });
+  // Index of the bucket containing the 100% reference (SWR only).
+  const refIdx = swr ? Math.min(nb-1, Math.floor((1/hi)*nb)) : -1;
+  const refPlugin={id:'mcHistRef',afterDatasetsDraw(ch){
+    if(refIdx<0) return; const x=ch.scales.x, ya=ch.scales.y; if(!x||!ya) return;
+    const px=x.getPixelForValue(refIdx); const c2=ch.ctx;
+    c2.save(); c2.strokeStyle='rgba(221,228,242,.5)'; c2.lineWidth=1; c2.setLineDash([4,3]);
+    c2.beginPath(); c2.moveTo(px,ya.top); c2.lineTo(px,ya.bottom); c2.stroke();
+    c2.setLineDash([]); c2.fillStyle='#7e8faa'; c2.font="600 9px 'DM Mono',monospace"; c2.textAlign='center';
+    c2.fillText('100%',px,ya.top+8); c2.restore();
+  }};
   if(mcHistChart) mcHistChart.destroy();
-  mcHistChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data:buckets,backgroundColor:colors,borderWidth:0,barPercentage:1,categoryPercentage:.96}]},options:{
+  mcHistChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data:buckets,backgroundColor:colors,borderWidth:0,barPercentage:1,categoryPercentage:.96}]},plugins:[refPlugin],options:{
     responsive:true,maintainAspectRatio:false,animation:{duration:200},
-    plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",bodyFont:{family:"'DM Mono'",size:11},padding:10,callbacks:{title:items=>"≈"+items[0].label,label:c=>" "+c.raw+" of "+n+" paths ("+Math.round(c.raw/n*100)+"%)"}}},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",bodyFont:{family:"'DM Mono'",size:11},padding:10,callbacks:{title:items=>"≈"+items[0].label,label:c=>" "+c.raw+" of "+n+" sims ("+Math.round(c.raw/n*100)+"%)"}}},
     scales:{x:{grid:{display:false},ticks:{color:GC.t,font:GC.f,maxTicksLimit:8}},y:{grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,maxTicksLimit:4}}}
   }});
 }

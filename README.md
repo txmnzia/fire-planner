@@ -627,22 +627,45 @@ Runs are reproducible (seeded RNG) — identical inputs give identical results. 
 
 ### Metrics reported
 
-The headline metric on each scenario card depends on the withdrawal mode, because the two modes fail in completely different ways:
+The metrics shown depend on the withdrawal mode, because the two modes fail in completely different ways.
 
-- **Fixed-Amount mode** — withdrawals are a fixed real amount, so the portfolio *can* run out. The headline is a true **depletion-based survival rate**.
-- **SWR mode** — withdrawals are a fixed % of the portfolio, so it can never fully deplete (survival is ~100% by construction). The headline is instead **income adequacy**: in a bad market sequence a 4% draw on a shrunken portfolio may no longer cover your spending. This is where sequence-of-returns risk actually bites.
+#### Fixed-Amount mode — depletion risk
 
-| Metric | Mode | Definition |
-|--------|------|------------|
-| **Success rate** | Fixed | % of paths where net worth never hits zero before life expectancy. |
-| **Income on target** | SWR | Share of all retirement years (across all paths) in which income — SWR withdrawal **plus** state & partner pension — covered your full inflation-adjusted spending target. Used instead of a "≥ 1 short year" frequency, which saturates near 100% over a multi-decade retirement. |
-| **Time below target** | SWR | Expected number of months per simulation where income falls short of the full spending target (average shortfall years × 12). Annual resolution. |
-| **Volatile spending** | SWR | % of paths with at least one retirement year where **real** spending swings more than **25%** vs the prior year. (In Fixed mode spending is constant in real terms by design, so this does not apply.) |
-| **Larger end portfolio** | Fixed | % of paths whose **real** ending net worth is **≥ 2×** that same path's inflation-adjusted value at retirement. |
-| **Smaller end portfolio** | both | % of paths whose **real** ending net worth is **≤ ½** that same path's inflation-adjusted value at retirement. |
-| **Median ending value** | Fixed | Median **real** ending net worth across all paths (with the 10th-percentile shown alongside). |
+Withdrawals are a fixed real amount, so the portfolio *can* run out. The headline is a true **survival rate**.
 
-The spending target for the SWR income metrics is the full inflation-adjusted living cost that year (retirement spending + child costs + mortgage − rent saved); a one-time property purchase lump is excluded. All end-portfolio comparisons are **per-path** (each path versus its own value at FIRE, which is itself random) and in **real (today's €)** terms.
+| Metric | Definition |
+|--------|------------|
+| **Success rate** (card headline) | % of paths where net worth never hits zero before life expectancy. |
+| **Median ending value** | Median **real** ending net worth across all paths (10th-percentile shown alongside). |
+| **Larger end portfolio** | % of paths whose **real** ending net worth is **≥ 2×** that path's inflation-adjusted value at retirement. |
+| **Smaller end portfolio** | % of paths whose **real** ending net worth is **≤ ½** that path's value at retirement. |
+
+#### SWR mode — budget-adequacy risk
+
+A % withdrawal can never fully deplete the portfolio (survival is ~100% by construction), so the question is not *"does it survive?"* but *"does it keep paying my budget — and if not, by how much does it fall short?"* Everything keys off the **funding ratio** computed each retirement year:
+
+```
+funding ratio = portfolio income (SWR withdrawal + state & partner pension)
+              ÷ full annual budget (retirement spending + child costs + mortgage − rent saved)
+```
+
+A one-time property purchase lump is excluded from the budget. Then:
+
+| Metric | Captures | Definition |
+|--------|----------|------------|
+| **Years on budget** (card headline) | frequency | Share of all retirement years (across all paths) where income ≥ budget. Used instead of a "≥ 1 short year" frequency, which saturates near 100% over a multi-decade retirement. |
+| **Years under budget** | frequency | Average number of retirement years per simulation where income < budget, shown as `X / Y` of total retirement years. |
+| **Typical funding** | depth | Median of each simulation's **average** funding ratio — i.e. the middle of the budget-coverage distribution. |
+| **When short, you fund** | depth | Average funding ratio across only the years that fall short — "when you miss, you typically cover this much of budget." |
+| **Worst year (1-in-10)** | tail depth | 10th-percentile of each path's leanest single-year funding ratio — the bad-case worst year. |
+
+These deliberately separate **how often** you fall short from **how far**: a plan can average comfortably above 100% yet still dip below budget in early-retirement years, which the worst-year and years-under-budget figures expose.
+
+#### Visuals
+
+- **Scenario cards** — the five scenarios with their headline rate (green ≥ 90%, amber 75–90%, red < 75%). Click one to drill in.
+- **Fan chart** — percentile bands (10–90th, 25–75th, median) over time. In Fixed mode this is **net worth** with the FIRE Target line; in SWR mode it is **budget coverage** (funding ratio) over the retirement years with a 100% reference line, so you can see *when* coverage is tightest.
+- **Distribution histogram** — in Fixed mode the spread of real ending net worth (depleted paths highlighted); in SWR mode the spread of each simulation's average budget coverage, coloured green / amber / red around the 100% line.
 
 ### Visuals
 
