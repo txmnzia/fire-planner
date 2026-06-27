@@ -1617,20 +1617,15 @@ function buildPlanProj(sc, gl) {
   return project(sc, gl, { startYear: first.year, startPort: first.val, history: sorted });
 }
 
-// Translates the gap between actual net worth today and the plan curve into time:
-// the year the plan reaches today's actual value, minus today. Positive = ahead.
-function computePlanMetric(planProj, gl, actualNow) {
-  const ys = planProj.years, vs = planProj.values;
-  let crossYear = null;
-  for (let i = 0; i < vs.length - 1; i++) {
-    const a = vs[i], b = vs[i+1];
-    if ((a <= actualNow && actualNow <= b) || (a >= actualNow && actualNow >= b)) {
-      const frac = b !== a ? (actualNow - a) / (b - a) : 0;
-      crossYear = ys[i] + frac; break;
-    }
+// First calendar year a projection's net worth reaches its FIRE target (null if
+// it never does within the horizon). This is the year the solid/dashed line on
+// the chart crosses the FIRE Target line — so "years ahead/behind" is the gap
+// between when the actual trajectory and the plan trajectory hit FIRE.
+function fireCrossYear(proj) {
+  for (let i = 0; i < proj.values.length; i++) {
+    if (proj.fireNums[i] > 0 && proj.values[i] >= proj.fireNums[i]) return proj.years[i];
   }
-  if (crossYear === null) crossYear = actualNow > vs[vs.length-1] ? ys[ys.length-1] : ys[0];
-  return { yearsAhead: crossYear - gl.baseYear };
+  return null;
 }
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
@@ -1702,10 +1697,17 @@ function renderMilestone(idx, sc, gl, proj) {
   let planRow = '';
   const planProj = buildPlanProj(sc, gl);
   if (planProj) {
-    const ya = computePlanMetric(planProj, gl, ibkrTotal + gl.cash).yearsAhead;
-    const ahead = ya >= 0, absY = Math.abs(ya), onPlan = absY < 0.05;
-    const txt = onPlan ? 'on plan' : absY.toFixed(1) + ' yrs ' + (ahead ? 'ahead' : 'behind');
-    planRow = '<div class="sc-result-row"><span class="k">vs Plan</span><span class="v '+(onPlan?'':(ahead?'ok':'err'))+'">'+(onPlan?'':(ahead?'▲ ':'▼ '))+txt+'</span></div>';
+    const actualCross = fireCrossYear(proj);     // actual trajectory (anchored today)
+    const planCross   = fireCrossYear(planProj); // plan trajectory (anchored at first snapshot)
+    const ageAt = y => gl.currentAge + (y - gl.baseYear);
+    const fireYearTxt = actualCross ? actualCross + ' (age ' + ageAt(actualCross) + ')' : 'beyond ' + gl.lifeExp;
+    planRow += '<div class="sc-result-row"><span class="k">FIRE year</span><span class="v '+cc+'">'+fireYearTxt+'</span></div>';
+    if (actualCross && planCross) {
+      const ya = planCross - actualCross; // +ve => reach FIRE earlier than the plan => ahead
+      const ahead = ya >= 0, absY = Math.abs(ya), onPlan = absY === 0;
+      const txt = onPlan ? 'on plan' : absY + ' yr' + (absY===1?'':'s') + ' ' + (ahead ? 'ahead' : 'behind');
+      planRow += '<div class="sc-result-row"><span class="k">vs Plan</span><span class="v '+(onPlan?'':(ahead?'ok':'err'))+'">'+(onPlan?'':(ahead?'▲ ':'▼ '))+txt+'</span></div>';
+    }
   }
 
   el("ms"+idx).innerHTML =
@@ -1717,6 +1719,7 @@ function renderMilestone(idx, sc, gl, proj) {
 }
 
 // ── CHARTS ─────────────────────────────────────────────────────────────────
+const FIRE_LINE   = "rgba(126,143,170,.75)"; // neutral horizontal FIRE-target reference line
 const COLORS      = ["#818cf8","#fbbf24","#34d399","#f472b6","#fb923c"];
 const COLORS_FADE = ["rgba(129,140,248,.5)","rgba(251,191,36,.5)","rgba(52,211,153,.5)","rgba(244,114,182,.5)","rgba(251,146,60,.5)"];
 const ALPHAS      = ["rgba(129,140,248,.07)","rgba(251,191,36,.07)","rgba(52,211,153,.07)","rgba(244,114,182,.07)","rgba(251,146,60,.07)"];
@@ -1770,17 +1773,13 @@ function buildChart(projs,gl) {
       {label:"Net Worth",data:combined,borderColor:color,backgroundColor:alpha,borderWidth:2.5,pointRadius:ptR,pointHoverRadius:ptHR,pointBackgroundColor:color,tension:.35,fill:false,order:1,spanGaps:true},
       {label:"Plan",data:planProj.values,borderColor:fade,borderWidth:1.5,borderDash:[5,5],pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:2,spanGaps:true},
     ];
-    if (gl.wdMode !== 'swr') {
-      ds.push({label:"__fire",data:planProj.fireNums,borderColor:color,borderWidth:1.5,borderDash:[4,4],pointRadius:0,tension:.35,fill:false,order:3});
-    }
+    ds.push({label:"FIRE Target",data:planProj.fireNums,borderColor:FIRE_LINE,borderWidth:1.5,borderDash:[6,5],pointRadius:0,tension:0,fill:false,order:3});
   } else {
     labels = proj.years;
     ds = [
       {label:"Portfolio",data:proj.values,borderColor:color,backgroundColor:alpha,borderWidth:2.5,pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:1},
     ];
-    if (gl.wdMode !== 'swr') {
-      ds.push({label:"__fire",data:proj.fireNums,borderColor:color,borderWidth:1.5,borderDash:[4,4],pointRadius:0,tension:.35,fill:false,order:2});
-    }
+    ds.push({label:"FIRE Target",data:proj.fireNums,borderColor:FIRE_LINE,borderWidth:1.5,borderDash:[6,5],pointRadius:0,tension:0,fill:false,order:2});
   }
   if (chart) chart.destroy();
   chart=new Chart(ctx,{type:"line",data:{labels,datasets:ds},plugins:[makeRetPlugin([proj],gl)],options:{
@@ -2003,16 +2002,16 @@ function updateLabels() {
   const dot=el('projLegDot'),lbl=el('projLegName'),dash=el('projLegDash');
   if(dot) dot.style.background=cv;
   if(lbl) lbl.textContent=name;
-  if(dash) dash.style.borderColor=cv;
+  if(dash) dash.style.borderColor=FIRE_LINE; // FIRE Target legend uses the neutral reference colour
   // Plan-vs-actual legend entries — shown only when past history exists
   const baseYr=numVal('baseYear',2026);
   const showAct = nwHistory.length>0 && nwHistory.some(r=>r.val>0) && Math.min(...nwHistory.map(r=>r.year))<baseYr;
   const lp=el('legPlan'), lpd=el('legPlanDash');
   if(lp) lp.style.display=showAct?'':'none';
   if(lpd) lpd.style.borderColor=cv;
-  const mode=(document.querySelector('input[name="wdMode"]:checked')||{value:'fixed'}).value;
+  // FIRE Target line is always shown now (including SWR mode)
   const fireLegItem=dash?dash.closest('.leg-item'):null;
-  if(fireLegItem) fireLegItem.style.display=mode==='swr'?'none':'';
+  if(fireLegItem) fireLegItem.style.display='';
   const sel=el("retCountry"), hd=el("pensionGroupHd");
   if (sel&&hd) {
     const txt=(sel.options[sel.selectedIndex]||{text:""}).text;
