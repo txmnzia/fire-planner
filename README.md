@@ -23,7 +23,8 @@ A single-file, browser-based **Financial Independence / Retire Early** calculato
 15. [Windfalls](#windfalls)
 16. [Income Change (Barista FIRE)](#income-change-barista-fire)
 17. [The 5 Default Scenarios](#the-5-default-scenarios)
-18. [Assumptions & Limitations](#assumptions--limitations)
+18. [Monte Carlo Simulation](#monte-carlo-simulation)
+19. [Assumptions & Limitations](#assumptions--limitations)
 
 ---
 
@@ -588,13 +589,80 @@ You can rename scenarios and change all parameters including the retirement age 
 
 ---
 
+## Monte Carlo Simulation
+
+The **Monte Carlo** tab (4th tab) stress-tests every scenario against thousands of possible market histories, instead of the single deterministic average-return path used by the other tabs. It answers: *"What are the odds my portfolio actually survives — and how wide is the range of outcomes?"*
+
+### Method: historical block bootstrap
+
+Rather than drawing returns from a synthetic bell curve (which understates crashes), each simulated path is built by **stitching together random blocks of consecutive real market years**:
+
+1. A dataset of annual total returns is embedded for **stocks** (MSCI World, developed markets, gross, USD) and a **global government-bond proxy**, covering **1970–2024**.
+2. To build one path, the engine repeatedly picks a random starting year and copies a **block** of consecutive historical years (default **5 years**) until the full horizon (today → life expectancy) is filled.
+3. Stock and bond returns are always sampled from the **same historical year together**, so their real-world co-movement (correlation) is preserved automatically.
+
+Because blocks are *consecutive* real history, each path keeps realistic short-run dynamics — momentum, volatility clustering, and crash-then-recovery sequences (1973–74, 2000–02, 2008, 2022). Only the *order* of historical episodes is randomized. This is the standard way to get thousands of statistically-distinct multi-decade paths from a finite history, which pure sequential backtesting cannot provide over a 50–70 year horizon.
+
+### Recentering to your assumptions (default ON)
+
+The embedded series is developed-markets, USD-denominated history. With **recentering** on, each sampled return keeps history's *deviation* from its own long-run mean but is re-anchored to **your** assumed `stockRet` / `bondRet`:
+
+```
+recentered_return = yourMean + (historicalReturn − historicalMean)
+```
+
+So the **volatility, fat tails, and sequencing are real**, while the **average return matches your own forecast** (e.g. a more conservative 7% rather than history's higher realized average). Turn recentering off to use the raw historical means instead.
+
+> **Note on the data:** the embedded return arrays are *approximate* annual figures compiled from public sources, chosen to reproduce realistic year-to-year dynamics rather than exact index levels. They live in `MC_HIST_STOCK` / `MC_HIST_BOND` in `index.html` and can be edited to plug in your own return history (the two arrays must stay aligned by year and equal in length). **Inflation is kept deterministic** (your inflation input) in this version.
+
+### Inputs
+
+| Input | Default | Notes |
+|-------|---------|-------|
+| Simulations | 1,000 | Paths per scenario (500 / 1,000 / 2,500 / 5,000). All five scenarios share the same set of paths for a fair comparison. |
+| Block length | 5 years | Length of each consecutive-history block. Larger blocks preserve longer real sequences; `1` = single-year resampling. |
+| Recenter to my return assumptions | On | Re-anchors sampled means to your `stockRet` / `bondRet` (see above). |
+
+Runs are reproducible (seeded RNG) — identical inputs give identical results. Press **Run simulation** to (re)compute; it is not run automatically on every keystroke.
+
+### Metrics reported
+
+The headline metric on each scenario card depends on the withdrawal mode, because the two modes fail in completely different ways:
+
+- **Fixed-Amount mode** — withdrawals are a fixed real amount, so the portfolio *can* run out. The headline is a true **depletion-based survival rate**.
+- **SWR mode** — withdrawals are a fixed % of the portfolio, so it can never fully deplete (survival is ~100% by construction). The headline is instead **income adequacy**: in a bad market sequence a 4% draw on a shrunken portfolio may no longer cover your spending. This is where sequence-of-returns risk actually bites.
+
+| Metric | Mode | Definition |
+|--------|------|------------|
+| **Success rate** | Fixed | % of paths where net worth never hits zero before life expectancy. |
+| **Income on target** | SWR | Share of all retirement years (across all paths) in which income — SWR withdrawal **plus** state & partner pension — covered your full inflation-adjusted spending target. Used instead of a "≥ 1 short year" frequency, which saturates near 100% over a multi-decade retirement. |
+| **Time below target** | SWR | Expected number of months per simulation where income falls short of the full spending target (average shortfall years × 12). Annual resolution. |
+| **Volatile spending** | SWR | % of paths with at least one retirement year where **real** spending swings more than **25%** vs the prior year. (In Fixed mode spending is constant in real terms by design, so this does not apply.) |
+| **Larger end portfolio** | Fixed | % of paths whose **real** ending net worth is **≥ 2×** that same path's inflation-adjusted value at retirement. |
+| **Smaller end portfolio** | both | % of paths whose **real** ending net worth is **≤ ½** that same path's inflation-adjusted value at retirement. |
+| **Median ending value** | Fixed | Median **real** ending net worth across all paths (with the 10th-percentile shown alongside). |
+
+The spending target for the SWR income metrics is the full inflation-adjusted living cost that year (retirement spending + child costs + mortgage − rent saved); a one-time property purchase lump is excluded. All end-portfolio comparisons are **per-path** (each path versus its own value at FIRE, which is itself random) and in **real (today's €)** terms.
+
+### Visuals
+
+- **Scenario cards** — the five scenarios side by side, each showing its success rate (green ≥ 90%, amber 75–90%, red < 75%). Click a card to drill in.
+- **Fan chart** — the selected scenario's portfolio value over time as percentile bands: the 10th–90th percentile range (light), the 25th–75th range (darker), and the median line, with the FIRE Target reference line.
+- **Distribution histogram** — the spread of real ending net worth across all paths (the leftmost/zero bucket, highlighted, is the depleted/failed paths).
+
+### Engine integration
+
+The Monte Carlo tab reuses the exact same `project()` cash-flow engine as the other tabs — all spending, tax, pension, glide-path and add-on logic is identical. The only difference is that `project()` is fed a sampled per-year return sequence (`opts.returnSeq`) instead of the deterministic glide-path return. This keeps the two views consistent and means any change to the planning logic automatically applies to the simulation.
+
+---
+
 ## Assumptions & Limitations
 
 ### What the Calculator Assumes
 
 1. **All returns are nominal** (before inflation). Real returns = nominal − inflation.
 2. **Inflation is constant** at the rate you specify, compounding annually.
-3. **Portfolio returns are deterministic** — no sequence-of-returns risk modeling (no Monte Carlo). This is a best-case-average-returns projection.
+3. **The first three tabs are deterministic** — they use constant average returns (no sequence-of-returns risk). For probabilistic sequence-risk analysis, use the **Monte Carlo** tab (see the [Monte Carlo Simulation](#monte-carlo-simulation) section).
 4. **Capital gains tax** is applied only on the gain fraction of each withdrawal. It does not model income tax on salary or pension.
 5. **Partner pension** is assumed to start at a fixed age and grow with inflation like the state pension.
 6. **The mortgage rate is fixed** for the entire term — no variable rate modeling.
@@ -606,7 +674,6 @@ You can rename scenarios and change all parameters including the retirement age 
 
 ### What the Calculator Does NOT Model
 
-- Sequence-of-returns risk (Monte Carlo simulation)
 - Variable spending in retirement (spending floors/ceilings)
 - Social security means-testing
 - Inheritance or estate planning
