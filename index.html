@@ -199,6 +199,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sec);}
 .leg-dot{width:7px;height:7px;border-radius:50%;}
 .leg-dash{width:14px;height:0;border-bottom:1.5px dashed;opacity:.5;}
+.leg-line{width:14px;height:0;border-bottom:2px solid;}
 .alloc-radios{display:flex;align-items:center;gap:5px;}
 .radio-pill{display:flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;cursor:pointer;border:1px solid var(--bdr);background:transparent;font-size:11px;transition:all .15s;}
 .radio-pill input{display:none;}
@@ -968,7 +969,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
       <div class="chart-legend" id="projLegend">
         <div class="leg-item"><div class="leg-dot" id="projLegDot" style="background:var(--s1c)"></div><span id="projLegName">A</span></div>
         <div class="leg-item" id="legPlan" style="display:none"><div class="leg-dash" id="legPlanDash" style="border-color:var(--s1c)"></div><span>Plan</span></div>
-        <div class="leg-item"><div class="leg-dash" id="projLegDash" style="border-color:var(--s1c)"></div><span>FIRE Target</span></div>
+        <div class="leg-item"><div class="leg-line" id="projLegDash" style="border-color:var(--s1c)"></div><span>FIRE Target</span></div>
       </div>
     </div>
     <div class="proj-canvas-wrap" style="position:relative;height:210px"><canvas id="fireChart"></canvas></div>
@@ -1601,7 +1602,7 @@ function project(sc, gl, opts) {
 
     years.push(yr); values.push(portfolioBefore+cashBefore); rows.push(row);
   }
-  return {years,values,fireNums,retYear,allocations,rows};
+  return {years,values,fireNums,retYear,allocations,rows,fireTarget:fireAtRetirement};
 }
 
 // ── PLAN vs ACTUAL ───────────────────────────────────────────────────────────
@@ -1617,13 +1618,13 @@ function buildPlanProj(sc, gl) {
   return project(sc, gl, { startYear: first.year, startPort: first.val, history: sorted });
 }
 
-// First calendar year a projection's net worth reaches its FIRE target (null if
-// it never does within the horizon). This is the year the solid/dashed line on
-// the chart crosses the FIRE Target line — so "years ahead/behind" is the gap
-// between when the actual trajectory and the plan trajectory hit FIRE.
-function fireCrossYear(proj) {
+// First calendar year a projection's net worth reaches the (constant) FIRE
+// target — i.e. where the line crosses the horizontal FIRE Target line on the
+// chart. "Years ahead/behind" is the gap between the actual and plan crossings.
+function fireCrossYear(proj, target) {
+  if (!(target > 0)) return null;
   for (let i = 0; i < proj.values.length; i++) {
-    if (proj.fireNums[i] > 0 && proj.values[i] >= proj.fireNums[i]) return proj.years[i];
+    if (proj.values[i] >= target) return proj.years[i];
   }
   return null;
 }
@@ -1650,6 +1651,25 @@ function renderMilestone(idx, sc, gl, proj) {
     : '<div class="sc-result-row"><span class="k">Survives to</span><span class="v ok">age '+gl.lifeExp+'+</span></div>';
   const coastRow = '<div class="sc-result-row"><span class="k">Coast Number</span><span class="v '+(coasting?'ok':'')+'">'+eur(coastNow)+(coasting?' \u2713':'')+'</span></div>';
 
+  const retYear = gl.baseYear + Math.max(0, sc.retAge - gl.currentAge);
+  const retireAgeRow = '<div class="sc-result-row"><span class="k">Retire age</span><span class="v '+cc+'">'+sc.retAge+' &middot; '+retYear+'</span></div>';
+  const nwRetRow = '<div class="sc-result-row"><span class="k">NW at retirement</span><span class="v '+cc+'">'+eur(portRet)+'</span></div>';
+
+  // FIRE-readiness vs the plan curve: gap between when each trajectory reaches
+  // the FIRE number (the horizontal FIRE Target line on the chart).
+  let vsPlanRow = '';
+  const planProj = buildPlanProj(sc, gl);
+  if (planProj) {
+    const actualCross = fireCrossYear(proj, proj.fireTarget);
+    const planCross   = fireCrossYear(planProj, proj.fireTarget);
+    if (actualCross && planCross) {
+      const d = planCross - actualCross; // +ve => reach FIRE before the plan
+      const onPlan = d === 0, ahead = d > 0, n = Math.abs(d);
+      const txt = onPlan ? 'on plan' : n + 'y ' + (ahead ? 'before' : 'after') + ' plan';
+      vsPlanRow = '<div class="sc-result-row"><span class="k">vs Plan</span><span class="v '+(onPlan?'':(ahead?'ok':'err'))+'">'+(onPlan?'':(ahead?'▲ ':'▼ '))+txt+'</span></div>';
+    }
+  }
+
   let headChip, innerRows;
   if (gl.wdMode === 'swr') {
     const cashAtRet = (proj.rows[Math.min(retIdx,proj.rows.length-1)]||{}).cashVal||0;
@@ -1665,7 +1685,6 @@ function renderMilestone(idx, sc, gl, proj) {
     // target spending at retirement: inflation-adjusted, partner multiplier, child costs
     const partnerMult = sc.hasPartner ? gl.partnerSpendMult : 1;
     const baseTargetMonthly = gl.spendRet * partnerMult * inflAtRet;
-    const retYear = gl.baseYear + nAccum;
     let childMonthlyAtRet = 0;
     if (sc.hasChild) {
       const childAgeAtRet = retYear - gl.childBirthYear;
@@ -1677,37 +1696,17 @@ function renderMilestone(idx, sc, gl, proj) {
     const ok = !depletionYear;
     const incomeOk = netMonthly >= targetMonthly;
     headChip = '<div class="ms-chip '+(ok?'ok':'err')+'">'+(ok?'\u2713 Lasts':'\u00d7 Depletes')+'</div>';
-    innerRows =
-      '<div class="sc-result-row"><span class="k">Portfolio at Ret.</span><span class="v '+cc+'">'+eur(portRet)+'</span></div>'+
-      '<div class="sc-result-row"><span class="k">Monthly Income</span><span class="v '+(incomeOk?'ok':'err')+'">'+eur(netMonthly)+'/mo <span class="tgt">/ '+eur(targetMonthly)+'</span></span></div>'+
-      coastRow+depRow;
+    const incomeRow = '<div class="sc-result-row"><span class="k">Monthly income</span><span class="v '+(incomeOk?'ok':'err')+'">'+eur(netMonthly)+' <span class="tgt">/ '+eur(targetMonthly)+'</span></span></div>';
+    innerRows = retireAgeRow + vsPlanRow + incomeRow + nwRetRow + coastRow + depRow;
   } else {
-    const fireRet = proj.fireNums[Math.min(retIdx,proj.fireNums.length-1)]||0;
+    const fireRet = proj.fireTarget;
     const surplus = portRet-fireRet, ok=surplus>=0;
     headChip = '<div class="ms-chip '+(ok?'ok':'err')+'">'+(ok?'\u2713 On Track':'\u00d7 Gap')+'</div>';
     const surpRow = ok
       ? '<div class="sc-result-row"><span class="k">Surplus</span><span class="v ok">+'+eur(surplus)+'</span></div>'
       : '<div class="sc-result-row"><span class="k">Gap</span><span class="v err">'+eur(surplus)+'</span></div>';
-    innerRows =
-      '<div class="sc-result-row"><span class="k">FIRE Number</span><span class="v '+cc+'">'+eur(fireRet)+'</span></div>'+
-      '<div class="sc-result-row"><span class="k">Portfolio at Ret.</span><span class="v '+cc+'">'+eur(portRet)+'</span></div>'+
-      surpRow+coastRow+depRow;
-  }
-
-  let planRow = '';
-  const planProj = buildPlanProj(sc, gl);
-  if (planProj) {
-    const actualCross = fireCrossYear(proj);     // actual trajectory (anchored today)
-    const planCross   = fireCrossYear(planProj); // plan trajectory (anchored at first snapshot)
-    const ageAt = y => gl.currentAge + (y - gl.baseYear);
-    const fireYearTxt = actualCross ? actualCross + ' (age ' + ageAt(actualCross) + ')' : 'beyond ' + gl.lifeExp;
-    planRow += '<div class="sc-result-row"><span class="k">FIRE year</span><span class="v '+cc+'">'+fireYearTxt+'</span></div>';
-    if (actualCross && planCross) {
-      const ya = planCross - actualCross; // +ve => reach FIRE earlier than the plan => ahead
-      const ahead = ya >= 0, absY = Math.abs(ya), onPlan = absY === 0;
-      const txt = onPlan ? 'on plan' : absY + ' yr' + (absY===1?'':'s') + ' ' + (ahead ? 'ahead' : 'behind');
-      planRow += '<div class="sc-result-row"><span class="k">vs Plan</span><span class="v '+(onPlan?'':(ahead?'ok':'err'))+'">'+(onPlan?'':(ahead?'▲ ':'▼ '))+txt+'</span></div>';
-    }
+    const fireNumRow = '<div class="sc-result-row"><span class="k">FIRE Number</span><span class="v '+cc+'">'+eur(fireRet)+'</span></div>';
+    innerRows = retireAgeRow + vsPlanRow + nwRetRow + fireNumRow + surpRow + coastRow + depRow;
   }
 
   el("ms"+idx).innerHTML =
@@ -1715,7 +1714,7 @@ function renderMilestone(idx, sc, gl, proj) {
       '<div class="sc-result-age" style="color:var(--'+cc+'c)">'+scName+' &middot; Age '+sc.retAge+'</div>'+
       headChip+
     '</div>'+
-    '<div class="sc-result-rows">'+innerRows+planRow+'</div>';
+    '<div class="sc-result-rows">'+innerRows+'</div>';
 }
 
 // ── CHARTS ─────────────────────────────────────────────────────────────────
@@ -1737,10 +1736,10 @@ function makeRetPlugin(projs, gl) {
       const tw=c2.measureText(label).width,px=5,bh=14;
       const bx=pt.x-tw/2-px, by=pt.y-20;
       c2.fillStyle="rgba(10,13,24,.88)"; c2.beginPath(); c2.roundRect(bx,by,tw+px*2,bh,3); c2.fill();
-      c2.strokeStyle=COLORS_FADE[i]; c2.lineWidth=1; c2.stroke();
-      c2.fillStyle=COLORS[i]; c2.textAlign="center"; c2.textBaseline="middle";
+      c2.strokeStyle=COLORS_FADE[activeScIdx]; c2.lineWidth=1; c2.stroke();
+      c2.fillStyle=COLORS[activeScIdx]; c2.textAlign="center"; c2.textBaseline="middle";
       c2.fillText(label,pt.x,by+bh/2);
-      c2.beginPath(); c2.arc(pt.x,pt.y,3,0,Math.PI*2); c2.fillStyle=COLORS[i]; c2.fill();
+      c2.beginPath(); c2.arc(pt.x,pt.y,3,0,Math.PI*2); c2.fillStyle=COLORS[activeScIdx]; c2.fill();
       c2.restore();
     });
   }};
@@ -1773,13 +1772,13 @@ function buildChart(projs,gl) {
       {label:"Net Worth",data:combined,borderColor:color,backgroundColor:alpha,borderWidth:2.5,pointRadius:ptR,pointHoverRadius:ptHR,pointBackgroundColor:color,tension:.35,fill:false,order:1,spanGaps:true},
       {label:"Plan",data:planProj.values,borderColor:fade,borderWidth:1.5,borderDash:[5,5],pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:2,spanGaps:true},
     ];
-    ds.push({label:"FIRE Target",data:planProj.fireNums,borderColor:FIRE_LINE,borderWidth:1.5,borderDash:[6,5],pointRadius:0,tension:0,fill:false,order:3});
+    ds.push({label:"FIRE Target",data:labels.map(()=>proj.fireTarget),borderColor:FIRE_LINE,borderWidth:1.5,pointRadius:0,tension:0,fill:false,order:3});
   } else {
     labels = proj.years;
     ds = [
       {label:"Portfolio",data:proj.values,borderColor:color,backgroundColor:alpha,borderWidth:2.5,pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:1},
     ];
-    ds.push({label:"FIRE Target",data:proj.fireNums,borderColor:FIRE_LINE,borderWidth:1.5,borderDash:[6,5],pointRadius:0,tension:0,fill:false,order:2});
+    ds.push({label:"FIRE Target",data:labels.map(()=>proj.fireTarget),borderColor:FIRE_LINE,borderWidth:1.5,pointRadius:0,tension:0,fill:false,order:2});
   }
   if (chart) chart.destroy();
   chart=new Chart(ctx,{type:"line",data:{labels,datasets:ds},plugins:[makeRetPlugin([proj],gl)],options:{
@@ -1806,8 +1805,8 @@ function buildAllocChart(projs,gl) {
     const tw=c2.measureText(label).width,px=5,bh=14;
     const bx=xPx-tw/2-px,by=yPx-bh-5;
     c2.fillStyle="rgba(10,13,24,.88)"; c2.beginPath(); c2.roundRect(bx,by,tw+px*2,bh,3); c2.fill();
-    c2.strokeStyle="rgba(255,255,255,.4)"; c2.lineWidth=1; c2.stroke();
-    c2.fillStyle="#dde4f2"; c2.textAlign="center"; c2.textBaseline="middle";
+    c2.strokeStyle=fade; c2.lineWidth=1; c2.stroke();
+    c2.fillStyle=color; c2.textAlign="center"; c2.textBaseline="middle";
     c2.fillText(label,xPx,by+bh/2); c2.restore();
   }};
   const ctx2=el("allocChart").getContext("2d");
@@ -1914,7 +1913,7 @@ function renderSummaryTiles(projs, gl, scenarios) {
       metric = '<span style="color:var(--'+(incomeOk?'ok':'err')+')">'+eur(netMonthly)+'/mo <span class="tgt">/ '+eur(targetMonthly)+'</span></span>';
       metricLabel = 'monthly income';
     } else {
-      const fireRet = proj.fireNums[Math.min(retIdx, proj.fireNums.length - 1)] || 0;
+      const fireRet = proj.fireTarget;
       const ok = portRet >= fireRet;
       chip = '<span class="ms-chip '+(ok?'ok':'err')+'">'+(ok?'✓ On Track':'× Gap')+'</span>';
       metric = eur(portRet);
@@ -2338,6 +2337,24 @@ document.addEventListener("DOMContentLoaded",()=>{
       }, 80);
     }, { passive: true });
   }
+
+  // Swipe the Results charts left/right to change the active scenario
+  function addChartSwipe(elm) {
+    if (!elm) return;
+    let x0 = null, y0 = null;
+    elm.addEventListener('touchstart', e => { const t = e.changedTouches[0]; x0 = t.clientX; y0 = t.clientY; }, { passive: true });
+    elm.addEventListener('touchend', e => {
+      if (x0 == null) return;
+      const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+        const ni = Math.min(4, Math.max(0, activeScIdx + (dx < 0 ? 1 : -1)));
+        if (ni !== activeScIdx) setActiveScenario(ni);
+      }
+      x0 = y0 = null;
+    }, { passive: true });
+  }
+  addChartSwipe(document.querySelector('.proj-canvas-wrap'));
+  addChartSwipe(document.querySelector('.alloc-canvas-wrap'));
 });
 </script>
 </body>
