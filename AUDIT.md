@@ -386,3 +386,43 @@ so is all of that.
    input, unique country codes.
 7. **F5, F7, F6** — cash overflow, surplus reinvestment, geometric recentering.
 8. **T4, T5, T7, T8** and README corrections.
+
+---
+
+## Resolution status (v6.5, 2026-07-02)
+
+Decisions taken with the user: keep the %-of-portfolio strategy but label it
+honestly (F3), interpret return inputs as **geometric/CAGR** (F6), show **both**
+the conservative and pension-adjusted FIRE numbers (F9), and move sync to a
+**per-device token** (S1).
+
+| Finding | Status | How |
+|---|---|---|
+| F1 SWR target ignores CGT | **Fixed** | `computeFireTarget` % branch applies `taxMult` |
+| F2 Partner income lost after your retirement | **Fixed** | Partner salary flows through retirement (engine, MC `swrIncome`, cards) + PV credit in DCF & adjusted target |
+| F3 Mislabeled Bengen rule | **Fixed** | Renamed "% of Portfolio", ✓ Funded/× Short chip replaces ✓ Lasts, README rewritten |
+| F4 Today's gain fraction used at retirement | **Fixed** | `project()` tracks `gainFracAtRet`; FIRE target, Coast, cards, MC reference all use it |
+| F5 Accumulation deficits written off | **Fixed** | Deficits overflow to cash; ⚠ Underfunded row when both exhausted; MC counts it as failure |
+| F6 Arithmetic-mean recentering (volatility drag) | **Fixed** | Multiplicative recentering anchored on geometric means |
+| F7 Surplus income discarded | **Fixed** | Surplus reinvested (raises cost basis); % mode sells only what the budget needs |
+| F8 Hidden `spendRet` drives SWR budget | **Fixed** | Input stays visible in % mode |
+| F9 SWR target missing child/property/future pensions | **Fixed** | Year-one budget everywhere; adjusted target credits future pensions & partner salary |
+| F10 Maternity income not inflated | **Fixed** | Inflation-adjusted |
+| F11 Partner has no age | **Fixed** | Optional `partnerBirthYear` input (default: same age) |
+| T1 Duplicate country option values | **Fixed** | Country-code values + rate map + legacy-state migration |
+| T2 Gain fraction not persisted / no input | **Fixed** | Visible `gainFrac` input, CSV auto-fill, synced |
+| T3 Fixed-column IBKR parse | **Fixed** | Columns resolved from the section header row (fallback to legacy indices) |
+| T4 Final-year depletion invisible | **Fixed** | `finalNetWorth` returned and checked (cards & MC) |
+| T5 Stale MC results | **Fixed** | Cards/tiles dim + "Inputs changed" status on any recalc |
+| T6 Card income at today's gain fraction | **Fixed** | Uses `gainFracAtRet` |
+| T7 Restore block clobbers state | **Fixed** | Seeds only when `fire_state` absent |
+| T8 Duplicated card logic | **Fixed** | Shared `computeCardMetrics()` + row helpers |
+| S1 Decodable baked-in PAT | **Fixed in code** | Token now pasted per device, stored in `localStorage` only. **Old token must still be revoked manually on GitHub.** |
+| S2 Cosmetic lock screen | Unchanged | Accepted as a privacy curtain (documented) |
+| S3 Personal data in repo | **Open** | `SAM_STATE` + seed block still embed personal financial data; remove before making the repo/page public |
+| Part 4 items (tax regime nuances, pension accrual realism, property equity, bond-series quality) | Documented | Now disclosed in README; model unchanged by design |
+
+Additional fixes found while implementing: retirement-era property purchase was
+never actually paid in SWR mode (now withdrawn with tax gross-up); 0%-rate
+mortgages produced a €0 payment (now principal/term); chart rendering failures
+(e.g. CDN offline) no longer abort recalculation and auto-save.
