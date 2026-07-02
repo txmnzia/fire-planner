@@ -242,6 +242,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .mc-run-btn:disabled{opacity:.5;cursor:default;}
 .mc-status{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);align-self:center;}
 .mc-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+.mc-body.stale #mcCards,.mc-body.stale #mcDetail{opacity:.4;transition:opacity .2s;}
 .mc-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:12px;cursor:pointer;transition:border-color .15s,background .15s;border-top:3px solid var(--cc,var(--bdr));}
 .mc-card:hover{border-color:var(--sec);}
 .mc-card.active{background:var(--dim);border-color:var(--sec);}
@@ -441,7 +442,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v6.4</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v6.5</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -555,15 +556,15 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
         <label>Withdrawal Strategy</label>
         <div class="wd-toggle">
           <label class="wd-pill"><input type="radio" name="wdMode" value="fixed" checked onchange="onWdMode()">Fixed Amount</label>
-          <label class="wd-pill"><input type="radio" name="wdMode" value="swr" onchange="onWdMode()">SWR %</label>
+          <label class="wd-pill"><input type="radio" name="wdMode" value="swr" onchange="onWdMode()">% of Portfolio</label>
         </div>
       </div>
       <div class="field" id="spendRet_wrap">
-        <label for="spendRet">Monthly Spending (retirement)</label>
+        <label for="spendRet">Monthly Spending (retirement) <button type="button" class="info-btn" title="Your retirement budget in today's money. Drives the FIRE target in both modes and the budget-adequacy metrics in % of Portfolio mode.">&#x24D8;</button></label>
         <div class="unit-wrap"><input type="number" id="spendRet" value="3000" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
       </div>
       <div class="field" id="swr_wrap" style="display:none">
-        <label for="swr">Safe Withdrawal Rate <button type="button" class="info-btn" title="Annual % of portfolio withdrawn. Withdrawal = portfolio × SWR each year.">&#x24D8;</button></label>
+        <label for="swr">Withdrawal Rate <button type="button" class="info-btn" title="Annual % of the current portfolio available to withdraw each year. This is a %-of-portfolio strategy: income varies with markets and the portfolio cannot fully deplete. It is NOT the classic Bengen fixed-real-amount rule (use Fixed Amount mode for that behaviour).">&#x24D8;</button></label>
         <div class="unit-wrap"><input type="number" id="swr" value="4" min="0.5" max="20" step="0.25" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
       </div>
     </div>
@@ -603,33 +604,37 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
       <div class="field">
         <label for="retCountry">Country of Residence</label>
         <select id="retCountry" oninput="recalc()" onchange="recalc()">
-          <option value="30" selected>&#x1F1EB;&#x1F1F7; France 30%</option>
-          <option value="28">&#x1F1F5;&#x1F1F9; Portugal 28%</option>
-          <option value="26">&#x1F1EA;&#x1F1F8; Spain 26%</option>
-          <option value="26">&#x1F1E9;&#x1F1EA; Germany 26%</option>
-          <option value="26">&#x1F1EE;&#x1F1F9; Italy 26%</option>
-          <option value="32">&#x1F1F3;&#x1F1F1; Netherlands 32%</option>
-          <option value="0">&#x1F1E7;&#x1F1EA; Belgium 0%</option>
-          <option value="0">&#x1F1F1;&#x1F1FA; Luxembourg 0%</option>
-          <option value="28">&#x1F1E6;&#x1F1F9; Austria 28%</option>
-          <option value="33">&#x1F1EE;&#x1F1EA; Ireland 33%</option>
-          <option value="15">&#x1F1EC;&#x1F1F7; Greece 15%</option>
-          <option value="0">&#x1F1E8;&#x1F1FE; Cyprus 0%</option>
-          <option value="0">&#x1F1F2;&#x1F1F9; Malta 0%</option>
-          <option value="10">&#x1F1ED;&#x1F1F7; Croatia 10%</option>
-          <option value="15">&#x1F1ED;&#x1F1FA; Hungary 15%</option>
-          <option value="10">&#x1F1F7;&#x1F1F4; Romania 10%</option>
-          <option value="10">&#x1F1E7;&#x1F1EC; Bulgaria 10%</option>
-          <option value="19">&#x1F1F5;&#x1F1F1; Poland 19%</option>
-          <option value="25">&#x1F1F8;&#x1F1EE; Slovenia 25%</option>
-          <option value="20">&#x1F1EA;&#x1F1EA; Estonia 20%</option>
-          <option value="20">&#x1F1F1;&#x1F1FB; Latvia 20%</option>
-          <option value="15">&#x1F1F1;&#x1F1F9; Lithuania 15%</option>
-          <option value="19">&#x1F1F8;&#x1F1F0; Slovakia 19%</option>
-          <option value="30">&#x1F1F8;&#x1F1EA; Sweden 30%</option>
-          <option value="27">&#x1F1E9;&#x1F1F0; Denmark 27%</option>
-          <option value="30">&#x1F1EB;&#x1F1EE; Finland 30%</option>
+          <option value="FR" selected>&#x1F1EB;&#x1F1F7; France 30%</option>
+          <option value="PT">&#x1F1F5;&#x1F1F9; Portugal 28%</option>
+          <option value="ES">&#x1F1EA;&#x1F1F8; Spain 26%</option>
+          <option value="DE">&#x1F1E9;&#x1F1EA; Germany 26%</option>
+          <option value="IT">&#x1F1EE;&#x1F1F9; Italy 26%</option>
+          <option value="NL">&#x1F1F3;&#x1F1F1; Netherlands 32%</option>
+          <option value="BE">&#x1F1E7;&#x1F1EA; Belgium 0%</option>
+          <option value="LU">&#x1F1F1;&#x1F1FA; Luxembourg 0%</option>
+          <option value="AT">&#x1F1E6;&#x1F1F9; Austria 28%</option>
+          <option value="IE">&#x1F1EE;&#x1F1EA; Ireland 33%</option>
+          <option value="GR">&#x1F1EC;&#x1F1F7; Greece 15%</option>
+          <option value="CY">&#x1F1E8;&#x1F1FE; Cyprus 0%</option>
+          <option value="MT">&#x1F1F2;&#x1F1F9; Malta 0%</option>
+          <option value="HR">&#x1F1ED;&#x1F1F7; Croatia 10%</option>
+          <option value="HU">&#x1F1ED;&#x1F1FA; Hungary 15%</option>
+          <option value="RO">&#x1F1F7;&#x1F1F4; Romania 10%</option>
+          <option value="BG">&#x1F1E7;&#x1F1EC; Bulgaria 10%</option>
+          <option value="PL">&#x1F1F5;&#x1F1F1; Poland 19%</option>
+          <option value="SI">&#x1F1F8;&#x1F1EE; Slovenia 25%</option>
+          <option value="EE">&#x1F1EA;&#x1F1EA; Estonia 20%</option>
+          <option value="LV">&#x1F1F1;&#x1F1FB; Latvia 20%</option>
+          <option value="LT">&#x1F1F1;&#x1F1F9; Lithuania 15%</option>
+          <option value="SK">&#x1F1F8;&#x1F1F0; Slovakia 19%</option>
+          <option value="SE">&#x1F1F8;&#x1F1EA; Sweden 30%</option>
+          <option value="DK">&#x1F1E9;&#x1F1F0; Denmark 27%</option>
+          <option value="FI">&#x1F1EB;&#x1F1EE; Finland 30%</option>
         </select>
+      </div>
+      <div class="field">
+        <label for="gainFrac">Unrealized Gain Fraction <button type="button" class="info-btn" title="Share of your portfolio that is unrealized capital gain today. Auto-filled when you import an IBKR CSV. Withdrawals are taxed on the gain portion only; the projection tracks how this fraction evolves over time.">&#x24D8;</button></label>
+        <div class="unit-wrap"><input type="number" id="gainFrac" value="27" min="0" max="99" step="1" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div>
       </div>
     </div>
   </section>
@@ -667,6 +672,10 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
       <div class="field">
         <label for="partnerRetAge">Partner Retirement Age</label>
         <input type="number" id="partnerRetAge" value="45" min="25" max="80" oninput="recalc()" onchange="recalc()">
+      </div>
+      <div class="field">
+        <label for="partnerBirthYear">Partner Year of Birth <button type="button" class="info-btn" title="Optional. If empty, your partner is assumed to be the same age as you. Used to work out when the partner reaches their retirement and pension ages.">&#x24D8;</button></label>
+        <input type="number" id="partnerBirthYear" placeholder="same as you" min="1940" max="2010" oninput="recalc()" onchange="recalc()">
       </div>
       <div class="field">
         <label for="partnerPension">Partner Pension Amount (gross)</label>
@@ -1099,10 +1108,10 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
     <strong>Method:</strong> historical block bootstrap. Each path stitches random blocks of consecutive
     real market years (MSCI World developed-markets total returns + a global government-bond proxy, 1970–2024),
     preserving real crashes, recoveries and stock/bond co-movement. With recentering on, history's
-    volatility and sequencing are kept but the average return is re-anchored to your own stock/bond
-    assumptions. Inflation is held at your fixed input. <strong>Success</strong> = portfolio never depleted
-    before life expectancy. Spending-swing, larger-end and smaller-end figures compare each path against its
-    own inflation-adjusted value at retirement.
+    volatility and sequencing are kept but the long-run <em>compound</em> (geometric) return is re-anchored to your
+    own stock/bond assumptions, so the median path is consistent with the deterministic tabs. Inflation is held
+    at your fixed input. <strong>Success</strong> = portfolio never depleted before life expectancy. Larger-end and
+    smaller-end figures compare each path against its own inflation-adjusted value at retirement.
   </div>
 
 </div>
@@ -1124,25 +1133,31 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
     <div id="syncStatusView">
       <p style="margin:0 0 4px">Auto-sync is <strong id="syncStateText" style="color:var(--text)">active</strong>.</p>
       <div class="sync-info" id="syncLastTime"></div>
-      <p style="font-size:12px;color:var(--sec);line-height:1.6;margin:10px 0 0">Your data syncs automatically across all your devices via a private GitHub Gist. Nothing to sign in to.</p>
+      <p style="font-size:12px;color:var(--sec);line-height:1.6;margin:10px 0 0">Your data syncs across your devices via a private GitHub Gist, using the token stored in this browser.</p>
       <div class="sync-actions" style="margin-top:12px;display:flex;gap:8px">
         <button class="sync-secondary-btn" onclick="syncNow()">Sync now</button>
+        <button class="sync-secondary-btn danger" onclick="disconnectSync()">Disconnect</button>
       </div>
     </div>
 
-    <!-- Not-configured view -->
+    <!-- Connect view -->
     <div id="syncNoTokenView" style="display:none">
-      <p style="font-size:12px;color:var(--sec);line-height:1.6;margin:0">Sync isn't configured yet — no access token has been set in this build.</p>
+      <p style="font-size:12px;color:var(--sec);line-height:1.6;margin:0 0 10px">Paste a GitHub personal access token (classic) with <strong>only the <code>gist</code> scope</strong> to sync your data across devices via a private Gist. The token is stored only in this browser &mdash; never in the app's source.</p>
+      <a class="sync-gh-link" href="https://github.com/settings/tokens/new?scopes=gist&amp;description=fire-planner-sync" target="_blank" rel="noopener">Create a gist-scoped token on GitHub &#x2197;</a>
+      <div style="height:10px"></div>
+      <input type="password" id="syncTokenInput" placeholder="ghp_..." autocomplete="off" onkeydown="if(event.key==='Enter')connectSync()">
+      <div style="height:10px"></div>
+      <button class="sync-connect-btn" id="syncConnectBtn" onclick="connectSync()">Connect</button>
+      <p class="sync-error" id="syncTokenErr" style="display:none"></p>
     </div>
   </div>
 </div>
 
 <script>
-// Runs synchronously before anything else — guarantees data is in localStorage
+// Seed default data only when no saved state exists yet — never overwrite user data.
 (function(){
-  if (!localStorage.getItem('fire_v3_restored')) {
+  if (!localStorage.getItem('fire_state')) {
     localStorage.setItem('fire_state', '{"v":1,"fields":{"cash":"18000","cashReturn":"1.5","dob":"1994-03-12","lifeExp":"85","baseYear":"2026","baseIncome":"6700","spendNow":"3700","spendRet":"3000","swr":"4","stockRet":"7","bondRet":"3","inflation":"2","bondAllocNow":"0","bondAllocRet":"40","retCountry":"30","pensionAmt":"800","pensionAge":"67","wf0_yr":"2030","wf0_amt":"100000","wf1_yr":"","wf1_amt":"","wf2_yr":"","wf2_amt":"","partnerInc":"1400","partnerRetAge":"67","partnerPension":"400","partnerPensionAge":"67","partnerSpendMult":"1.3","propBuyYear":"2029","propPrice":"400000","propDownPct":"20","propTxCostPct":"8","propMortgageRate":"3.5","propMortgageTerm":"25","propRentSaved":"1200","childBirthYear":"2030","childCostYearly":"12000","childCostUntilAge":"23","childMaternityMonths":"12","childMaternityIncome":"1800","sc1name":"FIRE","sc2name":"With Tatou","sc3name":"Barista","sc4name":"Tatou+kid @FR","sc5name":"All @FR","s1_ret":"42","s2_ret":"45","s3_ret":"50","s4_ret":"59","s5_ret":"63","s1_inc":"","s2_inc":"","s3_inc":"","s4_inc":"","s5_inc":"","s1_chgYear":"","s2_chgYear":"","s3_chgYear":"2030","s4_chgYear":"2031","s5_chgYear":"2031","s1_chgInc":"","s2_chgInc":"","s3_chgInc":"1400","s4_chgInc":"4000","s5_chgInc":"4000"},"wdMode":"swr","features":{"1":{"partner":false,"prop":false,"child":false},"2":{"partner":true,"prop":false,"child":false},"3":{"partner":false,"prop":false,"child":false},"4":{"partner":true,"prop":false,"child":true},"5":{"partner":true,"prop":true,"child":true}},"ibkr":{"total":286780.5899394,"holdings":[{"sym":"IWDA","qty":6,"val":702.21},{"sym":"VWCE","qty":1811,"val":278821.56},{"sym":"Cash","qty":null,"val":7256.8199394}]}}');
-    localStorage.setItem('fire_v3_restored', '1');
   }
 }());
 </script>
@@ -1150,7 +1165,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 "use strict";
 
 // ── state ──────────────────────────────────────────────────────────────────
-let ibkrTotal = 0, ibkrHoldings = [], ibkrGainFrac = null;
+let ibkrTotal = 0, ibkrHoldings = [];
 let nwHistory = []; // [{year,val}] manual net-worth snapshots for plan-vs-actual
 let chart = null, allocChart = null;
 let activeScIdx = 0;
@@ -1278,16 +1293,26 @@ function handleCSV(input) {
     ibkrTotal = 0; ibkrHoldings = [];
     const EQUITY_CATS = new Set(["Stocks","Stock","Equity","Equities"]);
     const navExtras = {};
-    let equityCostBasis = 0, costBasisValid = true;
+    let positionsCostBasis = 0, costBasisValid = true;
+    // Column indices for "Open Positions" rows — resolved from the section's own
+    // header row when present, so IBKR layout changes don't silently shift values.
+    let posCols = null;
+    const DEFAULT_POS_COLS = { sym:5, qty:6, cost:8, val:11 };
     for (const line of lines) {
       const c = parseLine(line);
       if (c.length < 3) continue;
+      if (c[0]==="Open Positions"&&c[1]==="Header") {
+        const find = n => c.indexOf(n);
+        const m = { sym:find("Symbol"), qty:find("Quantity"), cost:find("Cost Price"), val:find("Value") };
+        if (m.sym>0 && m.qty>0 && m.cost>0 && m.val>0) posCols = m;
+      }
       if (c[0]==="Open Positions"&&c[1]==="Data"&&c[2]==="Summary") {
-        const sym=c[5]||"", qty=parseFloat(c[6])||0, val=parseFloat(c[11])||0;
-        const costPrice = parseFloat(c[8]);
+        const ix = posCols || DEFAULT_POS_COLS;
+        const sym=c[ix.sym]||"", qty=parseFloat(c[ix.qty])||0, val=parseFloat(c[ix.val])||0;
+        const costPrice = parseFloat(c[ix.cost]);
         if (sym) {
           ibkrHoldings.push({sym,qty,val});
-          if (!isNaN(costPrice) && costPrice > 0) equityCostBasis += qty * costPrice;
+          if (!isNaN(costPrice) && costPrice > 0) positionsCostBasis += qty * costPrice;
           else costBasisValid = false;
         }
       }
@@ -1298,15 +1323,15 @@ function handleCSV(input) {
         if (!EQUITY_CATS.has(cat) && Math.abs(v)>0.01) navExtras[cat]=(navExtras[cat]||0)+v;
       }
     }
-    // Append non-equity NAV items (Cash, etc.) after positions
+    // Append non-position NAV items (Cash, etc.) after positions
     const cashFirst = Object.entries(navExtras).sort(([a],[b])=> a==="Cash"?-1:b==="Cash"?1:a.localeCompare(b));
     let nonEquityValue = 0;
     for (const [cat,val] of cashFirst) { ibkrHoldings.push({sym:cat, qty:null, val}); nonEquityValue += val; }
-    // Auto-fill unrealised gain fraction from cost basis data
-    if (costBasisValid && equityCostBasis > 0 && ibkrTotal > 0) {
-      const totalCostBasis = equityCostBasis + nonEquityValue; // cash/bonds have no gain
+    // Auto-fill the visible (and persisted) unrealised-gain-fraction input
+    if (costBasisValid && positionsCostBasis > 0 && ibkrTotal > 0) {
+      const totalCostBasis = positionsCostBasis + nonEquityValue; // cash carries no gain
       const autoGainFrac = Math.max(0, Math.min(99, Math.round((ibkrTotal - totalCostBasis) / ibkrTotal * 100)));
-      ibkrGainFrac = autoGainFrac;
+      const gf = el('gainFrac'); if (gf) gf.value = autoGainFrac;
     }
     renderHoldings();
     recalc();
@@ -1364,18 +1389,32 @@ function getWindfalls() {
   return wfs;
 }
 
+// Capital-gains tax rate per country (flat-rate approximation; see README).
+const COUNTRY_TAX = { FR:30, PT:28, ES:26, DE:26, IT:26, NL:32, BE:0, LU:0, AT:28, IE:33, GR:15,
+                      CY:0, MT:0, HR:10, HU:15, RO:10, BG:10, PL:19, SI:25, EE:20, LV:20, LT:15,
+                      SK:19, SE:30, DK:27, FI:30 };
+// Legacy saved states stored the numeric rate as the select value; map to a country code.
+const LEGACY_RATE_TO_CODE = { "30":"FR", "28":"PT", "26":"ES", "32":"NL", "0":"BE", "33":"IE",
+                              "15":"GR", "10":"HR", "19":"PL", "25":"SI", "20":"EE", "27":"DK" };
+
 function getGlobals() {
   const bondNow = numVal("bondAllocNow",0)/100;
   const sel = el("retCountry");
-  const taxRate = sel ? (parseFloat(sel.value)||0)/100 : 0.30;
+  const code = sel ? sel.value : "FR";
+  const taxRate = (COUNTRY_TAX[code] !== undefined ? COUNTRY_TAX[code] : 30)/100;
+  const currentAge = currentAgeFromDOB();
+  const baseYear   = numVal("baseYear",2026);
+  // Partner age offset: partnerAge = yourAge + offset (0 when no birth year given).
+  const pby = optVal("partnerBirthYear");
+  const partnerAgeOff = pby ? (baseYear - pby) - currentAge : 0;
   return {
-    currentAge:   currentAgeFromDOB(),
+    currentAge,
     lifeExp:      numVal("lifeExp",100),
-    baseYear:     numVal("baseYear",2026),
+    baseYear,
     spendNow:     numVal("spendNow",3000),
     spendRet:     numVal("spendRet",3000),
     inflation:    numVal("inflation",2)/100,
-    gainFrac:     (ibkrGainFrac !== null ? ibkrGainFrac : 27) / 100,
+    gainFrac:     Math.max(0, Math.min(0.99, numVal("gainFrac",27)/100)),
     stockRet:     numVal("stockRet",7)/100,
     bondRet:      numVal("bondRet",3)/100,
     stockAlloc:   1-bondNow,
@@ -1394,6 +1433,7 @@ function getGlobals() {
     partnerPension:    numVal("partnerPension",700),
     partnerPensionAge: numVal("partnerPensionAge",67),
     partnerSpendMult:  numVal("partnerSpendMult",1.5),
+    partnerAgeOff,
     // global property config
     propBuyYear:      optVal("propBuyYear") || numVal("propBuyYear",2029),
     propPrice:        numVal("propPrice",400000),
@@ -1442,34 +1482,88 @@ function annuityPV(C,r,g,n) {
   return C*(1-Math.pow((1+g)/(1+r),n))/(r-g);
 }
 
-function computeFireTarget(fromAge, sc, gl, taxMult) {
+// Flat annual mortgage payment (0 when no property price). Handles 0% rate.
+function mortgageAnnual(gl) {
+  if (!(gl.propPrice > 0) || !(gl.propMortgageTerm > 0)) return 0;
+  const principal = gl.propPrice*(1-gl.propDownPct);
+  const nm = gl.propMortgageTerm*12;
+  if (!(gl.propMortgageRate > 0)) return principal/nm*12;
+  const mr = gl.propMortgageRate/12;
+  return principal*mr*Math.pow(1+mr,nm)/(Math.pow(1+mr,nm)-1)*12;
+}
+
+// Full annual retirement budget in the first year of retirement at fromAge:
+// base spending (with partner multiplier) plus child costs, mortgage and rent
+// savings active in that year. Used by the %-of-portfolio FIRE target, the
+// scenario-card target, and (per year) the Monte Carlo funding ratio.
+function yearOneBudget(fromAge, sc, gl) {
+  const tFrom = fromAge - gl.currentAge;
+  const fromYear = gl.baseYear + tFrom;
+  const inflF = Math.pow(1+gl.inflation, tFrom);
+  let budget = gl.spendRet*(sc.hasPartner ? gl.partnerSpendMult : 1)*12*inflF;
+  if (sc.hasChild) {
+    const childAge = fromYear - gl.childBirthYear;
+    if (childAge >= 0 && childAge < gl.childCostUntilAge) budget += gl.childCostYearly*inflF;
+  }
+  if (sc.hasProp) {
+    if (fromYear >= gl.propBuyYear && fromYear < gl.propBuyYear + gl.propMortgageTerm) budget += mortgageAnnual(gl);
+    if (fromYear >= gl.propBuyYear) budget -= gl.propRentSaved*12*inflF;
+  }
+  return Math.max(0, budget);
+}
+
+function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
+  opts = opts || {};
   if (fromAge>=gl.lifeExp) return 0;
   const tFrom    = fromAge-gl.currentAge;
+  const off      = gl.partnerAgeOff || 0;   // partner's age = your age + off
   // effective retirement spending: partner multiplier increases it, child costs are time-limited
   const baseSpend = gl.spendRet * (sc.hasPartner ? gl.partnerSpendMult : 1);
   const spendNom  = baseSpend*12*Math.pow(1+gl.inflation,tFrom);
   const pensionNom= gl.pensionAmt*12*Math.pow(1+gl.inflation,tFrom);
   const rFrom     = portReturnAt(gl,fromAge,sc.retAge);
 
-  if (gl.wdMode==="swr") {
-    const pensionOffset = fromAge>=gl.pensionAge ? pensionNom : 0;
-    let partnerPenOff = 0;
-    if (sc.hasPartner && fromAge>=gl.partnerPensionAge) partnerPenOff = gl.partnerPension*12*Math.pow(1+gl.inflation,tFrom);
-    const annualFromPort = Math.max(0,spendNom-pensionOffset-partnerPenOff);
-    return gl.swr>0 ? Math.round(annualFromPort/gl.swr) : 0;
+  // PV at fromAge of an inflation-growing net income stream (in today's €/month)
+  // running from startAge to endAge (your-age terms). Income that arrives outside
+  // the portfolio replaces withdrawals that would carry the CGT gross-up, so the
+  // credit is scaled by the same taxMult.
+  function incomeCredit(monthlyToday, startAge, endAge) {
+    const s = Math.max(fromAge, startAge), e = Math.min(gl.lifeExp, endAge);
+    const n = e - s;
+    if (!(monthlyToday > 0) || n <= 0) return 0;
+    const atStart = monthlyToday*12*Math.pow(1+gl.inflation, s-gl.currentAge);
+    return annuityPV(atStart*taxMult, rFrom, gl.inflation, n) / Math.pow(1+rFrom, s-fromAge);
   }
 
-  // PV of partner pension income (credit against FIRE target) — DCF mode only
+  if (gl.wdMode==="swr") {
+    // %-of-portfolio mode: portfolio must be large enough that a GROSS draw of
+    // SWR% delivers the full year-one budget AFTER capital-gains tax (taxMult),
+    // net of income streams already flowing at retirement. Partner salary is
+    // deliberately excluded from the headline (it is temporary income).
+    const budget = yearOneBudget(fromAge, sc, gl);
+    const pensionOffset = fromAge>=gl.pensionAge ? pensionNom : 0;
+    let partnerPenOff = 0;
+    if (sc.hasPartner && fromAge+off>=gl.partnerPensionAge) partnerPenOff = gl.partnerPension*12*Math.pow(1+gl.inflation,tFrom);
+    const annualFromPort = Math.max(0,budget-pensionOffset-partnerPenOff);
+    let target = gl.swr>0 ? annualFromPort*taxMult/gl.swr : 0;
+    if (opts.otherIncomeCredit) {
+      // Adjusted (non-headline) number: also credit the PV of income the headline
+      // ignores — pensions that start after retirement, and partner salary until
+      // the partner retires.
+      if (fromAge < gl.pensionAge) target -= incomeCredit(gl.pensionAmt, gl.pensionAge, gl.lifeExp);
+      if (sc.hasPartner && fromAge+off < gl.partnerPensionAge) target -= incomeCredit(gl.partnerPension, gl.partnerPensionAge-off, gl.lifeExp);
+      if (sc.hasPartner && fromAge+off < gl.partnerRetAge)     target -= incomeCredit(gl.partnerInc, fromAge, gl.partnerRetAge-off);
+      target = Math.max(0, target);
+    }
+    return Math.round(target);
+  }
+
+  // PV credits against the DCF FIRE target: partner pension from the partner's
+  // pension age, and partner salary while the partner is still working.
   function partnerPenCredit() {
-    if (!sc.hasPartner || gl.partnerPensionAge >= gl.lifeExp) return 0;
-    const penStartAge = Math.max(fromAge, gl.partnerPensionAge);
-    const nDelay  = penStartAge - fromAge;
-    const tPS     = penStartAge - gl.currentAge;
-    const ppAtStart = gl.partnerPension*12*Math.pow(1+gl.inflation,tPS);
-    const nPen    = Math.max(0, gl.lifeExp - penStartAge);
-    if (nPen <= 0) return 0;
-    const pvAtStart = annuityPV(ppAtStart*taxMult, rFrom, gl.inflation, nPen);
-    return pvAtStart / Math.pow(1+rFrom, nDelay);
+    if (!sc.hasPartner) return 0;
+    return incomeCredit(gl.partnerPension, gl.partnerPensionAge-off, gl.lifeExp)
+         + incomeCredit(gl.partnerInc, fromAge, gl.partnerRetAge-off);
   }
 
   // PV of child costs (increases FIRE target) — DCF mode only
@@ -1502,11 +1596,8 @@ function computeFireTarget(fromAge, sc, gl, taxMult) {
     const mortgageEndYear = gl.propBuyYear + gl.propMortgageTerm;
     const mortgStartYear  = Math.max(gl.propBuyYear, fromYear);
     const nMortgage = Math.max(0, mortgageEndYear - mortgStartYear);
-    if (nMortgage > 0 && gl.propMortgageRate > 0 && gl.propPrice > 0) {
-      const principal = gl.propPrice * (1 - gl.propDownPct);
-      const mr = gl.propMortgageRate/12, nm = gl.propMortgageTerm*12;
-      const monthlyMtg = principal*mr*Math.pow(1+mr,nm)/(Math.pow(1+mr,nm)-1);
-      const annualMtg  = monthlyMtg * 12;
+    const annualMtg = mortgageAnnual(gl);
+    if (nMortgage > 0 && annualMtg > 0) {
       const nDelayMtg  = mortgStartYear - fromYear;
       const pvMtg = annuityPV(annualMtg*taxMult, rFrom, 0, nMortgage);
       pv += pvMtg / Math.pow(1+rFrom, nDelayMtg);
@@ -1556,16 +1647,12 @@ function project(sc, gl, opts) {
   const years=[],values=[],fireNums=[],allocations=[],rows=[];
   let portfolio = startPort;
   let costBasis = startPort*(1-gl.gainFrac);
-  const fireTaxMult = 1/Math.max(0.001,1-gl.gainFrac*gl.taxRate);
-  const fireAtRetirement = computeFireTarget(sc.retAge,sc,gl,fireTaxMult);
+  const off = gl.partnerAgeOff || 0;           // partner's age = your age + off
+  let gainFracAtRet = null;                    // tracked gain fraction when retirement starts
+  let infeasibleYear = null;                   // first year portfolio+cash can't fund the plan
 
   // mortgage amortisation
-  let monthlyMortgage = 0;
-  if (sc.hasProp && gl.propMortgageRate>0 && gl.propPrice>0) {
-    const principal = gl.propPrice*(1-gl.propDownPct);
-    const mr = gl.propMortgageRate/12, nm = gl.propMortgageTerm*12;
-    monthlyMortgage = principal*mr*Math.pow(1+mr,nm)/(Math.pow(1+mr,nm)-1);
-  }
+  const monthlyMortgage = sc.hasProp ? mortgageAnnual(gl)/12 : 0;
 
   // child cost helper: annual cost in year yr
   function childCostInYear(yr) {
@@ -1577,15 +1664,16 @@ function project(sc, gl, opts) {
   }
 
   // income helper: handles parental leave
-  function incomeInYear(yr, baseAnnInc) {
+  function incomeInYear(yr, baseAnnInc, infl) {
     if (!sc.hasChild) return baseAnnInc;
     const birthYr = gl.childBirthYear;
     if (yr !== birthYr) return baseAnnInc;
-    // In birth year: months of leave at reduced income, rest at full
+    // In birth year: months of leave at reduced income (inflation-adjusted like
+    // all other amounts), rest at full salary
     const leaveMonths = Math.min(12, gl.childMaternityMonths);
     const fullMonths  = 12 - leaveMonths;
     const monthlyBase = baseAnnInc / 12;
-    return fullMonths * monthlyBase + leaveMonths * gl.childMaternityIncome;
+    return fullMonths * monthlyBase + leaveMonths * gl.childMaternityIncome * infl;
   }
 
   // real past income/spending overrides (anchored plan curve only): carries the
@@ -1616,17 +1704,17 @@ function project(sc, gl, opts) {
       ? sf*opts.returnSeq[t].stock + (1-sf)*opts.returnSeq[t].bond
       : portReturnAt(gl,age,sc.retAge);
 
-    let fireNum;
-    if (yr<retYear) {
-      fireNum = fireAtRetirement;
-    } else {
-      if (gl.wdMode==="swr") {
-        fireNum = fireAtRetirement;
-      } else {
-        const gainFracNow = portfolio>0 ? Math.max(0,Math.min(1,(portfolio-costBasis)/portfolio)) : 0;
-        const postTaxMult = 1/Math.max(0.001,1-gainFracNow*gl.taxRate);
-        fireNum = computeFireTarget(age,sc,gl,postTaxMult);
-      }
+    // Capture the gain fraction the portfolio actually has when retirement starts;
+    // the FIRE target's tax gross-up is priced with it after the loop.
+    if (gainFracAtRet===null && yr>=retYear) {
+      gainFracAtRet = portfolio>0 ? Math.max(0,Math.min(1,(portfolio-costBasis)/portfolio)) : gl.gainFrac;
+    }
+
+    let fireNum = null;   // pre-retirement & %-of-portfolio years backfilled after the loop
+    if (yr>=retYear && gl.wdMode!=="swr") {
+      const gainFracNow = portfolio>0 ? Math.max(0,Math.min(1,(portfolio-costBasis)/portfolio)) : 0;
+      const postTaxMult = 1/Math.max(0.001,1-gainFracNow*gl.taxRate);
+      fireNum = computeFireTarget(age,sc,gl,postTaxMult);
     }
     fireNums.push(fireNum);
 
@@ -1645,10 +1733,10 @@ function project(sc, gl, opts) {
       } else {
         annInc = sc.income*12*infl;
         if (sc.chgYear!==null && yr>=sc.chgYear && sc.chgInc!==null) annInc=sc.chgInc*12*infl;
-        annInc = incomeInYear(yr, annInc);
-        // partner income until partner retires; partner pension once they reach pension age
-        if (sc.hasPartner && age < gl.partnerRetAge) annInc += gl.partnerInc*12*infl;
-        if (sc.hasPartner && age >= gl.partnerPensionAge) { const ppAcc=gl.partnerPension*12*infl; annInc+=ppAcc; row.partnerPension=Math.round(ppAcc); }
+        annInc = incomeInYear(yr, annInc, infl);
+        // partner income until the partner retires; partner pension once they reach pension age
+        if (sc.hasPartner && age+off < gl.partnerRetAge) annInc += gl.partnerInc*12*infl;
+        if (sc.hasPartner && age+off >= gl.partnerPensionAge) { const ppAcc=gl.partnerPension*12*infl; annInc+=ppAcc; row.partnerPension=Math.round(ppAcc); }
       }
       let annSpendNow, childCost;
       if (ov && ov.sp != null) {
@@ -1666,7 +1754,14 @@ function project(sc, gl, opts) {
       }
       const netFlow = annInc-annSpendNow-childCost-extraCost-mortgageAnn+rentSavingsAnn;
       cashVal = cashVal*(1+gl.cashReturn);
-      portfolio = Math.max(0,portfolio*(1+r)+netFlow+windfall);
+      let portEnd = portfolio*(1+r)+netFlow+windfall;
+      if (portEnd < 0) {
+        // Deficit larger than the portfolio: cover the remainder from cash instead
+        // of silently writing it off. If cash runs out too, the plan is underfunded.
+        cashVal += portEnd; portEnd = 0;
+        if (cashVal < 0) { if (infeasibleYear===null) infeasibleYear = yr; cashVal = 0; }
+      }
+      portfolio = portEnd;
       if (netFlow>0) costBasis+=netFlow;
       costBasis+=windfall;
       if (netFlow<0 && portfolioBefore>0) {
@@ -1681,58 +1776,77 @@ function project(sc, gl, opts) {
       const portAfterGrowth=portfolio*(1+r)+windfall;
       if (windfall>0) costBasis+=windfall;
       const gainFracNow=portAfterGrowth>0?Math.max(0,Math.min(1,(portAfterGrowth-costBasis)/portAfterGrowth)):0;
-      // pension income — computed once, used in both withdrawal modes and display
+      const netFrac=Math.max(0.001,1-gainFracNow*gl.taxRate);   // € received per € withdrawn
+      // Non-portfolio income: state pension, partner pension, and partner salary —
+      // the partner keeps earning after YOUR retirement until their own retirement age.
       const pAnn = age>=gl.pensionAge ? gl.pensionAmt*12*infl : 0;
-      let gross, netNeeded;
+      let partnerPensionAnn=0, partnerSalAnn=0;
+      if (sc.hasPartner && age+off>=gl.partnerPensionAge) partnerPensionAnn=gl.partnerPension*12*infl;
+      if (sc.hasPartner && age+off<gl.partnerRetAge)      partnerSalAnn=gl.partnerInc*12*infl;
 
       // property cash flows continue into retirement
-      let mortgageAnnRet=0, rentSavingsAnnRet=0;
+      let mortgageAnnRet=0, rentSavingsAnnRet=0, purchaseCost=0;
       if (sc.hasProp) {
-        if (yr===gl.propBuyYear) { row.extraCost=gl.propPrice*(gl.propDownPct+gl.propTxCostPct); }
+        if (yr===gl.propBuyYear) { purchaseCost=gl.propPrice*(gl.propDownPct+gl.propTxCostPct); row.extraCost=purchaseCost; }
         if (yr>=gl.propBuyYear && yr<gl.propBuyYear+gl.propMortgageTerm) { mortgageAnnRet=monthlyMortgage*12; row.mortgagePayment=Math.round(mortgageAnnRet); }
         if (yr>=gl.propBuyYear) { rentSavingsAnnRet=gl.propRentSaved*12*infl; row.rentSavings=Math.round(rentSavingsAnnRet); }
       }
 
+      const childCost=childCostInYear(yr);
+      const budget=Math.max(0, annRetSpend+childCost+mortgageAnnRet-rentSavingsAnnRet);
+      const otherInc=pAnn+partnerPensionAnn+partnerSalAnn;
+      let gross, surplus=0;
+
       if (gl.wdMode==="swr") {
-        gross=portAfterGrowth*gl.swr;
-        netNeeded=gross*(1-gainFracNow*gl.taxRate);
-        row.spending=Math.round(netNeeded);
-        // Income-adequacy bookkeeping (used by Monte Carlo): does the SWR draw,
-        // plus pensions, actually cover the full inflation-adjusted spending need?
-        // The one-time property purchase lump is excluded — only ongoing living costs.
-        let partnerPensionAnn=0;
-        if (sc.hasPartner&&age>=gl.partnerPensionAge) partnerPensionAnn=gl.partnerPension*12*infl;
-        row.partnerPension=Math.round(partnerPensionAnn);
-        row.swrIncome=Math.round(netNeeded+pAnn+partnerPensionAnn);
-        row.swrTarget=Math.round(Math.max(0, annRetSpend+childCostInYear(yr)+mortgageAnnRet-rentSavingsAnnRet));
+        // %-of-portfolio strategy: SWR% of the portfolio is *available* each year,
+        // but only what the budget needs (after other income) is actually sold —
+        // no needless realisation of gains; the rest stays invested. The adequacy
+        // metrics (swrIncome/swrTarget, used by Monte Carlo) use the full draw.
+        const potentialGross=portAfterGrowth*gl.swr;
+        const needGross=Math.max(0,budget-otherInc)/netFrac;
+        gross=Math.min(potentialGross,needGross);
+        if (purchaseCost>0) gross+=purchaseCost/netFrac;   // one-time purchase is funded regardless
+        surplus=Math.max(0,otherInc-budget);               // pension/partner income beyond budget is saved
+        row.swrIncome=Math.round(potentialGross*netFrac+otherInc);
+        row.swrTarget=Math.round(budget);
       } else {
-        let targetSpend=annRetSpend;
-        const childCost=childCostInYear(yr);
-        targetSpend+=childCost; row.childCost=Math.round(childCost);
-        targetSpend+=mortgageAnnRet;
-        targetSpend=Math.max(0,targetSpend-rentSavingsAnnRet);
-        if (yr===gl.propBuyYear&&sc.hasProp) targetSpend+=row.extraCost; // one-time purchase cost in retirement
-        if (pAnn>0) targetSpend=Math.max(0,targetSpend-pAnn);
-        let partnerPensionAnn=0;
-        if (sc.hasPartner&&age>=gl.partnerPensionAge) { partnerPensionAnn=gl.partnerPension*12*infl; targetSpend=Math.max(0,targetSpend-partnerPensionAnn); }
-        netNeeded=targetSpend;
-        gross=netNeeded>0?netNeeded/Math.max(0.001,1-gainFracNow*gl.taxRate):0;
-        row.spending=Math.round(annRetSpend); row.partnerPension=Math.round(partnerPensionAnn);
+        const needNet=budget+purchaseCost-otherInc;        // net cash the portfolio must produce
+        if (needNet>0) { gross=needNet/netFrac; }
+        else { gross=0; surplus=-needNet; }                // income exceeds spending → reinvest
       }
+
       if (gross<=portAfterGrowth) {
         portfolio=portAfterGrowth-gross;
       } else {
-        cashVal=Math.max(0,cashVal-(gross-portAfterGrowth));
+        cashVal=cashVal-(gross-portAfterGrowth);
         portfolio=0;
+        if (cashVal<0) { if (infeasibleYear===null) infeasibleYear=yr; cashVal=0; }
       }
       const fractionSold=portAfterGrowth>0?Math.min(1,gross/portAfterGrowth):0;
       costBasis=Math.max(0,costBasis*(1-fractionSold));
-      row.pension=Math.round(pAnn); row.withdrawal=Math.round(gross); row.taxPaid=Math.round(gross-Math.max(0,netNeeded));
+      if (surplus>0) { portfolio+=surplus; costBasis+=surplus; }
+      row.income=Math.round(partnerSalAnn);
+      row.spending=Math.round(annRetSpend); row.childCost=Math.round(childCost);
+      row.pension=Math.round(pAnn); row.partnerPension=Math.round(partnerPensionAnn);
+      row.withdrawal=Math.round(gross); row.taxPaid=Math.round(gross*gainFracNow*gl.taxRate);
     }
 
     years.push(yr); values.push(portfolioBefore+cashBefore); rows.push(row);
   }
-  return {years,values,fireNums,retYear,allocations,rows,fireTarget:fireAtRetirement};
+
+  // FIRE target priced with the tracked gain fraction at retirement: the tax
+  // gross-up reflects what the portfolio will actually owe in CGT then, not today.
+  if (gainFracAtRet===null) gainFracAtRet = gl.gainFrac;
+  const taxMultRet = 1/Math.max(0.001,1-gainFracAtRet*gl.taxRate);
+  const fireAtRetirement = computeFireTarget(sc.retAge,sc,gl,taxMultRet);
+  const fireTargetAdj = gl.wdMode==="swr"
+    ? computeFireTarget(sc.retAge,sc,gl,taxMultRet,{otherIncomeCredit:true})
+    : fireAtRetirement;
+  for (let i=0;i<fireNums.length;i++) if (fireNums[i]===null) fireNums[i]=fireAtRetirement;
+
+  return {years,values,fireNums,retYear,allocations,rows,
+          fireTarget:fireAtRetirement, fireTargetAdj, gainFracAtRet,
+          infeasibleYear, finalNetWorth: portfolio+cashVal};
 }
 
 // ── PLAN vs ACTUAL ───────────────────────────────────────────────────────────
@@ -1792,7 +1906,10 @@ const MC_HIST_BOND = [
    0.075,-0.015,-0.130, 0.055, 0.013,                                    // 2020-24
 ];
 
-function mcMean(a){ let s=0; for (const x of a) s+=x; return s/a.length; }
+// Geometric (compound) mean of a return series — the recentering anchor, so the
+// median bootstrapped path compounds at the user's assumed rate and stays
+// consistent with the deterministic tabs (which compound the input directly).
+function mcGeoMean(a){ let s=0; for (const x of a) s+=Math.log(1+x); return Math.exp(s/a.length)-1; }
 
 // Seedable PRNG (mulberry32) → runs are reproducible for identical inputs.
 function mulberry32(seed){
@@ -1816,7 +1933,11 @@ function mcBuildPath(rng, len, blockLen, recenter, stockMean, bondMean, hStockMe
     for (let b=0; b<blockLen && i<=len; b++, i++){
       const idx = (start+b)%N;
       let s = MC_HIST_STOCK[idx], bd = MC_HIST_BOND[idx];
-      if (recenter){ s = stockMean + (s - hStockMean); bd = bondMean + (bd - hBondMean); }
+      // Multiplicative shift anchored on geometric means: keeps history's
+      // volatility/sequencing while the long-run compound return matches the
+      // user's assumption (an additive arithmetic-mean shift would compound
+      // ~σ²/2 below it — volatility drag).
+      if (recenter){ s = (1+stockMean)*(1+s)/(1+hStockMean)-1; bd = (1+bondMean)*(1+bd)/(1+hBondMean)-1; }
       seq[i] = { stock:s, bond:bd };
     }
   }
@@ -1837,7 +1958,7 @@ function runMonteCarlo(scenarios, gl, cfg){
   const N = cfg.sims, blockLen = cfg.blockLen, recenter = cfg.recenter, floor = cfg.floor||0;
   const horizon = Math.max(1, gl.lifeExp - gl.currentAge);   // year-offsets per path
   const nYears  = horizon + 1;
-  const hStockMean = mcMean(MC_HIST_STOCK), hBondMean = mcMean(MC_HIST_BOND);
+  const hStockMean = mcGeoMean(MC_HIST_STOCK), hBondMean = mcGeoMean(MC_HIST_BOND);
   const rng = mulberry32(cfg.seed != null ? cfg.seed : 0x1F1E33);
   const paths = new Array(N);
   for (let p=0;p<N;p++) paths[p] = mcBuildPath(rng, horizon, blockLen, recenter, gl.stockRet, gl.bondRet, hStockMean, hBondMean);
@@ -1872,7 +1993,10 @@ function runMonteCarlo(scenarios, gl, cfg){
           if (tgt>0 && inc<tgt){ shortYears++; condShortSum += ratio; condShortCount++; }
         }
       }
-      const realEnd = (vals[nYears-1]!=null?vals[nYears-1]:0) / Math.pow(1+gl.inflation, nYears-1);
+      // values[] are start-of-year: also check the final end-of-year state and
+      // accumulation-phase feasibility so last-year depletion isn't missed.
+      if (proj.finalNetWorth<=floor || proj.infeasibleYear!=null) survived = false;
+      const realEnd = (proj.finalNetWorth!=null?proj.finalNetWorth:0) / Math.pow(1+gl.inflation, nYears-1);
       endVals[p] = realEnd;
       if (survived) successes++;
       if (realFire>0){ if (realEnd>=2*realFire) largeEnd++; if (realEnd<=0.5*realFire) smallEnd++; }
@@ -1944,14 +2068,16 @@ function runMonteCarloUI(){
                   recenter:el('mcRecenter').checked };
       const t0=performance.now();
       const results=runMonteCarlo(scenarios,gl,cfg);
-      const fireTaxMult=1/Math.max(0.001,1-gl.gainFrac*gl.taxRate);
       results.forEach((r,i)=>{
         r.name=getScenarioName(i); r.color=COLORS[i]; r.fade=COLORS_FADE[i]; r.alpha=ALPHAS[i];
-        r.fireTarget=computeFireTarget(scenarios[i].retAge,scenarios[i],gl,fireTaxMult);
+        // Reference FIRE target from the deterministic projection — priced with
+        // the tracked gain fraction at retirement, same number the other tabs show.
+        r.fireTarget=project(scenarios[i],gl).fireTarget;
       });
       mcResults=results; mcGl=gl;
       if (mcActiveIdx>=results.length) mcActiveIdx=0;
       el('mcStatus').textContent=cfg.sims.toLocaleString('en-US')+' paths · '+Math.round(performance.now()-t0)+' ms';
+      const mcBody=document.querySelector('.mc-body'); if(mcBody) mcBody.classList.remove('stale');
       el('mcEmpty').style.display='none'; el('mcDetail').style.display='block';
       renderMcCards(); selectMcScenario(mcActiveIdx);
     } catch(e){ el('mcStatus').textContent='Error: '+e.message; console.error(e); }
@@ -2039,6 +2165,8 @@ const MC_PCT_TICK=v=>Math.round(v*100)+"%";
 // retirement years with a reference line at 100%; otherwise net worth over time
 // with the FIRE target line.
 function buildMcFanChart(r, swr){
+  if (typeof Chart === "undefined") return;   // Chart.js CDN unavailable — keep calculations & saving alive
+
   const ctx=el('mcFanChart').getContext('2d');
   const labels = swr ? r.ratioYears : r.years;
   const bands  = swr ? r.ratioBands : r.bands;
@@ -2067,6 +2195,8 @@ function buildMcFanChart(r, swr){
 // Histogram. SWR: distribution of each sim's average budget coverage (funding
 // ratio), with the 100% line marked. Otherwise: distribution of ending net worth.
 function buildMcHistChart(r, swr){
+  if (typeof Chart === "undefined") return;   // Chart.js CDN unavailable — keep calculations & saving alive
+
   const ctx=el('mcHistChart').getContext('2d');
   const vals = swr ? r.coverageDist : r.endVals, n=vals.length||1;
   const nb=24;
@@ -2104,81 +2234,112 @@ function buildMcHistChart(r, swr){
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
 
-function renderMilestone(idx, sc, gl, proj) {
-  const retIdx  = proj.retYear-gl.baseYear;
-  const portRet = proj.values[Math.min(retIdx,proj.values.length-1)]||0;
-  const cc=SC_COLORS[idx-1];
-  const fireTaxMult = 1/Math.max(0.001,1-gl.gainFrac*gl.taxRate);
-  const fireAtRet   = computeFireTarget(sc.retAge,sc,gl,fireTaxMult);
-  const nAccum      = Math.max(0,sc.retAge-gl.currentAge);
-  let growthFactor  = 1;
-  for (let i=0;i<nAccum;i++) growthFactor*=(1+portReturnAt(gl,gl.currentAge+i,sc.retAge));
-  const coastNow    = growthFactor>0 ? fireAtRet/growthFactor : fireAtRet;
-  const coasting    = (ibkrTotal+gl.cash)>=coastNow;
-  let depletionYear=null;
-  for (let i=Math.max(0,retIdx);i<proj.values.length;i++) { if(proj.values[i]<=0){depletionYear=proj.years[i];break;} }
-  const scName = getScenarioName(idx-1);
-  const depRow = depletionYear
-    ? '<div class="sc-result-row"><span class="k">Runs out</span><span class="v err">'+depletionYear+' (age '+(gl.currentAge+depletionYear-gl.baseYear)+')</span></div>'
-    : '<div class="sc-result-row"><span class="k">Survives to</span><span class="v ok">age '+gl.lifeExp+'+</span></div>';
-  const coastRow = '<div class="sc-result-row"><span class="k">Coast Number</span><span class="v '+(coasting?'ok':'')+'">'+eur(coastNow)+(coasting?' \u2713':'')+'</span></div>';
-
+// Shared per-scenario card metrics — the single source of financial display
+// logic for both the Scenarios cards and the Results summary tiles.
+function computeCardMetrics(sc, gl, proj) {
+  const retIdx  = proj.retYear - gl.baseYear;
+  const iRet    = Math.min(Math.max(0, retIdx), proj.values.length - 1);
+  const portRet = proj.values[iRet] || 0;
   const retYear = gl.baseYear + Math.max(0, sc.retAge - gl.currentAge);
-  const retireAgeRow = '<div class="sc-result-row"><span class="k">Retire age</span><span class="v '+cc+'">'+sc.retAge+' &middot; '+retYear+'</span></div>';
-  const nwRetRow = '<div class="sc-result-row"><span class="k">NW at retirement</span><span class="v '+cc+'">'+eur(portRet)+'</span></div>';
-
-  // FIRE-readiness vs the plan curve: gap between when each trajectory reaches
-  // the FIRE number (the horizontal FIRE Target line on the chart).
-  let vsPlanRow = '';
+  const off     = gl.partnerAgeOff || 0;
+  const nAccum  = Math.max(0, sc.retAge - gl.currentAge);
+  // depletion: start-of-year values plus the final end-of-year state
+  let depletionYear = null;
+  for (let i = Math.max(0, retIdx); i < proj.values.length; i++) {
+    if (proj.values[i] <= 0) { depletionYear = proj.years[i]; break; }
+  }
+  if (depletionYear === null && proj.finalNetWorth <= 0) depletionYear = proj.years[proj.years.length - 1];
+  // coast number, from the retirement-basis FIRE target
+  let growthFactor = 1;
+  for (let i = 0; i < nAccum; i++) growthFactor *= (1 + portReturnAt(gl, gl.currentAge + i, sc.retAge));
+  const coastNow = growthFactor > 0 ? proj.fireTarget / growthFactor : proj.fireTarget;
+  const coasting = (ibkrTotal + gl.cash) >= coastNow;
+  // vs plan: gap between when the actual and plan trajectories reach the FIRE target
+  let vsPlan = null;
   const planProj = buildPlanProj(sc, gl);
   if (planProj) {
-    const actualCross = fireCrossYear(proj, proj.fireTarget);
-    const planCross   = fireCrossYear(planProj, proj.fireTarget);
-    if (actualCross && planCross) {
-      const d = planCross - actualCross; // +ve => reach FIRE before the plan
-      const onPlan = d === 0, ahead = d > 0, n = Math.abs(d);
-      const txt = onPlan ? 'on plan' : n + 'y ' + (ahead ? 'before' : 'after') + ' plan';
-      vsPlanRow = '<div class="sc-result-row"><span class="k">vs Plan</span><span class="v '+(onPlan?'':(ahead?'ok':'err'))+'">'+(onPlan?'':(ahead?'▲ ':'▼ '))+txt+'</span></div>';
-    }
+    const ac = fireCrossYear(proj, proj.fireTarget), pc = fireCrossYear(planProj, proj.fireTarget);
+    if (ac && pc) vsPlan = pc - ac;   // +ve = ahead of plan
   }
+  const m = { retIdx, portRet, retYear, depletionYear, coastNow, coasting, vsPlan,
+              fireTarget: proj.fireTarget, fireTargetAdj: proj.fireTargetAdj,
+              infeasibleYear: proj.infeasibleYear };
+  if (gl.wdMode === 'swr') {
+    const cashAtRet   = (proj.rows[iRet] || {}).cashVal || 0;
+    const investAtRet = Math.max(0, portRet - cashAtRet);
+    // net of CGT at the *tracked* gain fraction at retirement, not today's
+    const gfr = proj.gainFracAtRet != null ? proj.gainFracAtRet : gl.gainFrac;
+    const swrPortfolio = Math.round(investAtRet * gl.swr * (1 - gfr * gl.taxRate) / 12);
+    const inflAtRet = Math.pow(1 + gl.inflation, nAccum);
+    const pensionMonthly = sc.retAge >= gl.pensionAge ? Math.round(gl.pensionAmt * inflAtRet) : 0;
+    const partnerPensionMonthly = (sc.hasPartner && sc.retAge + off >= gl.partnerPensionAge)
+      ? Math.round(gl.partnerPension * inflAtRet) : 0;
+    const partnerSalMonthly = (sc.hasPartner && sc.retAge + off < gl.partnerRetAge)
+      ? Math.round(gl.partnerInc * inflAtRet) : 0;
+    m.netMonthly = swrPortfolio + pensionMonthly + partnerPensionMonthly + partnerSalMonthly;
+    // target = the same complete year-one budget the engine and Monte Carlo use
+    m.targetMonthly = Math.round(yearOneBudget(sc.retAge, sc, gl) / 12);
+    m.incomeOk = m.netMonthly >= m.targetMonthly;
+  } else {
+    m.surplus = portRet - proj.fireTarget;
+    m.ok = m.surplus >= 0;
+  }
+  return m;
+}
+
+function vsPlanRowHTML(m) {
+  if (m.vsPlan === null) return '';
+  const d = m.vsPlan, onPlan = d === 0, ahead = d > 0, n = Math.abs(d);
+  const txt = onPlan ? 'on plan' : n + 'y ' + (ahead ? 'before' : 'after') + ' plan';
+  return '<div class="sc-result-row"><span class="k">vs Plan</span><span class="v '+(onPlan?'':(ahead?'ok':'err'))+'">'+(onPlan?'':(ahead?'▲ ':'▼ '))+txt+'</span></div>';
+}
+
+function infeasibleRowHTML(m) {
+  if (m.infeasibleYear == null) return '';
+  return '<div class="sc-result-row"><span class="k">⚠ Underfunded</span><span class="v err">'+m.infeasibleYear+' (savings exhausted)</span></div>';
+}
+
+// FIRE Number row; in %-of-portfolio mode also shows the lower alternative
+// target that credits future pensions & partner salary (see README).
+function fireNumRowHTML(m, gl, cc) {
+  let adj = '';
+  if (gl.wdMode === 'swr' && m.fireTargetAdj < m.fireTarget * 0.99) {
+    adj = ' <span class="tgt">/ '+eur(m.fireTargetAdj)+' w/ pensions</span>';
+  }
+  return '<div class="sc-result-row"><span class="k">FIRE Number</span><span class="v '+cc+'">'+eur(m.fireTarget)+adj+'</span></div>';
+}
+
+function renderMilestone(idx, sc, gl, proj) {
+  const cc = SC_COLORS[idx-1];
+  const m  = computeCardMetrics(sc, gl, proj);
+  const retIdx = m.retIdx, portRet = m.portRet, retYearM = m.retYear;
+  const coastNow = m.coastNow, coasting = m.coasting, depletionYear = m.depletionYear;
+  const scName = getScenarioName(idx-1);
+  const coastRow = '<div class="sc-result-row"><span class="k">Coast Number</span><span class="v '+(coasting?'ok':'')+'">'+eur(coastNow)+(coasting?' \u2713':'')+'</span></div>';
+  const retireAgeRow = '<div class="sc-result-row"><span class="k">Retire age</span><span class="v '+cc+'">'+sc.retAge+' &middot; '+retYearM+'</span></div>';
+  const nwRetRow = '<div class="sc-result-row"><span class="k">NW at retirement</span><span class="v '+cc+'">'+eur(portRet)+'</span></div>';
+  const depRowErr = depletionYear
+    ? '<div class="sc-result-row"><span class="k">Runs out</span><span class="v err">'+depletionYear+' (age '+(gl.currentAge+depletionYear-gl.baseYear)+')</span></div>'
+    : '';
+  const vsPlanRow = vsPlanRowHTML(m);
+  const infeasRow = infeasibleRowHTML(m);
+  const fireNumRow = fireNumRowHTML(m, gl, cc);
 
   let headChip, innerRows;
   if (gl.wdMode === 'swr') {
-    const cashAtRet = (proj.rows[Math.min(retIdx,proj.rows.length-1)]||{}).cashVal||0;
-    const investAtRet = Math.max(0, portRet - cashAtRet);
-    const swrPortfolio = Math.round(investAtRet * gl.swr * (1 - gl.gainFrac * gl.taxRate) / 12);
-    const nAccum = Math.max(0, sc.retAge - gl.currentAge);
-    const inflAtRet = Math.pow(1 + gl.inflation, nAccum);
-    // pension & partner pension income active at retirement
-    const pensionMonthly = sc.retAge >= gl.pensionAge ? Math.round(gl.pensionAmt * inflAtRet) : 0;
-    const partnerPensionMonthly = (sc.hasPartner && sc.retAge >= gl.partnerPensionAge)
-      ? Math.round(gl.partnerPension * inflAtRet) : 0;
-    const netMonthly = swrPortfolio + pensionMonthly + partnerPensionMonthly;
-    // target spending at retirement: inflation-adjusted, partner multiplier, child costs
-    const partnerMult = sc.hasPartner ? gl.partnerSpendMult : 1;
-    const baseTargetMonthly = gl.spendRet * partnerMult * inflAtRet;
-    let childMonthlyAtRet = 0;
-    if (sc.hasChild) {
-      const childAgeAtRet = retYear - gl.childBirthYear;
-      if (childAgeAtRet >= 0 && childAgeAtRet < gl.childCostUntilAge) {
-        childMonthlyAtRet = (gl.childCostYearly / 12) * inflAtRet;
-      }
-    }
-    const targetMonthly = Math.round(baseTargetMonthly + childMonthlyAtRet);
-    const ok = !depletionYear;
-    const incomeOk = netMonthly >= targetMonthly;
-    headChip = '<div class="ms-chip '+(ok?'ok':'err')+'">'+(ok?'\u2713 Lasts':'\u00d7 Depletes')+'</div>';
-    const incomeRow = '<div class="sc-result-row"><span class="k">Monthly income</span><span class="v '+(incomeOk?'ok':'err')+'">'+eur(netMonthly)+' <span class="tgt">/ '+eur(targetMonthly)+'</span></span></div>';
-    innerRows = retireAgeRow + vsPlanRow + incomeRow + nwRetRow + coastRow + depRow;
+    // %-of-portfolio mode cannot meaningfully deplete, so the honest headline is
+    // budget adequacy, not a survival chip.
+    headChip = '<div class="ms-chip '+(m.incomeOk?'ok':'err')+'">'+(m.incomeOk?'\u2713 Funded':'\u00d7 Short')+'</div>';
+    const incomeRow = '<div class="sc-result-row"><span class="k">Monthly income</span><span class="v '+(m.incomeOk?'ok':'err')+'">'+eur(m.netMonthly)+' <span class="tgt">/ '+eur(m.targetMonthly)+'</span></span></div>';
+    innerRows = retireAgeRow + vsPlanRow + incomeRow + nwRetRow + fireNumRow + coastRow + depRowErr + infeasRow;
   } else {
-    const fireRet = proj.fireTarget;
-    const surplus = portRet-fireRet, ok=surplus>=0;
-    headChip = '<div class="ms-chip '+(ok?'ok':'err')+'">'+(ok?'\u2713 On Track':'\u00d7 Gap')+'</div>';
-    const surpRow = ok
-      ? '<div class="sc-result-row"><span class="k">Surplus</span><span class="v ok">+'+eur(surplus)+'</span></div>'
-      : '<div class="sc-result-row"><span class="k">Gap</span><span class="v err">'+eur(surplus)+'</span></div>';
-    const fireNumRow = '<div class="sc-result-row"><span class="k">FIRE Number</span><span class="v '+cc+'">'+eur(fireRet)+'</span></div>';
-    innerRows = retireAgeRow + vsPlanRow + nwRetRow + fireNumRow + surpRow + coastRow + depRow;
+    headChip = '<div class="ms-chip '+(m.ok?'ok':'err')+'">'+(m.ok?'\u2713 On Track':'\u00d7 Gap')+'</div>';
+    const surpRow = m.ok
+      ? '<div class="sc-result-row"><span class="k">Surplus</span><span class="v ok">+'+eur(m.surplus)+'</span></div>'
+      : '<div class="sc-result-row"><span class="k">Gap</span><span class="v err">'+eur(m.surplus)+'</span></div>';
+    const depRow = depletionYear ? depRowErr
+      : '<div class="sc-result-row"><span class="k">Survives to</span><span class="v ok">age '+gl.lifeExp+'+</span></div>';
+    innerRows = retireAgeRow + vsPlanRow + nwRetRow + fireNumRow + surpRow + coastRow + depRow + infeasRow;
   }
 
   el("ms"+idx).innerHTML =
@@ -2218,6 +2379,8 @@ function makeRetPlugin(projs, gl) {
 }
 
 function buildChart(projs,gl) {
+  if (typeof Chart === "undefined") return;   // Chart.js CDN unavailable — keep calculations & saving alive
+
   const proj=projs[activeScIdx], color=COLORS[activeScIdx], alpha=ALPHAS[activeScIdx], fade=COLORS_FADE[activeScIdx];
   const ctx=el("fireChart").getContext("2d");
   const sc = lastScenarios ? lastScenarios[activeScIdx] : null;
@@ -2261,6 +2424,8 @@ function buildChart(projs,gl) {
 }
 
 function buildAllocChart(projs,gl) {
+  if (typeof Chart === "undefined") return;   // Chart.js CDN unavailable — keep calculations & saving alive
+
   const proj=projs[activeScIdx],color=COLORS[activeScIdx],fade=COLORS_FADE[activeScIdx];
   const inv=proj.values.map((v,i)=>Math.max(0,v-(proj.rows[i]?(proj.rows[i].cashVal||0):0)));
   const sv=inv.map((v,i)=>Math.round(v*proj.allocations[i]/100));
@@ -2353,53 +2518,14 @@ function renderSummaryTiles(projs, gl, scenarios) {
   let html = '';
   projs.forEach((proj, i) => {
     const sc = scenarios[i], cv = CV[i], name = getScenarioName(i);
-    const retIdx = proj.retYear - gl.baseYear;
-    const portRet = proj.values[Math.min(retIdx, proj.values.length - 1)] || 0;
-    const retYear = gl.baseYear + Math.max(0, sc.retAge - gl.currentAge);
-
-    // vs plan: gap between when the actual and plan trajectories reach FIRE
-    let vsPlanRow = '';
-    const planProj = buildPlanProj(sc, gl);
-    if (planProj) {
-      const ac = fireCrossYear(proj, proj.fireTarget), pc = fireCrossYear(planProj, proj.fireTarget);
-      if (ac && pc) {
-        const d = pc - ac, n = Math.abs(d), onPlan = d === 0, ahead = d > 0;
-        const txt = onPlan ? 'on plan' : n + 'y ' + (ahead ? 'before' : 'after') + ' plan';
-        vsPlanRow = '<div class="sc-result-row"><span class="k">vs Plan</span><span class="v '+(onPlan?'':(ahead?'ok':'err'))+'">'+(onPlan?'':(ahead?'▲ ':'▼ '))+txt+'</span></div>';
-      }
-    }
-
+    const m = computeCardMetrics(sc, gl, proj);   // same numbers as the scenario cards
     let chip, metricRow;
     if (gl.wdMode === 'swr') {
-      const cashAtRet = (proj.rows[Math.min(retIdx, proj.rows.length-1)]||{}).cashVal||0;
-      const investAtRet = Math.max(0, portRet - cashAtRet);
-      const swrPortfolio = Math.round(investAtRet * gl.swr * (1 - gl.gainFrac * gl.taxRate) / 12);
-      const inflAtRet = Math.pow(1 + gl.inflation, Math.max(0, sc.retAge - gl.currentAge));
-      const pensionMonthly = sc.retAge >= gl.pensionAge ? Math.round(gl.pensionAmt * inflAtRet) : 0;
-      const partnerPensionMonthly = (sc.hasPartner && sc.retAge >= gl.partnerPensionAge)
-        ? Math.round(gl.partnerPension * inflAtRet) : 0;
-      const netMonthly = swrPortfolio + pensionMonthly + partnerPensionMonthly;
-      const partnerMult = sc.hasPartner ? gl.partnerSpendMult : 1;
-      const baseTargetMonthly = gl.spendRet * partnerMult * inflAtRet;
-      let childMonthlyAtRet = 0;
-      if (sc.hasChild) {
-        const childAgeAtRet = retYear - gl.childBirthYear;
-        if (childAgeAtRet >= 0 && childAgeAtRet < gl.childCostUntilAge) {
-          childMonthlyAtRet = (gl.childCostYearly / 12) * inflAtRet;
-        }
-      }
-      const targetMonthly = Math.round(baseTargetMonthly + childMonthlyAtRet);
-      let depletionYear = null;
-      for (let j=Math.max(0,retIdx);j<proj.values.length;j++) { if(proj.values[j]<=0){depletionYear=proj.years[j];break;} }
-      const ok = !depletionYear;
-      const incomeOk = netMonthly >= targetMonthly;
-      chip = '<span class="ms-chip '+(ok?'ok':'err')+'">'+(ok?'✓ Lasts':'× Depletes')+'</span>';
-      metricRow = '<div class="sc-result-row"><span class="k">Monthly income</span><span class="v '+(incomeOk?'ok':'err')+'">'+eur(netMonthly)+' <span class="tgt">/ '+eur(targetMonthly)+'</span></span></div>';
+      chip = '<span class="ms-chip '+(m.incomeOk?'ok':'err')+'">'+(m.incomeOk?'\u2713 Funded':'\u00d7 Short')+'</span>';
+      metricRow = '<div class="sc-result-row"><span class="k">Monthly income</span><span class="v '+(m.incomeOk?'ok':'err')+'">'+eur(m.netMonthly)+' <span class="tgt">/ '+eur(m.targetMonthly)+'</span></span></div>';
     } else {
-      const fireRet = proj.fireTarget;
-      const ok = portRet >= fireRet;
-      chip = '<span class="ms-chip '+(ok?'ok':'err')+'">'+(ok?'✓ On Track':'× Gap')+'</span>';
-      metricRow = '<div class="sc-result-row"><span class="k">FIRE Number</span><span class="v">'+eur(fireRet)+'</span></div>';
+      chip = '<span class="ms-chip '+(m.ok?'ok':'err')+'">'+(m.ok?'\u2713 On Track':'\u00d7 Gap')+'</span>';
+      metricRow = '<div class="sc-result-row"><span class="k">FIRE Number</span><span class="v">'+eur(m.fireTarget)+'</span></div>';
     }
     html +=
       '<div class="sc-summary-tile'+(i===activeScIdx?' active':'')+'" style="border-top:2.5px solid var(--'+cv+')" onclick="setActiveScenario('+i+')">' +
@@ -2408,10 +2534,11 @@ function renderSummaryTiles(projs, gl, scenarios) {
           chip +
         '</div>' +
         '<div class="sc-result-rows" style="margin-top:6px">' +
-          '<div class="sc-result-row"><span class="k">Retire age</span><span class="v">'+sc.retAge+' &middot; '+retYear+'</span></div>' +
-          vsPlanRow +
+          '<div class="sc-result-row"><span class="k">Retire age</span><span class="v">'+sc.retAge+' &middot; '+m.retYear+'</span></div>' +
+          vsPlanRowHTML(m) +
           metricRow +
-          '<div class="sc-result-row"><span class="k">NW at retirement</span><span class="v">'+eur(portRet)+'</span></div>' +
+          '<div class="sc-result-row"><span class="k">NW at retirement</span><span class="v">'+eur(m.portRet)+'</span></div>' +
+          infeasibleRowHTML(m) +
         '</div>' +
       '</div>';
   });
@@ -2469,8 +2596,10 @@ function downloadCSV() {
 function onWdMode() {
   const mode=(document.querySelector('input[name="wdMode"]:checked')||{value:'fixed'}).value;
   const sw=el("spendRet_wrap"), sr=el("swr_wrap");
-  if(mode==="swr"){if(sw)sw.style.display="none";if(sr)sr.style.display="";}
-  else{if(sw)sw.style.display="";if(sr)sr.style.display="none";}
+  // The retirement budget drives both modes (FIRE target, card targets, Monte
+  // Carlo funding ratio) — it must stay visible and editable in % mode too.
+  if(sw) sw.style.display="";
+  if(sr) sr.style.display = mode==="swr" ? "" : "none";
   recalc();
 }
 
@@ -2540,27 +2669,18 @@ const SYNC_FIELDS = [
   's1_chgYear','s2_chgYear','s3_chgYear','s4_chgYear','s5_chgYear',
   's1_chgInc','s2_chgInc','s3_chgInc','s4_chgInc','s5_chgInc',
   'mcSims','mcBlock',
+  'gainFrac','partnerBirthYear',
 ];
 
 const SAM_STATE = {"v":1,"fields":{"cash":"18000","cashReturn":"1.5","dob":"1994-03-12","lifeExp":"85","baseYear":"2026","baseIncome":"6700","spendNow":"3700","spendRet":"3000","swr":"4","stockRet":"7","bondRet":"3","inflation":"2","bondAllocNow":"0","bondAllocRet":"40","retCountry":"30","pensionAmt":"800","pensionAge":"67","wf0_yr":"2030","wf0_amt":"100000","wf1_yr":"","wf1_amt":"","wf2_yr":"","wf2_amt":"","partnerInc":"1400","partnerRetAge":"67","partnerPension":"400","partnerPensionAge":"67","partnerSpendMult":"1.3","propBuyYear":"2029","propPrice":"400000","propDownPct":"20","propTxCostPct":"8","propMortgageRate":"3.5","propMortgageTerm":"25","propRentSaved":"1200","childBirthYear":"2030","childCostYearly":"12000","childCostUntilAge":"23","childMaternityMonths":"12","childMaternityIncome":"1800","sc1name":"FIRE","sc2name":"With Tatou","sc3name":"Barista","sc4name":"Tatou+kid @FR","sc5name":"All @FR","s1_ret":"42","s2_ret":"45","s3_ret":"50","s4_ret":"59","s5_ret":"63","s1_inc":"","s2_inc":"","s3_inc":"","s4_inc":"","s5_inc":"","s1_chgYear":"","s2_chgYear":"","s3_chgYear":"2030","s4_chgYear":"2031","s5_chgYear":"2031","s1_chgInc":"","s2_chgInc":"","s3_chgInc":"1400","s4_chgInc":"4000","s5_chgInc":"4000"},"wdMode":"swr","features":{"1":{"partner":false,"prop":false,"child":false},"2":{"partner":true,"prop":false,"child":false},"3":{"partner":false,"prop":false,"child":false},"4":{"partner":true,"prop":false,"child":true},"5":{"partner":true,"prop":true,"child":true}},"ibkr":{"total":286780.5899394,"holdings":[{"sym":"IWDA","qty":6,"val":702.21},{"sym":"VWCE","qty":1811,"val":278821.56},{"sym":"Cash","qty":null,"val":7256.8199394}]}};
 const GIST_DESC = 'fire-planner';
 
-// ── Baked-in GitHub token, obfuscated so GitHub's secret scanner won't see (and
-//    auto-revoke) it. It is stored as an array of XOR'd char codes, never as a
-//    literal token string, so push protection and secret scanning don't match it.
-//
-//    To set or rotate the token:
-//      1. Create a *classic* PAT (Settings → Developer settings → Tokens (classic))
-//         with Expiration: No expiration and ONLY the `gist` scope.
-//      2. Open this app, open the browser console, and run:  encTok('PASTE_TOKEN')
-//      3. Copy the printed array and paste it as GH_TOK_OBF below.
-//    The raw token never needs to touch the repo or be shared with anyone.
-const GH_KEY = 'fire-planner-sync-v1';
-const encTok = t => JSON.stringify(Array.from(t, (c, i) => c.charCodeAt(0) ^ GH_KEY.charCodeAt(i % GH_KEY.length)));
-const decTok = a => a.map((n, i) => String.fromCharCode(n ^ GH_KEY.charCodeAt(i % GH_KEY.length))).join('');
-const GH_TOK_OBF = [1,1,2,58,127,18,8,86,40,7,29,3,95,28,63,89,84,97,51,0,41,57,71,15,125,5,27,8,22,57,50,29,101,6,73,28,80,116,33,95];   // ← paste encTok('your_token') output here
-
-let oauthToken  = GH_TOK_OBF.length ? decTok(GH_TOK_OBF) : '';
+// ── Per-device GitHub token ─────────────────────────────────────────────────
+// Sync uses a gist-scoped classic PAT pasted once per device in the sync modal
+// and stored only in that browser's localStorage. It is never embedded in the
+// served file or the repo: anything shipped in the page source is readable (and
+// abusable) by anyone who can load the page.
+let oauthToken  = localStorage.getItem('fire_github_token') || '';
 let ghLogin     = localStorage.getItem('fire_github_login') || '';
 let syncGistId  = localStorage.getItem('fire_gist_id')      || '';
 let syncTimer   = null;
@@ -2587,7 +2707,12 @@ function collectState() {
 function applyState(data) {
   if (!data || data.v !== 1) return;
   localTs = data.ts || 0;
-  Object.entries(data.fields || {}).forEach(([id, val]) => { const e = el(id); if (e) e.value = val; });
+  Object.entries(data.fields || {}).forEach(([id, val]) => {
+    const e = el(id); if (!e) return;
+    // migrate legacy numeric country values (rates were ambiguous across countries)
+    if (id === 'retCountry' && LEGACY_RATE_TO_CODE[val]) val = LEGACY_RATE_TO_CODE[val];
+    e.value = val;
+  });
   const radio = document.querySelector(`input[name="wdMode"][value="${data.wdMode}"]`);
   if (radio) radio.checked = true;
   const mcRe = el('mcRecenter'); if (mcRe && data.mc) mcRe.checked = data.mc.recenter !== false;
@@ -2680,9 +2805,52 @@ function setSyncStatus(status) {
 }
 
 function handleAuthError() {
-  // Token missing / revoked / lacks gist scope — disable sync until a valid one is baked in.
+  // Token revoked / lacks gist scope — clear it so the modal offers reconnection.
+  oauthToken = '';
+  localStorage.removeItem('fire_github_token');
   setSyncStatus('error');
   if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
+// Validate & store a pasted gist-scoped token for this device, then start syncing.
+async function connectSync() {
+  const inp = el('syncTokenInput'), err = el('syncTokenErr'), btn = el('syncConnectBtn');
+  const tok = (inp ? inp.value : '').trim();
+  if (!tok) return;
+  if (err) err.style.display = 'none';
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch('https://api.github.com/user', { headers: { Authorization: `Bearer ${tok}` } });
+    if (!res.ok) throw new Error('GitHub rejected the token (' + res.status + '). Check it has the gist scope.');
+    const user = await res.json();
+    oauthToken = tok;
+    localStorage.setItem('fire_github_token', tok);
+    ghLogin = user.login || '';
+    localStorage.setItem('fire_github_login', ghLogin);
+    if (inp) inp.value = '';
+    closeSyncModal();
+    setSyncStatus('syncing');
+    if (!syncGistId) {
+      const gid = await findGist();
+      if (gid) { syncGistId = gid; localStorage.setItem('fire_gist_id', syncGistId); }
+    }
+    if (syncGistId) await syncLoad(); else await syncSave();
+    setSyncStatus('ok');
+    startPolling();
+  } catch (e) {
+    if (err) { err.textContent = e.message || 'Could not connect.'; err.style.display = ''; }
+    setSyncStatus('error');
+  } finally { if (btn) btn.disabled = false; }
+}
+
+function disconnectSync() {
+  oauthToken = '';
+  localStorage.removeItem('fire_github_token');
+  ghLogin = '';
+  localStorage.removeItem('fire_github_login');
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  setSyncStatus('idle');
+  closeSyncModal();
 }
 
 // Background poll so an already-open tab picks up edits made on another device.
@@ -2748,6 +2916,11 @@ function recalc() {
   buildChart(projs,gl); buildAllocChart(projs,gl); renderTable(projs,gl);
   updateLabels();
   renderSummaryTiles(projs,gl,scenarios);
+  // Monte Carlo results were computed for the previous inputs — flag them stale.
+  if (mcResults) {
+    const st=el('mcStatus'); if(st) st.textContent='Inputs changed — press Run to refresh';
+    const mcBody=document.querySelector('.mc-body'); if(mcBody) mcBody.classList.add('stale');
+  }
   scheduleSave();
 }
 

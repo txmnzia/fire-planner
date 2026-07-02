@@ -34,8 +34,8 @@ The planner runs a **year-by-year simulation** from today until your life expect
 
 | Mode | What it answers |
 |------|----------------|
-| **Fixed Amount** | "How large does my portfolio need to be to sustain €X/month forever?" |
-| **Safe Withdrawal Rate (SWR)** | "Given a 4% withdrawal rate, how much monthly income will my portfolio generate?" |
+| **Fixed Amount** | "How large does my portfolio need to be to sustain €X/month (real) until life expectancy?" — Bengen-style fixed real withdrawals, depletion possible |
+| **% of Portfolio (SWR)** | "If up to 4% of my *current* portfolio is withdrawn each year, does that income cover my budget?" — adaptive income, cannot deplete; risk = income variability |
 
 Five parallel scenarios (A–E) are computed simultaneously for side-by-side comparison.
 
@@ -66,7 +66,7 @@ Five parallel scenarios (A–E) are computed simultaneously for side-by-side com
 | Monthly Income (net) | `baseIncome` | 6,700 | EUR/month | Your take-home income today |
 | Monthly Spending (now) | `spendNow` | 3,000 | EUR/month | Pre-retirement lifestyle spending |
 | Monthly Spending (retirement) | `spendRet` | 3,000 | EUR/month | Fixed-mode only; base for SWR target |
-| Safe Withdrawal Rate | `swr` | 4% | % | SWR-mode only; % of portfolio withdrawn annually |
+| Withdrawal Rate | `swr` | 4% | % | %-of-portfolio mode only; % of the current portfolio available annually |
 
 ### Market Assumptions
 
@@ -82,8 +82,8 @@ Five parallel scenarios (A–E) are computed simultaneously for side-by-side com
 
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
-| Country of Residence | `retCountry` | France | — | Sets capital-gains tax rate |
-| Unrealized Gain Fraction | `gainFrac` | 27% | % | % of your portfolio that is capital gain |
+| Country of Residence | `retCountry` | France | — | Sets capital-gains tax rate (stored as country code) |
+| Unrealized Gain Fraction | `gainFrac` | 27% | % | % of your portfolio that is capital gain today; auto-filled from IBKR CSV import, editable & synced |
 
 ### Future Income
 
@@ -102,6 +102,7 @@ Five parallel scenarios (A–E) are computed simultaneously for side-by-side com
 | Partner Pension Amount (gross) | `partnerPension` | 700 | EUR/month | Partner's monthly pension |
 | Partner Pension Age | `partnerPensionAge` | 67 | years | Age when partner's pension starts |
 | Spending Multiplier | `partnerSpendMult` | 1.5× | — | Household spending = solo spending × this |
+| Partner Year of Birth | `partnerBirthYear` | — (same as you) | year | Optional; shifts when partner ret./pension ages are reached |
 
 ### Property (global, toggled per scenario)
 
@@ -140,43 +141,69 @@ You specify **monthly spending in retirement** (`spendRet`). The calculator comp
 - Child costs that continue into retirement (if enabled)
 - Property mortgage / rent savings (if enabled)
 
-### Safe Withdrawal Rate Mode (`wdMode = "swr"`)
+### % of Portfolio Mode (`wdMode = "swr"`)
 
-You specify a **withdrawal rate** (e.g., 4%). The calculator:
+You specify a **withdrawal rate** (e.g., 4%). Each retirement year, `SWR% × current
+portfolio` is *available* for withdrawal; the engine actually sells only what the
+year's budget needs after other income (pensions, partner salary, rent savings), so
+gains are not realised — and taxed — unnecessarily. Income beyond the budget from
+pensions/partner salary is reinvested.
 
-1. Computes how large the portfolio needs to be at retirement so that `SWR% × portfolio` covers your spending after pension offsets.
-2. Simulates year-by-year portfolio growth during retirement, withdrawing exactly `SWR% × portfolio` each year.
-3. Tracks whether the portfolio runs out before life expectancy.
+> **Important:** this is a **%-of-current-portfolio strategy**, *not* the classic
+> Bengen/Trinity "4% rule" (which withdraws 4% of the *retirement-date* portfolio
+> and then inflation-adjusts that fixed amount). A %-of-portfolio draw can never
+> fully deplete the portfolio — its risk shows up as **income variability**
+> instead. That is why the scenario cards headline **budget adequacy**
+> (✓ Funded / × Short) rather than a survival chip, and why the Monte Carlo tab
+> reports funding ratios in this mode. For Bengen-style fixed-real withdrawals
+> with genuine depletion risk, use **Fixed Amount** mode.
 
-The scenario card shows your **effective monthly income** at retirement and compares it to your **inflation-adjusted spending target** including all add-ons.
+The scenario card compares your **effective monthly income** at retirement
+(after capital-gains tax, plus pensions and partner salary where active) with the
+**complete year-one budget** (spending × partner multiplier + child costs +
+mortgage − rent saved, inflation-adjusted).
 
 ---
 
 ## FIRE Number Calculation
 
-### SWR Mode Formula
+### % of Portfolio Mode Formula
+
+Two numbers are computed; the **conservative** one is the headline (chart line,
+Coast Number, on-track check), the **adjusted** one is shown alongside it on the
+scenario card.
 
 ```
-FIRE Number = Annual Net Spending / SWR rate
+Year-One Budget = Retirement Spending × partnerMult
+                + Child Costs (if dependent at retirement)
+                + Mortgage (if active at retirement) − Rent Saved
+                                    ...all inflation-adjusted to retirement date
+
+FIRE Number (headline) = max(0, Budget − pensions already flowing at retirement)
+                         × TaxMult / SWR rate
+
+FIRE Number (adjusted) = headline − PV(state pension starting later)
+                                  − PV(partner pension starting later)
+                                  − PV(partner salary until partner retires)
 ```
 
-Where:
-```
-Annual Net Spending = Inflation-Adjusted Retirement Spending
-                    − State Pension (if at pension age)
-                    − Partner Pension (if enabled and at partner pension age)
-```
+`TaxMult = 1 / (1 − gainFrac_at_retirement × taxRate)` grosses the target up so
+that the **after-tax** proceeds of the SWR draw cover the budget — a portfolio
+equal to the target really delivers the budget, net of capital-gains tax. The
+gain fraction used is the one the projection **tracks to your retirement date**,
+not today's.
 
-All amounts are **inflation-adjusted to retirement date**:
-```
-Inflated Amount = Nominal Amount × (1 + inflation)^years_to_retirement
-```
+The headline deliberately gives **no credit** for income that hasn't started yet
+(pensions at 67 when you retire at 45, or a partner's remaining working years) —
+those appear only in the adjusted number, so you can see both the safe target
+and the realistic one.
 
-**Example:** Retire in 10 years, spend €3,000/month, pension €800/month, 2% inflation, 4% SWR:
-- Inflated spending: €3,000 × 1.02¹⁰ = €3,657/month = €43,886/year
-- Inflated pension: €800 × 1.02¹⁰ = €975/month = €11,700/year
-- Net annual from portfolio: €43,886 − €11,700 = €32,186
-- FIRE Number: €32,186 / 0.04 = **€804,650**
+**Example:** Retire in 10 years, spend €3,000/month, pension €800/month starting
+at 67 (i.e. *after* retirement), 2% inflation, 4% SWR, 30% tax on a 50% gain
+fraction at retirement (TaxMult ≈ 1.176):
+- Inflated budget: €3,000 × 1.02¹⁰ × 12 = €43,886/year
+- Headline FIRE Number: €43,886 × 1.176 / 0.04 = **€1,290,000** (pension not yet flowing → no offset)
+- Adjusted FIRE Number: headline − PV(pension from 67) — shown as the secondary figure
 
 ### Fixed Amount (DCF) Mode Formula
 
@@ -187,6 +214,7 @@ FIRE Number = PV(spending, pre-pension) + PV(spending - pension, post-pension)
             + PV(child costs)
             + PV(property net costs)
             − PV(partner pension credit)
+            − PV(partner salary credit, until partner's retirement age)
 ```
 
 The **annuity PV formula** used is:
@@ -204,10 +232,13 @@ Where:
 **Tax multiplier** is applied to all spending to convert after-tax needs to pre-tax withdrawal amounts:
 
 ```
-Tax Multiplier = 1 / (1 − gainFrac × taxRate)
+Tax Multiplier = 1 / (1 − gainFrac_at_retirement × taxRate)
 ```
 
-This accounts for the fact that withdrawals trigger capital gains tax on the gain portion.
+This accounts for the fact that withdrawals trigger capital gains tax on the gain
+portion. The gain fraction is the one the projection **tracks to your retirement
+date** (contributions raise cost basis, growth raises the gain share), which is
+typically far higher than today's — using today's would understate the target.
 
 ---
 
@@ -224,9 +255,16 @@ Portfolio(t+1) = Portfolio(t) × (1 + r(age)) + Net Flow + Windfall
 
 Income includes:
 - Your salary (inflation-adjusted, with optional income change)
-- Partner income (inflation-adjusted, until partner retires)
+- Partner income (inflation-adjusted, until the *partner* retires — this continues
+  into your own retirement if the partner works longer; set `partnerBirthYear`
+  if your partner's age differs from yours)
 - Partner pension (once partner reaches pension age)
-- Parental leave income adjustment in child's birth year
+- Parental leave income adjustment in child's birth year (inflation-adjusted)
+
+If a year's deficit exceeds the portfolio (e.g. a property down payment), the
+remainder is drawn from **cash savings**; if cash runs out too, the scenario card
+shows an **⚠ Underfunded** warning for that year instead of silently writing the
+shortfall off.
 
 Spending includes:
 - `spendNow × inflation × partnerMult` (if partner enabled)
@@ -236,26 +274,36 @@ Spending includes:
 
 ### Retirement Phase
 
-**SWR Mode:**
+Both modes first compute the year's full budget and non-portfolio income:
+
 ```
-Gross Withdrawal = Portfolio × SWR rate
-Net Withdrawal (after-tax) = Gross × (1 − currentGainFrac × taxRate)
-Portfolio(t+1) = Portfolio(t) × (1 + r(age)) + Windfall − Gross Withdrawal
+Budget      = Inflated Retirement Spending × partnerMult
+            + Child Costs (if still applicable)
+            + Mortgage (if still active) − Rent Savings
+Other Income = State Pension + Partner Pension + Partner Salary (while partner still works)
 ```
+
+**% of Portfolio Mode:**
+```
+Available Gross = Portfolio × SWR rate
+Needed Gross    = max(0, Budget − Other Income) / (1 − currentGainFrac × taxRate)
+Gross Withdrawal = min(Available, Needed)  (+ any one-time property purchase, grossed up)
+Portfolio(t+1)  = Portfolio(t) × (1 + r(age)) + Windfall − Gross + Surplus
+```
+Only what the budget needs is sold (no needless tax); `Surplus` (other income
+beyond the budget) is reinvested. The adequacy metrics still compare the **full**
+available draw against the budget.
 
 **Fixed Amount Mode:**
 ```
-Target Spending = Inflated Retirement Spending × partnerMult
-               + Child Costs (if still applicable)
-               + Mortgage (if still active)
-               − Rent Savings
-               − Pension Income
-               − Partner Pension
-Gross Withdrawal = Target / (1 − currentGainFrac × taxRate)
-Portfolio(t+1) = Portfolio(t) × (1 + r(age)) + Windfall − Gross Withdrawal
+Need = Budget + Purchase Cost − Other Income
+if Need > 0:  Gross Withdrawal = Need / (1 − currentGainFrac × taxRate)
+else:         no withdrawal; the surplus income is reinvested (added to cost basis)
+Portfolio(t+1) = Portfolio(t) × (1 + r(age)) + Windfall − Gross + Surplus
 ```
 
-If the portfolio is exhausted, remaining withdrawals come from cash savings. When both are zero, the portfolio is depleted.
+If the portfolio is exhausted, remaining withdrawals come from cash savings. When
+both are zero, the plan is depleted (an **⚠ Underfunded** row flags the year).
 
 ---
 
@@ -289,6 +337,12 @@ Applied to:
 
 `gainFrac` (default 27%) is the **fraction of your current portfolio that is unrealized capital gain**. If your portfolio is €200,000 and 27% is gain, then €54,000 would be taxable if you sold everything today.
 
+It is a visible input in the **Tax & Country** section, is **auto-filled** when
+you import an IBKR CSV (from the statement's cost-basis columns), and is
+**persisted/synced** like every other field. The FIRE target's tax gross-up uses
+the gain fraction **projected to your retirement date** (see Cost Basis
+Tracking), not this starting value.
+
 ### Cost Basis Tracking
 
 During accumulation the calculator tracks your cost basis:
@@ -317,7 +371,12 @@ To compute the required **gross** withdrawal to meet a **net** spending need:
 GrossWithdrawal = NetSpending / (1 − currentGainFrac × taxRate)
 ```
 
-**Tax rates by country** (examples): Portugal 0%, Germany 25%, France 30%, Belgium 33%.
+**Tax rates by country** (examples, matching the dropdown): France 30%, Portugal 28%,
+Germany 26%, Ireland 33%, Belgium 0%. These are flat-rate approximations of
+headline capital-gains regimes — they do **not** model fund-specific rules such as
+Ireland's 41% ETF exit tax, Germany's Vorabpauschale/Teilfreistellung, the
+Netherlands' box-3 deemed-return system, or Belgium's new 2026 capital-gains
+regime. Verify the rate for your own situation and asset type.
 
 ---
 
@@ -373,15 +432,19 @@ Monthly Income: €3,500/mo  / €4,200 target
 ```
 
 - **Monthly Income** = total effective monthly income at retirement date, including:
-  - Portfolio SWR withdrawal (post capital gains tax)
+  - Portfolio SWR withdrawal (post capital gains tax, at the gain fraction
+    **tracked to retirement**)
   - State pension (if retirement age ≥ pension age), inflation-adjusted
-  - Partner pension (if enabled and retirement age ≥ partner pension age), inflation-adjusted
+  - Partner pension (if enabled and partner is at pension age), inflation-adjusted
+  - Partner salary (if enabled and partner is still working), inflation-adjusted
 
-- **Target** = total monthly spending need at retirement date:
+- **Target** = the complete year-one budget at retirement date:
   - Base retirement spending × partner multiplier (if enabled) × inflation factor
   - Plus child costs per month (if child is still a dependent at retirement year)
+  - Plus mortgage − rent saved (if property enabled and active at retirement)
 
-**Green** = income ≥ target. **Red** = income < target.
+**Green** = income ≥ target. **Red** = income < target. The chip shows
+**✓ Funded / × Short** accordingly.
 
 The comparison uses **inflation-adjusted future values** (not today's money), so both sides are on equal footing.
 
@@ -390,14 +453,15 @@ The comparison uses **inflation-adjusted future values** (not today's money), so
 ```
 inflAtRet = (1 + inflation)^years_to_retirement
 
-SWR Portfolio Income = investedPortfolio × SWR × (1 − gainFrac × taxRate) / 12
+SWR Portfolio Income = investedPortfolio × SWR × (1 − gainFrac_at_ret × taxRate) / 12
 
-Pension Income at Ret = pensionAmt × inflAtRet  (if retAge ≥ pensionAge)
-Partner Pension at Ret = partnerPension × inflAtRet  (if enabled and retAge ≥ partnerPensionAge)
+Pension Income at Ret  = pensionAmt × inflAtRet       (if retAge ≥ pensionAge)
+Partner Pension at Ret = partnerPension × inflAtRet   (if enabled and partner at pension age)
+Partner Salary at Ret  = partnerInc × inflAtRet       (if enabled and partner still working)
 
-Total Monthly Income = SWR Portfolio Income + Pension + Partner Pension
+Total Monthly Income = SWR Portfolio Income + Pension + Partner Pension + Partner Salary
 
-Target Monthly = spendRet × partnerMult × inflAtRet + childMonthlyCostAtRet
+Target Monthly = yearOneBudget(retAge) / 12
 ```
 
 ---
@@ -406,11 +470,16 @@ Target Monthly = spendRet × partnerMult × inflAtRet + childMonthlyCostAtRet
 
 When you toggle **"With Partner"** for a scenario, the following changes apply:
 
-### Income (Accumulation Phase)
+### Income (Both Phases)
 
 - Partner's income (`partnerInc`) added to household income each year, inflation-adjusted.
-- Partner income stops when partner reaches `partnerRetAge`.
-- Partner pension (`partnerPension`) starts once partner reaches `partnerPensionAge`.
+- Partner income stops when the **partner** reaches `partnerRetAge` — including
+  after *your* retirement. If you retire at 45 and your partner works to 67,
+  their salary offsets household withdrawals for those 22 years.
+- Partner pension (`partnerPension`) starts once the partner reaches `partnerPensionAge`.
+- The partner's age is assumed equal to yours unless you set
+  `partnerBirthYear` (Partner section), which shifts when their retirement and
+  pension ages are reached.
 
 ### Spending
 
@@ -422,9 +491,12 @@ When you toggle **"With Partner"** for a scenario, the following changes apply:
 
 ### FIRE Number Impact
 
-- **SWR mode:** pension offsets reduce required portfolio.
-- **Fixed mode:** partner pension PV is subtracted from FIRE target as a credit.
-- Spending increase raises the FIRE target; pension income lowers it.
+- **% of Portfolio mode:** pensions already flowing at retirement reduce the
+  headline target; future pensions and the partner's remaining salary years are
+  credited only in the **adjusted** (secondary) number.
+- **Fixed mode:** the PV of the partner's pension *and* of their salary until
+  `partnerRetAge` are subtracted from the FIRE target as credits.
+- Spending increase raises the FIRE target; partner income lowers it.
 
 ---
 
@@ -451,10 +523,11 @@ In the child's birth year, your income is reduced:
 
 ```
 Income in birth year = (12 − leaveMonths) × monthlyIncome
-                     + leaveMonths × childMaternityIncome
+                     + leaveMonths × childMaternityIncome × inflationFactor
 ```
 
-Where `leaveMonths = min(12, childMaternityMonths)`.
+Where `leaveMonths = min(12, childMaternityMonths)`. The leave income is
+inflation-adjusted like every other amount (it is entered in today's money).
 
 ### Impact on FIRE Number
 
@@ -528,10 +601,12 @@ Pension at future age = pensionAmt × 12 × (1 + inflation)^years
 
 ### Effect on FIRE Number
 
-**SWR mode:** Reduces the annual withdrawal needed from the portfolio:
+**% of Portfolio mode:** pensions **already flowing at retirement** reduce the
+headline target; pensions starting later are credited only in the adjusted number:
 ```
-annualFromPortfolio = max(0, annualSpending − pensionIncome − partnerPensionIncome)
-FIRE Number = annualFromPortfolio / SWR
+annualFromPortfolio    = max(0, yearOneBudget − pensions active at retirement)
+FIRE Number (headline) = annualFromPortfolio × TaxMult / SWR
+FIRE Number (adjusted) = headline − PV(future pensions & partner salary)
 ```
 
 **Fixed mode:** Splits the FIRE calculation into two periods:
@@ -554,7 +629,10 @@ Portfolio(t+1) = Portfolio(t) × (1 + r) + netFlow + windfall(yr)
 
 Windfalls also increase your cost basis (treated as new investment with cost basis = windfall amount).
 
-Windfalls reduce the required savings rate by boosting the portfolio at a specific point in time.
+Windfalls reduce the required savings rate by boosting the portfolio at a specific
+point in time. **They are deliberately not credited against the FIRE Number** —
+the target stays windfall-free (conservative); the projection curve simply crosses
+it earlier when a windfall lands.
 
 ---
 
@@ -605,13 +683,20 @@ Because blocks are *consecutive* real history, each path keeps realistic short-r
 
 ### Recentering to your assumptions (default ON)
 
-The embedded series is developed-markets, USD-denominated history. With **recentering** on, each sampled return keeps history's *deviation* from its own long-run mean but is re-anchored to **your** assumed `stockRet` / `bondRet`:
+The embedded series is developed-markets, USD-denominated history. With **recentering** on, each sampled return keeps history's shape but is re-anchored so the **long-run compound (geometric) return equals your** assumed `stockRet` / `bondRet`:
 
 ```
-recentered_return = yourMean + (historicalReturn − historicalMean)
+1 + recentered = (1 + yourReturn) × (1 + historicalReturn) / (1 + historicalGeoMean)
 ```
 
-So the **volatility, fat tails, and sequencing are real**, while the **average return matches your own forecast** (e.g. a more conservative 7% rather than history's higher realized average). Turn recentering off to use the raw historical means instead.
+So the **volatility, fat tails, and sequencing are real**, while the **compound
+return matches your own forecast** — which makes the Monte Carlo median
+consistent with the deterministic tabs (they compound your input directly). An
+additive arithmetic-mean shift would instead compound roughly σ²/2 ≈ 1.5
+percentage points *below* your input (volatility drag) and silently contradict
+the other tabs. Your `stockRet` input is therefore interpreted everywhere as a
+**CAGR / geometric** return. Turn recentering off to use the raw historical
+series instead.
 
 > **Note on the data:** the embedded return arrays are *approximate* annual figures compiled from public sources, chosen to reproduce realistic year-to-year dynamics rather than exact index levels. They live in `MC_HIST_STOCK` / `MC_HIST_BOND` in `index.html` and can be edited to plug in your own return history (the two arrays must stay aligned by year and equal in length). **Inflation is kept deterministic** (your inflation input) in this version.
 
@@ -693,7 +778,10 @@ The Monte Carlo tab reuses the exact same `project()` cash-flow engine as the ot
 8. **Child costs are constant in real terms** — `childCostYearly` is in today's money and grows with inflation.
 9. **Spending is constant in real terms** in retirement — you spend the same amount (inflation-adjusted) every year. No dynamic withdrawal strategy.
 10. **Cost basis tracking** uses a simplified proportional method. It is not a substitute for actual tax advice.
-11. **SWR mode** withdraws exactly `SWR% × current portfolio` each year — this is the classic Bengen/Trinity rule. The portfolio may still deplete if returns are poor (modeled as depletion when portfolio hits 0).
+11. **% of Portfolio mode** makes `SWR% × current portfolio` available each year and sells only what the budget needs — this is **not** the classic Bengen/Trinity rule (fixed real withdrawals set at retirement), and by construction it cannot fully deplete the portfolio. Its risk is income variability, reported as budget-adequacy metrics. Use **Fixed Amount** mode for Bengen-style depletion analysis.
+12. **Your return inputs are compound (CAGR/geometric) returns.** The deterministic tabs compound them directly, and Monte Carlo recentering anchors the geometric mean to them, so the two views agree at the median.
+13. **Surplus income is reinvested.** In retirement, pension/partner income beyond the year's budget is added back to the portfolio (raising its cost basis) rather than discarded.
+14. **Accumulation deficits draw down cash** after the portfolio; if both run out, the year is flagged ⚠ Underfunded on the scenario card rather than silently forgiven.
 
 ### What the Calculator Does NOT Model
 
@@ -712,11 +800,13 @@ The Monte Carlo tab reuses the exact same `project()` cash-flow engine as the ot
 |---------|---------|
 | Inflation adjustment | `Amount × (1 + inflation)^years` |
 | Annuity PV | `C × [1 − ((1+g)/(1+r))^n] / (r−g)` |
-| FIRE Number (SWR) | `(annualSpend − pension) / SWR` |
+| FIRE Number (% mode, headline) | `max(0, yearOneBudget − active pensions) × TaxMult / SWR` |
+| FIRE Number (% mode, adjusted) | headline − PV(future pensions & partner salary) |
 | Coast Number | `FIRE Number / ∏(1 + r_age)` |
-| Tax multiplier | `1 / (1 − gainFrac × taxRate)` |
-| Mortgage payment | `P × mr × (1+mr)^n / ((1+mr)^n − 1)` |
+| Tax multiplier | `1 / (1 − gainFrac_at_retirement × taxRate)` |
+| Mortgage payment | `P × mr × (1+mr)^n / ((1+mr)^n − 1)` (or `P/n` at 0% rate) |
 | Partner spending | `spendRet × partnerSpendMult` |
-| SWR monthly income | `portfolio × SWR × (1 − gainFrac × taxRate) / 12` |
-| Total monthly income (SWR card) | SWR income + pension + partner pension (all inflation-adjusted) |
-| Monthly target (SWR card) | `spendRet × partnerMult × inflAtRet + childMonthlyCostAtRet` |
+| SWR monthly income | `portfolio × SWR × (1 − gainFrac_at_ret × taxRate) / 12` |
+| Total monthly income (card) | SWR income + pension + partner pension + partner salary (all inflation-adjusted) |
+| Monthly target (card) | `yearOneBudget(retAge) / 12` |
+| MC recentering | `1+r' = (1+yourReturn)(1+r)/(1+geoMean(history))` |
