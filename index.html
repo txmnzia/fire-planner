@@ -442,7 +442,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v6.5</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v6.6</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -1862,15 +1862,19 @@ function buildPlanProj(sc, gl) {
   return project(sc, gl, { startYear: first.year, startPort: first.val, history: sorted });
 }
 
-// First calendar year a projection's net worth reaches the (constant) FIRE
-// target — i.e. where the line crosses the horizontal FIRE Target line on the
-// chart. "Years ahead/behind" is the gap between the actual and plan crossings.
-function fireCrossYear(proj, target) {
-  if (!(target > 0)) return null;
-  for (let i = 0; i < proj.values.length; i++) {
-    if (proj.values[i] >= target) return proj.years[i];
+// Position-based "vs Plan": the first calendar year the plan curve expected you
+// to reach TODAY'S actual net worth. Ahead/behind = that year − baseYear.
+// Measured on the steep accumulation slope, so it stays stable — unlike the old
+// FIRE-line-crossing comparison, which exploded into huge year-gaps whenever the
+// curves grew only a few %/yr near the (horizontal) target line.
+function planYearsAhead(planProj, gl) {
+  if (!planProj) return null;
+  const nowNW = ibkrTotal + gl.cash;
+  for (let i = 0; i < planProj.values.length; i++) {
+    if (planProj.values[i] >= nowNW) return { years: planProj.years[i] - gl.baseYear, open: false };
   }
-  return null;
+  // plan never reaches today's net worth within the horizon — at least this far ahead
+  return { years: planProj.years[planProj.years.length - 1] - gl.baseYear, open: true };
 }
 
 // ── MONTE CARLO ENGINE ───────────────────────────────────────────────────────
@@ -1978,17 +1982,21 @@ function runMonteCarlo(scenarios, gl, cfg){
       const proj = project(sc, gl, { returnSeq: paths[p] });
       const vals = proj.values, rows = proj.rows;
       const realFire = vals[retIdx] / Math.pow(1+gl.inflation, retIdx);
-      let survived = true, shortYears = 0, ratioSum = 0, ratioCount = 0, minRatio = Infinity;
+      let survived = true, shortYears = 0, covNum = 0, covDen = 0, ratioCount = 0, minRatio = Infinity;
       for (let y=0;y<nYears;y++){
         const v = vals[y]!=null ? vals[y] : 0;
         byYear[y][p] = v;
         if (y>=retIdx && v<=floor) survived = false;
         if (swr && y>=retIdx && rows[y]){
-          // funding ratio = portfolio income (SWR draw + pensions) ÷ full annual budget
+          // funding ratio = portfolio income (SWR draw + pensions + partner salary) ÷ full annual budget
           const tgt = rows[y].swrTarget, inc = rows[y].swrIncome;
           const ratio = tgt>0 ? inc/tgt : 1;
           byRatio[y-retIdx][p] = ratio;
-          ratioSum += ratio; ratioCount++;
+          ratioCount++;
+          // lifetime coverage: budget-capped and deflated, so surplus years can't
+          // inflate the score and every retirement year weighs equally in real terms
+          const defl = Math.pow(1+gl.inflation, y);
+          covNum += Math.min(inc, tgt)/defl; covDen += tgt/defl;
           if (ratio < minRatio) minRatio = ratio;
           if (tgt>0 && inc<tgt){ shortYears++; condShortSum += ratio; condShortCount++; }
         }
@@ -2003,7 +2011,7 @@ function runMonteCarlo(scenarios, gl, cfg){
       if (swr){
         shortfallYearSum += shortYears;
         fundedYearSum += (nRetYears - shortYears);
-        coverage[p] = ratioCount>0 ? ratioSum/ratioCount : 1;
+        coverage[p] = covDen>0 ? covNum/covDen : 1;   // share of lifetime budget funded (≤ 1)
         worstYr[p]  = ratioCount>0 ? minRatio : 1;
       }
     }
@@ -2032,7 +2040,9 @@ function runMonteCarlo(scenarios, gl, cfg){
       successRate: successes/N,
       // SWR income adequacy. Funded-share (income ≥ budget) is used over a
       // "≥1 short year" frequency, which saturates near 100% over a long horizon.
-      // Depth is captured by typical/conditional/worst-year funding ratios.
+      // Depth: typicalCoverage is each sim's budget-capped, deflated lifetime
+      // coverage (Σ min(income,budget) ÷ Σ budget) — an uncapped average would be
+      // dominated by late-life surplus years, since unspent gains compound.
       fundedRate:    swr ? fundedYearSum/(N*nRetYears) : null,
       yearsBelowAvg: swr ? shortfallYearSum/N : null,
       retYearsTotal: swr ? nRetYears : null,
@@ -2110,7 +2120,7 @@ function renderMcCards(){
   if (note){
     if (swr){
       note.style.display='block';
-      note.innerHTML='<strong>SWR mode:</strong> withdrawals are a fixed % of the portfolio, so it mathematically can’t hit zero — depletion-based survival is ~100% by construction. The real question is <strong>budget adequacy</strong>: how often, and by how much, the withdrawal (plus pensions) falls short of your full yearly spending budget. The cards show the share of retirement years on budget; click one for how deep the shortfalls go. Switch to Fixed-Amount mode for a classic depletion-based survival rate.';
+      note.innerHTML='<strong>% of Portfolio mode:</strong> up to SWR% of the current portfolio funds each year’s budget (surpluses stay invested), so the portfolio can’t hit zero — depletion-based survival is ~100% by construction. The real question is <strong>budget adequacy</strong>: how often, and by how much, the available draw (plus pensions and partner income) falls short of your full yearly budget. The cards show the share of retirement years on budget; click one for how deep the shortfalls go. Switch to Fixed-Amount mode for a classic depletion-based survival rate.';
     } else {
       note.style.display='none';
     }
@@ -2139,7 +2149,7 @@ function renderMcDetail(){
     // Frequency (how often short) + depth (how far short) of the funding ratio.
     const fundClr=MC_RATE_COLOR[mcRateClass(r.fundedRate)];
     t.push(mcTile('Years under budget','<span style="color:'+fundClr+'">'+Math.round(r.yearsBelowAvg)+' / '+r.retYearsTotal+'</span>','avg retirement yrs income < budget'));
-    t.push(mcTile('Typical funding',Math.round(r.typicalCoverage*100)+'%','median sim: % of budget funded'));
+    t.push(mcTile('Lifetime budget funded',Math.round(r.typicalCoverage*100)+'%','median sim: share of total budget covered'));
     t.push(mcTile('When short, you fund',Math.round(r.condShortDepth*100)+'%','avg coverage in under-budget yrs'));
     t.push(mcTile('Worst year (1-in-10)',Math.round(r.worstYearP10*100)+'%','leanest year in a bad path'));
   } else {
@@ -2153,7 +2163,7 @@ function renderMcDetail(){
   el('mcFanTitle').textContent=(swr?'Budget Coverage Over Retirement — ':'Outcome Range Over Time — ')+r.name;
   if (el('mcFanRefLabel')) el('mcFanRefLabel').textContent = swr ? 'Budget (100%)' : 'FIRE Target';
   if (el('mcHistTitle')) el('mcHistTitle').innerHTML = swr
-    ? 'Distribution of Budget Coverage <span style="color:var(--muted);font-weight:400">(avg % of budget funded per sim)</span>'
+    ? 'Distribution of Budget Coverage <span style="color:var(--muted);font-weight:400">(share of lifetime budget funded per sim)</span>'
     : 'Distribution of Ending Net Worth <span style="color:var(--muted);font-weight:400">(real, today’s €)</span>';
   buildMcFanChart(r, swr); buildMcHistChart(r, swr);
 }
@@ -2254,14 +2264,11 @@ function computeCardMetrics(sc, gl, proj) {
   for (let i = 0; i < nAccum; i++) growthFactor *= (1 + portReturnAt(gl, gl.currentAge + i, sc.retAge));
   const coastNow = growthFactor > 0 ? proj.fireTarget / growthFactor : proj.fireTarget;
   const coasting = (ibkrTotal + gl.cash) >= coastNow;
-  // vs plan: gap between when the actual and plan trajectories reach the FIRE target
-  let vsPlan = null;
-  const planProj = buildPlanProj(sc, gl);
-  if (planProj) {
-    const ac = fireCrossYear(proj, proj.fireTarget), pc = fireCrossYear(planProj, proj.fireTarget);
-    if (ac && pc) vsPlan = pc - ac;   // +ve = ahead of plan
-  }
-  const m = { retIdx, portRet, retYear, depletionYear, coastNow, coasting, vsPlan,
+  // vs plan: when did the plan curve expect you to be where you actually are today?
+  const pos = planYearsAhead(buildPlanProj(sc, gl), gl);
+  const vsPlan = pos ? pos.years : null;   // +ve = ahead of plan
+  const m = { retIdx, portRet, retYear, depletionYear, coastNow, coasting,
+              vsPlan, vsPlanOpen: pos ? pos.open : false,
               fireTarget: proj.fireTarget, fireTargetAdj: proj.fireTargetAdj,
               infeasibleYear: proj.infeasibleYear };
   if (gl.wdMode === 'swr') {
@@ -2289,8 +2296,8 @@ function computeCardMetrics(sc, gl, proj) {
 
 function vsPlanRowHTML(m) {
   if (m.vsPlan === null) return '';
-  const d = m.vsPlan, onPlan = d === 0, ahead = d > 0, n = Math.abs(d);
-  const txt = onPlan ? 'on plan' : n + 'y ' + (ahead ? 'before' : 'after') + ' plan';
+  const d = m.vsPlan, onPlan = d === 0 && !m.vsPlanOpen, ahead = d > 0 || m.vsPlanOpen, n = Math.abs(d);
+  const txt = onPlan ? 'on plan' : (m.vsPlanOpen ? '>' : '') + n + 'y ' + (ahead ? 'ahead of' : 'behind') + ' plan';
   return '<div class="sc-result-row"><span class="k">vs Plan</span><span class="v '+(onPlan?'':(ahead?'ok':'err'))+'">'+(onPlan?'':(ahead?'▲ ':'▼ '))+txt+'</span></div>';
 }
 

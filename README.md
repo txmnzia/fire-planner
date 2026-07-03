@@ -464,6 +464,22 @@ Total Monthly Income = SWR Portfolio Income + Pension + Partner Pension + Partne
 Target Monthly = yearOneBudget(retAge) / 12
 ```
 
+### vs Plan (years ahead/behind)
+
+Shown when you have past net-worth snapshots. It is **position-based**: the plan
+curve (your history re-projected with plan assumptions) is scanned for the first
+year it expected you to reach **today's actual net worth**:
+
+```
+years ahead = (plan year at which planValue ≥ actual NW today) − current year
+```
+
+Positive = you got here earlier than the plan predicted. This is measured on the
+steep accumulation slope, so it is numerically stable. (An earlier version
+compared when each curve crossed the FIRE Number line instead — near-flat curves
+against a horizontal line made that gap explode into implausible values like
+"13y" from small portfolio differences, so it was replaced.)
+
 ---
 
 ## Partner Model
@@ -730,7 +746,7 @@ Withdrawals are a fixed real amount, so the portfolio *can* run out. The headlin
 A % withdrawal can never fully deplete the portfolio (survival is ~100% by construction), so the question is not *"does it survive?"* but *"does it keep paying my budget — and if not, by how much does it fall short?"* Everything keys off the **funding ratio** computed each retirement year:
 
 ```
-funding ratio = portfolio income (SWR withdrawal + state & partner pension)
+funding ratio = available income (full SWR draw net of tax + pensions + partner salary)
               ÷ full annual budget (retirement spending + child costs + mortgage − rent saved)
 ```
 
@@ -740,7 +756,7 @@ A one-time property purchase lump is excluded from the budget. Then:
 |--------|----------|------------|
 | **Years on budget** (card headline) | frequency | Share of all retirement years (across all paths) where income ≥ budget. Used instead of a "≥ 1 short year" frequency, which saturates near 100% over a multi-decade retirement. |
 | **Years under budget** | frequency | Average number of retirement years per simulation where income < budget, shown as `X / Y` of total retirement years. |
-| **Typical funding** | depth | Median of each simulation's **average** funding ratio — i.e. the middle of the budget-coverage distribution. |
+| **Lifetime budget funded** | depth | Median across sims of each sim's `Σ min(income, budget) ÷ Σ budget` over all retirement years (real terms). **Capped at 100% per year** — surplus years can't inflate it. An uncapped average would be dominated by late-life snowball years (unspent surpluses compound), producing absurd headline figures (500%+) that say nothing about adequacy. |
 | **When short, you fund** | depth | Average funding ratio across only the years that fall short — "when you miss, you typically cover this much of budget." |
 | **Worst year (1-in-10)** | tail depth | 10th-percentile of each path's leanest single-year funding ratio — the bad-case worst year. |
 
@@ -750,7 +766,7 @@ These deliberately separate **how often** you fall short from **how far**: a pla
 
 - **Scenario cards** — the five scenarios with their headline rate (green ≥ 90%, amber 75–90%, red < 75%). Click one to drill in.
 - **Fan chart** — percentile bands (10–90th, 25–75th, median) over time. In Fixed mode this is **net worth** with the FIRE Target line; in SWR mode it is **budget coverage** (funding ratio) over the retirement years with a 100% reference line, so you can see *when* coverage is tightest.
-- **Distribution histogram** — in Fixed mode the spread of real ending net worth (depleted paths highlighted); in SWR mode the spread of each simulation's average budget coverage, coloured green / amber / red around the 100% line.
+- **Distribution histogram** — in Fixed mode the spread of real ending net worth (depleted paths highlighted); in SWR mode the spread of each simulation's **lifetime budget coverage** (capped share of total budget funded), coloured green / amber / red around the 100% line.
 
 ### Visuals
 
