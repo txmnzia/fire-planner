@@ -10,25 +10,10 @@ import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js";
 import { downloadCSV } from "./ui/table.js";
 import { runMonteCarloUI, selectMcScenario } from "./ui/mcTab.js";
 
-// ── LOCK SCREEN ─────────────────────────────────────────────────────────────
-function unlock() {
-  const val = document.getElementById('lockInput').value;
-  if (val === 'retraite') {
-    sessionStorage.setItem('unlocked', '1');
-    document.getElementById('lockScreen').classList.add('hidden');
-    document.getElementById('lockInput').value = '';
-    loadState();
-  } else {
-    const err = document.getElementById('lockErr');
-    err.textContent = 'Wrong password.';
-    setTimeout(() => { err.textContent = ''; }, 2000);
-  }
-}
-
 // The HTML uses inline on* attributes (and render functions emit them too), so
 // every function they reference must exist as a global.
 Object.assign(window, {
-  unlock, recalc, switchTab, toggleFeature, updateAge, stepAge, onWdMode,
+  recalc, switchTab, toggleFeature, updateAge, stepAge, onWdMode,
   toggleTable, downloadCSV, setActiveScenario, scrollToScenario,
   handleCSV, addNwRow, updateNwRow, removeNwRow,
   runMonteCarloUI, selectMcScenario,
@@ -37,13 +22,6 @@ Object.assign(window, {
 
 // ── INIT ───────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
-  // Lock screen
-  if (sessionStorage.getItem('unlocked') === '1') {
-    document.getElementById('lockScreen').classList.add('hidden');
-  } else {
-    setTimeout(() => document.getElementById('lockInput').focus(), 100);
-  }
-
   // Load state first — before updateAge/onWdMode which trigger recalc/scheduleSave
   // and would write empty defaults to localStorage before we get a chance to restore
   loadState();

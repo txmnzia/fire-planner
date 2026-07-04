@@ -14,8 +14,8 @@ css/styles.css          All styles.
 js/
   seed.js               Classic (non-module) script: seeds default localStorage state
                         on first visit. Runs before the module graph loads.
-  main.js               Entry point: init, lock screen, swipe/scroll wiring, and the
-                        window bindings for every function referenced by inline handlers.
+  main.js               Entry point: init, swipe/scroll wiring, and the window bindings
+                        for every function referenced by inline handlers.
   util.js               DOM/format helpers: el, numVal, optVal, fmt, eur, fmtK.
   state.js              Shared mutable state (one exported object) + feature toggles.
   inputs.js             Reads the form into plain objects: getGlobals(), getScenario(),
