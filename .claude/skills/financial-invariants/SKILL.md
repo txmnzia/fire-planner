@@ -138,7 +138,7 @@ Before merging, confirm every consumer of the quantity you touched still agrees:
 | Quantity | Single source | Consumers that must match |
 |---|---|---|
 | Year-one budget | `yearOneBudget()` + `budget` in `project()` ret-branch | SWR FIRE target, card `targetMonthly`, MC `swrTarget` |
-| SWR income | `rows[].swrIncome` (`potentialGross×netFrac + otherInc`) | card `netMonthly` (same formula at retYear), MC funding-ratio numerator |
+| SWR income | `rows[].swrIncome` (`potentialGross×netFrac + otherInc`) | MC funding-ratio numerator; card `netMonthly` uses the same formula but on the **start-of-year** portfolio at retirement (rows use after-growth values — a known ~one-year-of-growth timing gap, documented in `debugging-numbers`, not a bug to "fix" silently) |
 | Gain fraction at retirement | `proj.gainFracAtRet` | FIRE target `taxMultRet`, card `swrPortfolio`, Coast number |
 | FIRE target | `proj.fireTarget` | chart FIRE line, Coast number, `fireNums[]` backfill, on-track check |
 | Card metrics | `computeCardMetrics()` | scenario cards AND Results summary tiles (never duplicate — was T8) |
