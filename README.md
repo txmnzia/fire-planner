@@ -1,6 +1,6 @@
 # FIRE Planner — Calculation Logic & Documentation
 
-A single-file, browser-based **Financial Independence / Retire Early** calculator. All logic lives in `index.html` with no external dependencies beyond Chart.js (loaded from CDN).
+A browser-based, zero-build **Financial Independence / Retire Early** calculator. Plain HTML/CSS + native ES modules — no bundler, no backend, no dependencies beyond Chart.js (loaded from CDN). The financial engine is pure JavaScript in `js/engine.js` / `js/montecarlo.js`, unit-tested in CI; see [ARCHITECTURE.md](ARCHITECTURE.md) for the module layout.
 
 ---
 
@@ -714,7 +714,7 @@ the other tabs. Your `stockRet` input is therefore interpreted everywhere as a
 **CAGR / geometric** return. Turn recentering off to use the raw historical
 series instead.
 
-> **Note on the data:** the embedded return arrays are *approximate* annual figures compiled from public sources, chosen to reproduce realistic year-to-year dynamics rather than exact index levels. They live in `MC_HIST_STOCK` / `MC_HIST_BOND` in `index.html` and can be edited to plug in your own return history (the two arrays must stay aligned by year and equal in length). **Inflation is kept deterministic** (your inflation input) in this version.
+> **Note on the data:** the embedded return arrays are *approximate* annual figures compiled from public sources, chosen to reproduce realistic year-to-year dynamics rather than exact index levels. They live in `MC_HIST_STOCK` / `MC_HIST_BOND` in `js/montecarlo.js` and can be edited to plug in your own return history (the two arrays must stay aligned by year and equal in length). **Inflation is kept deterministic** (your inflation input) in this version.
 
 ### Inputs
 
