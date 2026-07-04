@@ -73,43 +73,90 @@ export function buildChart(projs,gl) {
   if (chart) chart.destroy();
   chart=new Chart(ctx,{type:"line",data:{labels,datasets:ds},plugins:[makeRetPlugin([proj],gl)],options:{
     responsive:true,maintainAspectRatio:false,animation:{duration:300},interaction:{mode:"index",intersect:false},
-    plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",titleFont:{family:"'DM Sans'",size:11},bodyFont:{family:"'DM Mono'",size:11},padding:10,filter:item=>!item.dataset.label.startsWith("__"),callbacks:{title:items=>"Entering "+items[0].label,label:c=>" "+c.dataset.label+": \u20ac"+fmt(c.raw)}}},
-    scales:{x:{grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},y:{grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,callback:v=>v>=1e6?"\u20ac"+(v/1e6).toFixed(1)+"M":v>=1e3?"\u20ac"+(v/1e3).toFixed(0)+"k":"\u20ac"+v}}}
+    plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",titleFont:{family:"'DM Sans'",size:11},bodyFont:{family:"'DM Mono'",size:11},padding:10,filter:item=>!item.dataset.label.startsWith("__"),callbacks:{title:items=>"Entering "+items[0].label,label:c=>" "+c.dataset.label+": €"+fmt(c.raw)}}},
+    scales:{x:{grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},y:{grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,callback:v=>v>=1e6?"€"+(v/1e6).toFixed(1)+"M":v>=1e3?"€"+(v/1e3).toFixed(0)+"k":"€"+v}}}
   }});
 }
 
-export function buildAllocChart(projs,gl) {
+// Revenue / cost flow chart. Each year is one diverging stacked bar: revenue
+// blocks (greens/teals) stack up from zero, cost blocks (reds/oranges) stack
+// down. Every line item from the year-by-year table is represented on its own —
+// aggregates (net worth, net flow) are deliberately excluded — and hovering a
+// single block reveals only that block's amount. SURFACE is the chart-surface
+// colour used both for the thin gap between stacked segments and the tooltip bg.
+const SURFACE = "#0b0e17";
+// Revenue line items (green -> teal -> lime family). `get` pulls a single, non-
+// overlapping amount from a projection row. Salary strips out the partner
+// pension that the engine folds into `income` during accumulation, so it is
+// never double-counted with the "Partner Pension" block.
+const REVENUE = [
+  {key:"salary",   label:"Salary",          color:"#22c55e", get:r=>Math.max(0,(r.income||0)-(r.phase==="acc"?(r.partnerPension||0):0))},
+  {key:"withdraw", label:"Withdrawal",      color:"#2dd4bf", get:r=>r.withdrawal||0},
+  {key:"market",   label:"Market Return",   color:"#4ade80", get:r=>Math.max(0,r.portReturn||0)},
+  {key:"pension",  label:"Pension",         color:"#14b8a6", get:r=>r.pension||0},
+  {key:"partPen",  label:"Partner Pension", color:"#a3e635", get:r=>r.partnerPension||0},
+  {key:"windfall", label:"Windfall",        color:"#86efac", get:r=>r.windfall||0},
+  {key:"rent",     label:"Rent Saved",      color:"#5eead4", get:r=>r.rentSavings||0},
+  {key:"cashInt",  label:"Cash Interest",   color:"#bef264", get:r=>Math.max(0,r.cashReturn||0)},
+];
+// Cost line items (red -> orange family). Plotted as negative so they stack
+// below zero; the magnitude is restored for display.
+const COST = [
+  {key:"spend",    label:"Spending",         color:"#ef4444", get:r=>r.spending||0},
+  {key:"mortgage", label:"Mortgage",         color:"#f97316", get:r=>r.mortgagePayment||0},
+  {key:"child",    label:"Child Costs",      color:"#fb7185", get:r=>r.childCost||0},
+  {key:"cgt",      label:"Capital Gain Tax", color:"#e11d48", get:r=>r.taxPaid||0},
+  {key:"purchase", label:"Purchase Cost",    color:"#f59e0b", get:r=>r.extraCost||0},
+];
+
+export function buildFlowChart(projs,gl) {
   if (typeof Chart === "undefined") return;   // Chart.js CDN unavailable — keep calculations & saving alive
 
-  const proj=projs[state.activeScIdx],color=COLORS[state.activeScIdx],fade=COLORS_FADE[state.activeScIdx];
-  const inv=proj.values.map((v,i)=>Math.max(0,v-(proj.rows[i]?(proj.rows[i].cashVal||0):0)));
-  const sv=inv.map((v,i)=>Math.round(v*proj.allocations[i]/100));
-  const bv=inv.map((v,i)=>Math.round(v*(100-proj.allocations[i])/100));
-  const step=Math.max(1,Math.floor(proj.years.length/40));
-  const fY=proj.years.filter((_,i)=>i%step===0);
-  const fS=sv.filter((_,i)=>i%step===0), fB=bv.filter((_,i)=>i%step===0);
-  const retIdx=fY.indexOf(proj.retYear);
-  const retPl={id:"retLabelAlloc",afterDatasetsDraw(ch){
-    if(retIdx<0) return; const c2=ch.ctx,xs=ch.scales.x,ys=ch.scales.y; if(!xs||!ys) return;
-    const xPx=xs.getPixelForValue(retIdx),yPx=ys.getPixelForValue(fS[retIdx]+fB[retIdx]);
+  const proj=projs[state.activeScIdx];
+  const rows=proj.rows||[], years=proj.years;
+  // One dataset per line item, dropping any that is zero across every year
+  // (e.g. no property -> no mortgage/rent/purchase blocks), so the legend and
+  // the stacks stay uncluttered for the active scenario.
+  const build=(specs,sign)=>specs.map(s=>{
+    const data=rows.map(r=>sign*s.get(r));
+    if (!data.some(v=>v!==0)) return null;
+    return {label:s.label,data,backgroundColor:s.color,stack:"flow",
+      borderColor:SURFACE,borderWidth:1,barPercentage:1,categoryPercentage:.92};
+  }).filter(Boolean);
+  const datasets=[...build(REVENUE,1),...build(COST,-1)];
+
+  const retIdx=years.indexOf(proj.retYear);
+  const retPl={id:"retLineFlow",afterDatasetsDraw(ch){
+    if(retIdx<0) return; const c2=ch.ctx,xs=ch.scales.x,area=ch.chartArea; if(!xs||!area) return;
+    const xPx=xs.getPixelForValue(retIdx);
+    c2.save();
+    c2.strokeStyle="rgba(126,143,170,.45)"; c2.lineWidth=1; c2.setLineDash([4,4]);
+    c2.beginPath(); c2.moveTo(xPx,area.top); c2.lineTo(xPx,area.bottom); c2.stroke();
+    c2.setLineDash([]);
     const label="retire "+(gl.currentAge+proj.retYear-gl.baseYear);
-    c2.save(); c2.font="600 9px 'DM Mono',monospace";
-    const tw=c2.measureText(label).width,px=5,bh=14;
-    const bx=xPx-tw/2-px,by=yPx-bh-5;
+    c2.font="600 9px 'DM Mono',monospace";
+    const tw=c2.measureText(label).width,px=5,bh=14,bx=Math.min(xPx+4,area.right-tw-px*2),by=area.top+2;
     c2.fillStyle="rgba(10,13,24,.88)"; c2.beginPath(); c2.roundRect(bx,by,tw+px*2,bh,3); c2.fill();
-    c2.strokeStyle=fade; c2.lineWidth=1; c2.stroke();
-    c2.fillStyle=color; c2.textAlign="center"; c2.textBaseline="middle";
-    c2.fillText(label,xPx,by+bh/2); c2.restore();
+    c2.strokeStyle="rgba(126,143,170,.55)"; c2.lineWidth=1; c2.stroke();
+    c2.fillStyle="#9fb0c8"; c2.textAlign="left"; c2.textBaseline="middle";
+    c2.fillText(label,bx+px,by+bh/2); c2.restore();
   }};
+
   const ctx2=el("allocChart").getContext("2d");
   if (allocChart) allocChart.destroy();
-  allocChart=new Chart(ctx2,{type:"bar",data:{labels:fY,datasets:[
-    {label:"Stocks",data:fS,backgroundColor:color,stack:"alloc",borderWidth:0,barPercentage:1,categoryPercentage:1},
-    {label:"Bonds", data:fB,backgroundColor:fade, stack:"alloc",borderWidth:0,barPercentage:1,categoryPercentage:1},
-  ]},plugins:[retPl],options:{
-    responsive:true,maintainAspectRatio:false,animation:{duration:200},interaction:{mode:"index",intersect:false},
-    plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",titleFont:{family:"'DM Sans'",size:11},bodyFont:{family:"'DM Mono'",size:11},padding:10,callbacks:{label:c=>" "+c.dataset.label+": \u20ac"+fmt(c.raw)}}},
-    scales:{x:{stacked:true,grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},y:{stacked:true,grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,maxTicksLimit:5,callback:v=>v>=1e6?"\u20ac"+(v/1e6).toFixed(1)+"M":v>=1e3?"\u20ac"+(v/1e3).toFixed(0)+"k":"\u20ac"+v}}}
+  allocChart=new Chart(ctx2,{type:"bar",data:{labels:years,datasets},plugins:[retPl],options:{
+    responsive:true,maintainAspectRatio:false,animation:{duration:200},
+    // Per-block hover: intersect a single segment so the tooltip shows only the
+    // amount for the block under the cursor, not the whole year's stack.
+    interaction:{mode:"nearest",intersect:true},
+    plugins:{
+      legend:{display:true,position:"bottom",labels:{color:"#9fb0c8",boxWidth:9,boxHeight:9,padding:7,font:{family:"'DM Sans'",size:10},usePointStyle:true,pointStyle:"rectRounded"}},
+      tooltip:{mode:"nearest",intersect:true,backgroundColor:SURFACE,borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",titleFont:{family:"'DM Sans'",size:11},bodyFont:{family:"'DM Mono'",size:11},padding:10,callbacks:{
+        title:items=>{const i=items[0].dataIndex,r=rows[i];return items[0].label+(r?"  ·  age "+r.age:"");},
+        label:c=>" "+c.dataset.label+": €"+fmt(Math.abs(c.raw))}}},
+    scales:{
+      x:{stacked:true,grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},
+      y:{stacked:true,grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,maxTicksLimit:7,callback:v=>{const a=Math.abs(v);return (v<0?"-€":"€")+(a>=1e6?(a/1e6).toFixed(1)+"M":a>=1e3?(a/1e3).toFixed(0)+"k":a);}}}}
   }});
 }
 
