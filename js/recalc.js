@@ -3,7 +3,7 @@ import { state } from "./state.js";
 import { getGlobals, getScenario } from "./inputs.js";
 import { project } from "./engine.js";
 import { renderMilestone, renderSummaryTiles } from "./ui/cards.js";
-import { buildChart, buildAllocChart } from "./ui/charts.js";
+import { buildChart, buildFlowChart } from "./ui/charts.js";
 import { renderTable } from "./ui/table.js";
 import { updateLabels } from "./ui/controls.js";
 import { markMcStale } from "./ui/mcTab.js";
@@ -27,7 +27,7 @@ export function recalc() {
   const projs=scenarios.map(sc=>project(sc,gl));
   scenarios.forEach((sc,i)=>renderMilestone(i+1,sc,gl,projs[i]));
   state.lastProjs=projs; state.lastGl=gl; state.lastScenarios=scenarios;
-  buildChart(projs,gl); buildAllocChart(projs,gl); renderTable(projs,gl);
+  buildChart(projs,gl); buildFlowChart(projs,gl); renderTable(projs,gl);
   updateLabels();
   renderSummaryTiles(projs,gl,scenarios);
   // Monte Carlo results were computed for the previous inputs — flag them stale.

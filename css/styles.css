@@ -336,7 +336,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 
   /* Taller charts (override inline style via !important) */
   .proj-canvas-wrap{height:260px!important;}
-  .alloc-canvas-wrap{height:180px!important;}
+  .alloc-canvas-wrap{height:300px!important;}
 
   /* Chart header */
   .chart-title{font-size:12px;}
