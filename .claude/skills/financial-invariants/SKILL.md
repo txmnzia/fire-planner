@@ -97,10 +97,13 @@ clamped to [0,1]. The derived gain fraction is always clamped to [0,1]. If you a
 flow into or out of the portfolio, update cost basis in the same expression — a missed
 basis update corrupts every later tax calculation.
 
-**I8 — Windfalls never reduce the FIRE target.**
+**I8 — Windfalls are never credited against the FIRE target.**
 They boost the projection curve (and cost basis) in their year, so the curve crosses
-the target earlier — but the target itself stays windfall-free. Conservative by design;
-documented in README. Don't "helpfully" credit them.
+the target earlier — but no PV credit ever reduces the target. Conservative by design;
+documented in README. Don't "helpfully" credit them. (Note: a windfall still moves the
+target *slightly* and indirectly, because it raises cost basis and therefore changes
+`gainFracAtRet` and the tax gross-up — that second-order effect is correct, not a bug,
+and it means "windfall added ⇒ target identical" is NOT a valid test assertion.)
 
 **I9 — Partner salary survives *your* retirement.**
 The partner keeps earning until *their* retirement age in: the accumulation branch, the
