@@ -2,7 +2,7 @@ import { el, numVal } from "../util.js";
 import { state, features } from "../state.js";
 import { getScenarioName } from "../inputs.js";
 import { recalc } from "../recalc.js";
-import { FIRE_LINE, buildChart, buildAllocChart, resizeResultsCharts } from "./charts.js";
+import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js";
 import { renderTable } from "./table.js";
 import { renderSummaryTiles } from "./cards.js";
 import { resizeMcCharts } from "./mcTab.js";
@@ -115,7 +115,7 @@ export function setActiveScenario(idx) {
   if (state.lastProjs && state.lastGl && state.lastScenarios) {
     renderSummaryTiles(state.lastProjs, state.lastGl, state.lastScenarios);
     buildChart(state.lastProjs, state.lastGl);
-    buildAllocChart(state.lastProjs, state.lastGl);
+    buildFlowChart(state.lastProjs, state.lastGl);
     renderTable(state.lastProjs, state.lastGl);
     // keep the summary-tile carousel in sync so the whole Results view matches
     const sumRow = el('scSummaryRow');
