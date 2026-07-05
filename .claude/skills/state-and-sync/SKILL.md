@@ -138,8 +138,9 @@ served files or the repo, in any encoding.** The design instead:
 
 ## iOS Safari lessons (git history)
 
-- `a574ad9` — iOS Safari evicts localStorage aggressively (~7 days unused, or
-  storage pressure). Any load path must survive `fire_state` vanishing:
+- `a574ad9` — iOS Safari evicts localStorage aggressively (observed in practice
+  after periods of disuse or under storage pressure). Any load path must survive
+  `fire_state` vanishing:
   that is why `loadState()` falls back to `SAM_STATE` and `js/seed.js`
   re-seeds. Never assume localStorage persistence on Safari.
 - `1f2ac00` — iOS Safari served stale cached pages after deploys; the
