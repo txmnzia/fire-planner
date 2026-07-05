@@ -48,8 +48,10 @@ actual click in the browser, not just page load.
 `recalc ⇄ controls` and `recalc ⇄ sync` are deliberate cycles: event handlers need
 `recalc()`, and `recalc()` needs the renderers/persistence. They are safe because **all
 cross-module calls happen at event time, never during module evaluation**. Top-level code
-in every module is limited to imports, constant definitions, and function definitions
-(the one exception: `main.js` registers a `DOMContentLoaded` listener).
+in the modules is limited to imports, constant/function definitions, and purely local
+setup (`state.js` initialises `features`; `main.js` does the `window` binding and
+registers a `DOMContentLoaded` listener) — nothing at module scope calls into another
+module.
 
 **Rule:** never add a top-level call into any module in these cycles (no `recalc()` at
 module scope, no top-level DOM reads that depend on another cycle member). During a
