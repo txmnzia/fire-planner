@@ -39,7 +39,7 @@ The planner runs a **year-by-year simulation** from today until your life expect
 
 Five parallel scenarios (A–E) are computed simultaneously for side-by-side comparison.
 
-An in-app **How-To** tab (5th tab) summarises this logic in plain language — most importantly the difference between the two withdrawal strategies — for users who don't read this document.
+An in-app **Explanation** tab (5th tab) walks through this logic in plain language, tailored to a chosen scenario: pick one of the five scenarios and it narrates what happens to that scenario's actual numbers at each milestone (today, reaching "coast", at retirement, when the state pension begins, end of plan), showing only the withdrawal strategy in use. Its figures come from the same `computeCardMetrics()` source as the scenario cards and the engine's own per-year rows — it never re-derives a number.
 
 ---
 

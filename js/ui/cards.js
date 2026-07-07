@@ -46,6 +46,10 @@ export function computeCardMetrics(sc, gl, proj) {
     const partnerSalMonthly = (sc.hasPartner && sc.retAge + off < gl.partnerRetAge)
       ? Math.round(gl.partnerInc * inflAtRet) : 0;
     m.netMonthly = swrPortfolio + pensionMonthly + partnerPensionMonthly + partnerSalMonthly;
+    // component split, so the Explanation tab can show where the income comes from
+    // without re-deriving it (single source — must stay equal to netMonthly).
+    m.incomeBreakdown = { portfolio: swrPortfolio, pension: pensionMonthly,
+                          partnerPension: partnerPensionMonthly, partnerSalary: partnerSalMonthly };
     // target = the same complete year-one budget the engine and Monte Carlo use
     m.targetMonthly = Math.round(yearOneBudget(sc.retAge, sc, gl) / 12);
     m.incomeOk = m.netMonthly >= m.targetMonthly;

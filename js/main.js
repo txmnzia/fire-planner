@@ -9,6 +9,7 @@ import { handleCSV } from "./ui/ibkr.js";
 import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js";
 import { downloadCSV } from "./ui/table.js";
 import { runMonteCarloUI, selectMcScenario } from "./ui/mcTab.js";
+import { selectExplanationScenario } from "./ui/explanation.js";
 
 // The HTML uses inline on* attributes (and render functions emit them too), so
 // every function they reference must exist as a global.
@@ -16,7 +17,7 @@ Object.assign(window, {
   recalc, switchTab, toggleFeature, updateAge, stepAge, onWdMode,
   toggleTable, downloadCSV, setActiveScenario, scrollToScenario,
   handleCSV, addNwRow, updateNwRow, removeNwRow,
-  runMonteCarloUI, selectMcScenario,
+  runMonteCarloUI, selectMcScenario, selectExplanationScenario,
   scheduleSave, connectSync, disconnectSync, openSyncModal, closeSyncModal, syncNow,
 });
 

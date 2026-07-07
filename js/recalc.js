@@ -5,6 +5,7 @@ import { project } from "./engine.js";
 import { renderMilestone, renderSummaryTiles } from "./ui/cards.js";
 import { buildChart, buildFlowChart } from "./ui/charts.js";
 import { renderTable } from "./ui/table.js";
+import { renderExplanation } from "./ui/explanation.js";
 import { updateLabels } from "./ui/controls.js";
 import { markMcStale } from "./ui/mcTab.js";
 import { scheduleSave } from "./sync.js";
@@ -30,6 +31,7 @@ export function recalc() {
   buildChart(projs,gl); buildFlowChart(projs,gl); renderTable(projs,gl);
   updateLabels();
   renderSummaryTiles(projs,gl,scenarios);
+  renderExplanation(projs,gl,scenarios);
   // Monte Carlo results were computed for the previous inputs — flag them stale.
   markMcStale();
   scheduleSave();

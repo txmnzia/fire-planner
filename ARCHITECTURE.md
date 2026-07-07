@@ -34,6 +34,8 @@ js/
     charts.js           Projection & allocation charts (Chart.js) and shared palette.
     table.js            Year-by-year detail table + CSV export.
     mcTab.js            Monte Carlo tab UI (cards, tiles, fan & histogram charts).
+    explanation.js      Explanation tab: scenario-tailored, plain-language milestone
+                        walkthrough (reuses computeCardMetrics + engine rows).
     ibkr.js             IBKR CSV import and holdings list.
     nwHistory.js        Net-worth snapshot editor (plan-vs-actual inputs).
 tests/                  node:test unit tests for the two pure engines.
