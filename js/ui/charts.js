@@ -11,6 +11,11 @@ export const COLORS      = ["#818cf8","#fbbf24","#34d399","#f472b6","#fb923c"];
 export const COLORS_FADE = ["rgba(129,140,248,.5)","rgba(251,191,36,.5)","rgba(52,211,153,.5)","rgba(244,114,182,.5)","rgba(251,146,60,.5)"];
 export const ALPHAS      = ["rgba(129,140,248,.07)","rgba(251,191,36,.07)","rgba(52,211,153,.07)","rgba(244,114,182,.07)","rgba(251,146,60,.07)"];
 export const GC = {g:"rgba(255,255,255,.035)",t:"#3a4a62",f:{family:"'DM Mono',monospace",size:10}};
+// Pin the y-axis to a fixed width so the Portfolio Projection and the Revenue &
+// Costs charts share the same plot-area left edge — otherwise their differing
+// tick-label widths (e.g. "€2M" vs "-€500k") shift the bars and the retirement
+// marker out of alignment between the two stacked Results charts (issue #10).
+const AXIS_Y_FIT = (scale) => { scale.width = 58; };
 
 function makeRetPlugin(projs, gl) {
   return { id:"retLabels", afterDatasetsDraw(ch) {
@@ -74,7 +79,7 @@ export function buildChart(projs,gl) {
   chart=new Chart(ctx,{type:"line",data:{labels,datasets:ds},plugins:[makeRetPlugin([proj],gl)],options:{
     responsive:true,maintainAspectRatio:false,animation:{duration:300},interaction:{mode:"index",intersect:false},
     plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",titleFont:{family:"'DM Sans'",size:11},bodyFont:{family:"'DM Mono'",size:11},padding:10,filter:item=>!item.dataset.label.startsWith("__"),callbacks:{title:items=>"Entering "+items[0].label,label:c=>" "+c.dataset.label+": €"+fmt(c.raw)}}},
-    scales:{x:{grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},y:{grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,callback:v=>v>=1e6?"€"+(v/1e6).toFixed(1)+"M":v>=1e3?"€"+(v/1e3).toFixed(0)+"k":"€"+v}}}
+    scales:{x:{grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},y:{afterFit:AXIS_Y_FIT,grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,callback:v=>v>=1e6?"€"+(v/1e6).toFixed(1)+"M":v>=1e3?"€"+(v/1e3).toFixed(0)+"k":"€"+v}}}
   }});
 }
 
@@ -113,16 +118,30 @@ export function buildFlowChart(projs,gl) {
   if (typeof Chart === "undefined") return;   // Chart.js CDN unavailable — keep calculations & saving alive
 
   const proj=projs[state.activeScIdx];
-  const rows=proj.rows||[], years=proj.years;
+  const rows=proj.rows||[];
+  // Share the x-axis with the Portfolio Projection chart (issue #10): when past
+  // net-worth history extends that chart's labels to the left, mirror the same
+  // label range here and pad the leading (pre-plan) years with nulls, so both
+  // charts show the same time horizon and their retirement markers line up.
+  const sc = state.lastScenarios ? state.lastScenarios[state.activeScIdx] : null;
+  const planProj = sc ? buildPlanProj(sc, gl, state.nwHistory) : null;
+  const years = planProj ? planProj.years.slice() : proj.years;
+  const pad   = years.length - rows.length; // leading label slots with no flow data
+  const padData = data => pad>0 ? Array(pad).fill(null).concat(data) : data;
   // One dataset per line item, dropping any that is zero across every year
   // (e.g. no property -> no mortgage/rent/purchase blocks), so the legend and
-  // the stacks stay uncluttered for the active scenario.
+  // the stacks stay uncluttered for the active scenario. Datasets are ordered by
+  // the first year each item becomes non-zero (issue #11): items present from the
+  // start stack nearest zero, and items that appear later (pension, capital-gain
+  // tax, …) pile up on the outside — on top for revenue, at the bottom for costs
+  // — instead of squeezing in between existing bars.
   const build=(specs,sign)=>specs.map(s=>{
     const data=rows.map(r=>sign*s.get(r));
-    if (!data.some(v=>v!==0)) return null;
-    return {label:s.label,data,backgroundColor:s.color,stack:"flow",
-      borderColor:SURFACE,borderWidth:1,barPercentage:1,categoryPercentage:.92};
-  }).filter(Boolean);
+    const firstIdx=data.findIndex(v=>v!==0);
+    if (firstIdx<0) return null;
+    return {firstIdx, ds:{label:s.label,data:padData(data),backgroundColor:s.color,stack:"flow",
+      borderColor:SURFACE,borderWidth:1,barPercentage:1,categoryPercentage:.92}};
+  }).filter(Boolean).sort((a,b)=>a.firstIdx-b.firstIdx).map(o=>o.ds);
   const datasets=[...build(REVENUE,1),...build(COST,-1)];
 
   const retIdx=years.indexOf(proj.retYear);
@@ -152,11 +171,11 @@ export function buildFlowChart(projs,gl) {
     plugins:{
       legend:{display:true,position:"bottom",labels:{color:"#9fb0c8",boxWidth:9,boxHeight:9,padding:7,font:{family:"'DM Sans'",size:10},usePointStyle:true,pointStyle:"rectRounded"}},
       tooltip:{mode:"nearest",intersect:true,backgroundColor:SURFACE,borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",titleFont:{family:"'DM Sans'",size:11},bodyFont:{family:"'DM Mono'",size:11},padding:10,callbacks:{
-        title:items=>{const i=items[0].dataIndex,r=rows[i];return items[0].label+(r?"  ·  age "+r.age:"");},
+        title:items=>{const r=rows[items[0].dataIndex-pad];return items[0].label+(r?"  ·  age "+r.age:"");},
         label:c=>" "+c.dataset.label+": €"+fmt(Math.abs(c.raw))}}},
     scales:{
       x:{stacked:true,grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},
-      y:{stacked:true,grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,maxTicksLimit:7,callback:v=>{const a=Math.abs(v);return (v<0?"-€":"€")+(a>=1e6?(a/1e6).toFixed(1)+"M":a>=1e3?(a/1e3).toFixed(0)+"k":a);}}}}
+      y:{afterFit:AXIS_Y_FIT,stacked:true,grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,maxTicksLimit:7,callback:v=>{const a=Math.abs(v);return (v<0?"-€":"€")+(a>=1e6?(a/1e6).toFixed(1)+"M":a>=1e3?(a/1e3).toFixed(0)+"k":a);}}}}
   }});
 }
 
