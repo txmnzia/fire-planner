@@ -39,6 +39,8 @@ The planner runs a **year-by-year simulation** from today until your life expect
 
 Five parallel scenarios (A–E) are computed simultaneously for side-by-side comparison.
 
+An in-app **How-To** tab (5th tab) summarises this logic in plain language — most importantly the difference between the two withdrawal strategies — for users who don't read this document.
+
 ---
 
 ## Input Parameters
