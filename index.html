@@ -42,8 +42,8 @@
   <button class="tab-btn" role="tab" data-tab="montecarlo" aria-selected="false" onclick="switchTab('montecarlo')">
     <span class="tab-num">4</span> Monte Carlo
   </button>
-  <button class="tab-btn" role="tab" data-tab="howto" aria-selected="false" onclick="switchTab('howto')">
-    <span class="tab-num">5</span> How-To
+  <button class="tab-btn" role="tab" data-tab="explanation" aria-selected="false" onclick="switchTab('explanation')">
+    <span class="tab-num">5</span> Explanation
   </button>
 </nav>
 
@@ -694,131 +694,14 @@
 </div><!-- /tab-panel-montecarlo -->
 
 <!-- ═══════════════════════════════════════════
-     TAB 5 — HOW-TO / GUIDE
+     TAB 5 — EXPLANATION (scenario-tailored guide)
 ═══════════════════════════════════════════ -->
-<div class="tab-panel" id="tab-panel-howto" role="tabpanel">
-<div class="sit-body howto">
-
-  <section class="sit-section">
-    <div class="sit-hd">How This Planner Works</div>
-    <p>The planner runs a <strong>year-by-year simulation</strong> of your money, from today until your
-    life expectancy. Each year it grows your portfolio by an assumed return, adds your income, subtracts
-    your spending (and any child, mortgage or property costs), and — once you retire — draws down whatever
-    your budget needs. It does this for <strong>five scenarios at once</strong> (A–E) so you can compare
-    retiring earlier, later, with a partner, with a child, and so on, side by side.</p>
-    <p>Everything you enter is in <strong>today's money</strong>. The engine applies your inflation rate to
-    convert those amounts into future euros, so a "€3,000/month" retirement budget keeps the same purchasing
-    power every year of the plan. The <strong>My Situation</strong> and <strong>Scenarios</strong> tabs are
-    the inputs; the <strong>Results</strong> tab shows the projection, the year-by-year table and the two
-    charts; the <strong>Monte Carlo</strong> tab stress-tests the plan against real market history.</p>
-  </section>
-
-  <section class="sit-section">
-    <div class="sit-hd">The Two Withdrawal Strategies</div>
-    <p>This is the single most important choice on the planner, set under
-    <strong>Income &amp; Spending → Withdrawal Strategy</strong>. The two modes answer completely different
-    questions and can fail in completely different ways.</p>
-
-    <div class="sub-hd">💶 Fixed Amount <span style="font-weight:400;color:var(--muted)">(Bengen / "4% rule" style)</span></div>
-    <p>You tell the planner how much you want to spend each month in retirement (in today's money). It then
-    calculates <strong>how big your portfolio must be</strong> to pay that fixed, inflation-adjusted amount
-    every year until life expectancy. Your spending is set — the portfolio has to keep up.</p>
-    <ul>
-      <li><strong>The risk:</strong> a bad run of early market returns can drain the portfolio, so it
-      <em>can</em> run out. That's why this mode reports a <strong>survival / success rate</strong>.</li>
-      <li><strong>Use it when</strong> you have a spending number you refuse to compromise on and you want to
-      know the odds it lasts.</li>
-    </ul>
-
-    <div class="sub-hd">📊 % of Portfolio <span style="font-weight:400;color:var(--muted)">(percentage-of-current-balance)</span></div>
-    <p>You tell the planner a withdrawal <strong>rate</strong> (e.g. 4%). Each year it makes
-    <strong>that percentage of your current balance</strong> available to spend. Because the draw is always a
-    slice of what's left, the portfolio <strong>can never fully run out</strong> — but the euro amount you can
-    spend <strong>rises and falls with the markets</strong>.</p>
-    <ul>
-      <li><strong>The risk:</strong> not running out of money, but <strong>income variability</strong> — in a
-      downturn the percentage buys less than your budget needs. That's why this mode reports
-      <strong>budget adequacy</strong> (✓ Funded / ✗ Short) instead of a survival rate.</li>
-      <li><strong>Important:</strong> this is <em>not</em> the classic Bengen/Trinity "4% rule", which fixes a
-      real euro amount at retirement and never rebases it. For that behaviour, use <strong>Fixed Amount</strong>.</li>
-    </ul>
-
-    <div class="sub-hd">Side by side</div>
-    <div class="howto-tbl-wrap">
-    <table class="howto-tbl">
-      <thead><tr><th></th><th>Fixed Amount</th><th>% of Portfolio</th></tr></thead>
-      <tbody>
-        <tr><td>You choose</td><td>a monthly spend</td><td>a withdrawal rate (%)</td></tr>
-        <tr><td>Yearly income</td><td>constant (inflation-adjusted)</td><td>varies with the markets</td></tr>
-        <tr><td>Can deplete?</td><td>yes</td><td>no (by construction)</td></tr>
-        <tr><td>Main risk</td><td>running out of money</td><td>income falling below budget</td></tr>
-        <tr><td>Headline metric</td><td>success / survival rate</td><td>budget adequacy (funded years)</td></tr>
-      </tbody>
-    </table>
-    </div>
-    <p style="color:var(--muted)">In <strong>both</strong> modes, the retirement budget you enter drives the
-    FIRE target and the charts — the retirement-spending field stays relevant even in % mode.</p>
-  </section>
-
-  <section class="sit-section">
-    <div class="sit-hd">Your FIRE Number</div>
-    <p>Your <strong>FIRE number</strong> is the portfolio you need at retirement to fund your plan. The
-    planner shows a <strong>headline</strong> (conservative) figure and, next to it, an
-    <strong>adjusted</strong> one:</p>
-    <ul>
-      <li><strong>Headline</strong> gives <em>no credit</em> for income that hasn't started yet — a state
-      pension at 67 when you retire at 45, or a partner's remaining working years. It's the safe target.</li>
-      <li><strong>Adjusted</strong> subtracts the present value of those future pensions and partner-salary
-      years — the realistic target once you count everything you'll actually receive.</li>
-    </ul>
-    <p>The target is <strong>grossed up for tax</strong> so that, after capital-gains tax, the withdrawals
-    really cover your budget. Crucially, the tax uses the gain fraction the projection expects
-    <strong>at your retirement date</strong> — not today's — because decades of growth push far more of your
-    portfolio into "gain". The <strong>Coast Number</strong> tells you the smaller amount you'd need
-    <em>today</em> so that, with zero further saving, growth alone reaches the FIRE number by retirement.</p>
-  </section>
-
-  <section class="sit-section">
-    <div class="sit-hd">Key Assumptions &amp; Simplifications</div>
-    <ul>
-      <li><strong>Returns are compound (CAGR / geometric).</strong> Your stock/bond inputs are the long-run
-      annualised return; the deterministic tabs compound them directly and Monte Carlo is anchored to the
-      same figure, so the median agrees across tabs.</li>
-      <li><strong>A glide path</strong> shifts you from your current stock/bond mix toward the retirement mix
-      as you age, so the return used each year changes smoothly.</li>
-      <li><strong>Inflation is constant</strong> at your input and applies to all spending, income and pensions.</li>
-      <li><strong>Tax</strong> is a flat capital-gains rate (set by your country), charged only on the
-      <em>gain</em> portion of each withdrawal — salary and pension income tax are not modelled.</li>
-      <li><strong>Partner, child and property</strong> are toggled per scenario: partner income and pension,
-      a household spending multiplier, inflation-adjusted child costs with parental-leave income, and a
-      property's down payment, mortgage and rent saved.</li>
-      <li><strong>Property price appreciation, variable mortgage rates, currency risk and inheritance are not
-      modelled.</strong> See the full list in the README.</li>
-    </ul>
-  </section>
-
-  <section class="sit-section">
-    <div class="sit-hd">Monte Carlo — In Plain Terms</div>
-    <p>The other tabs assume your return happens smoothly every year. Real markets don't — the
-    <em>order</em> of good and bad years matters (a crash just after you retire hurts far more than one
-    decades later). The <strong>Monte Carlo</strong> tab builds thousands of alternate futures by stitching
-    together random stretches of <strong>real historical market years</strong> (1970–2024), keeping genuine
-    crashes and recoveries intact. It then reports how many of those futures your plan survives (Fixed mode)
-    or how well it keeps paying your budget (% mode). With <em>recentering</em> on, history's ups and downs
-    are kept but the long-run average is re-anchored to your own return assumption, so it lines up with the
-    other tabs.</p>
-  </section>
-
-  <section class="sit-section">
-    <div class="sit-hd">A Note of Caution</div>
-    <p>This is a planning tool, not financial or tax advice. Its tax rates are flat-rate approximations that
-    ignore fund-specific rules, and every projection depends entirely on assumptions about the future that
-    will not hold exactly. Use it to compare scenarios and understand trade-offs — then verify the numbers
-    for your own situation before making decisions.</p>
-  </section>
-
-</div><!-- /howto -->
-</div><!-- /tab-panel-howto -->
+<div class="tab-panel" id="tab-panel-explanation" role="tabpanel">
+<div class="sit-body expl">
+  <p class="expl-intro">Pick a scenario to see, in plain language, what happens to <em>your</em> money at each milestone — with this scenario's own numbers and only the withdrawal strategy you've chosen.</p>
+  <div id="explBody"></div>
+</div><!-- /expl -->
+</div><!-- /tab-panel-explanation -->
 </div><!-- /tab-panels -->
 
 <!-- ── GITHUB SYNC MODAL ── -->
