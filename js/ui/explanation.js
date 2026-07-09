@@ -1,7 +1,7 @@
 import { el, eur } from "../util.js";
 import { state } from "../state.js";
 import { getScenarioName } from "../inputs.js";
-import { portReturnAt, yearOneBudget } from "../engine.js";
+import { portReturnAt, yearOneBudget, project } from "../engine.js";
 import { computeCardMetrics } from "./cards.js";
 
 // ── EXPLANATION TAB ──────────────────────────────────────────────────────────
@@ -97,9 +97,12 @@ export function renderExplanation(projs, gl, scenarios) {
   const todayLead = already
     ? "You've already reached your retirement age in this scenario, so the plan starts drawing down straight away."
     : "Right now you're building the portfolio. You plan to retire in <strong>" + nAccum + " years</strong>, at age <strong>" + retAge + "</strong> (" + m.retYear + ").";
-  let html = chips ? '<div class="expl-chips" role="group" aria-label="Choose a scenario">' + chips + "</div>" : "";
-  html += summary + modeNote + '<div class="expl-timeline">';
-  html += card("neutral", "Today", yearAt(0) + " &middot; age " + currentAge, todayLead, todayRows);
+  const head = (chips ? '<div class="expl-chips" role="group" aria-label="Choose a scenario">' + chips + "</div>" : "") + summary + modeNote;
+  // Milestone cards are collected with a chronological sort key `o` (year index),
+  // so dated life events (buying a home, having a child) slot into the timeline at
+  // the right point. Today/Coast pin to the top, End pins to the bottom.
+  const tl = [];
+  tl.push({ o: -1e6, h: card("neutral", "Today", yearAt(0) + " &middot; age " + currentAge, todayLead, todayRows) });
 
   // ── milestone 2: coast ──
   // The question this answers: from what age could you STOP contributing (still
@@ -162,7 +165,7 @@ export function renderExplanation(projs, gl, scenarios) {
         row("FIRE number", eur(proj.fireTarget)) +
         (adjNote ? row("With pensions counted", eur(proj.fireTargetAdj) + ' <span class="tgt">lower target</span>') : "");
     }
-    html += card(tone, "Reaching &ldquo;coast&rdquo;", when, lead, rows);
+    tl.push({ o: -9e5, h: card(tone, "Reaching &ldquo;coast&rdquo;", when, lead, rows) });
   }
 
   // ── milestone 3: at retirement ──
@@ -207,7 +210,7 @@ export function renderExplanation(projs, gl, scenarios) {
         (otherInc ? row("&nbsp;&nbsp;Other income", eur(otherInc) + ' <span class="tgt">pension / partner</span>') : "");
     }
     const retStep = already ? "You're retired" : "At retirement";
-    html += card(retTone, retStep, m.retYear + " &middot; age " + retAge, retLead, retRows);
+    tl.push({ o: retIdx, h: card(retTone, retStep, m.retYear + " &middot; age " + retAge, retLead, retRows) });
   }
 
   // ── milestone 3b: the early years — the trade-offs & drawbacks of the strategy ──
@@ -246,7 +249,7 @@ export function renderExplanation(projs, gl, scenarios) {
           ? row("Portfolio outcome", "runs out " + m.depletionYear, "err")
           : row("Portfolio outcome", "lasts to age " + gl.lifeExp + " (avg path)", "ok"));
     }
-    html += card(tone, "The early years — your strategy's trade-off", when, lead, tradeRows);
+    tl.push({ o: retIdx + 0.5, h: card(tone, "The early years — your strategy's trade-off", when, lead, tradeRows) });
   }
 
   // ── milestone 4: settling in / state pension ──
@@ -279,7 +282,7 @@ export function renderExplanation(projs, gl, scenarios) {
       rows4 += row("Draw vs budget", eur(r4.swrIncome || 0) + ' <span class="tgt">/ ' + eur(r4.swrTarget) + "</span>", okY ? "ok" : "err");
       if (pensionApplies) tone4 = okY ? "ok" : "warn";
     }
-    html += card(tone4, step4, yearAt(idx4) + " &middot; age " + ageAt(idx4), lead4, rows4);
+    tl.push({ o: idx4, h: card(tone4, step4, yearAt(idx4) + " &middot; age " + ageAt(idx4), lead4, rows4) });
   }
 
   // ── milestone 5: end of plan ──
@@ -306,10 +309,54 @@ export function renderExplanation(projs, gl, scenarios) {
     }
     if (m.infeasibleYear && !m.depletionYear && !swr)
       endRows += row("&#9888; Underfunded from", m.infeasibleYear + " (savings exhausted)", "err");
-    html += card(endTone, "End of the plan", gl.baseYear + (gl.lifeExp - currentAge) + " &middot; age " + gl.lifeExp, endLead, endRows);
+    tl.push({ o: 1e6, h: card(endTone, "End of the plan", gl.baseYear + (gl.lifeExp - currentAge) + " &middot; age " + gl.lifeExp, endLead, endRows) });
   }
 
-  html += "</div>"; // /expl-timeline
-  html += '<p class="expl-foot">Figures for future years are in that year’s euros (they include inflation), just like the projection chart. This is the single deterministic average-return path; for the range of outcomes, see the Monte Carlo tab. Not financial advice.</p>';
-  host.innerHTML = html;
+  // ── property purchase & child milestones (only when toggled on for this scenario) ──
+  // Impact on the FIRE plan is measured by re-running the pure engine with the
+  // feature off and diffing — no duplicated financial logic.
+  const iRet = Math.min(Math.max(0, retIdx), lastIdx);
+  const signed = n => (n >= 0 ? "+" : "&minus;") + eur(Math.abs(Math.round(n)));
+  const fireImpactLead = d => d > 0 ? "<strong>raises</strong> your FIRE number by " + eur(Math.round(d))
+    : d < 0 ? "<strong>lowers</strong> your FIRE number by " + eur(Math.round(-d)) : "barely moves your FIRE number";
+  if (sc.hasProp && (gl.propBuyYear - baseYear) <= lastIdx) {
+    const propIdx = gl.propBuyYear - baseYear, past = propIdx < 0;
+    const base = project({ ...sc, hasProp: false }, gl);
+    const dFire = proj.fireTarget - base.fireTarget, dNw = (vals[iRet] || 0) - (base.values[iRet] || 0);
+    const upfront = Math.round(gl.propPrice * (gl.propDownPct + gl.propTxCostPct));
+    const mortMo = Math.round(((rows.find(r => r.mortgagePayment > 0) || {}).mortgagePayment || 0) / 12);
+    const lead = "You " + (past ? "already own" : "buy") + " a " + eur(gl.propPrice) + " home" + (past ? "" : " in " + gl.propBuyYear) +
+      ". The planner tracks only the <strong>cash flows</strong> — deposit &amp; fees up front, the mortgage, and the rent you stop paying — <strong>not the home's value</strong>, so your net-worth line shows money leaving but not the equity you build. Net effect on the plan: it " + fireImpactLead(dFire) + ".";
+    const rows_ = row("Upfront (deposit + fees)", eur(upfront) + ' <span class="tgt">' + (past ? "already paid" : gl.propBuyYear) + "</span>") +
+      row("Mortgage", eur(mortMo) + "/mo" + ' <span class="tgt">for ' + gl.propMortgageTerm + "y</span>") +
+      row("Rent saved", "&minus;" + eur(gl.propRentSaved) + "/mo" + ' <span class="tgt">grows w/ inflation</span>', "ok") +
+      row("Effect on FIRE number", signed(dFire), dFire > 0 ? "err" : dFire < 0 ? "ok" : "") +
+      row("Net worth at retirement", signed(dNw) + ' <span class="tgt">cash out; equity not counted</span>');
+    tl.push({ o: past ? -8e5 : propIdx, h: card("neutral", "🏠 You buy a home", past ? "already owned" : gl.propBuyYear + " &middot; age " + (currentAge + propIdx), lead, rows_) });
+  }
+  if (sc.hasChild && (gl.childBirthYear - baseYear) <= lastIdx) {
+    const childIdx = gl.childBirthYear - baseYear, born = childIdx < 0;
+    const base = project({ ...sc, hasChild: false }, gl);
+    const dFire = proj.fireTarget - base.fireTarget, dNw = (vals[iRet] || 0) - (base.values[iRet] || 0);
+    const childEndYear = gl.childBirthYear + gl.childCostUntilAge;
+    const overlapsRet = childEndYear > (baseYear + Math.max(0, retAge - currentAge));
+    const leave = Math.min(12, gl.childMaternityMonths);
+    const lead = "You have a child in " + gl.childBirthYear + ". Kids are a sustained cost — about " + eur(gl.childCostYearly) +
+      "/yr (today's money) from birth until age " + gl.childCostUntilAge +
+      (leave > 0 ? ", plus reduced income during " + leave + " month" + (leave === 1 ? "" : "s") + " of parental leave" : "") + ". " +
+      (overlapsRet ? "Some of these costs land <strong>in retirement</strong>, so they push your FIRE number up."
+                   : "The costs finish <strong>before you retire</strong>, so they mainly slow your saving rather than raising your FIRE number.") +
+      " Net effect: it " + fireImpactLead(dFire) + ".";
+    const rows_ = row("Annual cost", eur(gl.childCostYearly) + "/yr" + ' <span class="tgt">' + eur(Math.round(gl.childCostYearly / 12)) + "/mo, today's €</span>") +
+      row("Costs run", gl.childBirthYear + "&ndash;" + childEndYear + ' <span class="tgt">until age ' + gl.childCostUntilAge + "</span>") +
+      (leave > 0 ? row("Parental leave", leave + " month" + (leave === 1 ? "" : "s") + ' <span class="tgt">reduced income, ' + gl.childBirthYear + "</span>") : "") +
+      row("Still a cost at retirement?", overlapsRet ? "yes" : "no", overlapsRet ? "err" : "ok") +
+      row("Effect on FIRE number", signed(dFire), dFire > 0 ? "err" : dFire < 0 ? "ok" : "") +
+      row("Net worth at retirement", signed(dNw));
+    tl.push({ o: born ? -8e5 : childIdx, h: card("neutral", "👶 You have a child", born ? "born " + gl.childBirthYear : gl.childBirthYear + " &middot; age " + (currentAge + childIdx), lead, rows_) });
+  }
+
+  tl.sort((a, b) => a.o - b.o);
+  const foot = '<p class="expl-foot">Figures for future years are in that year’s euros (they include inflation), just like the projection chart. This is the single deterministic average-return path; for the range of outcomes, see the Monte Carlo tab. Not financial advice.</p>';
+  host.innerHTML = head + '<div class="expl-timeline">' + tl.map(x => x.h).join("") + "</div>" + foot;
 }
