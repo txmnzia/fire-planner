@@ -90,32 +90,110 @@ select option{background:var(--card);}
 .expl-chip:hover{border-color:var(--cc);color:var(--text);}
 .expl-chip-dot{width:8px;height:8px;border-radius:50%;background:var(--cc);flex-shrink:0;}
 .expl-chip.active{border-color:var(--cc);background:color-mix(in srgb,var(--cc) 16%,transparent);color:var(--text);}
-/* strategy summary + mode explainer */
-.expl-summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;padding:10px 14px;border:1px solid var(--bdr);border-left-width:3px;border-radius:var(--rs);background:var(--card);margin-bottom:12px;}
-.expl-summary-name{font-size:14px;font-weight:700;}
-.expl-summary-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--sec);}
-.expl-mode{font-size:13px;line-height:1.6;color:var(--sec);margin:0 0 18px;max-width:960px;}
-.expl-mode strong{color:var(--text);font-weight:600;}
-/* milestone timeline — a single vertical column (top → bottom). Each card is a
-   two-pane layout on wide screens: narrative on the left, numbers panel pinned
-   to the right, so the card fills the width without an empty band. */
-.expl-timeline{display:flex;flex-direction:column;gap:12px;}
-.expl-card{padding:15px 20px;border:1px solid var(--bdr);border-left:3px solid var(--sec);border-radius:var(--rs);background:var(--card);}
-.expl-card.ok{border-left-color:var(--ok);}
-.expl-card.bad{border-left-color:var(--err);}
-.expl-card.warn{border-left-color:#f59e0b;}
-.expl-card.neutral{border-left-color:var(--sec);}
-.expl-card-main{min-width:0;}
-.expl-card-hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px;}
-.expl-step{font-size:14px;font-weight:700;color:var(--text);}
-.expl-when{font-family:'DM Mono',monospace;font-size:11px;color:var(--sec);white-space:nowrap;}
-.expl-lead{font-size:13px;line-height:1.65;color:var(--sec);margin:0;max-width:680px;}
-.expl-lead strong{color:var(--text);font-weight:600;}
-.expl-rows{display:flex;flex-direction:column;gap:6px;margin-top:12px;}
-@media(min-width:900px){
-  .expl-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,440px);column-gap:44px;align-items:start;}
-  .expl-rows{margin-top:0;padding-left:28px;border-left:1px solid var(--bdr);}
+/* lede — the plan in one sentence, plus headline stat tiles */
+.expl-lede{border:1px solid var(--bdr);border-left:3px solid var(--cc,var(--sec));border-radius:var(--rs);background:var(--card);padding:16px 20px;margin-bottom:18px;}
+.expl-lede-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.expl-lede-name{font-size:15px;font-weight:700;color:var(--cc,var(--text));}
+.expl-lede-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--sec);margin-left:auto;}
+.expl-lede p{font-size:13px;line-height:1.65;color:var(--sec);margin:0 0 6px;max-width:880px;}
+.expl-lede p strong{color:var(--text);font-weight:600;}
+.expl-lede-mode{font-size:12px !important;color:var(--muted) !important;}
+.expl-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:12px;}
+.expl-stat{background:var(--dim);border:1px solid var(--bdr);border-radius:var(--rs);padding:9px 12px;display:flex;flex-direction:column;gap:2px;min-width:0;}
+.expl-stat .l{font-size:9.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);}
+.expl-stat .v{font-family:'DM Mono',monospace;font-size:15px;color:var(--text);white-space:nowrap;}
+.expl-stat .v.ok{color:var(--ok);}
+.expl-stat .v.err{color:var(--err);}
+.expl-stat .s{font-family:'DM Mono',monospace;font-size:10px;color:var(--sec);}
+/* journey timeline — phase segments with life-event markers above, age axis below */
+.expl-tl-scroll{overflow-x:auto;margin:2px 0 24px;scrollbar-width:none;}
+.expl-tl-scroll::-webkit-scrollbar{display:none;}
+.expl-tl{min-width:640px;padding:4px 2px 0;}
+.expl-tl-marks{position:relative;height:64px;}
+.expl-tl-mark{position:absolute;bottom:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:1px;}
+.expl-tl-mark .i{font-size:13px;line-height:1.2;}
+.expl-tl-mark .y{font-family:'DM Mono',monospace;font-size:9px;color:var(--sec);}
+.expl-tl-mark .pin{width:1px;height:8px;background:var(--bdr);}
+.expl-tl-mark.lane2 .pin{height:34px;}
+.expl-tl-mark.err .y{color:var(--err);}
+.expl-tl-mark.ok .y{color:var(--ok);}
+.expl-tl-track{display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--dim);}
+.expl-tl-seg{height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap;}
+.expl-tl-seg+.expl-tl-seg{border-left:2px solid var(--bg);}
+.expl-tl-seg span{padding:0 6px;font-size:10px;font-weight:600;color:var(--text);text-shadow:0 1px 2px rgba(0,0,0,.45);}
+.expl-tl-axis{position:relative;height:32px;margin-top:5px;}
+.expl-tl-ax{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:1px;}
+.expl-tl-ax.first{transform:none;align-items:flex-start;}
+.expl-tl-ax.last{transform:translateX(-100%);align-items:flex-end;}
+.expl-tl-ax b{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--text);}
+.expl-tl-ax span{font-size:9px;color:var(--muted);white-space:nowrap;}
+/* section headers between the page's blocks */
+.expl-sect-hd{font-size:11px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--muted);padding-bottom:8px;border-bottom:1px solid var(--bdr);margin:26px 0 12px;}
+/* phase "chapter" cards — narrative left, numbers panel right on wide screens */
+.expl-phases{display:flex;flex-direction:column;gap:14px;}
+.expl-phase{border:1px solid var(--bdr);border-radius:var(--rs);background:var(--card);padding:16px 20px;}
+.expl-ph-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.expl-ph-n{flex:0 0 22px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--text);background:var(--pc,var(--dim));}
+.expl-ph-name{font-size:14px;font-weight:700;color:var(--text);}
+.expl-ph-range{font-family:'DM Mono',monospace;font-size:11px;color:var(--sec);}
+.expl-ph-hd .ms-chip{margin-left:auto;}
+.expl-ph-body{display:flex;flex-direction:column;gap:14px;}
+.expl-ph-main{min-width:0;}
+.expl-ph-lead{font-size:13px;line-height:1.65;color:var(--sec);margin:0;max-width:720px;}
+.expl-ph-lead strong{color:var(--text);font-weight:600;}
+.expl-ph-side{display:flex;flex-direction:column;gap:14px;min-width:0;}
+@media(min-width:1000px){
+  .expl-ph-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,460px);column-gap:44px;align-items:start;}
+  .expl-ph-side{padding-left:28px;border-left:1px solid var(--bdr);}
 }
+/* life-event entries inside a phase */
+.expl-evs{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+.expl-ev{display:flex;gap:12px;padding:10px 12px;border:1px solid var(--bdr);border-left-width:2px;border-radius:var(--rs);background:var(--dim);}
+.expl-ev.ok{border-left-color:var(--ok);}
+.expl-ev.err{border-left-color:var(--err);}
+.expl-ev.warn{border-left-color:#f59e0b;}
+.expl-ev-when{flex:0 0 74px;font-family:'DM Mono',monospace;font-size:10px;line-height:1.5;color:var(--sec);padding-top:2px;}
+.expl-ev-main{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px;}
+.expl-ev-t{font-size:12.5px;font-weight:600;color:var(--text);}
+.expl-ev-t strong{color:var(--text);}
+.expl-ev-sub{font-size:11.5px;line-height:1.55;color:var(--sec);}
+.expl-ev-sub strong{color:var(--text);font-weight:600;}
+.expl-ev .expl-rows{margin-top:6px;max-width:430px;}
+/* comparison meters (lifestyle now vs phase) & funding-mix stacked bar */
+.expl-meter,.expl-mix{display:flex;flex-direction:column;gap:6px;}
+.expl-meter-hd{font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--sec);}
+.expl-meter-row{display:grid;grid-template-columns:74px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:11px;}
+.expl-meter-row .k{color:var(--sec);}
+.expl-meter-row .bar{height:10px;border-radius:5px;background:var(--dim);overflow:hidden;}
+.expl-meter-row .bar i{display:block;height:100%;border-radius:5px;background:var(--sec);}
+.expl-meter-row .v{font-family:'DM Mono',monospace;color:var(--text);white-space:nowrap;}
+.expl-meter-row .v.ok{color:var(--ok);}
+.expl-meter-row .v.err{color:var(--err);}
+.expl-meter-row .v .tgt{color:var(--sec);font-size:10px;}
+.expl-mix-bar{display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;background:var(--dim);}
+.expl-mix-bar i{height:100%;}
+.expl-mix-row{display:flex;align-items:center;gap:8px;font-size:11px;}
+.expl-mix-row .dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+.expl-mix-row .k{color:var(--sec);flex:1;}
+.expl-mix-row .v{font-family:'DM Mono',monospace;color:var(--text);}
+/* concept explainers — native disclosure widgets */
+.expl-concepts{display:flex;flex-direction:column;gap:8px;}
+.expl-c{border:1px solid var(--bdr);border-radius:var(--rs);background:var(--card);}
+.expl-c summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:10px;padding:12px 16px;flex-wrap:wrap;}
+.expl-c summary::-webkit-details-marker{display:none;}
+.expl-c summary::before{content:"\25B8";font-size:10px;color:var(--sec);}
+.expl-c[open] summary::before{content:"\25BE";}
+.expl-c summary:hover .expl-c-t{color:var(--cc,var(--text));}
+.expl-c-t{font-size:13px;font-weight:600;color:var(--text);}
+.expl-c-gist{font-size:11.5px;color:var(--sec);}
+.expl-c-num{margin-left:auto;font-family:'DM Mono',monospace;font-size:12px;color:var(--sec);white-space:nowrap;}
+.expl-c-body{padding:0 16px 14px 32px;font-size:12.5px;line-height:1.65;color:var(--sec);}
+.expl-c-body p{margin:0 0 8px;max-width:760px;}
+.expl-c-body p:last-child{margin-bottom:0;}
+.expl-c-body strong{color:var(--text);font-weight:600;}
+.expl-c-body .expl-rows{max-width:440px;margin:8px 0 10px;}
+/* shared key/value rows */
+.expl-rows{display:flex;flex-direction:column;gap:6px;}
 .expl-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12px;}
 .expl-row .k{color:var(--sec);}
 .expl-row .v{font-family:'DM Mono',monospace;color:var(--text);text-align:right;}
@@ -432,6 +510,14 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   .mc-card{flex:0 0 42%;scroll-snap-align:start;}
   /* Metric tiles: 2×2 grid instead of one thin row */
   .mc-tiles{grid-template-columns:1fr 1fr;}
+
+  /* ── EXPLANATION ── */
+  .expl-stats{grid-template-columns:1fr 1fr;}
+  .expl-lede{padding:14px 16px;}
+  .expl-phase{padding:14px 16px;}
+  .expl-ev{flex-direction:column;gap:4px;}
+  .expl-ev-when{flex:none;padding-top:0;}
+  .expl-c-body{padding-left:16px;}
 }
 
 /* ── GITHUB SYNC ── */
