@@ -102,47 +102,67 @@ export function renderExplanation(projs, gl, scenarios) {
   html += card("neutral", "Today", yearAt(0) + " &middot; age " + currentAge, todayLead, todayRows);
 
   // ── milestone 2: coast ──
+  // The question this answers: from what age could you STOP contributing (still
+  // covering day-to-day costs from work, not touching the portfolio) and have
+  // market growth alone carry the balance to your FIRE number by retirement.
+  // There is no fixed "5 years early" rule — it's computed from the plan.
   if (!already) {
-    // Coast crossover: the future year where the portfolio, if frozen from then on,
-    // still grows into the FIRE number BY retirement (i.e. saving becomes optional).
-    const growthFrom = startAge => { let g = 1; for (let a = startAge; a < retAge; a++) g *= (1 + portReturnAt(gl, a, retAge)); return g; };
-    let crossIdx = null;
-    for (let k = 0; k <= retIdx; k++) { if ((vals[k] || 0) * growthFrom(ageAt(k)) >= proj.fireTarget) { crossIdx = k; break; } }
-    // "If you never saved again": freeze today's net worth and compound it at the
-    // glide-path return until it reaches the FIRE number, with NO retirement deadline.
-    let freezeAge = null; { let p = nwToday; for (let a = currentAge; a <= 120; a++) { if (p >= proj.fireTarget) { freezeAge = a; break; } p *= (1 + portReturnAt(gl, a, retAge)); } }
-    const coastRatio = m.coastNow > 0 ? nwToday / m.coastNow : null;
-    const ratioRow = coastRatio != null
-      ? row("Coast progress", Math.round(coastRatio * 100) + "% of the coast number", coastRatio >= 1 ? "ok" : "")
-      : "";
-    const coastLine = "The <strong>coast number</strong> is the balance that, left untouched, would grow into your FIRE number by retirement. Once you pass it, market growth alone finishes the job and saving becomes optional.";
-    let coastTone, coastWhen, coastLead, coastRows;
+    const growth = (fromAge, toAge) => { let g = 1; for (let a = fromAge; a < toAge; a++) g *= (1 + portReturnAt(gl, a, retAge)); return g; };
+    // earliest projection year k where freezing contributions still reaches the
+    // FIRE number by retirement (vals[k] = start-of-year net worth at year k).
+    let coastIdx = null;
+    for (let k = 0; k <= retIdx; k++) { if ((vals[k] || 0) * growth(ageAt(k), retAge) >= proj.fireTarget) { coastIdx = k; break; } }
+    // in SWR mode, the same crossover against the realistic (adjusted) target that
+    // credits guaranteed future pensions & partner income — usually far earlier.
+    let coastIdxAdj = null;
+    if (gl.wdMode === "swr" && proj.fireTargetAdj < proj.fireTarget * 0.99)
+      for (let k = 0; k <= retIdx; k++) { if ((vals[k] || 0) * growth(ageAt(k), retAge) >= proj.fireTargetAdj) { coastIdxAdj = k; break; } }
+    // if frozen at idx, the age the balance would grow into the FIRE number (may
+    // be after retirement — i.e. you'd delay drawdown by that many years).
+    const reachAgeFrozenAt = idx => { let a = ageAt(idx), p = vals[idx] || 0; while (p < proj.fireTarget && a < 121) { p *= (1 + portReturnAt(gl, a, retAge)); a++; } return p >= proj.fireTarget ? a : null; };
+    const adjNote = (gl.wdMode === "swr" && proj.fireTargetAdj < proj.fireTarget * 0.99)
+      ? " Counting the pensions and partner income you'll actually receive (your lower " + eur(proj.fireTargetAdj) + " target), you could stop even earlier." : "";
+    const ruleLine = " There's no fixed rule for how early that is — it's not always &ldquo;5 years before&rdquo; — it depends on how far ahead of target you get. For this scenario:";
+    const coastLine = "<strong>Coast FIRE</strong> is the point where you can stop investing new money — still covering your day-to-day costs from work — and let market growth alone carry the portfolio to your FIRE number by retirement." + ruleLine;
+    let tone, when, lead, rows;
     if (m.coasting) {
-      coastTone = "ok"; coastWhen = "reached";
-      coastLead = coastLine + " <strong>You're already past it</strong> — even if you stopped saving today, this scenario still reaches FIRE by " + m.retYear + ".";
-      coastRows = row("Coast number", eur(m.coastNow)) + row("Your net worth today", eur(nwToday), "ok") + ratioRow;
-    } else if (crossIdx != null && crossIdx < retIdx) {
-      const yrs = crossIdx;
-      coastTone = "neutral"; coastWhen = yearAt(crossIdx) + " &middot; age " + ageAt(crossIdx);
-      coastLead = coastLine + " On plan you reach it in <strong>" + yrs + " year" + (yrs === 1 ? "" : "s") + "</strong> — around <strong>" + yearAt(crossIdx) + "</strong> (age " + ageAt(crossIdx) + "). After that you could stop saving and still be FI by retirement.";
-      coastRows = row("Coast reached", "age " + ageAt(crossIdx) + " &middot; " + yearAt(crossIdx) + ' <span class="tgt">in ' + yrs + "y</span>", "ok") +
-        row("Coast number (today)", eur(m.coastNow)) +
-        row("Net worth when you coast", eur(vals[crossIdx] || 0)) +
-        ratioRow;
+      tone = "ok"; when = "already coasting";
+      lead = coastLine + " <strong>You're already there.</strong> You could stop investing today and still reach your " + eur(proj.fireTarget) + " target by " + m.retYear + " on market growth alone.";
+      rows = row("You can stop investing", "now &middot; age " + currentAge, "ok") +
+        row("Years before retirement", nAccum + "y") +
+        row("Net worth today", eur(nwToday)) +
+        row("FIRE number by " + m.retYear, eur(proj.fireTarget));
+    } else if (coastIdx != null && coastIdx < retIdx) {
+      const yrsEarly = retAge - ageAt(coastIdx);
+      tone = "ok"; when = "coast at age " + ageAt(coastIdx);
+      lead = coastLine + " On plan, from <strong>age " + ageAt(coastIdx) + "</strong> (" + yearAt(coastIdx) + ") you could stop investing — <strong>" + yrsEarly + " year" + (yrsEarly === 1 ? "" : "s") + " before you retire</strong> — and markets alone would carry you to your " + eur(proj.fireTarget) + " target by " + retAge + "." + adjNote;
+      rows = row("Stop investing at", "age " + ageAt(coastIdx) + " &middot; " + yearAt(coastIdx), "ok") +
+        row("Years before retirement", yrsEarly + "y", "ok") +
+        row("Years you still contribute", coastIdx + "y") +
+        row("Net worth at that point", eur(vals[coastIdx] || 0));
+    } else if (coastIdxAdj != null && coastIdxAdj < retIdx) {
+      // can't coast against the cautious target, but can against the realistic one
+      const yrsEarly = retAge - ageAt(coastIdxAdj);
+      tone = "neutral"; when = "coast at age " + ageAt(coastIdxAdj) + " w/ pensions";
+      lead = coastLine + " Against the cautious " + eur(proj.fireTarget) + " target you'd keep investing until retirement — but that number gives no credit for the pensions and partner income you'll actually receive. Counting those (a realistic " + eur(proj.fireTargetAdj) + " target), from <strong>age " + ageAt(coastIdxAdj) + "</strong> (" + yearAt(coastIdxAdj) + ") you could stop investing — <strong>" + yrsEarly + " year" + (yrsEarly === 1 ? "" : "s") + " before you retire</strong>.";
+      rows = row("Stop investing at", "age " + ageAt(coastIdxAdj) + " &middot; " + yearAt(coastIdxAdj) + ' <span class="tgt">pensions counted</span>', "ok") +
+        row("Years before retirement", yrsEarly + "y", "ok") +
+        row("Cautious FIRE number", eur(proj.fireTarget)) +
+        row("Realistic (pensions counted)", eur(proj.fireTargetAdj), "ok");
     } else {
-      // Doesn't get ahead of the coast curve before retirement — but compounding
-      // still gets there eventually; tell them when, which is what Q2 asks for.
-      coastTone = "warn"; coastWhen = freezeAge != null ? "coast at age " + freezeAge : "not within horizon";
-      coastLead = coastLine + " This scenario <strong>relies on saving until retirement</strong> to be FI by then. But compounding gets you there eventually anyway: " +
-        (freezeAge != null
-          ? "if you never saved another euro, today's net worth alone would grow into your FIRE number around <strong>" + yearAt(freezeAge - currentAge) + "</strong> (age " + freezeAge + "), about <strong>" + (freezeAge - currentAge) + " years</strong> from now."
-          : "though not within your planning horizon at these return assumptions.");
-      coastRows = row("Coast number (today)", eur(m.coastNow)) +
-        row("Your net worth today", eur(nwToday)) +
-        ratioRow +
-        (freezeAge != null ? row("Compounding alone reaches FIRE", "age " + freezeAge + " &middot; " + yearAt(freezeAge - currentAge) + ' <span class="tgt">in ' + (freezeAge - currentAge) + "y, no more saving</span>") : "");
+      // never gets far enough ahead to coast before retirement (cutting it close)
+      tone = "warn"; when = "no early coast on plan";
+      const stopIdx = Math.max(0, retIdx - 3);
+      const reachAge = reachAgeFrozenAt(stopIdx);
+      const delay = reachAge != null ? Math.max(0, reachAge - retAge) : null;
+      lead = coastLine + " You're <strong>cutting it close</strong> — this plan needs your contributions right up to retirement to hit the target on time, so there's no comfortable window to stop early." +
+        (reachAge != null ? " For a feel: stop <strong>3 years early</strong> (age " + ageAt(stopIdx) + ", keep covering costs from work) and you'd reach the number around age " + reachAge + " — about " + delay + " year" + (delay === 1 ? "" : "s") + " past your target." : "") + adjNote;
+      rows = row("Earliest full coast", "at retirement (age " + retAge + ")") +
+        (reachAge != null ? row("Stop 3y early instead", "reach target at age " + reachAge + ' <span class="tgt">+' + delay + "y vs target</span>") : "") +
+        row("FIRE number", eur(proj.fireTarget)) +
+        (adjNote ? row("With pensions counted", eur(proj.fireTargetAdj) + ' <span class="tgt">lower target</span>') : "");
     }
-    html += card(coastTone, "Reaching &ldquo;coast&rdquo;", coastWhen, coastLead, coastRows);
+    html += card(tone, "Reaching &ldquo;coast&rdquo;", when, lead, rows);
   }
 
   // ── milestone 3: at retirement ──
@@ -188,6 +208,45 @@ export function renderExplanation(projs, gl, scenarios) {
     }
     const retStep = already ? "You're retired" : "At retirement";
     html += card(retTone, retStep, m.retYear + " &middot; age " + retAge, retLead, retRows);
+  }
+
+  // ── milestone 3b: the early years — the trade-offs & drawbacks of the strategy ──
+  {
+    const rr = rows[retIdx] || {};
+    const retLen = Math.max(0, gl.lifeExp - retAge);
+    let tone, when, lead, tradeRows;
+    if (swr) {
+      const b = m.incomeBreakdown || {};
+      const floor = (b.pension || 0) + (b.partnerPension || 0) + (b.partnerSalary || 0); // income that doesn't move with markets
+      const badTotal = Math.round(0.7 * (b.portfolio || 0)) + floor;                     // draw after a −30% year
+      const shortfall = m.targetMonthly - badTotal;
+      tone = "neutral"; when = "sequence-of-returns risk";
+      lead = "Living off a <strong>% of the portfolio</strong> has one big upside and one real drawback. " +
+        "<strong>Upside:</strong> you can never fully run out — you always draw a slice of what's left, so the money outlives you. " +
+        "<strong>Drawback:</strong> your income <strong>swings with the market</strong>. A bad run early in retirement doesn't threaten survival, it <strong>shrinks your paycheck</strong> — and since the draw feeds on a smaller base after a crash, the leanest years often come first, right when you've just stopped earning. Your pensions and partner income are the part that doesn't move, so the bigger that floor, the steadier you are. " +
+        "<em>(The Fixed Amount approach trades this the other way: steadier income, but a portfolio that can be depleted.)</em>";
+      tradeRows =
+        row("Income, normal year", eur(m.netMonthly) + ' <span class="tgt">/ ' + eur(m.targetMonthly) + " budget</span>", m.incomeOk ? "ok" : "err") +
+        row("Income after a &minus;30% year", eur(badTotal) + ' <span class="tgt">/ ' + eur(m.targetMonthly) + "</span>", badTotal >= m.targetMonthly ? "ok" : "err") +
+        (shortfall > 0 ? row("&nbsp;&nbsp;you'd trim by", eur(shortfall) + "/mo that year", "err") : "") +
+        row("Steady floor (pensions/partner)", eur(floor) + "/mo" + (floor === 0 ? ' <span class="tgt">none yet</span>' : "")) +
+        row("Portfolio can run out?", "no — by design", "ok");
+    } else {
+      const wdRate = m.portRet > 0 ? (rr.withdrawal || 0) / m.portRet * 100 : 0;
+      tone = m.depletionYear ? "bad" : "neutral"; when = "sequence-of-returns risk";
+      lead = "Living off a <strong>fixed real amount</strong> flips the trade-off. " +
+        "<strong>Upside:</strong> your income is <strong>predictable</strong> — the same inflation-adjusted budget every year, no market-watching. " +
+        "<strong>Drawback:</strong> the portfolio <strong>can run dry</strong>. The danger is <strong>sequence of returns</strong> — a crash in the first decade, while you keep withdrawing a fixed sum, can do damage the portfolio never recovers from. Retiring early sharpens this: a " + retLen + "-year retirement leans on the money far longer than the ~30 years the classic 4% rule was built for, so a lower draw rate is safer. " +
+        "<em>(The % of Portfolio approach trades this the other way: it can't deplete, but your income would rise and fall with markets.)</em>";
+      tradeRows =
+        row("Fixed budget (real)", mo((rr.spending || 0) + (rr.childCost || 0) + (rr.mortgagePayment || 0) - (rr.rentSavings || 0)) + "/mo") +
+        row("First-year draw rate", wdRate.toFixed(1) + "% of portfolio" + ' <span class="tgt">4% ≈ 30-yr rule</span>', wdRate <= 4 ? "ok" : wdRate <= 5 ? "" : "err") +
+        row("Retirement length", retLen + " years") +
+        (m.depletionYear
+          ? row("Portfolio outcome", "runs out " + m.depletionYear, "err")
+          : row("Portfolio outcome", "lasts to age " + gl.lifeExp + " (avg path)", "ok"));
+    }
+    html += card(tone, "The early years — your strategy's trade-off", when, lead, tradeRows);
   }
 
   // ── milestone 4: settling in / state pension ──
