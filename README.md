@@ -39,7 +39,7 @@ The planner runs a **year-by-year simulation** from today until your life expect
 
 Five parallel scenarios (A–E) are computed simultaneously for side-by-side comparison.
 
-An in-app **Explanation** tab (5th tab) walks through this logic in plain language, tailored to a chosen scenario: pick one of the five scenarios and it narrates what happens to that scenario's actual numbers at each milestone (today, reaching "coast", at retirement, when the state pension begins, end of plan), showing only the withdrawal strategy in use. Its figures come from the same `computeCardMetrics()` source as the scenario cards and the engine's own per-year rows — it never re-derives a number.
+An in-app **Explanation** tab (5th tab) walks through this logic in plain language, tailored to a chosen scenario: pick one of the five scenarios and it narrates what happens to that scenario's actual numbers at each milestone (today, reaching "coast", buying a home and having a child when those toggles are on, at retirement, the early-retirement strategy trade-off, when the state pension begins, end of plan), showing only the withdrawal strategy in use. Life-event milestones quantify their impact by re-running the engine with the feature off and diffing the FIRE number and net worth at retirement. Its figures come from the same `computeCardMetrics()` source as the scenario cards and the engine's own per-year rows — it never re-derives a number.
 
 ---
 
