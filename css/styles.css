@@ -80,8 +80,8 @@ select option{background:var(--card);}
 .sub-hd{font-size:12px;font-weight:600;color:var(--sec);margin-bottom:10px;margin-top:4px;}
 
 /* EXPLANATION TAB (scenario-tailored guide) */
-.expl{max-width:860px;}
-.expl-intro{font-size:13px;line-height:1.6;color:var(--sec);margin:0 0 14px;}
+.expl{max-width:none;}
+.expl-intro{font-size:13px;line-height:1.6;color:var(--sec);margin:0 0 14px;max-width:960px;}
 .expl-intro em{color:var(--text);font-style:normal;font-weight:600;}
 /* scenario filter chips — one horizontally-scrollable line */
 .expl-chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-bottom:16px;}
@@ -93,24 +93,31 @@ select option{background:var(--card);}
 /* strategy summary + mode explainer */
 .expl-summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;padding:10px 14px;border:1px solid var(--bdr);border-left-width:3px;border-radius:var(--rs);background:var(--card);margin-bottom:12px;}
 .expl-summary-name{font-size:14px;font-weight:700;}
-.expl-summary-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
-.expl-mode{font-size:13px;line-height:1.6;color:var(--sec);margin:0 0 18px;}
+.expl-summary-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--sec);}
+.expl-mode{font-size:13px;line-height:1.6;color:var(--sec);margin:0 0 18px;max-width:960px;}
 .expl-mode strong{color:var(--text);font-weight:600;}
-/* milestone timeline */
-.expl-timeline{display:flex;flex-direction:column;gap:12px;position:relative;}
-.expl-card{position:relative;padding:14px 16px;border:1px solid var(--bdr);border-left:3px solid var(--sec);border-radius:var(--rs);background:var(--card);}
+/* milestone timeline — a single vertical column (top → bottom). Each card is a
+   two-pane layout on wide screens: narrative on the left, numbers panel pinned
+   to the right, so the card fills the width without an empty band. */
+.expl-timeline{display:flex;flex-direction:column;gap:12px;}
+.expl-card{padding:15px 20px;border:1px solid var(--bdr);border-left:3px solid var(--sec);border-radius:var(--rs);background:var(--card);}
 .expl-card.ok{border-left-color:var(--ok);}
 .expl-card.bad{border-left-color:var(--err);}
 .expl-card.warn{border-left-color:#f59e0b;}
 .expl-card.neutral{border-left-color:var(--sec);}
+.expl-card-main{min-width:0;}
 .expl-card-hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px;}
-.expl-step{font-size:13px;font-weight:700;color:var(--text);}
-.expl-when{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;}
-.expl-lead{font-size:12.5px;line-height:1.6;color:var(--sec);margin:0 0 10px;}
+.expl-step{font-size:14px;font-weight:700;color:var(--text);}
+.expl-when{font-family:'DM Mono',monospace;font-size:11px;color:var(--sec);white-space:nowrap;}
+.expl-lead{font-size:13px;line-height:1.65;color:var(--sec);margin:0;max-width:680px;}
 .expl-lead strong{color:var(--text);font-weight:600;}
-.expl-rows{display:flex;flex-direction:column;gap:4px;}
+.expl-rows{display:flex;flex-direction:column;gap:6px;margin-top:12px;}
+@media(min-width:900px){
+  .expl-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,440px);column-gap:44px;align-items:start;}
+  .expl-rows{margin-top:0;padding-left:28px;border-left:1px solid var(--bdr);}
+}
 .expl-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12px;}
-.expl-row .k{color:var(--muted);}
+.expl-row .k{color:var(--sec);}
 .expl-row .v{font-family:'DM Mono',monospace;color:var(--text);text-align:right;}
 .expl-row .v.ok{color:var(--ok);}
 .expl-row .v.err{color:var(--err);}
@@ -119,9 +126,9 @@ select option{background:var(--card);}
 .expl-row .v.s3c{color:var(--s3c);}
 .expl-row .v.s4c{color:var(--s4c);}
 .expl-row .v.s5c{color:var(--s5c);}
-.expl-row .v .tgt{color:var(--muted);font-size:11px;}
-.expl-sub{font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:8px 0 2px;}
-.expl-foot{font-size:11px;line-height:1.5;color:var(--muted);margin:16px 0 0;}
+.expl-row .v .tgt{color:var(--sec);font-size:11px;}
+.expl-sub{font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--sec);margin:8px 0 2px;}
+.expl-foot{font-size:11px;line-height:1.5;color:var(--sec);margin:16px 0 0;max-width:960px;}
 
 /* upload */
 .upload-btn{width:100%;height:36px;border:1.5px dashed var(--bdr);border-radius:var(--rs);background:transparent;color:var(--sec);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;}
