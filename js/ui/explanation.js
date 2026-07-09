@@ -1,7 +1,7 @@
 import { el, eur } from "../util.js";
 import { state } from "../state.js";
 import { getScenarioName } from "../inputs.js";
-import { portReturnAt } from "../engine.js";
+import { portReturnAt, yearOneBudget } from "../engine.js";
 import { computeCardMetrics } from "./cards.js";
 
 // ── EXPLANATION TAB ──────────────────────────────────────────────────────────
@@ -26,9 +26,11 @@ const pct = n => (Math.round(n * 1000) / 10) + "%"; // 0.04 → "4%"
 function row(k, v, cls) { return '<div class="expl-row"><span class="k">' + k + '</span><span class="v ' + (cls || "") + '">' + v + "</span></div>"; }
 function card(tone, step, when, lead, rows) {
   return '<section class="expl-card ' + tone + '">' +
-    '<div class="expl-card-hd"><span class="expl-step">' + step + "</span>" +
-    (when ? '<span class="expl-when">' + when + "</span>" : "") + "</div>" +
-    '<p class="expl-lead">' + lead + "</p>" +
+    '<div class="expl-card-main">' +
+      '<div class="expl-card-hd"><span class="expl-step">' + step + "</span>" +
+      (when ? '<span class="expl-when">' + when + "</span>" : "") + "</div>" +
+      '<p class="expl-lead">' + lead + "</p>" +
+    "</div>" +
     (rows ? '<div class="expl-rows">' + rows + "</div>" : "") + "</section>";
 }
 
@@ -81,11 +83,17 @@ export function renderExplanation(projs, gl, scenarios) {
   const nwToday = (gl.invested || 0) + gl.cash;
   const savedY = r0.netFlow || 0;
   const saveRate = (r0.income > 0) ? Math.round(savedY / r0.income * 100) : null;
+  // "years of retirement spending banked" — net worth ÷ retirement budget expressed
+  // in today's money (the FI odometer; ~25× ≈ the 4% rule is met).
+  const inflAtRet = Math.pow(1 + gl.inflation, nAccum);
+  const budgetTodayAnn = yearOneBudget(retAge, sc, gl) / (inflAtRet || 1);
+  const yearsBanked = budgetTodayAnn > 0 ? nwToday / budgetTodayAnn : null;
   let todayRows =
     row("Net worth", eur(nwToday) + ' <span class="tgt">(' + eur(gl.invested || 0) + " invested + " + eur(gl.cash) + " cash)</span>", CV[i]) +
     row("Income this year", eur(r0.income || 0) + ' <span class="tgt">' + mo(r0.income || 0) + "/mo</span>") +
     row("Spending this year", eur(r0.spending || 0) + ' <span class="tgt">' + mo(r0.spending || 0) + "/mo</span>");
   if (!already) todayRows += row("You save", (savedY >= 0 ? "+" : "") + eur(savedY) + "/yr" + (saveRate != null ? " (" + saveRate + "% of income)" : ""), savedY >= 0 ? "ok" : "err");
+  if (yearsBanked != null) todayRows += row("Retirement spending banked", yearsBanked.toFixed(1) + " years" + ' <span class="tgt">of your ' + eur(Math.round(budgetTodayAnn)) + "/yr budget</span>", yearsBanked >= 25 ? "ok" : "");
   const todayLead = already
     ? "You've already reached your retirement age in this scenario, so the plan starts drawing down straight away."
     : "Right now you're building the portfolio. You plan to retire in <strong>" + nAccum + " years</strong>, at age <strong>" + retAge + "</strong> (" + m.retYear + ").";
@@ -95,25 +103,44 @@ export function renderExplanation(projs, gl, scenarios) {
 
   // ── milestone 2: coast ──
   if (!already) {
+    // Coast crossover: the future year where the portfolio, if frozen from then on,
+    // still grows into the FIRE number BY retirement (i.e. saving becomes optional).
     const growthFrom = startAge => { let g = 1; for (let a = startAge; a < retAge; a++) g *= (1 + portReturnAt(gl, a, retAge)); return g; };
     let crossIdx = null;
     for (let k = 0; k <= retIdx; k++) { if ((vals[k] || 0) * growthFrom(ageAt(k)) >= proj.fireTarget) { crossIdx = k; break; } }
+    // "If you never saved again": freeze today's net worth and compound it at the
+    // glide-path return until it reaches the FIRE number, with NO retirement deadline.
+    let freezeAge = null; { let p = nwToday; for (let a = currentAge; a <= 120; a++) { if (p >= proj.fireTarget) { freezeAge = a; break; } p *= (1 + portReturnAt(gl, a, retAge)); } }
+    const coastRatio = m.coastNow > 0 ? nwToday / m.coastNow : null;
+    const ratioRow = coastRatio != null
+      ? row("Coast progress", Math.round(coastRatio * 100) + "% of the coast number", coastRatio >= 1 ? "ok" : "")
+      : "";
     const coastLine = "The <strong>coast number</strong> is the balance that, left untouched, would grow into your FIRE number by retirement. Once you pass it, market growth alone finishes the job and saving becomes optional.";
     let coastTone, coastWhen, coastLead, coastRows;
     if (m.coasting) {
       coastTone = "ok"; coastWhen = "reached";
       coastLead = coastLine + " <strong>You're already past it</strong> — even if you stopped saving today, this scenario still reaches FIRE by " + m.retYear + ".";
-      coastRows = row("Coast number", eur(m.coastNow), "ok") + row("Your net worth today", eur(nwToday), "ok");
-    } else if (crossIdx != null) {
+      coastRows = row("Coast number", eur(m.coastNow)) + row("Your net worth today", eur(nwToday), "ok") + ratioRow;
+    } else if (crossIdx != null && crossIdx < retIdx) {
+      const yrs = crossIdx;
       coastTone = "neutral"; coastWhen = yearAt(crossIdx) + " &middot; age " + ageAt(crossIdx);
-      coastLead = coastLine + " On plan, you reach it around <strong>" + yearAt(crossIdx) + "</strong> (age " + ageAt(crossIdx) + ") — after that, work becomes optional for retirement funding.";
-      coastRows = row("Coast number (today)", eur(m.coastNow)) +
-        row("Net worth when you coast", eur(vals[crossIdx] || 0), "ok") +
-        row("Years of saving left", Math.max(0, crossIdx) + "y");
+      coastLead = coastLine + " On plan you reach it in <strong>" + yrs + " year" + (yrs === 1 ? "" : "s") + "</strong> — around <strong>" + yearAt(crossIdx) + "</strong> (age " + ageAt(crossIdx) + "). After that you could stop saving and still be FI by retirement.";
+      coastRows = row("Coast reached", "age " + ageAt(crossIdx) + " &middot; " + yearAt(crossIdx) + ' <span class="tgt">in ' + yrs + "y</span>", "ok") +
+        row("Coast number (today)", eur(m.coastNow)) +
+        row("Net worth when you coast", eur(vals[crossIdx] || 0)) +
+        ratioRow;
     } else {
-      coastTone = "warn"; coastWhen = "not before retirement";
-      coastLead = coastLine + " This scenario <strong>relies on saving all the way to retirement</strong> — the projection doesn't reach a coast point earlier, so contributions keep mattering until you retire.";
-      coastRows = row("Coast number (today)", eur(m.coastNow)) + row("Your net worth today", eur(nwToday));
+      // Doesn't get ahead of the coast curve before retirement — but compounding
+      // still gets there eventually; tell them when, which is what Q2 asks for.
+      coastTone = "warn"; coastWhen = freezeAge != null ? "coast at age " + freezeAge : "not within horizon";
+      coastLead = coastLine + " This scenario <strong>relies on saving until retirement</strong> to be FI by then. But compounding gets you there eventually anyway: " +
+        (freezeAge != null
+          ? "if you never saved another euro, today's net worth alone would grow into your FIRE number around <strong>" + yearAt(freezeAge - currentAge) + "</strong> (age " + freezeAge + "), about <strong>" + (freezeAge - currentAge) + " years</strong> from now."
+          : "though not within your planning horizon at these return assumptions.");
+      coastRows = row("Coast number (today)", eur(m.coastNow)) +
+        row("Your net worth today", eur(nwToday)) +
+        ratioRow +
+        (freezeAge != null ? row("Compounding alone reaches FIRE", "age " + freezeAge + " &middot; " + yearAt(freezeAge - currentAge) + ' <span class="tgt">in ' + (freezeAge - currentAge) + "y, no more saving</span>") : "");
     }
     html += card(coastTone, "Reaching &ldquo;coast&rdquo;", coastWhen, coastLead, coastRows);
   }
