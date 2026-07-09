@@ -90,28 +90,35 @@ export function buildChart(projs,gl) {
 // single block reveals only that block's amount. SURFACE is the chart-surface
 // colour used both for the thin gap between stacked segments and the tooltip bg.
 const SURFACE = "#0b0e17";
+// Cash-flow line-item colours, shared with the Explanation tab's funding-mix
+// bars so "portfolio draw", "pension", etc. wear the same colour everywhere.
+export const FLOW_COLORS = {
+  salary:"#22c55e", withdraw:"#2dd4bf", market:"#4ade80", pension:"#14b8a6",
+  partnerPension:"#a3e635", windfall:"#86efac", rent:"#5eead4", cashInt:"#bef264",
+  spend:"#ef4444", mortgage:"#f97316", child:"#fb7185", tax:"#e11d48", purchase:"#f59e0b",
+};
 // Revenue line items (green -> teal -> lime family). `get` pulls a single, non-
 // overlapping amount from a projection row. Salary strips out the partner
 // pension that the engine folds into `income` during accumulation, so it is
 // never double-counted with the "Partner Pension" block.
 const REVENUE = [
-  {key:"salary",   label:"Salary",          color:"#22c55e", get:r=>Math.max(0,(r.income||0)-(r.phase==="acc"?(r.partnerPension||0):0))},
-  {key:"withdraw", label:"Withdrawal",      color:"#2dd4bf", get:r=>r.withdrawal||0},
-  {key:"market",   label:"Market Return",   color:"#4ade80", get:r=>Math.max(0,r.portReturn||0)},
-  {key:"pension",  label:"Pension",         color:"#14b8a6", get:r=>r.pension||0},
-  {key:"partPen",  label:"Partner Pension", color:"#a3e635", get:r=>r.partnerPension||0},
-  {key:"windfall", label:"Windfall",        color:"#86efac", get:r=>r.windfall||0},
-  {key:"rent",     label:"Rent Saved",      color:"#5eead4", get:r=>r.rentSavings||0},
-  {key:"cashInt",  label:"Cash Interest",   color:"#bef264", get:r=>Math.max(0,r.cashReturn||0)},
+  {key:"salary",   label:"Salary",          color:FLOW_COLORS.salary,         get:r=>Math.max(0,(r.income||0)-(r.phase==="acc"?(r.partnerPension||0):0))},
+  {key:"withdraw", label:"Withdrawal",      color:FLOW_COLORS.withdraw,       get:r=>r.withdrawal||0},
+  {key:"market",   label:"Market Return",   color:FLOW_COLORS.market,         get:r=>Math.max(0,r.portReturn||0)},
+  {key:"pension",  label:"Pension",         color:FLOW_COLORS.pension,        get:r=>r.pension||0},
+  {key:"partPen",  label:"Partner Pension", color:FLOW_COLORS.partnerPension, get:r=>r.partnerPension||0},
+  {key:"windfall", label:"Windfall",        color:FLOW_COLORS.windfall,       get:r=>r.windfall||0},
+  {key:"rent",     label:"Rent Saved",      color:FLOW_COLORS.rent,           get:r=>r.rentSavings||0},
+  {key:"cashInt",  label:"Cash Interest",   color:FLOW_COLORS.cashInt,        get:r=>Math.max(0,r.cashReturn||0)},
 ];
 // Cost line items (red -> orange family). Plotted as negative so they stack
 // below zero; the magnitude is restored for display.
 const COST = [
-  {key:"spend",    label:"Spending",         color:"#ef4444", get:r=>r.spending||0},
-  {key:"mortgage", label:"Mortgage",         color:"#f97316", get:r=>r.mortgagePayment||0},
-  {key:"child",    label:"Child Costs",      color:"#fb7185", get:r=>r.childCost||0},
-  {key:"cgt",      label:"Capital Gain Tax", color:"#e11d48", get:r=>r.taxPaid||0},
-  {key:"purchase", label:"Purchase Cost",    color:"#f59e0b", get:r=>r.extraCost||0},
+  {key:"spend",    label:"Spending",         color:FLOW_COLORS.spend,    get:r=>r.spending||0},
+  {key:"mortgage", label:"Mortgage",         color:FLOW_COLORS.mortgage, get:r=>r.mortgagePayment||0},
+  {key:"child",    label:"Child Costs",      color:FLOW_COLORS.child,    get:r=>r.childCost||0},
+  {key:"cgt",      label:"Capital Gain Tax", color:FLOW_COLORS.tax,      get:r=>r.taxPaid||0},
+  {key:"purchase", label:"Purchase Cost",    color:FLOW_COLORS.purchase, get:r=>r.extraCost||0},
 ];
 
 export function buildFlowChart(projs,gl) {
