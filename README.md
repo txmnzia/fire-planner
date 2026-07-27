@@ -93,7 +93,7 @@ An in-app **Explanation** tab (5th tab) turns a chosen scenario into a plain-lan
 |-----------|----------|---------|------|-------|
 | State Pension Amount (gross) | `pensionAmt` | 800 | EUR/month | Monthly gross pension when eligible |
 | State Pension Age | `pensionAge` | 67 | years | Age when pension starts |
-| Windfall 0–2 (Year, Amount) | `wf0_yr`, `wf0_amt` | 2030, 100k | year, EUR | Up to 3 one-time lump-sum inflows |
+| Windfalls (Year, Amount) | `state.windfalls` `[{yr,amt}]` | 2030, 100k | year, EUR | Add-as-many-as-needed one-time lump-sum inflows; a dynamic list persisted on state (legacy `wf0/1/2` fields auto-migrate) |
 
 ### Partner (global, toggled per scenario)
 

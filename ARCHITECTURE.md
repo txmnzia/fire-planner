@@ -41,7 +41,12 @@ js/
                         (reuses computeCardMetrics + engine rows; engine re-runs
                         with a feature off quantify life-event impacts).
     ibkr.js             IBKR CSV import and holdings list.
-    nwHistory.js        Net-worth snapshot editor (plan-vs-actual inputs).
+    nwHistory.js        Net-worth snapshot editor (plan-vs-actual inputs) —
+                        compact datapoint rows shared with the windfall list.
+    situation.js        My Situation tab enhancements: subject-card rail scroll-spy,
+                        year-picker popover (buildYpick), sliders over the numeric
+                        inputs, and the dynamic windfall datapoint list. Progressive
+                        enhancement — the id-bearing inputs stay the source of truth.
 tests/                  node:test unit tests for the two pure engines.
 .github/workflows/ci.yml  Syntax-checks every module and runs the tests on push/PR.
 ```
