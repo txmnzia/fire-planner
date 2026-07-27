@@ -176,8 +176,14 @@ function initRail() {
     const t = el(a.dataset.t); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }));
   const io = new IntersectionObserver(es => es.forEach(e => {
-    if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.dataset.t === e.target.id));
-  }), { root: content, rootMargin: '-8% 0px -80% 0px', threshold: 0 });
+    if (!e.isIntersecting) return;
+    let active = null;
+    links.forEach(a => { const on = a.dataset.t === e.target.id; a.classList.toggle('on', on); if (on) active = a; });
+    // On the mobile single-line slider, keep the active chip scrolled into view.
+    if (active && rail.scrollWidth > rail.clientWidth + 4) {
+      rail.scrollTo({ left: Math.max(0, active.offsetLeft - 16), behavior: 'smooth' });
+    }
+  }), { root: null, rootMargin: '-22% 0px -72% 0px', threshold: 0 }); // viewport band works whether sit-content or the panel is the scroller
   content.querySelectorAll('.subj').forEach(s => io.observe(s));
   if (links[0]) links[0].classList.add('on');
 }
