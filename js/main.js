@@ -7,6 +7,7 @@ import { switchTab, toggleFeature, updateToggleUI, scrollToScenario, updateScNav
          updateAge, stepAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js";
 import { handleCSV } from "./ui/ibkr.js";
 import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js";
+import { initSituation } from "./ui/situation.js";
 import { downloadCSV } from "./ui/table.js";
 import { runMonteCarloUI, selectMcScenario } from "./ui/mcTab.js";
 import { selectExplanationScenario } from "./ui/explanation.js";
@@ -23,6 +24,10 @@ Object.assign(window, {
 
 // ── INIT ───────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
+  // Enhance the Situation-tab controls (sliders, year pickers, subject rail,
+  // windfall list) BEFORE loadState — applyState() repaints them from saved data.
+  initSituation();
+
   // Load state first — before updateAge/onWdMode which trigger recalc/scheduleSave
   // and would write empty defaults to localStorage before we get a chance to restore
   loadState();
