@@ -634,9 +634,13 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   .sit-rail .rail-a[data-t="subj-partner"]::before{content:"";position:absolute;left:-7px;top:22%;bottom:22%;width:1px;background:var(--bdr);}
   .sit-content{padding:18px 14px max(60px, calc(40px + env(safe-area-inset-bottom)));}
   .subj-grid{grid-template-columns:1fr;}
-  .subj-hd{padding:13px 14px;}
+  /* Header stacks on mobile: icon + title on row 1, chips/total drop to their own row */
+  .subj{scroll-margin-top:64px;} /* clear the sticky rail when a chip jumps to a section */
+  .subj-hd{padding:13px 14px;flex-wrap:wrap;}
+  .subj-tt{flex:1 1 auto;}
   .subj-body{padding:14px;}
-  .subj-meta{flex-wrap:wrap;justify-content:flex-end;}
+  .sc-chips{width:100%;margin-left:0;justify-content:flex-start;padding-top:8px;margin-top:8px;border-top:1px dashed var(--bdrs);}
+  .subj.life .sc-chips{border-top-color:color-mix(in srgb,var(--acc) 15%,var(--bdrs));}
   .inp,.ypick-btn,.sl-ctrl{height:44px;}
   .inp>input,.inp>select,.ypick-btn{font-size:16px;}
   .sv input{font-size:15px;width:48px;}
