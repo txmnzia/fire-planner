@@ -5,6 +5,7 @@ export const state = {
   ibkrTotal: 0,
   ibkrHoldings: [],
   nwHistory: [],   // [{year,val,income,spend}] manual net-worth snapshots for plan-vs-actual
+  windfalls: [],   // [{yr,amt}] one-off future windfalls (dynamic list; migrated from wf0/1/2 fields)
   activeScIdx: 0,
   lastProjs: null, lastGl: null, lastScenarios: null,
 };

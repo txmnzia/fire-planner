@@ -35,6 +35,12 @@ export function updateToggleUI() {
     if (sw_pr) { sw_pr.className = "tog-sw" + (features[s].prop    ? " on-prop" : ""); }
     if (sw_c)  { sw_c.className  = "tog-sw" + (features[s].child   ? " on-child": ""); }
   }
+  // Mirror the same feature state onto the Situation-tab life-event chips.
+  document.querySelectorAll('.sc-chip[data-scenario][data-feat]').forEach(chip => {
+    const on = !!(features[chip.dataset.scenario] && features[chip.dataset.scenario][chip.dataset.feat]);
+    chip.classList.toggle('on', on);
+    chip.setAttribute('aria-pressed', on);
+  });
 }
 
 // ── MOBILE HELPERS ─────────────────────────────────────────────────────────
