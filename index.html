@@ -15,7 +15,7 @@
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v6.7</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v6.8</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -104,7 +104,7 @@
         <div class="pb" id="holdingsList" style="display:none;margin-top:10px"></div>
         <div class="subj-subhd">Cash</div>
         <div class="subj-grid">
-          <div class="field"><label for="cash">Cash &amp; savings</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="number" id="cash" value="30000" min="0" step="500" oninput="recalc()" onchange="recalc()"></div></div>
+          <div class="field"><label for="cash_disp">Cash &amp; savings</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="cash" id="cash_disp"><input type="hidden" id="cash" value="30000"></div></div>
           <div class="field slider-field"><label for="cashReturn">Cash interest rate <span class="sv"><input type="number" id="cashReturn" value="1" min="0" max="10" step="0.25" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
             <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="cashReturn" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         </div>
@@ -117,8 +117,8 @@
         <div class="subj-tt"><h3>Income &amp; spending</h3><p>What you earn now and plan to spend in retirement</p></div></div>
       <div class="subj-body">
         <div class="subj-grid">
-          <div class="field"><label for="baseIncome">Monthly income (net)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="number" id="baseIncome" value="6700" min="0" step="100" oninput="recalc()" onchange="recalc()"></div></div>
-          <div class="field"><label for="spendNow">Monthly spending (now)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="number" id="spendNow" value="3000" min="0" step="100" oninput="recalc()" onchange="recalc()"></div></div>
+          <div class="field"><label for="baseIncome_disp">Monthly income (net)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="baseIncome" id="baseIncome_disp"><input type="hidden" id="baseIncome" value="6700"></div></div>
+          <div class="field"><label for="spendNow_disp">Monthly spending (now)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="spendNow" id="spendNow_disp"><input type="hidden" id="spendNow" value="3000"></div></div>
         </div>
         <div class="subj-subhd">Withdrawal strategy</div>
         <div class="subj-grid">
@@ -128,7 +128,7 @@
               <label class="wd-pill"><input type="radio" name="wdMode" value="swr" onchange="onWdMode()">% of portfolio</label>
             </div>
           </div>
-          <div class="field" id="spendRet_wrap"><label for="spendRet">Monthly spending (retirement) <button type="button" class="info-btn" title="Your retirement budget in today's money. Drives the FIRE target in both modes and the budget-adequacy metrics in % of Portfolio mode.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="number" id="spendRet" value="3000" min="0" step="100" oninput="recalc()" onchange="recalc()"></div></div>
+          <div class="field" id="spendRet_wrap"><label for="spendRet_disp">Monthly spending (retirement) <button type="button" class="info-btn" title="Your retirement budget in today's money. Drives the FIRE target in both modes and the budget-adequacy metrics in % of Portfolio mode.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="spendRet" id="spendRet_disp"><input type="hidden" id="spendRet" value="3000"></div></div>
           <div class="field slider-field" id="swr_wrap" style="display:none"><label for="swr">Withdrawal rate <button type="button" class="info-btn" title="Annual % of the current portfolio available to withdraw each year. This is a %-of-portfolio strategy: income varies with markets and the portfolio cannot fully deplete. It is NOT the classic Bengen fixed-real-amount rule (use Fixed Amount mode for that behaviour).">&#x24D8;</button> <span class="sv"><input type="number" id="swr" value="4" min="0.5" max="20" step="0.25" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
             <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="swr" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         </div>
@@ -198,7 +198,7 @@
       <div class="subj-body">
         <div class="subj-subhd" id="pensionGroupHd">State Pension</div>
         <div class="subj-grid">
-          <div class="field"><label for="pensionAmt">Pension amount (gross/mo)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="number" id="pensionAmt" value="800" min="0" step="50" oninput="recalc()" onchange="recalc()"></div></div>
+          <div class="field"><label for="pensionAmt_disp">Pension amount (gross/mo)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="pensionAmt" id="pensionAmt_disp"><input type="hidden" id="pensionAmt" value="800"></div></div>
           <div class="field slider-field"><label for="pensionAge">Pension age <span class="sv"><input type="number" id="pensionAge" value="67" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
             <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="pensionAge" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         </div>
@@ -231,11 +231,11 @@
           <button type="button" class="sc-chip" data-scenario="5" data-feat="partner" onclick="toggleFeature(5,'partner')" aria-pressed="false">E</button>
         </div></div>
       <div class="subj-body"><div class="subj-grid">
-        <div class="field"><label for="partnerInc">Partner income (net/mo)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="number" id="partnerInc" value="4000" min="0" step="100" oninput="recalc()" onchange="recalc()"></div></div>
+        <div class="field"><label for="partnerInc_disp">Partner income (net/mo)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerInc" id="partnerInc_disp"><input type="hidden" id="partnerInc" value="4000"></div></div>
         <div class="field slider-field"><label for="partnerRetAge">Partner retirement age <span class="sv"><input type="number" id="partnerRetAge" value="45" min="25" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="partnerRetAge" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         <div class="field"><label>Partner year of birth <button type="button" class="info-btn" title="Optional. If empty, your partner is assumed to be the same age as you. Used to work out when the partner reaches their retirement and pension ages.">&#x24D8;</button></label><div class="ypick" data-target="partnerBirthYear" data-min="1940" data-max="2010" data-optional></div><input type="hidden" id="partnerBirthYear" value=""></div>
-        <div class="field"><label for="partnerPension">Partner pension (gross/mo)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="number" id="partnerPension" value="700" min="0" step="50" oninput="recalc()" onchange="recalc()"></div></div>
+        <div class="field"><label for="partnerPension_disp">Partner pension (gross/mo)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerPension" id="partnerPension_disp"><input type="hidden" id="partnerPension" value="700"></div></div>
         <div class="field slider-field"><label for="partnerPensionAge">Partner pension age <span class="sv"><input type="number" id="partnerPensionAge" value="67" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="partnerPensionAge" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         <div class="field slider-field"><label for="partnerSpendMult">Spending multiplier <span class="sv"><input type="number" id="partnerSpendMult" value="1.5" min="1" max="3" step="0.1" oninput="recalc()" onchange="recalc()"><i>&#xD7;</i></span></label>
@@ -257,7 +257,7 @@
         </div></div>
       <div class="subj-body"><div class="subj-grid">
         <div class="field"><label>Purchase year</label><div class="ypick" data-target="propBuyYear" data-min="2024" data-max="2080"></div><input type="hidden" id="propBuyYear" value="2029"></div>
-        <div class="field"><label for="propPrice">Purchase price</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="number" id="propPrice" value="400000" min="0" step="5000" oninput="recalc()" onchange="recalc()"></div></div>
+        <div class="field"><label for="propPrice_disp">Purchase price</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="propPrice" id="propPrice_disp"><input type="hidden" id="propPrice" value="400000"></div></div>
         <div class="field slider-field"><label for="propDownPct">Down payment <span class="sv"><input type="number" id="propDownPct" value="20" min="0" max="100" step="1" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="propDownPct" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         <div class="field slider-field"><label for="propTxCostPct">Transaction costs <span class="sv"><input type="number" id="propTxCostPct" value="8" min="0" max="20" step="0.5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
@@ -266,7 +266,7 @@
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="propMortgageRate" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         <div class="field slider-field"><label for="propMortgageTerm">Mortgage term <span class="sv"><input type="number" id="propMortgageTerm" value="25" min="5" max="40" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="propMortgageTerm" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field"><label for="propRentSaved">Rent saved / month</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="number" id="propRentSaved" value="1200" min="0" step="50" oninput="recalc()" onchange="recalc()"></div></div>
+        <div class="field"><label for="propRentSaved_disp">Rent saved / month</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="propRentSaved" id="propRentSaved_disp"><input type="hidden" id="propRentSaved" value="1200"></div></div>
       </div></div>
     </section>
 
@@ -283,12 +283,12 @@
         </div></div>
       <div class="subj-body"><div class="subj-grid">
         <div class="field"><label>Child's birth year</label><div class="ypick" data-target="childBirthYear" data-min="2024" data-max="2060"></div><input type="hidden" id="childBirthYear" value="2027"></div>
-        <div class="field"><label for="childCostYearly">Annual child cost <button type="button" class="info-btn" title="Total out-of-pocket cost per year: childcare, food, activities, clothing, etc.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="number" id="childCostYearly" value="12000" min="0" step="500" oninput="recalc()" onchange="recalc()"></div></div>
+        <div class="field"><label for="childCostYearly_disp">Annual child cost <button type="button" class="info-btn" title="Total out-of-pocket cost per year: childcare, food, activities, clothing, etc.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="childCostYearly" id="childCostYearly_disp"><input type="hidden" id="childCostYearly" value="12000"></div></div>
         <div class="field slider-field"><label for="childCostUntilAge">Dependent until age <span class="sv"><input type="number" id="childCostUntilAge" value="25" min="10" max="30" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="childCostUntilAge" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         <div class="field slider-field"><label for="childMaternityMonths">Parental leave <button type="button" class="info-btn" title="Months of reduced or no income due to parental leave.">&#x24D8;</button> <span class="sv"><input type="number" id="childMaternityMonths" value="6" min="0" max="24" step="1" oninput="recalc()" onchange="recalc()"><i>mo</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="childMaternityMonths" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field"><label for="childMaternityIncome">Income during leave (net)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="number" id="childMaternityIncome" value="2000" min="0" step="100" oninput="recalc()" onchange="recalc()"></div></div>
+        <div class="field"><label for="childMaternityIncome_disp">Income during leave (net)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="childMaternityIncome" id="childMaternityIncome_disp"><input type="hidden" id="childMaternityIncome" value="2000"></div></div>
       </div></div>
     </section>
 
