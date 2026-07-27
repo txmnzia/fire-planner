@@ -622,17 +622,25 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   /* Net-worth history: larger touch targets */
   .nw-del{width:44px;height:44px;font-size:18px;}
 
-  /* Situation redesign: stack the subject rail above the content */
+  /* Situation redesign: subject rail becomes a single-line horizontal slider */
   .sit2{grid-template-columns:1fr;height:auto;min-height:100%;}
-  .sit-rail{border-right:none;border-bottom:1px solid var(--bdr);display:flex;flex-wrap:wrap;gap:6px;padding:12px;position:sticky;top:0;z-index:5;}
-  .sit-rail .rail-grp{width:100%;padding:6px 4px 2px;}
-  .sit-rail .rail-a{flex:0 0 auto;}
+  .sit-rail{border-right:none;border-bottom:1px solid var(--bdr);display:flex;flex-wrap:nowrap;align-items:center;gap:7px;padding:9px 12px;position:sticky;top:0;z-index:5;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain;}
+  .sit-rail::-webkit-scrollbar{display:none;}
+  .sit-rail .rail-grp{display:none;}
+  .sit-rail .rail-a{flex:0 0 auto;white-space:nowrap;padding:7px 13px;}
   .sit-rail .rail-a .tag{display:none;}
+  /* subtle divider between "You & your money" and the life-event sections */
+  .sit-rail .rail-a[data-t="subj-partner"]{margin-left:13px;position:relative;}
+  .sit-rail .rail-a[data-t="subj-partner"]::before{content:"";position:absolute;left:-7px;top:22%;bottom:22%;width:1px;background:var(--bdr);}
   .sit-content{padding:18px 14px max(60px, calc(40px + env(safe-area-inset-bottom)));}
   .subj-grid{grid-template-columns:1fr;}
-  .subj-hd{padding:13px 14px;}
+  /* Header stacks on mobile: icon + title on row 1, chips/total drop to their own row */
+  .subj{scroll-margin-top:64px;} /* clear the sticky rail when a chip jumps to a section */
+  .subj-hd{padding:13px 14px;flex-wrap:wrap;}
+  .subj-tt{flex:1 1 auto;}
   .subj-body{padding:14px;}
-  .subj-meta{flex-wrap:wrap;justify-content:flex-end;}
+  .sc-chips{width:100%;margin-left:0;justify-content:flex-start;padding-top:8px;margin-top:8px;border-top:1px dashed var(--bdrs);}
+  .subj.life .sc-chips{border-top-color:color-mix(in srgb,var(--acc) 15%,var(--bdrs));}
   .inp,.ypick-btn,.sl-ctrl{height:44px;}
   .inp>input,.inp>select,.ypick-btn{font-size:16px;}
   .sv input{font-size:15px;width:48px;}
