@@ -4,6 +4,7 @@ import { LEGACY_RATE_TO_CODE } from "./inputs.js";
 import { recalc } from "./recalc.js";
 import { renderHoldings } from "./ui/ibkr.js";
 import { renderNwHistory } from "./ui/nwHistory.js";
+import { refreshSituationControls } from "./ui/situation.js";
 import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js";
 
 // ── GITHUB GIST SYNC ────────────────────────────────────────────────────────
@@ -14,7 +15,6 @@ const SYNC_FIELDS = [
   'stockRet','bondRet','inflation','bondAllocNow','bondAllocRet',
   'retCountry',
   'pensionAmt','pensionAge',
-  'wf0_yr','wf0_amt','wf1_yr','wf1_amt','wf2_yr','wf2_amt',
   'partnerInc','partnerRetAge','partnerPension','partnerPensionAge','partnerSpendMult',
   'propBuyYear','propPrice','propDownPct','propTxCostPct','propMortgageRate','propMortgageTerm','propRentSaved',
   'childBirthYear','childCostYearly','childCostUntilAge','childMaternityMonths','childMaternityIncome',
@@ -55,6 +55,7 @@ export function collectState() {
   const mcRe = el('mcRecenter');
   return { v: 1, fields, wdMode: wdEl ? wdEl.value : 'fixed', features: feat,
     nwHistory: state.nwHistory,
+    windfalls: state.windfalls,
     mc: { recenter: mcRe ? mcRe.checked : true },
     ibkr: { total: state.ibkrTotal, holdings: state.ibkrHoldings } };
 }
@@ -78,7 +79,24 @@ export function applyState(data) {
     income:(r.income==null||r.income==='')?null:+r.income,
     spend:(r.spend==null||r.spend==='')?null:+r.spend
   })) : [];
+  // Windfalls: dynamic array on newer payloads; migrate legacy wf{i}_yr/wf{i}_amt fields otherwise.
+  if (Array.isArray(data.windfalls)) {
+    state.windfalls = data.windfalls.map(w=>({
+      yr:(w.yr==null||w.yr==='')?null:parseInt(w.yr),
+      amt:(w.amt==null||w.amt==='')?null:+w.amt
+    }));
+  } else {
+    const wfs = [];
+    for (let i = 0; i < 3; i++) {
+      const yr = data.fields?.['wf'+i+'_yr'], amt = data.fields?.['wf'+i+'_amt'];
+      if (yr == null || yr === '') continue;
+      const y = parseInt(yr), a = parseFloat(amt);
+      if (!isNaN(y)) wfs.push({ yr: y, amt: isNaN(a) ? null : a });
+    }
+    state.windfalls = wfs;
+  }
   renderNwHistory();
+  refreshSituationControls();
   for (let s = 1; s <= 5; s++) updateAge(s);
   onWdMode(); updateToggleUI();
   isSyncLoad = true; recalc(); isSyncLoad = false;

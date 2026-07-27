@@ -21,13 +21,10 @@ export function currentAgeFromDOB() {
 }
 
 export function getWindfalls() {
-  const wfs = [];
-  for (let i = 0; i < 3; i++) {
-    const ye=el("wf"+i+"_yr"), ae=el("wf"+i+"_amt"); if(!ye||!ae) continue;
-    const yr=parseInt(ye.value), amt=parseFloat(ae.value);
-    if (!isNaN(yr)&&!isNaN(amt)&&amt>0) wfs.push({yr,amt});
-  }
-  return wfs;
+  // Dynamic list held on state.windfalls ([{yr,amt}]); only complete, positive rows feed the engine.
+  return state.windfalls
+    .map(w => ({ yr: parseInt(w.yr), amt: parseFloat(w.amt) }))
+    .filter(w => !isNaN(w.yr) && !isNaN(w.amt) && w.amt > 0);
 }
 
 // Capital-gains tax rate per country (flat-rate approximation; see README).

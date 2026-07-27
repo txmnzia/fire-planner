@@ -76,7 +76,7 @@ export function handleCSV(input) {
     if (costBasisValid && positionsCostBasis > 0 && state.ibkrTotal > 0) {
       const totalCostBasis = positionsCostBasis + nonEquityValue; // cash carries no gain
       const autoGainFrac = Math.max(0, Math.min(99, Math.round((state.ibkrTotal - totalCostBasis) / state.ibkrTotal * 100)));
-      const gf = el('gainFrac'); if (gf) gf.value = autoGainFrac;
+      const gf = el('gainFrac'); if (gf) { gf.value = autoGainFrac; gf.dispatchEvent(new Event('input')); }
     }
     renderHoldings();
     recalc();
