@@ -9,6 +9,40 @@ import { recalc } from "../recalc.js";
 
 const YNOW = 2026;
 
+// ── MONEY FORMATTING ─────────────────────────────────────────────────────────
+// Thousands separators are a DISPLAY concern only. Currency fields keep the real
+// numeric value on a hidden id-bearing input (the persistence key inputs.js /
+// sync.js read); the visible input is text and never feeds parseFloat directly.
+export function fmtMoney(v) {
+  let s = String(v);
+  if (s === '' || s === '-') return s;
+  const neg = s.startsWith('-'); if (neg) s = s.slice(1);
+  const dot = s.indexOf('.');
+  const int = dot < 0 ? s : s.slice(0, dot);
+  const dec = dot < 0 ? '' : '.' + s.slice(dot + 1);
+  return (neg ? '-' : '') + int.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + dec;
+}
+export function cleanMoney(v) {
+  const s = String(v).replace(/[^0-9.]/g, '');
+  const i = s.indexOf('.');
+  return i < 0 ? s : s.slice(0, i + 1) + s.slice(i + 1).replace(/\./g, ''); // keep only the first dot
+}
+// Form-field currency inputs: a text display (.cur-in) mirrored to a hidden input.
+function initCurrency() {
+  document.querySelectorAll('.cur-in[data-target]').forEach(disp => {
+    if (disp._wiredCur) return; disp._wiredCur = true;
+    const hidden = el(disp.dataset.target);
+    disp._paintCur = () => { disp.value = hidden.value === '' ? '' : fmtMoney(hidden.value); };
+    disp._paintCur();
+    disp.addEventListener('input', () => {
+      const raw = cleanMoney(disp.value);
+      hidden.value = raw;            // clean numeric string is the source of truth
+      disp.value = fmtMoney(raw);
+      recalc();
+    });
+  });
+}
+
 // ── YEAR PICKER ──────────────────────────────────────────────────────────────
 // buildYpick enhances a `.ypick` element into a decade-grid popover. Value flows
 // through getVal/setVal so the same component drives hidden form inputs AND the
@@ -111,7 +145,7 @@ export function renderWindfalls() {
     row.innerHTML =
       '<div class="dp-main"><div class="ypick mini"></div>' +
       '<div class="inp cur mini"><span class="pre">€</span>' +
-      '<input type="number" inputmode="numeric" min="0" step="1000" placeholder="Amount" value="' + (w.amt == null ? '' : w.amt) + '"></div>' +
+      '<input type="text" inputmode="decimal" autocomplete="off" placeholder="Amount" value="' + (w.amt == null ? '' : fmtMoney(w.amt)) + '"></div>' +
       '<button type="button" class="dp-del" aria-label="Remove windfall">×</button></div>';
     host.appendChild(row);
     buildYpick(row.querySelector('.ypick'), {
@@ -120,7 +154,8 @@ export function renderWindfalls() {
       setVal: y => { w.yr = y; recalc(); },
     });
     row.querySelector('.cur input').addEventListener('input', e => {
-      const v = parseFloat(e.target.value); w.amt = isNaN(v) ? null : v; recalc();
+      const raw = cleanMoney(e.target.value); e.target.value = fmtMoney(raw);
+      const v = parseFloat(raw); w.amt = isNaN(v) ? null : v; recalc();
     });
     row.querySelector('.dp-del').addEventListener('click', () => { state.windfalls.splice(i, 1); renderWindfalls(); recalc(); });
   });
@@ -161,6 +196,7 @@ export function refreshSituationControls() {
     const num = el(range.dataset.for); if (num) { if (num.value !== '') range.value = num.value; paintSlider(range, num); }
   });
   document.querySelectorAll('.ypick[data-target]').forEach(p => { if (p._paint) p._paint(); });
+  document.querySelectorAll('.cur-in[data-target]').forEach(d => { if (d._paintCur) d._paintCur(); });
   renderWindfalls();
 }
 
@@ -168,6 +204,7 @@ export function initSituation() {
   bindGlobalClosers();
   initSliders();
   initYearFields();
+  initCurrency();
   renderWindfalls();
   initRail();
 }
