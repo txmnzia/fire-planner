@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=6.9">
+<link rel="stylesheet" href="css/styles.css?v=7.0">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v6.9</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v7.0</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -667,7 +667,7 @@
     <div class="sync-modal-hd">
       <span class="sync-modal-title" id="syncModalTitle">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-        GitHub Sync
+        Sync
       </span>
       <button class="sync-modal-close" onclick="closeSyncModal()" aria-label="Close">&#x2715;</button>
     </div>
@@ -676,22 +676,20 @@
     <div id="syncStatusView">
       <p style="margin:0 0 4px">Auto-sync is <strong id="syncStateText" style="color:var(--text)">active</strong>.</p>
       <div class="sync-info" id="syncLastTime"></div>
-      <p style="font-size:12px;color:var(--sec);line-height:1.6;margin:10px 0 0">Your data syncs across your devices via a private GitHub Gist, using the token stored in this browser.</p>
+      <p style="font-size:12px;color:var(--sec);line-height:1.6;margin:10px 0 0">Signed in as <strong id="syncEmailLbl" style="color:var(--text)"></strong>. Your plan syncs across every device where you sign in.</p>
       <div class="sync-actions" style="margin-top:12px;display:flex;gap:8px">
         <button class="sync-secondary-btn" onclick="syncNow()">Sync now</button>
-        <button class="sync-secondary-btn danger" onclick="disconnectSync()">Disconnect</button>
+        <button class="sync-secondary-btn danger" onclick="disconnectSync()">Sign out</button>
       </div>
     </div>
 
-    <!-- Connect view -->
-    <div id="syncNoTokenView" style="display:none">
-      <p style="font-size:12px;color:var(--sec);line-height:1.6;margin:0 0 10px">Paste a GitHub personal access token (classic) with <strong>only the <code>gist</code> scope</strong> to sync your data across devices via a private Gist. The token is stored only in this browser &mdash; never in the app's source.</p>
-      <a class="sync-gh-link" href="https://github.com/settings/tokens/new?scopes=gist&amp;description=fire-planner-sync" target="_blank" rel="noopener">Create a gist-scoped token on GitHub &#x2197;</a>
+    <!-- Sign-in view -->
+    <div id="syncSignInView" style="display:none">
+      <p style="font-size:12px;color:var(--sec);line-height:1.6;margin:0 0 10px">Sign in with your email to sync your plan across devices. No password: you get a one-time link. Without signing in, everything stays in this browser only.</p>
+      <input type="email" id="syncEmailInput" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')connectSync()">
       <div style="height:10px"></div>
-      <input type="password" id="syncTokenInput" placeholder="ghp_..." autocomplete="off" onkeydown="if(event.key==='Enter')connectSync()">
-      <div style="height:10px"></div>
-      <button class="sync-connect-btn" id="syncConnectBtn" onclick="connectSync()">Connect</button>
-      <p class="sync-error" id="syncTokenErr" style="display:none"></p>
+      <button class="sync-connect-btn" id="syncConnectBtn" onclick="connectSync()">Send sign-in link</button>
+      <p class="sync-error" id="syncEmailErr" style="display:none"></p>
     </div>
   </div>
 </div>

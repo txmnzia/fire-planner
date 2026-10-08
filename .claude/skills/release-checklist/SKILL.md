@@ -69,8 +69,9 @@ page's tag changes, because step 8 uses it to prove the deploy actually landed
   repo/page visibility.
 - **Never add new personal data** to any file or commit message.
 - **Never commit tokens**, even obfuscated — a "hidden" XOR'd PAT shipped once and was
-  effectively public (AUDIT.md S1). Sync tokens are pasted per-device and live in
-  `localStorage` only. If a token ever lands in a commit, revoking it on GitHub is the
+  effectively public (AUDIT.md S1). Sync uses a Supabase magic-link session, no
+  token; the publishable key in `js/db.js` is public by design, the secret key never
+  goes in the repo. If a token ever lands in a commit, revoking it on GitHub is the
   fix — deleting the commit is not.
 
 ## 5. Deploy reality: Pages serves main
@@ -107,7 +108,7 @@ iOS Safari served stale page versions until three no-cache meta tags were added 
 - If the live page looks stale after a confirmed deploy: hard-refresh on desktop
   (Cmd/Ctrl+Shift+R); on iOS Safari there is no hard refresh — close the tab fully and
   reopen, or Settings → Safari → clear website data as a last resort (warn the user
-  first: that also clears the app's `localStorage` state and per-device sync token —
+  first: that also clears the app's `localStorage` state and the sync sign-in —
   related history: a574ad9, iOS clearing storage aggressively).
 - The meta tags only cover the HTML document. CSS/JS are fetched per-load, but if a
   change ever seems half-applied, suspect a cached subresource before suspecting code.
@@ -130,7 +131,7 @@ On the deployed URL (not localhost), ideally also on a phone:
 - Header shows the **new version tag** (proves cache + deploy, steps 5–6).
 - **Console is clean** on load, on each tab, and after clicking one control per screen.
 - **Data is intact**: the user's saved values (not seed defaults) appear, and survive a
-  reload; the sync button reflects a working state if a token is connected.
+  reload; the sync button reflects a working state if signed in.
 - The specific change you shipped is visibly present.
 
 ## 9. Branch and commit conventions (from the log)
