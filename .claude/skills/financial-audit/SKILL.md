@@ -83,8 +83,9 @@ existing user data? (`js/seed.js` must only seed when `fire_state` is absent.)
 
 **Trust boundaries (found S1–S3).**
 Anything embedded in a served file is public: tokens (even obfuscated — S1), personal
-data (S3). Who can write to the Gist, and does `applyState` trust what it reads? What
-would an attacker with the token be able to make the user believe?
+data (S3). Who can write the synced `fire_planner.state` row (RLS: only the signed-in owner), and
+does `applyState` trust what it reads? What could someone with access to the account
+make the user believe?
 
 ## Report format
 

@@ -99,7 +99,7 @@ whatever keys the payload has back into matching elements.
 
 **If you forget:** nothing errors. The input works all session, then on reload
 the value silently reverts to the HTML `value=""` default, and cross-device
-Gist sync never carries it. This is exactly AUDIT.md **T2** — the auto-computed
+Supabase sync never carries it. This is exactly AUDIT.md **T2** — the auto-computed
 gain fraction reverted to a hardcoded 27% on every reload while tax on every
 withdrawal depended on it. The reload round-trip in step 8 is how you catch it.
 
@@ -116,7 +116,7 @@ state (arrays, objects) also goes through this pair — see `state-and-sync`.
 Precedence for an input's value at page load, highest first:
 
 1. **Saved state** — the `fields[id]` entry in localStorage `fire_state` (or
-   the Gist payload). Applied by `applyState()`. Wins whenever the key exists.
+   the synced payload). Applied by `applyState()`. Wins whenever the key exists.
 2. **HTML `value="…"` attribute** — what the field shows when the saved
    payload has no key for it (every pre-existing user, the day you ship a new
    field) or when there is no saved state and no seed.
@@ -154,7 +154,7 @@ checklist, and add a hand-computed test.
 
 ## 6. Migration — changing an existing field's meaning or values
 
-If old saved payloads (localStorage AND Gists on other devices) hold values
+If old saved payloads (localStorage on every device AND the synced copy in Supabase) hold values
 your new code can't interpret, migrate them in `applyState()` in `js/sync.js`,
 following the `retCountry` pattern:
 
@@ -165,7 +165,7 @@ if (id === 'retCountry' && LEGACY_RATE_TO_CODE[val]) val = LEGACY_RATE_TO_CODE[v
 The map (`LEGACY_RATE_TO_CODE` in `js/inputs.js`) translates legacy numeric
 select values to country codes (T1 fix). Same recipe for renaming an id or
 re-keying options: intercept the old key/value in `applyState()`, map to the
-new one, keep the mapping forever (a stale Gist can resurface years later).
+new one, keep the mapping forever (a stale device can resurface years later and push its old payload).
 Do **not** bump the payload's `v` — see `state-and-sync` for why.
 
 ## 7. Docs
@@ -183,7 +183,7 @@ Reload round-trip, in a served browser session (`python3 -m http.server 8000`):
 2. Confirm the key: `JSON.parse(localStorage.getItem('fire_state')).fields.myField`
    in the console — must show `"7.77"`.
 3. Hard-reload. Field still shows `7.77` and results reflect it.
-4. Clear `fire_state` (plus `fire_github_token`, `fire_gist_id`), reload —
+4. Clear `fire_state` , reload —
    first-visit path works, field shows its intended default.
 5. Check both `wdMode` radio settings if the value feeds the engine.
 6. `node --test tests/*.test.mjs` and `for f in js/*.js js/ui/*.js; do node --check "$f"; done`.
