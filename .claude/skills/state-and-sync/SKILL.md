@@ -137,6 +137,14 @@ pasted token. Since 2026-10 sync runs on Supabase instead and needs no token:
   than `localTs`, push when this device is newer or the account has no row yet.
   That is how a device's first sign-in uploads its existing local state, and why
   sign-in order across devices doesn't matter.
+- **Loading is never an edit.** `applyState()` runs entirely under
+  `isSyncLoad`, and `main.js` wraps the load-time `updateAge/onWdMode/
+  updateToggleUI` calls in `withoutSave()`. Otherwise their recalcs re-stamp
+  `ts` to "now", every opened device looks newest, and last-write-wins pushes
+  stale state (or the seed) over newer data. This shipped broken in v7.0 and
+  was fixed in v7.1; verified with a headless run against a fake supabase-js
+  (stale device, newer device, fresh seed device, empty account, edit after
+  load).
 - On load, `sync.js` deletes the old Gist keys (`fire_github_token`,
   `fire_github_login`, `fire_gist_id`) so a leftover PAT doesn't linger.
 
