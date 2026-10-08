@@ -2,7 +2,7 @@
 // public by design (row-level security protects the data); never put the
 // secret / service_role key here.
 const SUPABASE_URL = 'https://srnrnfrugpumzsmfsgjt.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_REPLACE_ME';
+const SUPABASE_ANON_KEY = 'sb_publishable_6NRDcc1RO15_sEpqtOgd9g_oT7P8RZE';
 const SCHEMA = 'fire_planner';
 
 let client;
