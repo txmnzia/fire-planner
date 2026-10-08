@@ -25,7 +25,9 @@ There is no package.json, no npm install, no build step. Do not introduce one.
 | `js/inputs.js` | Reads the form → plain `gl` (globals) / `sc` (scenario) objects. Country tax table. |
 | `js/state.js` | Shared mutable state object + per-scenario feature toggles. |
 | `js/recalc.js` | Orchestrator: inputs → engine → every renderer → persistence. |
-| `js/sync.js` | localStorage persistence + GitHub Gist cross-device sync. `SYNC_FIELDS` lives here. |
+| `js/sync.js` | localStorage persistence + cross-device sync via Supabase (magic-link sign-in, last-write-wins on `ts`). `SYNC_FIELDS` lives here. |
+| `js/db.js` | Supabase client for the shared `txmnzia-dbs` project, schema `fire_planner`. Loaded from a CDN, fails soft to local-only. |
+| `supabase/migrations/` | SQL for the `fire_planner` schema (run by hand in the Supabase SQL editor). |
 | `js/main.js` | Entry point; binds every inline-handler function onto `window`. |
 | `js/ui/*` | Renderers: cards, charts, table, Monte Carlo tab, IBKR import, net-worth history. |
 | `js/seed.js` | Classic (non-module) script: seeds default state on first visit only. |
@@ -52,8 +54,10 @@ There is no package.json, no npm install, no build step. Do not introduce one.
 5. **Tests before commit, always** — `node --test tests/*.test.mjs` plus a syntax check.
    A financial change without a new hand-computed test expectation is not done.
 6. **Never bake secrets or tokens into served files** — not even obfuscated. This was
-   done once and is documented as the S1 incident in AUDIT.md. Tokens are pasted
-   per-device and live in `localStorage` only.
+   done once and is documented as the S1 incident in AUDIT.md. Sync needs no token:
+   it signs in with a magic link. The Supabase publishable key in `js/db.js` is public
+   by design (row-level security protects the data); the secret/service_role key must
+   never appear anywhere.
 7. **This repo contains the owner's real personal financial data** (`SAM_STATE` in
    `js/sync.js` and `js/seed.js`: DOB, income, holdings). Do not copy it anywhere new,
    do not commit more of it, and warn the user before anything that would make the repo
@@ -71,7 +75,7 @@ There is no package.json, no npm install, no build step. Do not introduce one.
 | Editing `js/montecarlo.js` or MC metrics/tab | `monte-carlo` |
 | A number on screen looks wrong / two views disagree | `debugging-numbers` |
 | Adding or changing a user input / parameter | `adding-an-input` |
-| localStorage, Gist sync, seeding, state migration | `state-and-sync` |
+| localStorage, Supabase sync, seeding, state migration | `state-and-sync` |
 | Tabs, cards, charts, handlers, anything in `js/ui/` or `index.html` | `ui-conventions` |
 | Writing or extending tests, CI questions | `testing-and-ci` |
 | Auditing the financial logic for correctness | `financial-audit` |

@@ -1,14 +1,16 @@
 ---
 name: state-and-sync
-description: How the FIRE planner persists and synchronises state — localStorage lifecycle, first-visit seeding, the GitHub Gist per-device-token sync, timestamp conflict handling, and state-shape migrations. Load before touching js/sync.js, js/seed.js, the load order in js/main.js, anything reading or writing localStorage, or when saved values reset, sync misbehaves, or a field must be renamed/migrated.
+description: How the FIRE planner persists and synchronises state — localStorage lifecycle, first-visit seeding, the Supabase sync (shared txmnzia-dbs project, schema fire_planner, magic-link sign-in), timestamp conflict handling, and state-shape migrations. Load before touching js/sync.js, js/seed.js, the load order in js/main.js, anything reading or writing localStorage, or when saved values reset, sync misbehaves, or a field must be renamed/migrated.
 ---
 
 # State & sync
 
 One versioned JSON payload holds everything the user entered. It lives in three
 places that must stay consistent: the DOM (source of truth while the page is
-open), `localStorage['fire_state']` (per device), and a private GitHub Gist
-(cross-device, optional). `js/sync.js` owns all of it. History note: most of
+open), `localStorage['fire_state']` (per device), and one row in
+`fire_planner.state` on the shared Supabase project (cross-device, optional,
+only when signed in). Until 2026-10 the cross-device copy was a private GitHub
+Gist; that code and its stored tokens are gone (see Sync below). `js/sync.js` owns all of it. History note: most of
 the odd-looking guards below are scar tissue from real incidents — commits
 `a574ad9`, `ae05a9c`, `829d346`, `1f2ac00`, and AUDIT.md T7/S1/S3. Do not
 "simplify" them away.
@@ -27,8 +29,9 @@ page load
           └─ absent or JSON.parse throws → applyState(SAM_STATE)
      2. updateAge(1..5), onWdMode(), updateToggleUI()
      3. initSync()  — best-effort, non-blocking:
-          token? → findGist() if no cached id → syncLoad() (pull newer devices)
-                   or syncSave() (first run: create the gist) → startPolling()
+          load supabase-js (CDN; null → stay local-only)
+          session? (also completes a magic-link redirect) → syncLoad()
+                   → startPolling()
 
 applyState(data):
   fields → DOM (with retCountry legacy migration) → wdMode radio → mc.recenter
@@ -39,7 +42,7 @@ applyState(data):
 every recalc() (any input edit) ends with scheduleSave():
   isSyncLoad? return                    ← loads must not re-save (loop guard)
   localTs = Date.now(); write localStorage immediately
-  token present? debounce 2.5 s → syncSave() (PATCH gist / POST create)
+  signed in? debounce 2.5 s → syncSave() (upsert the fire_planner.state row)
 
 every 15 s while tab visible: syncPoll() — pull remote if strictly newer
 ```
@@ -102,7 +105,7 @@ merging. The moving parts, all in `js/sync.js`:
   (and re-stamp `ts`), turning polling into an infinite save/load loop.
 - `syncPoll()` returns early when `syncTimer` is set (a debounced local save
   is pending — pulling now would overwrite the user's newest edits before they
-  reach the Gist) and when `document.activeElement` is an
+  reach Supabase) and when `document.activeElement` is an
   INPUT/SELECT/TEXTAREA (never rewrite a field mid-keystroke).
 - Polling runs only while `document.visibilityState === 'visible'`, plus once
   on each visibilitychange-to-visible (`startPolling()`).
@@ -110,31 +113,32 @@ merging. The moving parts, all in `js/sync.js`:
 Keep every one of these guards when refactoring. Losing any of them
 reintroduces a data-loss race that only shows up with two devices open.
 
-## Tokens and security — the S1 incident
+## Sync — Supabase, and the S1 history
 
 Commits `d33e180`/`67fc8d0` once baked a XOR-"obfuscated" GitHub PAT into the
-served page. AUDIT.md **S1**: anyone viewing source could decode it in one
-console line, read/overwrite the private gist, and — because `syncPoll()`
-feeds `applyState()` — silently distort the numbers the user makes retirement
-decisions with. The obfuscation also defeated GitHub secret scanning, so the
-token would never have been auto-revoked.
+served page (AUDIT.md **S1**). The Gist sync that followed used a per-device
+pasted token. Since 2026-10 sync runs on Supabase instead and needs no token:
 
-The rule now (CLAUDE.md iron rule 6): **never embed tokens or secrets in
-served files or the repo, in any encoding.** The design instead:
-
-- The user creates a **gist-scoped classic PAT** and pastes it once per device
-  into the sync modal (`#syncNoTokenView` in `index.html`).
-- `connectSync()` validates it against `GET /user`, then stores it in
-  `localStorage['fire_github_token']` (plus `fire_github_login`) — that
-  browser only. Blast radius if one device is compromised: one gist scope.
-- 401 anywhere (`syncSave`, `syncLoad`, `syncPoll`) → `handleAuthError()`:
-  clear the stored token, stop polling, set the sync button to `error` so the
-  modal offers reconnection. A 404 on PATCH means the gist was deleted:
-  `syncSave()` clears `fire_gist_id` and recurses once to create a fresh one.
-- `findGist()` locates the gist by **description** — exact `'fire-planner'`
-  (the `GIST_DESC` constant) or the legacy `'fire-planner:'` prefix — paging
-  through up to 500 gists. Change `GIST_DESC` and existing users' gists go
-  unfound; don't.
+- `js/db.js` lazy-loads supabase-js from jsdelivr and creates the client for the
+  shared project `txmnzia-dbs`, schema `fire_planner`. If the CDN or network
+  fails, `db()` returns null and the app is exactly the local-only app.
+- The publishable key in `js/db.js` is **public by design**; row-level security
+  limits `fire_planner.state` to its owner (`user_id = auth.uid()`). The secret
+  / service_role key must never be in the repo (iron rule 6).
+- Sign-in: `connectSync()` sends a magic link (`signInWithOtp`, redirect back to
+  this page). `initSync()` always loads the client so the redirect completes;
+  `onAuthStateChange` then sets `userId` and runs `syncLoad()`. The session
+  lives in supabase-js's own localStorage keys (`sb-*`).
+- Table: `fire_planner.state (user_id pk, data jsonb, ts bigint, updated_at)`,
+  migration in `supabase/migrations/0001_fire_planner.sql`. `data` is exactly
+  the `collectState()` payload; `ts` duplicates `data.ts` so conflicts compare
+  without parsing.
+- `syncLoad()` = last-write-wins on `ts`: pull when the row is strictly newer
+  than `localTs`, push when this device is newer or the account has no row yet.
+  That is how a device's first sign-in uploads its existing local state, and why
+  sign-in order across devices doesn't matter.
+- On load, `sync.js` deletes the old Gist keys (`fire_github_token`,
+  `fire_github_login`, `fire_gist_id`) so a leftover PAT doesn't linger.
 
 ## iOS Safari lessons (git history)
 
@@ -161,7 +165,7 @@ repo or deployed page public**.
 ## Migration recipes
 
 **Renaming a field id / changing select option values.** Old payloads (this
-device's localStorage AND stale Gists from other devices) keep the old
+device's localStorage AND stale devices that push their old payload to Supabase) keep the old
 key/value indefinitely, so map them at apply time, forever. The canonical
 example is in `applyState()`:
 
@@ -183,29 +187,30 @@ numbers and preserves explicit nulls). Keep `v:1`.
 
 **Changing a field's semantics** (units, meaning): prefer a new id plus a
 translation from the old one over reusing the id with new meaning — a synced
-device running old code would write old-semantics values into the shared gist.
+device running old code would write old-semantics values into the shared row.
 
 ## Debugging
 
 - Inspect current state:
   `JSON.parse(localStorage.getItem('fire_state'))` in the console; check
   `.fields.<id>`, `.ts`, `.features`.
-- **Simulate a first visit**: remove `fire_state`, `fire_github_token`,
-  `fire_github_login`, `fire_gist_id` (and `fire_v3_restored`, a leftover key
-  from pre-refactor builds — current code never writes it) then reload.
+- **Simulate a first visit**: remove `fire_state` and the `sb-*` session keys
+  (and `fire_v3_restored`, a leftover key from pre-refactor builds — current
+  code never writes it) then reload.
   Expect the seed data (Sam's defaults) to appear, sync button `idle`.
 - Value resets on reload → its id is missing from `SYNC_FIELDS`, or a
   checkbox went through `SYNC_FIELDS` instead of explicit handling (T2 class
   of bug; see `adding-an-input`).
 - Page shows HTML defaults despite data in storage → `applyState()` bailed:
   check `data.v === 1` and that the JSON parses.
-- **Test sync end-to-end** with a scratch token: create a throwaway
-  gist-scoped classic PAT (the modal links to the pre-scoped GitHub page),
-  connect in two browser profiles against a local server, edit in one, wait
-  ≤15 s with the other tab visible and no field focused, confirm the pull.
-  Sync button state is `el('syncBtn').dataset.state`
-  (`idle|syncing|ok|error`). Delete the scratch token and gist afterwards;
-  never commit either.
+- **Test sync end-to-end**: sign in with the same email in two browser
+  profiles on the live page (or localhost, if `http://localhost:*` is an allowed
+  Redirect URL in Supabase), edit in one, wait ≤15 s with the other tab visible
+  and no field focused, confirm the pull. Sync button state is
+  `el('syncBtn').dataset.state` (`idle|syncing|ok|error`). Inspect the row in
+  Supabase: Table Editor → schema `fire_planner` → `state`.
+- **Offline / CDN blocked**: block `cdn.jsdelivr.net`; the app must load,
+  calculate and persist locally, sync button `idle`.
 - Must-run before commit: `node --test tests/*.test.mjs` and
   `for f in js/*.js js/ui/*.js; do node --check "$f"; done`. Persistence has
   no unit tests — the browser round-trip above IS the test; do it.

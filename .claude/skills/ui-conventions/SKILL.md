@@ -72,7 +72,7 @@ may be undefined — a top-level call breaks the whole app at load with a confus
 6. `markMcStale()` — MC results on screen were computed for the previous inputs
    (AUDIT.md T5); this dims `.mc-body` and sets the "Inputs changed" status. Never
    remove this call.
-7. `scheduleSave()` — persists to localStorage and debounces a Gist sync.
+7. `scheduleSave()` — persists to localStorage and debounces a Supabase sync.
 
 **Adding a renderer:** export a `renderX(projs, gl)` from a `js/ui/` module and call it
 from `recalc()` between steps 3 and 6. If it must react to active-scenario changes

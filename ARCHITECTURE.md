@@ -25,8 +25,10 @@ js/
   montecarlo.js         PURE Monte Carlo engine — historical block bootstrap, seeded
                         PRNG, percentile bands. Depends only on engine.js.
   recalc.js             Orchestrator: inputs → engine → all renderers, then persistence.
-  sync.js               localStorage persistence + GitHub Gist cross-device sync
-                        (collectState/applyState, token handling, polling).
+  sync.js               localStorage persistence + Supabase cross-device sync
+                        (collectState/applyState, magic-link sign-in, polling).
+  db.js                 Supabase client (shared txmnzia-dbs project, schema
+                        fire_planner), lazy-loaded from a CDN, null when offline.
   ui/
     controls.js         Tabs, feature toggles, age sliders, withdrawal-mode switch,
                         labels, active-scenario selection, mobile nav.
@@ -61,7 +63,7 @@ form inputs ──getGlobals()/getScenario()──▶ plain gl/sc objects
                                               ▼
 recalc() ──────────────▶ renderers (cards, charts, table, labels)
    │                                          ▲
-   └── scheduleSave() → localStorage → Gist ──┘ (applyState on load/sync)
+   └── scheduleSave() → localStorage → Supabase ┘ (applyState on load/sync)
 ```
 
 Two conventions keep the module graph sane:
