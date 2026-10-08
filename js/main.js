@@ -2,7 +2,7 @@ import { el } from "./util.js";
 import { state } from "./state.js";
 import { recalc } from "./recalc.js";
 import { loadState, initSync, scheduleSave, connectSync, disconnectSync,
-         openSyncModal, closeSyncModal, syncNow } from "./sync.js";
+         openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js";
 import { switchTab, toggleFeature, updateToggleUI, scrollToScenario, updateScNav,
          updateAge, stepAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js";
 import { handleCSV } from "./ui/ibkr.js";
@@ -32,11 +32,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // and would write empty defaults to localStorage before we get a chance to restore
   loadState();
 
-  for (let s = 1; s <= 5; s++) updateAge(s);
-  onWdMode();
-  updateToggleUI();
+  // Not a user edit: must not re-stamp the saved state's ts (see withoutSave).
+  withoutSave(() => {
+    for (let s = 1; s <= 5; s++) updateAge(s);
+    onWdMode();
+    updateToggleUI();
+  });
 
-  // Background Gist sync (best-effort, non-blocking)
+  // Background Supabase sync (best-effort, non-blocking)
   initSync();
 
   // Sync scenario nav dots with horizontal scroll position

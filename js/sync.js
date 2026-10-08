@@ -59,9 +59,18 @@ export function collectState() {
     ibkr: { total: state.ibkrTotal, holdings: state.ibkrHoldings } };
 }
 
+// Applying a payload is never an edit: everything below, including the
+// recalcs that updateAge()/onWdMode() trigger, runs with isSyncLoad set so
+// scheduleSave() can't re-stamp ts. Otherwise every load would look like the
+// newest edit and last-write-wins would push stale state over newer devices.
 export function applyState(data) {
   if (!data || data.v !== 1) return;
+  isSyncLoad = true;
+  try { applyStateInner(data); } finally { isSyncLoad = false; }
   localTs = data.ts || 0;
+}
+
+function applyStateInner(data) {
   Object.entries(data.fields || {}).forEach(([id, val]) => {
     const e = el(id); if (!e) return;
     // migrate legacy numeric country values (rates were ambiguous across countries)
@@ -98,7 +107,14 @@ export function applyState(data) {
   refreshSituationControls();
   for (let s = 1; s <= 5; s++) updateAge(s);
   onWdMode(); updateToggleUI();
-  isSyncLoad = true; recalc(); isSyncLoad = false;
+  recalc();
+}
+
+// Run UI initialisation that recalcs without counting it as a user edit
+// (page load in main.js). Same reason as applyState above.
+export function withoutSave(fn) {
+  isSyncLoad = true;
+  try { fn(); } finally { isSyncLoad = false; }
 }
 
 export async function syncSave() {
