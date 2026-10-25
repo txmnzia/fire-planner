@@ -45,11 +45,18 @@ An in-app **Explanation** tab (5th tab) turns a chosen scenario into a plain-lan
 
 ## Input Parameters
 
+### Defaults and first visit
+
+No personal data ships with the app. On a device with no saved state the
+personal fields start **empty** (a dash below; the value in brackets is what an
+empty field computes as). Only market and model assumptions have defaults.
+Your real values come from localStorage, or from Supabase once you sign in.
+
 ### Your Portfolio
 
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
-| Cash & Savings | `cash` | 30,000 | EUR | Earns `cashReturn`, not invested in stocks/bonds |
+| Cash & Savings | `cash` | — (0) | EUR | Earns `cashReturn`, not invested in stocks/bonds |
 | Cash Interest Rate | `cashReturn` | 1% | % p.a. | Applied to cash portion only |
 | Investable Portfolio | `ibkrTotal` | — | EUR | Loaded from IBKR/broker sync or manual entry |
 
@@ -57,7 +64,7 @@ An in-app **Explanation** tab (5th tab) turns a chosen scenario into a plain-lan
 
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
-| Date of Birth | `dob` |  | date | Current age derived from today's date |
+| Date of Birth | `dob` | — (age 30) | date | Current age derived from today's date |
 | Life Expectancy | `lifeExp` | 100 | years | Simulation ends at this age |
 | Plan Start Year | `baseYear` | 2026 | year | Year 0 for all projections |
 
@@ -65,9 +72,9 @@ An in-app **Explanation** tab (5th tab) turns a chosen scenario into a plain-lan
 
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
-| Monthly Income (net) | `baseIncome` | — | EUR/month | Your take-home income today |
-| Monthly Spending (now) | `spendNow` | 3,000 | EUR/month | Pre-retirement lifestyle spending |
-| Monthly Spending (retirement) | `spendRet` | 3,000 | EUR/month | Fixed-mode only; base for SWR target |
+| Monthly Income (net) | `baseIncome` | — (0) | EUR/month | Your take-home income today |
+| Monthly Spending (now) | `spendNow` | — (0) | EUR/month | Pre-retirement lifestyle spending |
+| Monthly Spending (retirement) | `spendRet` | — (0) | EUR/month | Fixed-mode only; base for SWR target |
 | Withdrawal Rate | `swr` | 4% | % | %-of-portfolio mode only; % of the current portfolio available annually |
 
 ### Market Assumptions
@@ -85,13 +92,13 @@ An in-app **Explanation** tab (5th tab) turns a chosen scenario into a plain-lan
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
 | Country of Residence | `retCountry` | France | — | Sets capital-gains tax rate (stored as country code) |
-| Unrealized Gain Fraction | `gainFrac` | 27% | % | % of your portfolio that is capital gain today; auto-filled from IBKR CSV import, editable & synced |
+| Unrealized Gain Fraction | `gainFrac` | 25% | % | % of your portfolio that is capital gain today; auto-filled from IBKR CSV import, editable & synced |
 
 ### Future Income
 
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
-| State Pension Amount (gross) | `pensionAmt` | 800 | EUR/month | Monthly gross pension when eligible |
+| State Pension Amount (gross) | `pensionAmt` | — (0) | EUR/month | Monthly gross pension when eligible |
 | State Pension Age | `pensionAge` | 67 | years | Age when pension starts |
 | Windfalls (Year, Amount) | `state.windfalls` `[{yr,amt}]` | none | year, EUR | Add-as-many-as-needed one-time lump-sum inflows; a dynamic list persisted on state (legacy `wf0/1/2` fields auto-migrate) |
 
@@ -99,9 +106,9 @@ An in-app **Explanation** tab (5th tab) turns a chosen scenario into a plain-lan
 
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
-| Partner Monthly Income (net) | `partnerInc` | 4,000 | EUR/month | Added to income until partner retires |
+| Partner Monthly Income (net) | `partnerInc` | — (0) | EUR/month | Added to income until partner retires |
 | Partner Retirement Age | `partnerRetAge` | 45 | years | Partner income stops at this age |
-| Partner Pension Amount (gross) | `partnerPension` | 700 | EUR/month | Partner's monthly pension |
+| Partner Pension Amount (gross) | `partnerPension` | — (0) | EUR/month | Partner's monthly pension |
 | Partner Pension Age | `partnerPensionAge` | 67 | years | Age when partner's pension starts |
 | Spending Multiplier | `partnerSpendMult` | 1.5× | — | Household spending = solo spending × this |
 | Partner Year of Birth | `partnerBirthYear` | — (same as you) | year | Optional; shifts when partner ret./pension ages are reached |
@@ -111,22 +118,22 @@ An in-app **Explanation** tab (5th tab) turns a chosen scenario into a plain-lan
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
 | Purchase Year | `propBuyYear` | 2029 | year | Year of purchase |
-| Purchase Price | `propPrice` | 400,000 | EUR | Total property price |
+| Purchase Price | `propPrice` | — (0) | EUR | Total property price |
 | Down Payment | `propDownPct` | 20% | % | % of price paid up front |
 | Transaction Costs | `propTxCostPct` | 8% | % | Notary, taxes, fees on top of price |
 | Mortgage Rate | `propMortgageRate` | 3.5% | % p.a. | Fixed rate for entire term |
 | Mortgage Term | `propMortgageTerm` | 25 | years | Amortization period |
-| Rent Saved per Month | `propRentSaved` | 1,200 | EUR/month | Rent you no longer pay after purchase |
+| Rent Saved per Month | `propRentSaved` | — (0) | EUR/month | Rent you no longer pay after purchase |
 
 ### Child (global, toggled per scenario)
 
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
 | Birth Year | `childBirthYear` | 2027 | year | Child's year of birth |
-| Annual Child Cost | `childCostYearly` | 12,000 | EUR/year | Total out-of-pocket cost per year |
+| Annual Child Cost | `childCostYearly` | — (0) | EUR/year | Total out-of-pocket cost per year |
 | Dependent Until Age | `childCostUntilAge` | 25 | years | Costs apply from birth until this child age |
-| Parental Leave (months) | `childMaternityMonths` | 6 | months | Months of reduced income in birth year |
-| Income During Leave | `childMaternityIncome` | 2,000 | EUR/month | Your income during those leave months |
+| Parental Leave (months) | `childMaternityMonths` | — (0) | months | Months of reduced income in birth year |
+| Income During Leave | `childMaternityIncome` | — (0) | EUR/month | Your income during those leave months |
 
 ---
 
@@ -200,11 +207,11 @@ The headline deliberately gives **no credit** for income that hasn't started yet
 those appear only in the adjusted number, so you can see both the safe target
 and the realistic one.
 
-**Example:** Retire in 10 years, spend €3,000/month, pension €800/month starting
+**Example:** Retire in 10 years, spend €2,500/month, pension €700/month starting
 at 67 (i.e. *after* retirement), 2% inflation, 4% SWR, 30% tax on a 50% gain
 fraction at retirement (TaxMult ≈ 1.176):
-- Inflated budget: €3,000 × 1.02¹⁰ × 12 = €43,886/year
-- Headline FIRE Number: €43,886 × 1.176 / 0.04 = **€1,290,000** (pension not yet flowing → no offset)
+- Inflated budget: €2,500 × 1.02¹⁰ × 12 = €36,570/year
+- Headline FIRE Number: €36,570 × 1.176 / 0.04 = **€1,075,000** (pension not yet flowing → no offset)
 - Adjusted FIRE Number: headline − PV(pension from 67) — shown as the secondary figure
 
 ### Fixed Amount (DCF) Mode Formula
@@ -337,7 +344,7 @@ Applied to:
 
 ### What `gainFrac` Represents
 
-`gainFrac` (default 27%) is the **fraction of your current portfolio that is unrealized capital gain**. If your portfolio is €200,000 and 27% is gain, then €54,000 would be taxable if you sold everything today.
+`gainFrac` (default 25%) is the **fraction of your current portfolio that is unrealized capital gain**. If your portfolio is €200,000 and 25% is gain, then €50,000 would be taxable if you sold everything today.
 
 It is a visible input in the **Tax & Country** section, is **auto-filled** when
 you import an IBKR CSV (from the statement's cost-basis columns), and is
@@ -505,7 +512,7 @@ When you toggle **"With Partner"** for a scenario, the following changes apply:
 - This applies to both `spendNow` (during accumulation) and `spendRet` (in retirement).
 - Default multiplier of 1.5× reflects that two people sharing a home cost ~50% more than one.
 
-**Example:** Solo spending €3,000/month → with partner: €3,000 × 1.5 = €4,500/month.
+**Example:** Solo spending €2,000/month → with partner: €2,000 × 1.5 = €3,000/month.
 
 ### FIRE Number Impact
 
@@ -677,7 +684,7 @@ if (yr >= chgYear && chgYear !== null)
 |----------|--------------------|---------|----------|-------|---------|
 | A — Early Retirement | 40 | ✗ | ✗ | ✗ | Baseline solo path |
 | B — Standard Path | 45 | ✗ | ✗ | ✗ | 5 years later |
-| C — Barista FIRE | 50 | ✗ | ✗ | ✗ | Income drops to €800/mo from 2030 |
+| C — Barista FIRE | 50 | ✗ | ✗ | ✗ | Set an income change (year + amount) for the part-time phase |
 | D — With Partner | 42 | ✓ | ✗ | ✗ | Joint income, joint spending |
 | E — Full Picture | varies | ✓ | ✓ | ✓ | All add-ons enabled |
 

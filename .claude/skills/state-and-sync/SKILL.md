@@ -19,14 +19,12 @@ the odd-looking guards below are scar tissue from real incidents — commits
 
 ```
 page load
-  index.html: <script src="js/seed.js">           (classic script, synchronous,
-     └─ if localStorage 'fire_state' ABSENT:       runs before any module)
-        write baked default JSON — never overwrite existing state (T7)
   index.html: <script type="module" src="js/main.js">
   DOMContentLoaded (js/main.js):
      1. loadState()                                ← MUST run first (see below)
           ├─ parse localStorage 'fire_state' → applyState(data)
-          └─ absent or JSON.parse throws → applyState(SAM_STATE)
+          └─ absent or JSON.parse throws → nothing applied: empty form (HTML
+             defaults), and nothing is saved until the user edits
      2. updateAge(1..5), onWdMode(), updateToggleUI()
      3. initSync()  — best-effort, non-blocking:
           load supabase-js (CDN; null → stay local-only)
@@ -52,9 +50,8 @@ every 15 s while tab visible: syncPoll() — pull remote if strictly newer
 call `recalc()`, and `recalc()` ends in `scheduleSave()`, which writes
 localStorage synchronously. Run them before `loadState()` and you persist the
 HTML defaults over the user's saved data — data loss on every page load.
-Commit `829d346` is the same lesson one layer down: seeding must happen
-synchronously before any module JS runs, hence `js/seed.js` is a classic
-(non-module) script tag placed before `js/main.js`.
+Commit `829d346` is the same lesson one layer down (it concerned the old
+`js/seed.js`, removed in v7.2 together with all baked personal data).
 
 ## The payload contract — collectState()/applyState()
 
@@ -153,22 +150,22 @@ pasted token. Since 2026-10 sync runs on Supabase instead and needs no token:
 - `a574ad9` — iOS Safari evicts localStorage aggressively (observed in practice
   after periods of disuse or under storage pressure). Any load path must survive
   `fire_state` vanishing:
-  that is why `loadState()` falls back to `SAM_STATE` and `js/seed.js`
-  re-seeds. Never assume localStorage persistence on Safari.
+  since v7.2 the fallback is an empty form and the real data comes back from
+  Supabase on sign-in (a pull, because an untouched empty device has `ts` 0).
+  Never assume localStorage persistence on Safari.
 - `1f2ac00` — iOS Safari served stale cached pages after deploys; the
   `Cache-Control/Pragma/Expires` no-cache `<meta>` tags in `index.html` exist
   for that. Leave them.
 - `ae05a9c` / `829d346` — the load-order rules described above; both were
   found because Safari's timing made the overwrite reproducible.
 
-## Privacy — S3 is still open
+## Privacy — S3 fixed in v7.2
 
-`SAM_STATE` in `js/sync.js` and the seed blob in `js/seed.js` embed the
-owner's **real** personal data: DOB, income, spending, partner details, exact
-IBKR holdings. AUDIT.md **S3** is unresolved by decision, not oversight. Do
-not copy these blobs into new files, tests, docs, or console examples; do not
-add more personal data; **warn the user before any action that would make the
-repo or deployed page public**.
+The repo and Pages site are public. No personal data ships with the app: the
+old `SAM_STATE` / `js/seed.js` default state was removed and git history
+rewritten (AUDIT.md **S3**). The owner's real values live only in localStorage
+and the Supabase row. Never bake a default state again, and use made-up
+numbers in tests, docs and console examples.
 
 ## Migration recipes
 
@@ -205,7 +202,8 @@ device running old code would write old-semantics values into the shared row.
 - **Simulate a first visit**: remove `fire_state` and the `sb-*` session keys
   (and `fire_v3_restored`, a leftover key from pre-refactor builds — current
   code never writes it) then reload.
-  Expect the seed data (Sam's defaults) to appear, sync button `idle`.
+  Expect an empty form (no personal values), sync button `idle`, and no
+  `fire_state` written until you edit a field.
 - Value resets on reload → its id is missing from `SYNC_FIELDS`, or a
   checkbox went through `SYNC_FIELDS` instead of explicit handling (T2 class
   of bug; see `adding-an-input`).

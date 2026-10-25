@@ -14,8 +14,8 @@ the user are true**, and whether the words around them honestly describe them.
 ## Ground rules
 
 1. **Severity is judged against the user's actual configuration**, not abstract
-   defaults. Read the saved state first (`SAM_STATE` in `js/sync.js`, or ask the user
-   for their current settings): which `wdMode`, which retirement ages, partner on/off,
+   defaults. Ask the user for their current settings first
+   (the repo holds none: they live in localStorage and Supabase): which `wdMode`, which retirement ages, partner on/off,
    which country. A bug in fixed mode is low severity for a user who lives in SWR mode.
    State the config you judged against at the top of your report, as AUDIT.md does.
 2. **Verify every claim numerically before reporting it.** Reproduce each suspected
@@ -78,8 +78,9 @@ definition). *Do the deterministic and stochastic views agree at the median?*
 
 **State lifecycle (found T1, T7).**
 Save → reload → does everything round-trip? Select each dropdown option, reload, check
-it stuck (duplicate option values broke this). Does first-visit seeding ever overwrite
-existing user data? (`js/seed.js` must only seed when `fire_state` is absent.)
+it stuck (duplicate option values broke this). Does a first visit (no saved state) ever
+write to storage before the user edits? It must not, or it would push an empty
+state over the synced row.
 
 **Trust boundaries (found S1–S3).**
 Anything embedded in a served file is public: tokens (even obfuscated — S1), personal

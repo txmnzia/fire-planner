@@ -47,10 +47,10 @@ chart line inherit the same understatement.
 pension and partner pension but **no partner salary**, regardless of
 `partnerRetAge`.
 
-Your saved state has `partnerRetAge = 67` while your retirement ages are
-in the 40s–50s. In a partner scenario (retire 45), the model throws away **22 years
-of partner income (inflation-adjusted)** — while still charging the
-household the full partner spending multiplier for those same years.
+The saved state had a partner retiring at 67 while the owner's retirement
+ages were in the 40s–50s. In a partner scenario retiring at 45, the model threw
+away **22 years of partner income (inflation-adjusted)** — while still charging
+the household the full partner spending multiplier for those same years.
 
 Consequences, all in the pessimistic direction:
 - Gross withdrawals (and therefore CGT) are overstated in every partner
@@ -195,9 +195,9 @@ approach: subtract the PV-equivalent annuity value).
 
 ### F10. Parental-leave income is never inflation-adjusted
 `incomeInYear()` line 1588: `leaveMonths * gl.childMaternityIncome` uses the
-raw nominal figure, while the surrounding salary is multiplied by `infl`. With
-birth year 4 years out and 12 months leave, leave-year income is
-understated by ~8% (4 years of missed 2% inflation). Small, one year only.
+raw nominal figure, while the surrounding salary is multiplied by `infl`. With a
+birth year 4 years out and 12 months leave, leave-year income is understated by
+~8% (4 years of missed 2% inflation). Small, one year only.
 
 ### F11. The partner has no age of their own
 `partnerRetAge` and `partnerPensionAge` are compared against **your** age
@@ -297,9 +297,9 @@ on `DOMContentLoaded` regardless of lock state — the data is in the DOM/JS
 behind the overlay. Fine as a privacy curtain; do not rely on it.
 
 ### S3. Personal financial data is hardcoded in the repository
-`SAM_STATE` and the bootstrap block embed your DOB, income, spending, partner
-details, and exact broker holdings in the
-page and the git history. If this repo or the deployed page is ever public,
+`SAM_STATE` and the bootstrap block embedded the owner's DOB, income,
+spending, partner details, and exact broker holdings in the page and the git
+history. If this repo or the deployed page is ever public,
 so is all of that.
 
 ---
@@ -378,7 +378,7 @@ so is all of that.
 
 1. **S1** — revoke the token (do this today; independent of any code change).
 2. **F1 + F9** — make the SWR FIRE Number tax- and budget-complete.
-3. **F2** — partner income in retirement (biggest distortion for your saved
+3. **F2** — partner income in retirement (biggest distortion for the saved
    scenarios).
 4. **F3** — decide Bengen vs %-of-portfolio and label/simulate accordingly.
 5. **F4/T6** — projected gain fraction at retirement everywhere.
@@ -419,7 +419,7 @@ the conservative and pension-adjusted FIRE numbers (F9), and move sync to a
 | T8 Duplicated card logic | **Fixed** | Shared `computeCardMetrics()` + row helpers |
 | S1 Decodable baked-in PAT | **Fixed in code** | Token now pasted per device, stored in `localStorage` only. **Old token must still be revoked manually on GitHub.** |
 | S2 Cosmetic lock screen | Unchanged | Accepted as a privacy curtain (documented) |
-| S3 Personal data in repo | **Open** | `SAM_STATE` + seed block still embed personal financial data; remove before making the repo/page public |
+| S3 Personal data in repo | **Fixed (v7.2)** | `SAM_STATE` and `js/seed.js` removed, personal defaults blanked, fixtures replaced with a made-up profile, git history rewritten. First visit shows an empty form; real data comes from Supabase sync |
 | Part 4 items (tax regime nuances, pension accrual realism, property equity, bond-series quality) | Documented | Now disclosed in README; model unchanged by design |
 
 Additional fixes found while implementing: retirement-era property purchase was
