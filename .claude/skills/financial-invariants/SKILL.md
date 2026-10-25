@@ -173,21 +173,21 @@ in `tests/engine.test.mjs` are the reference fixtures):
 ```sh
 node -e "
 import('./js/engine.js').then(({project, yearOneBudget}) => {
-  const gl = { currentAge:32, lifeExp:85, baseYear:2026, spendNow:3500, spendRet:3000,
-    inflation:0.02, gainFrac:0.27, stockRet:0.07, bondRet:0.03, stockAlloc:1,
-    bondAllocRet:0.4, taxRate:0.30, pensionAmt:800, pensionAge:67, cash:20000,
-    cashReturn:0.015, windfalls:[], wdMode:'swr', swr:0.04, invested:250000,
-    partnerInc:2000, partnerRetAge:67, partnerPension:500, partnerPensionAge:67,
-    partnerSpendMult:1.4, partnerAgeOff:0, propBuyYear:2029, propPrice:400000,
+  const gl = { currentAge:35, lifeExp:90, baseYear:2026, spendNow:3500, spendRet:2800,
+    inflation:0.02, gainFrac:0.25, stockRet:0.07, bondRet:0.03, stockAlloc:1,
+    bondAllocRet:0.4, taxRate:0.30, pensionAmt:900, pensionAge:67, cash:20000,
+    cashReturn:0.01, windfalls:[], wdMode:'swr', swr:0.04, invested:250000,
+    partnerInc:2000, partnerRetAge:65, partnerPension:500, partnerPensionAge:67,
+    partnerSpendMult:1.4, partnerAgeOff:0, propBuyYear:2030, propPrice:350000,
     propDownPct:0.2, propTxCostPct:0.08, propMortgageRate:0.035, propMortgageTerm:25,
-    propRentSaved:1200, childBirthYear:2030, childCostYearly:12000,
-    childCostUntilAge:23, childMaternityMonths:6, childMaternityIncome:2000 };
-  const sc = { id:1, retAge:42, income:5000, chgYear:null, chgInc:null,
+    propRentSaved:1000, childBirthYear:2031, childCostYearly:10000,
+    childCostUntilAge:22, childMaternityMonths:6, childMaternityIncome:2000 };
+  const sc = { id:1, retAge:45, income:5000, chgYear:null, chgInc:null,
     hasPartner:false, hasProp:false, hasChild:false };
   const p = project(sc, gl);
   console.log({fireTarget:p.fireTarget, fireTargetAdj:p.fireTargetAdj,
     gainFracAtRet:+p.gainFracAtRet.toFixed(3), finalNW:Math.round(p.finalNetWorth),
-    infeasible:p.infeasibleYear, budget:Math.round(yearOneBudget(42,sc,gl))});
+    infeasible:p.infeasibleYear, budget:Math.round(yearOneBudget(45,sc,gl))});
 });"
 ```
 

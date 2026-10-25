@@ -12,7 +12,7 @@ import { scheduleSave } from "./sync.js";
 
 // ── RECALC ──────────────────────────────────────────────────────────────────
 export function updateMultPreview() {
-  const now=numVal("spendNow",3000), ret=numVal("spendRet",3000), mult=numVal("partnerSpendMult",1.5);
+  const now=numVal("spendNow",0), ret=numVal("spendRet",0), mult=numVal("partnerSpendMult",1.5);
   const pn=el("multPreviewNow");
   if(pn) pn.textContent='€'+Math.round(now*mult).toLocaleString();
 }

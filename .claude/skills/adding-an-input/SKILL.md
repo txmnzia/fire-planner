@@ -119,28 +119,17 @@ Precedence for an input's value at page load, highest first:
    the synced payload). Applied by `applyState()`. Wins whenever the key exists.
 2. **HTML `value="…"` attribute** — what the field shows when the saved
    payload has no key for it (every pre-existing user, the day you ship a new
-   field) or when there is no saved state and no seed.
+   field) or when there is no saved state (first visit: the form shows these).
 3. **`numVal` fallback** — used only at *read* time when the field is empty or
    non-numeric (placeholder-style optional fields). Never visible in the UI.
-4. **`js/seed.js` / `SAM_STATE`** — not really a layer of their own: both are
-   prepackaged *saved-state payloads*. `js/seed.js` (classic script, runs
-   before the module graph) writes its JSON blob into `fire_state` **only when
-   the key is absent** — first visit ever, or after iOS Safari evicted
-   storage. `SAM_STATE` in `js/sync.js` is `loadState()`'s in-memory fallback
-   when `fire_state` is absent or unparseable. So on a fresh device, layer 1
-   is populated by seed data and layers 2–3 never show.
+There is no baked default state (the old `js/seed.js` / `SAM_STATE` held the
+owner's real data and was removed in v7.2, AUDIT.md **S3**). Never add one.
 
-Touch `js/seed.js` **only** when a default must exist on first visit with a
-value different from the HTML attribute. It must never overwrite existing
-state (AUDIT.md **T7**: a "one-time restore" flag once clobbered real saved
-data; the guard is now `if (!localStorage.getItem('fire_state'))` — keep it).
-The seed JSON is one long string literal; if you edit it, keep it valid JSON
-and mirror the same change in `SAM_STATE`. Both embed the owner's real
-financial data (AUDIT.md **S3**) — do not copy them anywhere new.
-
-For most new fields: set a sane HTML `value=""`, matching `numVal` fallback,
-and leave seed.js alone. Old payloads simply lack the key and the HTML default
-applies.
+Personal fields (amounts, dates about the user's life) default to empty with a
+`numVal` fallback of 0, so the empty form never computes with invisible
+numbers. Model assumptions (returns, rates, ages) get a sane generic HTML
+`value` with a matching `numVal` fallback. Old payloads simply lack the key and
+the HTML default applies.
 
 ## 5. Use it in the engine
 
@@ -214,8 +203,8 @@ annualFee: numVal("annualFee", 0)/100,
 'stockRet','bondRet','inflation','bondAllocNow','bondAllocRet','annualFee',
 ```
 
-**js/seed.js / SAM_STATE**: untouched — old payloads lack `annualFee`, the
-HTML `value="0.2"` applies, which is the intended default.
+**Saved payloads**: old ones lack `annualFee`, so the HTML `value="0.2"`
+applies, which is the intended default.
 
 **js/engine.js**: subtract `gl.annualFee` wherever the blended return is
 composed — a financial change, so `financial-invariants` applies: check the
@@ -239,8 +228,8 @@ Then the full step-8 verification.
       fallback, `/100` for percents done exactly once.
 - [ ] Id appended to `SYNC_FIELDS` (T2) — or explicit `collectState`/`applyState`
       handling for checkbox/radio/non-field state.
-- [ ] Defaults reasoned through the four layers; seed.js untouched unless truly
-      needed, and never overwriting existing state (T7).
+- [ ] Defaults reasoned through the layers; personal fields empty with fallback
+      0, no real values anywhere.
 - [ ] Engine receives it via `gl`/`sc` only; engines stay pure.
 - [ ] Semantics changed? `applyState()` migration in the LEGACY_RATE_TO_CODE
       style, kept forever.

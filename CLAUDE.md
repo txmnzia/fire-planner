@@ -30,7 +30,6 @@ There is no package.json, no npm install, no build step. Do not introduce one.
 | `supabase/migrations/` | SQL for the `fire_planner` schema (run by hand in the Supabase SQL editor). |
 | `js/main.js` | Entry point; binds every inline-handler function onto `window`. |
 | `js/ui/*` | Renderers: cards, charts, table, Monte Carlo tab, IBKR import, net-worth history. |
-| `js/seed.js` | Classic (non-module) script: seeds default state on first visit only. |
 | `tests/` | `node:test` suites for the two pure engines. |
 | `AUDIT.md` | The 2026-07 financial/technical audit and its resolution. **Read it before touching financial logic** — it is the list of mistakes already made once. |
 
@@ -58,10 +57,11 @@ There is no package.json, no npm install, no build step. Do not introduce one.
    it signs in with a magic link. The Supabase publishable key in `js/db.js` is public
    by design (row-level security protects the data); the secret/service_role key must
    never appear anywhere.
-7. **This repo contains the owner's real personal financial data** (`SAM_STATE` in
-   `js/sync.js` and `js/seed.js`: DOB, income, holdings). Do not copy it anywhere new,
-   do not commit more of it, and warn the user before anything that would make the repo
-   or the deployed page public (AUDIT.md S3).
+7. **No personal data in the repo, ever.** The repo and the Pages site are public. The
+   owner's real values (DOB, income, spending, holdings, partner/child plans) live only
+   in localStorage and the Supabase row. Defaults, fixtures, docs and examples use
+   made-up numbers. History was rewritten once to remove baked-in data (AUDIT.md S3,
+   v7.2); never reintroduce a baked default state.
 8. **Docs move with code.** If behaviour changes, update README.md (calculation logic)
    and ARCHITECTURE.md (module layout) in the same commit. README↔code drift caused an
    entire audit section (AUDIT.md Part 5).

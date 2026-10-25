@@ -75,37 +75,37 @@ Every row was a real audited bug (IDs → AUDIT.md) or a recurring near-miss.
 
 ## Worked example — hand-verify the year-one budget and SWR card income
 
-Default fixtures (`makeGl`/`makeSc`: retire at 42, currentAge 32 → `tFrom = 10`,
+Default fixtures (`makeGl`/`makeSc`: retire at 45, currentAge 35 → `tFrom = 10`,
 `infl = 1.02^10 = 1.21899`), no partner/prop/child. All figures below were computed by
 actually running the engine.
 
-**Budget:** `yearOneBudget(42, sc, gl) = 3000 × 12 × 1.21899 = €43,884`/yr →
-card `targetMonthly = 43,884 / 12 = €3,657`.
+**Budget:** `yearOneBudget(45, sc, gl) = 2800 × 12 × 1.21899 = €40,958`/yr →
+card `targetMonthly = 40,958 / 12 = €3,413`.
 
 **Card income** (reproducing `computeCardMetrics`, SWR branch): `values[10] = 739,080`
 (start of 2036), `rows[10].cashVal = 22,092` → invested `716,988`;
 `gainFracAtRet = 0.4636` → `netFrac = 1 − 0.4636×0.30 = 0.8609`;
-`swrPortfolio = 716,988 × 0.04 × 0.8609 / 12 = €2,058`/mo. No pension at 42, no
-partner → `netMonthly = 2,058 < 3,657` → the card honestly shows **× Short**. Verify:
+`swrPortfolio = 716,988 × 0.04 × 0.8609 / 12 = €2,058`/mo. No pension at 45, no
+partner → `netMonthly = 2,058 < 3,413` → the card honestly shows **× Short**. Verify:
 
 ```sh
 node -e "
 import('./js/engine.js').then(({project, yearOneBudget}) => {
-  const gl = { currentAge:32, lifeExp:85, baseYear:2026, spendNow:3500, spendRet:3000,
-    inflation:0.02, gainFrac:0.27, stockRet:0.07, bondRet:0.03, stockAlloc:1,
-    bondAllocRet:0.4, taxRate:0.30, pensionAmt:800, pensionAge:67, cash:20000,
-    cashReturn:0.015, windfalls:[], wdMode:'swr', swr:0.04, invested:250000,
-    partnerInc:2000, partnerRetAge:67, partnerPension:500, partnerPensionAge:67,
-    partnerSpendMult:1.4, partnerAgeOff:0, propBuyYear:2029, propPrice:400000,
+  const gl = { currentAge:35, lifeExp:90, baseYear:2026, spendNow:3500, spendRet:2800,
+    inflation:0.02, gainFrac:0.25, stockRet:0.07, bondRet:0.03, stockAlloc:1,
+    bondAllocRet:0.4, taxRate:0.30, pensionAmt:900, pensionAge:67, cash:20000,
+    cashReturn:0.01, windfalls:[], wdMode:'swr', swr:0.04, invested:250000,
+    partnerInc:2000, partnerRetAge:65, partnerPension:500, partnerPensionAge:67,
+    partnerSpendMult:1.4, partnerAgeOff:0, propBuyYear:2030, propPrice:350000,
     propDownPct:0.2, propTxCostPct:0.08, propMortgageRate:0.035, propMortgageTerm:25,
-    propRentSaved:1200, childBirthYear:2030, childCostYearly:12000,
-    childCostUntilAge:23, childMaternityMonths:6, childMaternityIncome:2000 };
-  const sc = { id:1, retAge:42, income:5000, chgYear:null, chgInc:null,
+    propRentSaved:1000, childBirthYear:2031, childCostYearly:10000,
+    childCostUntilAge:22, childMaternityMonths:6, childMaternityIncome:2000 };
+  const sc = { id:1, retAge:45, income:5000, chgYear:null, chgInc:null,
     hasPartner:false, hasProp:false, hasChild:false };
   const p = project(sc, gl), i = p.retYear - gl.baseYear;
   const invest = p.values[i] - p.rows[i].cashVal;
-  console.log({ budget: Math.round(yearOneBudget(42, sc, gl)),          // 43884
-    targetMonthly: Math.round(yearOneBudget(42, sc, gl)/12),            // 3657
+  console.log({ budget: Math.round(yearOneBudget(45, sc, gl)),          // 40958
+    targetMonthly: Math.round(yearOneBudget(45, sc, gl)/12),            // 3413
     investAtRet: Math.round(invest),                                    // 716988
     gainFracAtRet: +p.gainFracAtRet.toFixed(4),                         // 0.4636
     netMonthly: Math.round(invest*gl.swr*(1-p.gainFracAtRet*gl.taxRate)/12), // 2058
@@ -119,8 +119,7 @@ rebuild the arithmetic from the formulas in README.md ("Year-by-Year Projection"
 ## When the browser IS needed
 
 Node can't reproduce bugs in **input reading** (`js/inputs.js` reading the DOM — wrong
-element id, radio default, `optVal` returning null), **persistence** (`js/sync.js`,
-`js/seed.js` — value resets on reload usually means a field missing from `SYNC_FIELDS`,
+element id, radio default, `optVal` returning null), **persistence** (`js/sync.js` — value resets on reload usually means a field missing from `SYNC_FIELDS`,
 T2), or **rendering** (a renderer displaying the right number wrongly). Then:
 
 1. `python3 -m http.server 8000` from the repo root (ES modules don't load over
@@ -133,8 +132,8 @@ T2), or **rendering** (a renderer displaying the right number wrongly). Then:
    goes wrong is the bug's home.
 3. Last-computed engine outputs are kept on the shared state for inspection:
    `const {state} = await import('./js/state.js'); state.lastProjs[0].rows[10]`.
-4. Remember `js/seed.js` seeds defaults only when `fire_state` is absent (T7) — clear
-   it to test first-visit behaviour: `localStorage.removeItem('fire_state')`.
+4. To test first-visit behaviour (empty form, nothing saved until an edit):
+   `localStorage.removeItem('fire_state')` and reload.
 
 ## Closing the investigation
 

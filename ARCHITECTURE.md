@@ -12,8 +12,6 @@ index.html              Markup only (all tabs, forms, modals). No inline <style>
                         blocks — just inline on*="" handlers bound to window in main.js.
 css/styles.css          All styles.
 js/
-  seed.js               Classic (non-module) script: seeds default localStorage state
-                        on first visit. Runs before the module graph loads.
   main.js               Entry point: init, swipe/scroll wiring, and the window bindings
                         for every function referenced by inline handlers.
   util.js               DOM/format helpers: el, numVal, optVal, fmt, eur, fmtK.

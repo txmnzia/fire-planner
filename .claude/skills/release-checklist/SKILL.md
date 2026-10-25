@@ -59,12 +59,10 @@ page's tag changes, because step 8 uses it to prove the deploy actually landed
 
 ## 4. Privacy gate — before ANY push
 
-- **This repo embeds the owner's real financial data** (AUDIT.md S3): `SAM_STATE` in
-  `js/sync.js` and the seed blob in `js/seed.js` contain DOB, income, spending, partner
-  details, and exact IBKR holdings — and they are in git history too. **Never make the
-  repo or the deployed page public without explicit user sign-off**, and warn the user
-  before any action that could (changing repo visibility, forking, publishing
-  elsewhere). Note the old lock screen was removed as cosmetic (commit 6883295, AUDIT.md
+- **The repo and Pages site are public.** Personal data was removed in v7.2 and git
+  history rewritten (AUDIT.md S3). Scan every diff for real values (DOB, income,
+  holdings, names) before pushing: once pushed, removing them again means another
+  history rewrite. Note the old lock screen was removed as cosmetic (commit 6883295, AUDIT.md
   S2) — the deployed page has **no access control at all**; its privacy is entirely the
   repo/page visibility.
 - **Never add new personal data** to any file or commit message.

@@ -28,7 +28,6 @@ const SYNC_FIELDS = [
   'gainFrac','partnerBirthYear',
 ];
 
-const SAM_STATE = {"v":1,"fields":{}};
 // ── Per-account sync (Supabase, shared txmnzia-dbs project) ─────────────────
 // Sign-in is a magic link; the session lives in supabase-js's own storage. No
 // token is ever pasted or stored by this app. The old Gist token keys are
@@ -239,8 +238,9 @@ export async function syncNow() { localTs = Date.now(); await syncSave(); }
 
 export function loadState() {
   const saved = localStorage.getItem('fire_state');
-  if (saved) { try { applyState(JSON.parse(saved)); return; } catch {} }
-  applyState(SAM_STATE);
+  if (saved) { try { applyState(JSON.parse(saved)); } catch {} }
+  // No saved state: the form stays empty (no personal data ships with the app).
+  // Signing in pulls the real state from Supabase.
 }
 
 // Sync bootstrap (best-effort, non-blocking). Always loads the client so a

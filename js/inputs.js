@@ -12,7 +12,7 @@ export function incomeFor(s) {
 
 // ── GLOBALS ────────────────────────────────────────────────────────────────
 export function currentAgeFromDOB() {
-  const s = el("dob").value; if (!s) return 32;
+  const s = el("dob").value; if (!s) return 30;
   const dob = new Date(s), ref = new Date(numVal("baseYear",2026),0,1);
   let age = ref.getFullYear() - dob.getFullYear();
   const m = ref.getMonth() - dob.getMonth();
@@ -50,16 +50,16 @@ export function getGlobals() {
     invested:     state.ibkrTotal,
     lifeExp:      numVal("lifeExp",100),
     baseYear,
-    spendNow:     numVal("spendNow",3000),
-    spendRet:     numVal("spendRet",3000),
+    spendNow:     numVal("spendNow",0),
+    spendRet:     numVal("spendRet",0),
     inflation:    numVal("inflation",2)/100,
-    gainFrac:     Math.max(0, Math.min(0.99, numVal("gainFrac",27)/100)),
+    gainFrac:     Math.max(0, Math.min(0.99, numVal("gainFrac",25)/100)),
     stockRet:     numVal("stockRet",7)/100,
     bondRet:      numVal("bondRet",3)/100,
     stockAlloc:   1-bondNow,
     bondAllocRet: numVal("bondAllocRet",40)/100,
     taxRate,
-    pensionAmt:   numVal("pensionAmt",800),
+    pensionAmt:   numVal("pensionAmt",0),
     pensionAge:   numVal("pensionAge",67),
     cash:         numVal("cash",0),
     cashReturn:   numVal("cashReturn",1)/100,
@@ -67,26 +67,26 @@ export function getGlobals() {
     wdMode:       (document.querySelector('input[name="wdMode"]:checked')||{value:'fixed'}).value,
     swr:          numVal("swr",4)/100,
     // global partner config
-    partnerInc:        numVal("partnerInc",4000),
+    partnerInc:        numVal("partnerInc",0),
     partnerRetAge:     numVal("partnerRetAge",45),
-    partnerPension:    numVal("partnerPension",700),
+    partnerPension:    numVal("partnerPension",0),
     partnerPensionAge: numVal("partnerPensionAge",67),
     partnerSpendMult:  numVal("partnerSpendMult",1.5),
     partnerAgeOff,
     // global property config
     propBuyYear:      optVal("propBuyYear") || numVal("propBuyYear",2029),
-    propPrice:        numVal("propPrice",400000),
+    propPrice:        numVal("propPrice",0),
     propDownPct:      numVal("propDownPct",20)/100,
     propTxCostPct:    numVal("propTxCostPct",8)/100,
     propMortgageRate: numVal("propMortgageRate",3.5)/100,
     propMortgageTerm: numVal("propMortgageTerm",25),
-    propRentSaved:    numVal("propRentSaved",1200),
+    propRentSaved:    numVal("propRentSaved",0),
     // global child config
     childBirthYear:      numVal("childBirthYear",2027),
-    childCostYearly:     numVal("childCostYearly",12000),
+    childCostYearly:     numVal("childCostYearly",0),
     childCostUntilAge:   numVal("childCostUntilAge",25),
-    childMaternityMonths:numVal("childMaternityMonths",6),
-    childMaternityIncome:numVal("childMaternityIncome",2000),
+    childMaternityMonths:numVal("childMaternityMonths",0),
+    childMaternityIncome:numVal("childMaternityIncome",0),
   };
 }
 
