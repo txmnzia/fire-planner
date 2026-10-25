@@ -152,9 +152,9 @@ from `financial-invariants` before and after.
 1. **Baseline.** Run the "Quick numeric self-check" snippet from `financial-invariants`
    and record `fireTarget`, `fireTargetAdj`, `gainFracAtRet`, `finalNetWorth`,
    `infeasibleYear`, `budget`. Do it for **both** modes (verified reference values for
-   the test fixtures: swr → fireTarget 1,189,372, adj 1,073,590, gainFracAtRet 0.4636,
+   the test fixtures: swr → fireTarget 1,189,372, adj 1,073,590, gainFracAtRet 0.464,
    finalNW 1,267,046, infeasible null; fixed → fireTarget 963,532, finalNW 0,
-   infeasible 2070 — yes, the default fixture legitimately depletes in fixed mode).
+   infeasible 2056 — yes, the default fixture legitimately depletes in fixed mode).
 2. **Change**, keeping `yearOneBudget` and the retirement-branch `budget` in lockstep
    (I2), new flows through the deficit chain (I5) and cost basis (I7), inflation applied
    (I10), partner ages offset (I9/F11).
