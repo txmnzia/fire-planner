@@ -133,7 +133,11 @@ pasted token. Since 2026-10 sync runs on Supabase instead and needs no token:
 - `syncLoad()` = last-write-wins on `ts`: pull when the row is strictly newer
   than `localTs`, push when this device is newer or the account has no row yet.
   That is how a device's first sign-in uploads its existing local state, and why
-  sign-in order across devices doesn't matter.
+  sign-in order across devices doesn't matter. Two v7.2 guards, both needed
+  since there is no baked default state: a device with `localTs` 0 (never
+  edited, empty form) **never pushes**, and every pull goes through
+  `applyRemote()`, which mirrors the payload to localStorage so a pull-only
+  device keeps the data offline and after a reload.
 - **Loading is never an edit.** `applyState()` runs entirely under
   `isSyncLoad`, and `main.js` wraps the load-time `updateAge/onWdMode/
   updateToggleUI` calls in `withoutSave()`. Otherwise their recalcs re-stamp
