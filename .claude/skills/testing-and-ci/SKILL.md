@@ -54,15 +54,15 @@ derived independently of the code under test. Real examples from `tests/engine.t
 ```js
 test('mortgageAnnual: standard annuity payment for 3.5% / 25y', () => {
   const gl = makeGl();
-  const principal = 400000 * 0.8, mr = 0.035 / 12, nm = 300;
+  const principal = 350000 * 0.8, mr = 0.035 / 12, nm = 300;
   const expected = principal * mr * Math.pow(1 + mr, nm) / (Math.pow(1 + mr, nm) - 1) * 12;
   assert.ok(Math.abs(mortgageAnnual(gl) - expected) < 1e-6);
 });
 
 test('yearOneBudget: base case is inflated retirement spending', () => {
   const gl = makeGl(), sc = makeSc();
-  const expected = 3000 * 12 * Math.pow(1.02, 10); // retire at 42, 10y from age 32
-  assert.ok(Math.abs(yearOneBudget(42, sc, gl) - expected) < 1e-6);
+  const expected = 2800 * 12 * Math.pow(1.02, 10); // retire at 45, 10y from age 35
+  assert.ok(Math.abs(yearOneBudget(45, sc, gl) - expected) < 1e-6);
 });
 ```
 
@@ -104,10 +104,10 @@ test('regression F1: SWR FIRE target includes the CGT gross-up at the tracked ga
   // AUDIT.md F1: the SWR branch of computeFireTarget dropped taxMult, understating
   // the target by 1/(1 − gainFrac·taxRate). The target must equal the year-one
   // budget grossed up at the *at-retirement* gain fraction (I1), over the SWR.
-  const gl = makeGl(), sc = makeSc();          // swr mode, retire 42, France 30%
+  const gl = makeGl(), sc = makeSc();          // swr mode, retire 45, France 30%
   const p = project(sc, gl);
   const taxMult = 1 / (1 - p.gainFracAtRet * gl.taxRate);
-  const expected = Math.round(yearOneBudget(42, sc, gl) * taxMult / gl.swr);
+  const expected = Math.round(yearOneBudget(45, sc, gl) * taxMult / gl.swr);
   assert.equal(p.fireTarget, expected);        // 1,189,372 on the reference fixture
 });
 ```
