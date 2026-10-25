@@ -130,6 +130,13 @@ export async function syncSave() {
   } catch { setSyncStatus('error'); }
 }
 
+// Apply a pulled payload and mirror it to localStorage, so a device that only
+// ever pulls still has the data offline or after a reload.
+function applyRemote(data) {
+  applyState(data);
+  try { localStorage.setItem('fire_state', JSON.stringify(data)); } catch {}
+}
+
 async function fetchRemote() {
   const { data, error } = await sb.from('state').select('data,ts').maybeSingle();
   if (error) throw error;
@@ -143,11 +150,13 @@ export async function syncLoad() {
   if (!sb || !userId) return false;
   const remote = await fetchRemote();
   if (remote && remote.ts > localTs) {
-    applyState(remote.data);
+    applyRemote(remote.data);
     lastSynced = new Date();
     return true;
   }
-  if (!remote || remote.ts < localTs) await syncSave();
+  // Push only real local state: an untouched device (localTs 0, empty form)
+  // must never upload its blank form.
+  if (localTs && (!remote || remote.ts < localTs)) await syncSave();
   return false;
 }
 
@@ -208,7 +217,7 @@ async function syncPoll() {
   if (ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)) return;
   try {
     const remote = await fetchRemote();
-    if (remote && remote.ts > localTs) { applyState(remote.data); lastSynced = new Date(); setSyncStatus('ok'); }
+    if (remote && remote.ts > localTs) { applyRemote(remote.data); lastSynced = new Date(); setSyncStatus('ok'); }
   } catch { /* transient network blip — try again next tick */ }
 }
 
