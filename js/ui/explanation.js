@@ -1,7 +1,7 @@
 import { el, eur } from "../util.js";
 import { state } from "../state.js";
 import { getScenarioName } from "../inputs.js";
-import { portReturnAt, yearOneBudget, project } from "../engine.js";
+import { portReturnAt, yearOneBudget, project, partnerSeparation } from "../engine.js";
 import { computeCardMetrics } from "./cards.js";
 import { FLOW_COLORS } from "./charts.js";
 
@@ -90,7 +90,8 @@ export function renderExplanation(projs, gl, scenarios) {
 
   // full annual outgoings in year idx, from the engine's own row composition
   // (same shape as the engine's retirement `budget` and yearOneBudget)
-  const budAnn = idx => { const r = rows[idx] || {}; return Math.max(0, (r.spending || 0) + (r.childCost || 0) + (r.mortgagePayment || 0) - (r.rentSavings || 0)); };
+  // (two-person model: net of the partner's contribution, i.e. YOUR cost)
+  const budAnn = idx => { const r = rows[idx] || {}; return Math.max(0, (r.spending || 0) + (r.childCost || 0) + (r.mortgagePayment || 0) - (r.rentSavings || 0) - (r.partnerContrib || 0)); };
   const nwToday = (gl.invested || 0) + gl.cash;
   const nowMo = budAnn(0) / 12;          // what the household actually lives on today (€/mo)
   const gfr = proj.gainFracAtRet != null ? proj.gainFracAtRet : gl.gainFrac;
@@ -185,9 +186,16 @@ export function renderExplanation(projs, gl, scenarios) {
   // partner milestones
   if (sc.hasPartner) {
     const prIdx = gl.partnerRetAge - off - currentAge;
-    if (prIdx > 0 && prIdx <= lastIdx) addEv(prIdx, "&#x1F91D;", "Your partner retires", "Their " + eur(gl.partnerInc) + "/mo salary (today's €) stops — until now it was covering part of the household budget.", "");
     const ppIdx = gl.partnerPensionAge - off - currentAge;
+    if (m.two) {
+      // two-person model: her income changes move her share of the shared costs
+      const sh = k => Math.round(((rows[k] || {}).partnerShare || 0) * 100) + "%";
+      if (prIdx > 0 && prIdx <= lastIdx) addEv(prIdx, "&#x1F91D;", "Your partner retires", "Her income falls to her pension and own portfolio draw, so her share of shared costs moves from " + sh(prIdx - 1) + " to <strong>" + sh(prIdx) + "</strong>.", "");
+      if (ppIdx > 0 && ppIdx <= lastIdx && ppIdx !== prIdx) addEv(ppIdx, "&#x1F9D3;", "Partner's pension starts", "Her pension lifts her income, so her share of shared costs moves to <strong>" + sh(ppIdx) + "</strong>.", "ok");
+    } else {
+    if (prIdx > 0 && prIdx <= lastIdx) addEv(prIdx, "&#x1F91D;", "Your partner retires", "Their " + eur(gl.partnerInc) + "/mo salary (today's €) stops — until now it was covering part of the household budget.", "");
     if (ppIdx > 0 && ppIdx <= lastIdx) addEv(ppIdx, "&#x1F9D3;", "Partner's pension starts", "+" + eur(gl.partnerPension) + "/mo (today's €) of steady income the portfolio no longer has to provide.", "ok");
+    }
   }
 
   // windfalls
@@ -506,11 +514,37 @@ export function renderExplanation(projs, gl, scenarios) {
   concepts.push(concept("One smooth path vs real markets", "", "what this page hides, and where to see it",
     "<p>Everything here assumes returns arrive smoothly at their long-run average (" + pct(gl.stockRet) + " stocks / " + pct(gl.bondRet) + " bonds, blended along your glide path). Real markets deliver that average in lurches. The <strong>Monte Carlo</strong> tab takes this exact plan — same engine, same numbers — and replays it through hundreds of resampled historical return sequences. Treat this page as the map, Monte Carlo as the weather forecast.</p>"));
 
+  // ── two-person model: partial vs household FIRE + partner autonomy panel ──
+  let twoHtml = "";
+  if (m.two) {
+    const t = m.two, n = t.note || {};
+    const sep = partnerSeparation(proj, sc, gl);
+    const pv = proj.partner.values;
+    const herIdx = k => Math.min(Math.max(0, k), pv.length - 1);
+    const prIdx = gl.partnerRetAge - off - currentAge, ppIdx = gl.partnerPensionAge - off - currentAge;
+    twoHtml = '<div class="expl-sect-hd">Two-person household</div>' +
+      '<div class="expl-two"><p><strong>Partial FIRE (you)</strong> means your own portfolio covers <em>your</em> cost — your personal spending plus your share of the shared costs — while your partner keeps paying her pro-rata share (' + Math.round((n.share || 0) * 100) + "% when you retire, about " + eur(n.contribMonthly || 0) + "/mo in today's €)." +
+      " Target " + eur(t.partialTarget) + ", you'd have " + eur(t.partialNW) + ": <strong>" + (t.partialOk ? "funded" : "short by " + eur(t.partialTarget - t.partialNW)) + "</strong>." +
+      (n.untilHerAge != null && n.costAfterMonthly != null ? " From her age " + n.untilHerAge + " your cost becomes " + eur(n.costAfterMonthly) + "/mo (today's €)." : "") +
+      " <strong>Household FIRE</strong> is the stricter test: you both stop working in " + m.retYear + " and the combined portfolios carry the whole household, net of both pensions once they start. Target " + eur(t.householdTarget) + " vs combined " + eur(t.householdNW) + ": <strong>" + (t.householdOk ? "household funded" : "household short by " + eur(t.householdTarget - t.householdNW)) + "</strong>.</p>" +
+      '<div class="expl-rows">' +
+      row("Partner portfolio today", eur(pv[0] || 0)) +
+      row("&hellip; when you retire (" + m.retYear + ")", eur(pv[herIdx(retIdx)] || 0)) +
+      (prIdx > 0 && prIdx <= lastIdx ? row("&hellip; when she retires (her " + gl.partnerRetAge + ")", eur(pv[herIdx(prIdx)] || 0)) : "") +
+      row("Her pension", eur(gl.partnerPension) + "/mo from her " + gl.partnerPensionAge + ' <span class="tgt">today\u2019s €</span>') +
+      (t.partnerInfeasibleYear != null ? row("&#x26A0; Her savings run out", String(t.partnerInfeasibleYear), "err") : "") +
+      "</div>" +
+      '<div class="expl-meter-hd">Could she manage alone? Her solo costs: ' + eur((gl.partnerPersonal || 0) + (gl.soloShared || 0)) + "/mo (today's €)</div>" +
+      '<div class="expl-rows">' + sep.map(x => row(x.label + " (her " + x.herAge + ", " + x.yr + ")",
+        eur(x.income) + "/mo " + (x.working ? "salary" : "pension + 4% draw") + ' <span class="tgt">gap ' + signed(x.gap) + "/mo</span>", x.gap >= 0 ? "ok" : "err")).join("") +
+      "</div></div>";
+  }
+
   const conceptsHtml = '<div class="expl-sect-hd">The jargon, in your numbers</div><div class="expl-concepts">' + concepts.join("") + "</div>";
 
   const foot = '<p class="expl-foot">Figures for future years are in that year’s euros unless tagged &ldquo;today’s €&rdquo; (the tag divides out your ' + pct(gl.inflation) + '/yr inflation assumption). Everything here is the single deterministic average-return path for the selected scenario; for the range of outcomes, see the Monte Carlo tab. Not financial advice.</p>';
 
   host.innerHTML =
     '<div class="expl-chips" role="group" aria-label="Choose a scenario">' + chips + "</div>" +
-    lede + timeline + phasesHtml + conceptsHtml + foot;
+    lede + timeline + phasesHtml + twoHtml + conceptsHtml + foot;
 }

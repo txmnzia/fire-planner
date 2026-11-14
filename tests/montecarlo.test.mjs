@@ -21,6 +21,10 @@ function makeGl(over = {}) {
     propMortgageRate: 0.035, propMortgageTerm: 25, propRentSaved: 1000,
     childBirthYear: 2034, childCostYearly: 10000, childCostUntilAge: 22,
     childMaternityMonths: 6, childMaternityIncome: 2000,
+    // two-person model (made-up numbers); partnerModel 'simple' = original model
+    partnerModel: 'simple', samPersonalNow: 1200, samPersonalRet: 1100,
+    sharedNow: 2400, sharedRet: 2200, soloShared: 1500, partnerPersonal: 700,
+    partnerPortfolio: 30000, partnerGainFrac: 0.1, shareMin: 0, shareMax: 0.5,
     ...over,
   };
 }
@@ -86,4 +90,16 @@ test('runMonteCarlo: SWR mode reports adequacy metrics, fixed mode does not', ()
   assert.ok(rs.fundedRate !== null && rs.typicalCoverage !== null && rs.ratioBands !== null);
   assert.equal(rf.fundedRate, null);
   assert.equal(rf.ratioBands, null);
+});
+
+test('two-person: MC runs on your projection and is deterministic for a fixed seed', () => {
+  const gl = makeGl({ partnerModel: 'two' });
+  const sc = [{ ...scenarios[0], hasPartner: true }];
+  const cfg = { sims: 200, blockLen: 5, recenter: true, seed: 42 };
+  const a = runMonteCarlo(sc, gl, cfg), b = runMonteCarlo(sc, gl, cfg);
+  assert.deepEqual(a, b);
+  assert.ok(a[0].fundedRate >= 0 && a[0].fundedRate <= 1);
+  // the two models give different results for the same paths (it is not simple mode)
+  const s = runMonteCarlo(sc, makeGl({ partnerModel: 'simple' }), cfg);
+  assert.notDeepEqual(a[0].ratioBands, s[0].ratioBands);
 });

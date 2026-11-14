@@ -31,6 +31,13 @@ export function renderTable(projs,gl) {
     ['Rent Saved',        (r,i)=>money(r.rentSavings>0?r.rentSavings:null,'pos','+')],
     ['Purchase Cost',     (r,i)=>money(r.extraCost>0?r.extraCost:null,'neg','-')],
   ];
+  // two-person model: her contribution, share and own portfolio (her money, not yours)
+  if (proj.partner) ROWS.push(
+    ['Partner Contribution', (r,i)=>money(r.partnerContrib||null,'pos','+')],
+    ['  Partner Share',      (r,i)=>pct(Math.round((r.partnerShare||0)*100))],
+    ['Partner Portfolio',    (r,i)=>money(r.partnerPortfolio,'',''),],
+    ['  Partner Withdrawal', (r,i)=>money(r.partnerWithdrawal||null,'neg','-')],
+  );
   let body='';
   ROWS.forEach(([label,fn])=>{
     body+='<tr><td class="tbl-lbl">'+label+'</td>';

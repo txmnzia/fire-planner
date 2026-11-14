@@ -72,6 +72,12 @@ function renderMcCards(){
     } else {
       note.style.display='none';
     }
+    // Two-person model: MC simulates YOUR projection (Partial FIRE); the
+    // partner's portfolio rides the same paths but no household-level MC exists.
+    if (mcGl.partnerModel==='two'){
+      note.style.display='block';
+      note.innerHTML=(swr?note.innerHTML+'<br><br>':'')+'<strong>Two-person model:</strong> for scenarios with the partner, Monte Carlo runs on <em>your</em> projection (Partial FIRE: your portfolio covering your net cost, with the partner contributing her share). Household FIRE is not simulated here.';
+    }
   }
 }
 

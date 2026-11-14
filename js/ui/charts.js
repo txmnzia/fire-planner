@@ -75,6 +75,14 @@ export function buildChart(projs,gl) {
     ];
     ds.push({label:"FIRE Target",data:labels.map(()=>proj.fireTarget),borderColor:FIRE_LINE,borderWidth:1.5,pointRadius:0,tension:0,fill:false,order:2});
   }
+  // Two-person model: the partner's own portfolio as a dashed reference line
+  // (start-of-year values from project(); never part of your net worth line).
+  const legP = el("legPartner");
+  if (proj.partner) {
+    const pv = labels.map(y => { const i = y - proj.years[0]; return (i>=0 && i<proj.partner.values.length) ? proj.partner.values[i] : null; });
+    ds.push({label:"Partner portfolio",data:pv,borderColor:"rgba(244,114,182,.7)",borderWidth:1.5,borderDash:[2,3],pointRadius:0,pointHoverRadius:3,tension:.35,fill:false,order:4,spanGaps:false});
+  }
+  if (legP) legP.style.display = proj.partner ? "" : "none";
   if (chart) chart.destroy();
   chart=new Chart(ctx,{type:"line",data:{labels,datasets:ds},plugins:[makeRetPlugin([proj],gl)],options:{
     responsive:true,maintainAspectRatio:false,animation:{duration:300},interaction:{mode:"index",intersect:false},
@@ -94,7 +102,7 @@ const SURFACE = "#0b0e17";
 // bars so "portfolio draw", "pension", etc. wear the same colour everywhere.
 export const FLOW_COLORS = {
   salary:"#22c55e", withdraw:"#2dd4bf", market:"#4ade80", pension:"#14b8a6",
-  partnerPension:"#a3e635", windfall:"#86efac", rent:"#5eead4", cashInt:"#bef264",
+  partnerPension:"#a3e635", partnerContrib:"#f9a8d4", windfall:"#86efac", rent:"#5eead4", cashInt:"#bef264",
   spend:"#ef4444", mortgage:"#f97316", child:"#fb7185", tax:"#e11d48", purchase:"#f59e0b",
 };
 // Revenue line items (green -> teal -> lime family). `get` pulls a single, non-
@@ -108,6 +116,7 @@ const REVENUE = [
   {key:"pension",  label:"Pension",         color:FLOW_COLORS.pension,        get:r=>r.pension||0},
   {key:"partPen",  label:"Partner Pension", color:FLOW_COLORS.partnerPension, get:r=>r.partnerPension||0},
   {key:"windfall", label:"Windfall",        color:FLOW_COLORS.windfall,       get:r=>r.windfall||0},
+  {key:"pContrib", label:"Partner Share of Costs", color:FLOW_COLORS.partnerContrib, get:r=>r.partnerContrib||0},
   {key:"rent",     label:"Rent Saved",      color:FLOW_COLORS.rent,           get:r=>r.rentSavings||0},
   {key:"cashInt",  label:"Cash Interest",   color:FLOW_COLORS.cashInt,        get:r=>Math.max(0,r.cashReturn||0)},
 ];

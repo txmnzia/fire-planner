@@ -20,6 +20,10 @@ js/
                         plus country tax table and scenario names.
   engine.js             PURE financial engine — no DOM, no shared state. Projection
                         loop, FIRE targets, annuities, mortgage, plan-vs-actual.
+                        Also the two-person household model (partnerModel 'two'):
+                        partnerShare, twoPersonCost, selfFundedCost, household target,
+                        partner ledger (proj.partner / proj.household) — the single
+                        source for every two-person number in the UI.
   montecarlo.js         PURE Monte Carlo engine — historical block bootstrap, seeded
                         PRNG, percentile bands. Depends only on engine.js.
   recalc.js             Orchestrator: inputs → engine → all renderers, then persistence.
@@ -48,6 +52,8 @@ js/
                         inputs, and the dynamic windfall datapoint list. Progressive
                         enhancement — the id-bearing inputs stay the source of truth.
 tests/                  node:test unit tests for the two pure engines.
+  fixtures/             simple-mode-snapshot.json: project() output frozen before the
+                        two-person model, so simple mode is proven unchanged.
 .github/workflows/ci.yml  Syntax-checks every module and runs the tests on push/PR.
 ```
 

@@ -16,7 +16,7 @@ A browser-based, zero-build **Financial Independence / Retire Early** calculator
 8. [Portfolio Return & Glide Path](#portfolio-return--glide-path)
 9. [Coast Number](#coast-number)
 10. [Scenario Cards (SWR Mode Display)](#scenario-cards-swr-mode-display)
-11. [Partner Model](#partner-model)
+11. [Partner Model](#partner-model) (incl. [Two-person model](#two-person-model))
 12. [Child Cost Model](#child-cost-model)
 13. [Property Model](#property-model)
 14. [Pension / State Pension](#pension--state-pension)
@@ -110,8 +110,24 @@ Your real values come from localStorage, or from Supabase once you sign in.
 | Partner Retirement Age | `partnerRetAge` | 45 | years | Partner income stops at this age |
 | Partner Pension Amount (gross) | `partnerPension` | — (0) | EUR/month | Partner's monthly pension |
 | Partner Pension Age | `partnerPensionAge` | 67 | years | Age when partner's pension starts |
-| Spending Multiplier | `partnerSpendMult` | 1.5× | — | Household spending = solo spending × this |
+| Spending Multiplier | `partnerSpendMult` | 1.5× | — | Simple model only (hidden in two-person mode): household spending = solo spending × this |
 | Partner Year of Birth | `partnerBirthYear` | — (same as you) | year | Optional; shifts when partner ret./pension ages are reached |
+| Partner Model | `partnerModel` | `simple` | `simple` / `two` | Global switch (segmented control). Saved states without it load as `simple`, outputs unchanged |
+
+Two-person model inputs (used only when `partnerModel = two`; see [Two-person model](#two-person-model)):
+
+| Parameter | Input ID | Default | Unit | Notes |
+|-----------|----------|---------|------|-------|
+| Your personal spending (now) | `samPersonalNow` | — (0) | EUR/month | Your own spending, not shared |
+| Your personal spending (retirement) | `samPersonalRet` | same as now | EUR/month | From your retirement year; empty = the "now" value |
+| Shared costs (now) | `sharedNow` | — (0) | EUR/month | Everything paid jointly (rent, utilities, groceries, joint leisure and holidays) |
+| Shared costs (retirement) | `sharedRet` | same as now | EUR/month | From your retirement year; empty = the "now" value |
+| Housing & shared costs if alone | `soloShared` | — (0) | EUR/month | Replaces shared costs in scenarios **without** the partner; also her solo cost in the separation check |
+| Partner personal spending | `partnerPersonal` | — (0) | EUR/month | Her own spending |
+| Partner invested assets | `partnerPortfolio` | — (0) | EUR | Her portfolio today |
+| Partner unrealized gain | `partnerGainFrac` | 0% | % | Seeds her cost basis |
+| Partner share floor | `shareMin` | 0% | % | Lower clamp on her pro-rata share |
+| Partner share cap | `shareMax` | 50% | % | Upper clamp on her pro-rata share |
 
 ### Property (global, toggled per scenario)
 
@@ -522,6 +538,84 @@ When you toggle **"With Partner"** for a scenario, the following changes apply:
 - **Fixed mode:** the PV of the partner's pension *and* of their salary until
   `partnerRetAge` are subtracted from the FIRE target as credits.
 - Spending increase raises the FIRE target; partner income lowers it.
+
+Everything above describes the **Simple** model (`partnerModel = simple`, the default).
+
+### Two-person model
+
+Switch **Partner → Partner model → Two-person** (`partnerModel = two`, global: it
+applies to every scenario with the partner on). Each person keeps their own money:
+shared costs are split pro rata to the two net incomes, and her surplus is her savings,
+not your income. All formulas live in `js/engine.js` (`partnerShare`,
+`partnerIncomeAt`, `householdCosts`, `twoPersonCost`, `selfFundedCost`,
+`computeHouseholdTarget`, `partnerSeparation`, `partnerContributionNote`); cards, tiles,
+charts, table, Explanation and Monte Carlo only consume them.
+
+Per projection year `y` (nominal, `infl = (1+inflation)^t`):
+
+```
+samInc(y)  = before your retirement: your salary (income change, parental leave as today)
+             after:  your pension (if started) + start-of-year portfolio × SWR × netFrac
+             (netFrac = 1 − gainFrac × taxRate; SWR is used even in Fixed mode, for the share only)
+herInc(y)  = partnerInc until HER partnerRetAge (her age via partnerBirthYear)
+           + partnerPension from HER partnerPensionAge
+           + once she stopped work: her start-of-year portfolio × SWR × her netFrac
+share(y)   = clamp(herInc / (herInc + samInc), shareMin, shareMax);  0 if both are 0
+shared(y)  = max(0, sharedNow|sharedRet × 12 × infl + child cost + mortgage − rent saved)
+herContribution(y) = share(y) × shared(y)
+yourCost(y)        = samPersonalNow|Ret × 12 × infl + shared(y) − herContribution(y)
+```
+
+- `yourCost` replaces the simple model's `spendNow × partnerSpendMult` (accumulation)
+  and `budget` (retirement) in your projection. Her salary and pension are **not**
+  added to your income. A property purchase cost stays on your side (not shared).
+- The share uses **start-of-year** values for both portfolios (no iteration), like the
+  rest of the loop.
+- **Her portfolio** runs its own loop on the same return path (deterministic or the
+  Monte Carlo sequence) with its own cost basis: inflow `salary + pension −
+  partnerPersonal − herContribution`; a surplus is invested (adds to her basis), a
+  deficit is sold with the CGT gross-up at her tracked gain fraction. If her portfolio
+  is empty the year is flagged (`partnerInfeasibleYear`, "⚠ Partner short") and the
+  shortfall is **not** moved onto your portfolio.
+- **Scenarios without the partner** use `samPersonal + soloShared` as your base
+  spending (child and property costs as usual, all yours).
+
+**Partial FIRE (you)** — the headline `fireTarget` of a partner scenario in two-person
+mode (chart line, Coast number, Monte Carlo reference). Your own portfolio covers your
+net cost while she keeps contributing. Your cost is priced at the share that holds when
+your portfolio *equals* the target: then your sustainable draw plus pension equals your
+cost, so the share solves `c = P + S × (1 − share(herInc, c))` (closed form, `selfFundedCost`).
+
+- % of Portfolio: `max(0, yourCost(retYear) − your pension if flowing) × taxMult / SWR`
+  (year-one, like today). The **adjusted** number credits your later pension and prices
+  later changes in her share against the year-one share
+  (`Σ shared(y) × (share₀ − share(y)) × taxMult / (1+r)^(k+1)`). Because her share can
+  *fall* later (she retires before her pension), the adjusted number can sit **above**
+  the headline; the card then shows it as "w/ later changes".
+- Fixed: `Σₖ max(0, yourCost(y) − your pension(y)) × taxMult / (1+r)^(k+1)` year by year
+  to `lifeExp`, plus a retirement-era purchase cost.
+- `taxMult` uses your tracked gain fraction at retirement, as everywhere.
+- Card note: "Assumes partner contributes X €/mo (today's €) until her age N; after
+  that your cost becomes Y €/mo". The card's monthly target in % mode is this same
+  year-one cost (`yearOneBudget`), while Monte Carlo's per-year `swrTarget` uses the
+  share from your *actual* portfolio that year — equal when you are exactly on target,
+  intentionally different otherwise.
+
+**Household FIRE** — both of you stop working in your retirement year. The combined
+portfolios must carry `samPersonalRet + partnerPersonal + shared(y)`, net of both
+pensions once they start, priced with the combined (you + partner) gain fraction at
+retirement: year-one × taxMult / SWR in % mode, year-by-year PV in Fixed mode. Compared
+with your net worth (portfolio + cash) plus her portfolio at the start of your
+retirement year: "✓ Household funded / × Household short".
+
+**Partner autonomy** (Explanation tab, partner scenarios): her portfolio today, at your
+retirement and at hers, her pension, any shortfall year, and a **separation check** —
+could she cover `partnerPersonal + soloShared` alone? Income = her salary while she
+works, otherwise her pension + her portfolio at a fixed **4%** draw net of CGT. Shown
+as a today's-€/mo gap at her age 50, at your retirement year and at her age 67.
+
+Monte Carlo in two-person mode simulates **your** projection (Partial FIRE); her
+portfolio rides the same paths. There is no household-level Monte Carlo yet.
 
 ---
 

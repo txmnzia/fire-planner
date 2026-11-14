@@ -26,6 +26,8 @@ const SYNC_FIELDS = [
   's1_chgInc','s2_chgInc','s3_chgInc','s4_chgInc','s5_chgInc',
   'mcSims','mcBlock',
   'gainFrac','partnerBirthYear',
+  'partnerModel','samPersonalNow','samPersonalRet','sharedNow','sharedRet','soloShared',
+  'partnerPersonal','partnerPortfolio','partnerGainFrac','shareMin','shareMax',
 ];
 
 // ── Per-account sync (Supabase, shared txmnzia-dbs project) ─────────────────
@@ -70,6 +72,10 @@ export function applyState(data) {
 }
 
 function applyStateInner(data) {
+  // Payloads saved before the two-person model have no partnerModel: they load
+  // as the Simple model, whatever this tab showed before (outputs unchanged).
+  const pm = el('partnerModel');
+  if (pm && !(data.fields && 'partnerModel' in data.fields)) pm.value = 'simple';
   Object.entries(data.fields || {}).forEach(([id, val]) => {
     const e = el(id); if (!e) return;
     // migrate legacy numeric country values (rates were ambiguous across countries)

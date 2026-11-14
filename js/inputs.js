@@ -10,6 +10,12 @@ export function incomeFor(s) {
   return numVal("baseIncome", 0);
 }
 
+// Optional money field: null when empty (unlike optVal, 0 is a valid value).
+function optNum(id) {
+  const e = el(id); if (!e || e.value.trim() === "") return null;
+  const v = parseFloat(e.value); return isNaN(v) ? null : v;
+}
+
 // ── GLOBALS ────────────────────────────────────────────────────────────────
 export function currentAgeFromDOB() {
   const s = el("dob").value; if (!s) return 30;
@@ -73,6 +79,19 @@ export function getGlobals() {
     partnerPensionAge: numVal("partnerPensionAge",67),
     partnerSpendMult:  numVal("partnerSpendMult",1.5),
     partnerAgeOff,
+    // two-person household model (see README "Two-person model"). Retirement
+    // amounts left empty fall back to the "now" amount, never to 0.
+    partnerModel:      (el("partnerModel") && el("partnerModel").value === "two") ? "two" : "simple",
+    samPersonalNow:    numVal("samPersonalNow",0),
+    samPersonalRet:    optNum("samPersonalRet") ?? numVal("samPersonalNow",0),
+    sharedNow:         numVal("sharedNow",0),
+    sharedRet:         optNum("sharedRet") ?? numVal("sharedNow",0),
+    soloShared:        numVal("soloShared",0),
+    partnerPersonal:   numVal("partnerPersonal",0),
+    partnerPortfolio:  numVal("partnerPortfolio",0),
+    partnerGainFrac:   Math.max(0, Math.min(0.99, numVal("partnerGainFrac",0)/100)),
+    shareMin:          Math.max(0, Math.min(1, numVal("shareMin",0)/100)),
+    shareMax:          Math.max(0, Math.min(1, numVal("shareMax",50)/100)),
     // global property config
     propBuyYear:      optVal("propBuyYear") || numVal("propBuyYear",2029),
     propPrice:        numVal("propPrice",0),

@@ -1,7 +1,7 @@
 import { el, eur } from "../util.js";
 import { state } from "../state.js";
 import { getScenarioName } from "../inputs.js";
-import { portReturnAt, yearOneBudget, buildPlanProj, planYearsAhead } from "../engine.js";
+import { portReturnAt, yearOneBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote } from "../engine.js";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -33,6 +33,20 @@ export function computeCardMetrics(sc, gl, proj) {
               vsPlan, vsPlanOpen: pos ? pos.open : false,
               fireTarget: proj.fireTarget, fireTargetAdj: proj.fireTargetAdj,
               infeasibleYear: proj.infeasibleYear };
+  // Two-person model, partner scenario: the headline target is Partial FIRE
+  // (your portfolio covers your net cost); Household FIRE compares the combined
+  // net worth with the whole household's target. Both come from project().
+  const twoP = isTwoPerson(gl) && sc.hasPartner && proj.household;
+  const herDrawRet = twoP ? (proj.partner.drawByT[proj.retYear - gl.baseYear] || 0) : 0;
+  if (twoP) {
+    m.two = {
+      partialTarget: proj.fireTarget, partialNW: portRet, partialOk: portRet >= proj.fireTarget,
+      householdTarget: proj.household.target, householdNW: proj.household.nwAtRet,
+      householdOk: proj.household.funded,
+      note: partnerContributionNote(sc, gl, proj),
+      partnerInfeasibleYear: proj.partnerInfeasibleYear,
+    };
+  }
   if (gl.wdMode === 'swr') {
     const cashAtRet   = (proj.rows[iRet] || {}).cashVal || 0;
     const investAtRet = Math.max(0, portRet - cashAtRet);
@@ -41,9 +55,10 @@ export function computeCardMetrics(sc, gl, proj) {
     const swrPortfolio = Math.round(investAtRet * gl.swr * (1 - gfr * gl.taxRate) / 12);
     const inflAtRet = Math.pow(1 + gl.inflation, nAccum);
     const pensionMonthly = sc.retAge >= gl.pensionAge ? Math.round(gl.pensionAmt * inflAtRet) : 0;
-    const partnerPensionMonthly = (sc.hasPartner && sc.retAge + off >= gl.partnerPensionAge)
+    // in the two-person model her salary and pension are hers, not your income
+    const partnerPensionMonthly = (sc.hasPartner && !isTwoPerson(gl) && sc.retAge + off >= gl.partnerPensionAge)
       ? Math.round(gl.partnerPension * inflAtRet) : 0;
-    const partnerSalMonthly = (sc.hasPartner && sc.retAge + off < gl.partnerRetAge)
+    const partnerSalMonthly = (sc.hasPartner && !isTwoPerson(gl) && sc.retAge + off < gl.partnerRetAge)
       ? Math.round(gl.partnerInc * inflAtRet) : 0;
     m.netMonthly = swrPortfolio + pensionMonthly + partnerPensionMonthly + partnerSalMonthly;
     // component split, so the Explanation tab can show where the income comes from
@@ -51,7 +66,7 @@ export function computeCardMetrics(sc, gl, proj) {
     m.incomeBreakdown = { portfolio: swrPortfolio, pension: pensionMonthly,
                           partnerPension: partnerPensionMonthly, partnerSalary: partnerSalMonthly };
     // target = the same complete year-one budget the engine and Monte Carlo use
-    m.targetMonthly = Math.round(yearOneBudget(sc.retAge, sc, gl) / 12);
+    m.targetMonthly = Math.round(yearOneBudget(sc.retAge, sc, gl, herDrawRet) / 12);
     m.incomeOk = m.netMonthly >= m.targetMonthly;
   } else {
     m.surplus = portRet - proj.fireTarget;
@@ -67,6 +82,26 @@ export function vsPlanRowHTML(m) {
   return '<div class="sc-result-row"><span class="k">vs Plan</span><span class="v '+(onPlan?'':(ahead?'ok':'err'))+'">'+(onPlan?'':(ahead?'▲ ':'▼ '))+txt+'</span></div>';
 }
 
+// Two-person rows: Partial FIRE (you) and Household FIRE, each target · net
+// worth at retirement · chip, plus the contribution note and her shortfall flag.
+export function twoRowsHTML(m, compact) {
+  const t = m.two; if (!t) return '';
+  const chip = (ok, yes, no) => '<span class="ms-chip sm '+(ok?'ok':'err')+'">'+(ok?'\u2713 '+yes:'\u00d7 '+no)+'</span>';
+  const line = (k, tgt, nw, ok, yes, no) =>
+    '<div class="sc-result-row two-row"><span class="k">'+k+' '+chip(ok, yes, no)+'</span><span class="v">'+eur(tgt)+' <span class="tgt">/ NW '+eur(nw)+'</span></span></div>';
+  let html = line('Partial FIRE (you)', t.partialTarget, t.partialNW, t.partialOk, 'Funded', 'Short')
+           + line('Household FIRE', t.householdTarget, t.householdNW, t.householdOk, 'Household funded', 'Household short');
+  if (!compact && t.note) {
+    const n = t.note;
+    html += '<div class="sc-result-note">Assumes partner contributes '+eur(n.contribMonthly)+'/mo'
+      + (n.untilHerAge != null ? ' until her age '+n.untilHerAge+(n.costAfterMonthly != null ? '; after that your cost becomes '+eur(n.costAfterMonthly)+'/mo' : '') : '')
+      + ' (today\u2019s \u20ac).</div>';
+  }
+  if (t.partnerInfeasibleYear != null)
+    html += '<div class="sc-result-row"><span class="k">\u26a0 Partner short</span><span class="v err">'+t.partnerInfeasibleYear+' (her savings exhausted)</span></div>';
+  return html;
+}
+
 export function infeasibleRowHTML(m) {
   if (m.infeasibleYear == null) return '';
   return '<div class="sc-result-row"><span class="k">⚠ Underfunded</span><span class="v err">'+m.infeasibleYear+' (savings exhausted)</span></div>';
@@ -78,8 +113,12 @@ export function fireNumRowHTML(m, gl, cc) {
   let adj = '';
   if (gl.wdMode === 'swr' && m.fireTargetAdj < m.fireTarget * 0.99) {
     adj = ' <span class="tgt">/ '+eur(m.fireTargetAdj)+' w/ pensions</span>';
+  } else if (gl.wdMode === 'swr' && m.two && m.fireTargetAdj > m.fireTarget * 1.01) {
+    // two-person: her share can fall later (she retires before her pension), so
+    // the adjusted number can sit ABOVE the year-one headline — show it.
+    adj = ' <span class="tgt">/ '+eur(m.fireTargetAdj)+' w/ later changes</span>';
   }
-  return '<div class="sc-result-row"><span class="k">FIRE Number</span><span class="v '+cc+'">'+eur(m.fireTarget)+adj+'</span></div>';
+  return '<div class="sc-result-row"><span class="k">'+(m.two ? 'FIRE Number (you)' : 'FIRE Number')+'</span><span class="v '+cc+'">'+eur(m.fireTarget)+adj+'</span></div>';
 }
 
 export function renderMilestone(idx, sc, gl, proj) {
@@ -104,7 +143,7 @@ export function renderMilestone(idx, sc, gl, proj) {
     // budget adequacy, not a survival chip.
     headChip = '<div class="ms-chip '+(m.incomeOk?'ok':'err')+'">'+(m.incomeOk?'\u2713 Funded':'\u00d7 Short')+'</div>';
     const incomeRow = '<div class="sc-result-row"><span class="k">Monthly income</span><span class="v '+(m.incomeOk?'ok':'err')+'">'+eur(m.netMonthly)+' <span class="tgt">/ '+eur(m.targetMonthly)+'</span></span></div>';
-    innerRows = retireAgeRow + vsPlanRow + incomeRow + nwRetRow + fireNumRow + coastRow + depRowErr + infeasRow;
+    innerRows = retireAgeRow + vsPlanRow + incomeRow + nwRetRow + fireNumRow + twoRowsHTML(m) + coastRow + depRowErr + infeasRow;
   } else {
     headChip = '<div class="ms-chip '+(m.ok?'ok':'err')+'">'+(m.ok?'\u2713 On Track':'\u00d7 Gap')+'</div>';
     const surpRow = m.ok
@@ -112,7 +151,7 @@ export function renderMilestone(idx, sc, gl, proj) {
       : '<div class="sc-result-row"><span class="k">Gap</span><span class="v err">'+eur(m.surplus)+'</span></div>';
     const depRow = depletionYear ? depRowErr
       : '<div class="sc-result-row"><span class="k">Survives to</span><span class="v ok">age '+gl.lifeExp+'+</span></div>';
-    innerRows = retireAgeRow + vsPlanRow + nwRetRow + fireNumRow + surpRow + coastRow + depRow + infeasRow;
+    innerRows = retireAgeRow + vsPlanRow + nwRetRow + fireNumRow + surpRow + twoRowsHTML(m) + coastRow + depRow + infeasRow;
   }
 
   el("ms"+idx).innerHTML =
@@ -150,6 +189,7 @@ export function renderSummaryTiles(projs, gl, scenarios) {
           vsPlanRowHTML(m) +
           metricRow +
           '<div class="sc-result-row"><span class="k">NW at retirement</span><span class="v">'+eur(m.portRet)+'</span></div>' +
+          twoRowsHTML(m, true) +
           infeasibleRowHTML(m) +
         '</div>' +
       '</div>';
