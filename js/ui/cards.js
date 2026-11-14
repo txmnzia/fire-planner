@@ -1,7 +1,7 @@
 import { el, eur } from "../util.js";
 import { state } from "../state.js";
 import { getScenarioName } from "../inputs.js";
-import { portReturnAt, yearOneBudget, buildPlanProj, planYearsAhead } from "../engine.js";
+import { portReturnAt, yearOneBudget, buildPlanProj, planYearsAhead, partnerAutonomy, AUTONOMY_SWR } from "../engine.js";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -41,9 +41,12 @@ export function computeCardMetrics(sc, gl, proj) {
     const swrPortfolio = Math.round(investAtRet * gl.swr * (1 - gfr * gl.taxRate) / 12);
     const inflAtRet = Math.pow(1 + gl.inflation, nAccum);
     const pensionMonthly = sc.retAge >= gl.pensionAge ? Math.round(gl.pensionAmt * inflAtRet) : 0;
-    const partnerPensionMonthly = (sc.hasPartner && sc.retAge + off >= gl.partnerPensionAge)
+    // two-person model: her income is hers — it enters your plan only as her
+    // contribution, already netted out of your cost (targetMonthly)
+    const two = !!proj.two;
+    const partnerPensionMonthly = (!two && sc.hasPartner && sc.retAge + off >= gl.partnerPensionAge)
       ? Math.round(gl.partnerPension * inflAtRet) : 0;
-    const partnerSalMonthly = (sc.hasPartner && sc.retAge + off < gl.partnerRetAge)
+    const partnerSalMonthly = (!two && sc.hasPartner && sc.retAge + off < gl.partnerRetAge)
       ? Math.round(gl.partnerInc * inflAtRet) : 0;
     m.netMonthly = swrPortfolio + pensionMonthly + partnerPensionMonthly + partnerSalMonthly;
     // component split, so the Explanation tab can show where the income comes from
@@ -51,13 +54,52 @@ export function computeCardMetrics(sc, gl, proj) {
     m.incomeBreakdown = { portfolio: swrPortfolio, pension: pensionMonthly,
                           partnerPension: partnerPensionMonthly, partnerSalary: partnerSalMonthly };
     // target = the same complete year-one budget the engine and Monte Carlo use
-    m.targetMonthly = Math.round(yearOneBudget(sc.retAge, sc, gl) / 12);
+    m.targetMonthly = Math.round(yearOneBudget(sc.retAge, sc, gl, two ? proj.two.shareAtRet : undefined) / 12);
     m.incomeOk = m.netMonthly >= m.targetMonthly;
   } else {
     m.surplus = portRet - proj.fireTarget;
     m.ok = m.surplus >= 0;
   }
+  // two-person model: Partial FIRE (you) and Household FIRE, straight from the
+  // engine's twoModeTargets — funded = net worth at retirement ≥ target
+  if (proj.two) {
+    const t = proj.two;
+    m.two = {
+      partial: { target: t.partial.target, targetAdj: t.partial.targetAdj, risePV: t.partial.risePV,
+                 nw: portRet, ok: portRet >= t.partial.target },
+      household: t.household ? { target: t.household.target, targetAdj: t.household.targetAdj,
+                 nw: t.household.nw, ok: t.household.nw >= t.household.target } : null,
+      note: t.note, partnerInfeasibleYear: t.partnerInfeasibleYear,
+    };
+  }
   return m;
+}
+
+// Two-person rows (cards + tiles): Partial FIRE (you), Household FIRE, and the
+// contribution note. Empty in the simple model.
+function chip(ok) { return '<span class="v '+(ok?'ok':'err')+'" style="margin-left:6px">'+(ok?'\u2713 funded':'\u00d7 short')+'</span>'; }
+export function twoRowsHTML(m, gl, compact) {
+  if (!m.two) return '';
+  const p = m.two.partial, h = m.two.household;
+  const adj = (t, a) => (!compact && gl.wdMode === 'swr' && a < t * 0.99) ? ' <span class="tgt">/ '+eur(a)+' adj.</span>' : '';
+  let html = '<div class="sc-result-row"><span class="k">Partial FIRE (you)</span><span class="v">'+eur(p.target)+adj(p.target,p.targetAdj)+
+    (compact ? '' : ' <span class="tgt">vs '+eur(p.nw)+'</span>')+chip(p.ok)+'</span></div>';
+  if (h) html += '<div class="sc-result-row"><span class="k">Household FIRE</span><span class="v">'+eur(h.target)+adj(h.target,h.targetAdj)+
+    (compact ? '' : ' <span class="tgt">vs '+eur(h.nw)+'</span>')+'<span class="v '+(h.ok?'ok':'err')+'" style="margin-left:6px">'+(h.ok?'Household funded':'Household short')+'</span></span></div>';
+  if (m.two.partnerInfeasibleYear != null)
+    html += '<div class="sc-result-row"><span class="k">\u26a0 Partner savings</span><span class="v err">run out '+m.two.partnerInfeasibleYear+'</span></div>';
+  if (!compact && m.two.note) html += '<div class="sc-two-note">'+twoNoteText(m.two, gl)+'</div>';
+  return html;
+}
+// "Assumes partner contributes X €/mo until her age N; after that your cost becomes Y €/mo"
+export function twoNoteText(t, gl) {
+  const n = t.note; if (!n) return '';
+  let s = 'Assumes partner contributes '+eur(Math.round(n.contribMonthlyToday))+'/mo ('+Math.round(n.share*100)+'% of shared costs, today\u2019s \u20ac)';
+  s += n.change
+    ? ' until her age '+n.change.herAge+'; after that your cost becomes '+eur(Math.round(n.change.costMonthlyToday))+'/mo (from '+eur(Math.round(n.costMonthlyToday))+').'
+    : ', pro rata to your incomes.';
+  if (t.partial.risePV > 0) s += ' Target includes '+eur(t.partial.risePV)+' for her share falling later.';
+  return s;
 }
 
 export function vsPlanRowHTML(m) {
@@ -104,7 +146,7 @@ export function renderMilestone(idx, sc, gl, proj) {
     // budget adequacy, not a survival chip.
     headChip = '<div class="ms-chip '+(m.incomeOk?'ok':'err')+'">'+(m.incomeOk?'\u2713 Funded':'\u00d7 Short')+'</div>';
     const incomeRow = '<div class="sc-result-row"><span class="k">Monthly income</span><span class="v '+(m.incomeOk?'ok':'err')+'">'+eur(m.netMonthly)+' <span class="tgt">/ '+eur(m.targetMonthly)+'</span></span></div>';
-    innerRows = retireAgeRow + vsPlanRow + incomeRow + nwRetRow + fireNumRow + coastRow + depRowErr + infeasRow;
+    innerRows = retireAgeRow + vsPlanRow + incomeRow + nwRetRow + fireNumRow + coastRow + depRowErr + infeasRow + twoRowsHTML(m, gl, false);
   } else {
     headChip = '<div class="ms-chip '+(m.ok?'ok':'err')+'">'+(m.ok?'\u2713 On Track':'\u00d7 Gap')+'</div>';
     const surpRow = m.ok
@@ -112,7 +154,7 @@ export function renderMilestone(idx, sc, gl, proj) {
       : '<div class="sc-result-row"><span class="k">Gap</span><span class="v err">'+eur(m.surplus)+'</span></div>';
     const depRow = depletionYear ? depRowErr
       : '<div class="sc-result-row"><span class="k">Survives to</span><span class="v ok">age '+gl.lifeExp+'+</span></div>';
-    innerRows = retireAgeRow + vsPlanRow + nwRetRow + fireNumRow + surpRow + coastRow + depRow + infeasRow;
+    innerRows = retireAgeRow + vsPlanRow + nwRetRow + fireNumRow + surpRow + coastRow + depRow + infeasRow + twoRowsHTML(m, gl, false);
   }
 
   el("ms"+idx).innerHTML =
@@ -151,8 +193,39 @@ export function renderSummaryTiles(projs, gl, scenarios) {
           metricRow +
           '<div class="sc-result-row"><span class="k">NW at retirement</span><span class="v">'+eur(m.portRet)+'</span></div>' +
           infeasibleRowHTML(m) +
+          twoRowsHTML(m, gl, true) +
         '</div>' +
       '</div>';
   });
   row.innerHTML = html;
+}
+
+// ── PARTNER AUTONOMY PANEL (Results tab, two-person model, active scenario) ──
+// Every figure comes from engine.partnerAutonomy(); this only formats it.
+export function renderPartnerAutonomy(projs, gl, scenarios) {
+  const host = el('partnerPanel');
+  if (!host) return;
+  const i = state.activeScIdx, proj = projs && projs[i], sc = scenarios && scenarios[i];
+  const a = proj && sc ? partnerAutonomy(proj, sc, gl) : null;
+  if (!a) { host.style.display = 'none'; host.innerHTML = ''; return; }
+  host.style.display = '';
+  const r = (k, v, cls) => '<div class="sc-result-row"><span class="k">'+k+'</span><span class="v '+(cls||'')+'">'+v+'</span></div>';
+  const cps = a.checkpoints.map(c => c.outOfRange
+    ? '<tr><td class="tbl-lbl">'+c.label+'</td><td class="dim tbl-v" colspan="4">outside the plan horizon</td></tr>'
+    : '<tr><td class="tbl-lbl">'+c.label+' <span class="dim">'+c.yr+' &middot; age '+c.herAge+'</span></td>'+
+      '<td class="tbl-v">'+eur(Math.round(c.income))+' <span class="dim">'+c.source+'</span></td>'+
+      '<td class="tbl-v">'+eur(Math.round(c.cost))+'</td>'+
+      '<td class="tbl-v '+(c.gap>=0?'pos':'neg')+'">'+(c.gap>=0?'+':'&minus;')+eur(Math.abs(Math.round(c.gap)))+'</td></tr>').join('');
+  host.innerHTML =
+    '<div class="chart-top"><div class="chart-title">Partner autonomy</div></div>' +
+    '<div class="sc-result-rows">' +
+      r('Her portfolio today', eur(Math.round(a.portfolioNow))) +
+      r('At your retirement', eur(Math.round(a.portfolioAtRet))) +
+      r('At the end of the plan', eur(Math.round(a.portfolioEnd))) +
+      r('Her pension', eur(a.pensionMonthly)+'/mo from age '+a.pensionAge+' <span class="tgt">today&rsquo;s &euro;</span>') +
+      (a.partnerInfeasibleYear != null ? r('&#x26A0; Her savings run out', a.partnerInfeasibleYear+' &mdash; shortfall not moved to you', 'err') : '') +
+    '</div>' +
+    '<div class="subj-subhd" style="margin-top:14px">Separation check &mdash; could she cover her solo costs alone? (&euro;/mo, today&rsquo;s money)</div>' +
+    '<div class="tbl-wrap"><table class="dtbl"><thead><tr><th class="tbl-lbl-hd">When</th><th>Her income</th><th>Solo cost</th><th>Gap</th></tr></thead><tbody>'+cps+'</tbody></table></div>' +
+    '<p class="sc-two-note">Solo cost = her personal spending + your &ldquo;housing &amp; shared costs if alone&rdquo; figure. Income = salary while she works, then pension + '+Math.round(AUTONOMY_SWR*100)+'% of her projected portfolio after tax. Her portfolio path assumes the couple arrangement continues.</p>';
 }

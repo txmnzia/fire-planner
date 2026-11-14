@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=7.2">
+<link rel="stylesheet" href="css/styles.css?v=7.3">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v7.2</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v7.3</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -120,6 +120,7 @@
           <div class="field"><label for="baseIncome_disp">Monthly income (net)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="baseIncome" id="baseIncome_disp"><input type="hidden" id="baseIncome" value=""></div></div>
           <div class="field"><label for="spendNow_disp">Monthly spending (now)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="spendNow" id="spendNow_disp"><input type="hidden" id="spendNow" value=""></div></div>
         </div>
+        <p class="sit-note pm-two-note" style="display:none">Two-person model is on: the two spending fields here are not used. Your spending is set in <b>Partner &#x2192; Spending split</b>.</p>
         <div class="subj-subhd">Withdrawal strategy</div>
         <div class="subj-grid">
           <div class="field"><label>Strategy</label>
@@ -230,7 +231,13 @@
           <button type="button" class="sc-chip" data-scenario="4" data-feat="partner" onclick="toggleFeature(4,'partner')" aria-pressed="false">D</button>
           <button type="button" class="sc-chip" data-scenario="5" data-feat="partner" onclick="toggleFeature(5,'partner')" aria-pressed="false">E</button>
         </div></div>
-      <div class="subj-body"><div class="subj-grid">
+      <div class="subj-body">
+        <div class="subj-grid"><div class="field"><label>Partner model <button type="button" class="info-btn" title="Simple: household spending = your spending &#xD7; a multiplier, and the partner's whole salary is household income. Two-person: you each have personal spending, shared costs are split pro rata to your two net incomes, and the partner's savings build her own portfolio, not yours.">&#x24D8;</button></label>
+          <div class="wd-toggle" role="group" aria-label="Partner model">
+            <button type="button" class="wd-pill pm-pill on" data-pm="simple" aria-pressed="true" onclick="setPartnerModel('simple')">Simple</button>
+            <button type="button" class="wd-pill pm-pill" data-pm="two" aria-pressed="false" onclick="setPartnerModel('two')">Two-person</button>
+          </div><input type="hidden" id="partnerModel" value="simple"></div></div>
+        <div class="subj-grid" style="margin-top:16px">
         <div class="field"><label for="partnerInc_disp">Partner income (net/mo)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerInc" id="partnerInc_disp"><input type="hidden" id="partnerInc" value=""></div></div>
         <div class="field slider-field"><label for="partnerRetAge">Partner retirement age <span class="sv"><input type="number" id="partnerRetAge" value="45" min="25" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="partnerRetAge" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
@@ -238,10 +245,33 @@
         <div class="field"><label for="partnerPension_disp">Partner pension (gross/mo)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerPension" id="partnerPension_disp"><input type="hidden" id="partnerPension" value=""></div></div>
         <div class="field slider-field"><label for="partnerPensionAge">Partner pension age <span class="sv"><input type="number" id="partnerPensionAge" value="67" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="partnerPensionAge" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field slider-field"><label for="partnerSpendMult">Spending multiplier <span class="sv"><input type="number" id="partnerSpendMult" value="1.5" min="1" max="3" step="0.1" oninput="recalc()" onchange="recalc()"><i>&#xD7;</i></span></label>
+        <div class="field slider-field pm-simple"><label for="partnerSpendMult">Spending multiplier <span class="sv"><input type="number" id="partnerSpendMult" value="1.5" min="1" max="3" step="0.1" oninput="recalc()" onchange="recalc()"><i>&#xD7;</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="partnerSpendMult" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field"><label>Combined monthly spending</label><div class="mult-preview2">Now <b id="multPreviewNow"></b></div></div>
-      </div></div>
+        <div class="field pm-simple"><label>Combined monthly spending</label><div class="mult-preview2">Now <b id="multPreviewNow"></b></div></div>
+        </div>
+        <div class="pm-two" style="display:none">
+        <div class="subj-subhd">Spending split</div>
+        <p class="sit-note">All monthly, in today's money. Shared costs (plus child costs and mortgage minus rent saved) are split pro rata to your two net incomes; your portfolio pays your personal spending and your part of the shared costs.</p>
+        <div class="subj-grid">
+          <div class="field"><label for="samPersonalNow_disp">Your personal spending (now)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="samPersonalNow" id="samPersonalNow_disp"><input type="hidden" id="samPersonalNow" value=""></div></div>
+          <div class="field"><label for="samPersonalRet_disp">Your personal spending (retired)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="samPersonalRet" id="samPersonalRet_disp"><input type="hidden" id="samPersonalRet" value=""></div></div>
+          <div class="field"><label for="sharedNow_disp">Shared costs (now) <button type="button" class="info-btn" title="Everything paid jointly: rent, utilities, groceries, joint leisure and holidays.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="sharedNow" id="sharedNow_disp"><input type="hidden" id="sharedNow" value=""></div></div>
+          <div class="field"><label for="sharedRet_disp">Shared costs (once you retire)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="sharedRet" id="sharedRet_disp"><input type="hidden" id="sharedRet" value=""></div></div>
+          <div class="field"><label for="soloShared_disp">Housing &amp; shared costs if alone <button type="button" class="info-btn" title="What rent, utilities and other shared-type costs would be if you lived alone. Used by scenarios without the partner toggle, and for the partner separation check.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="soloShared" id="soloShared_disp"><input type="hidden" id="soloShared" value=""></div></div>
+          <div class="field slider-field"><label for="shareMin">Partner share floor <button type="button" class="info-btn" title="Lower bound on the partner share of shared costs.">&#x24D8;</button> <span class="sv"><input type="number" id="shareMin" value="0" min="0" max="100" step="1" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
+            <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="shareMin" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+          <div class="field slider-field"><label for="shareMax">Partner share cap <button type="button" class="info-btn" title="Upper bound on the partner share of shared costs (50% = never more than half).">&#x24D8;</button> <span class="sv"><input type="number" id="shareMax" value="50" min="0" max="100" step="1" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
+            <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="shareMax" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+        </div>
+        <div class="subj-subhd">Partner finances</div>
+        <div class="subj-grid">
+          <div class="field"><label for="partnerPersonal_disp">Partner personal spending</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerPersonal" id="partnerPersonal_disp"><input type="hidden" id="partnerPersonal" value=""></div></div>
+          <div class="field"><label for="partnerPortfolio_disp">Partner investments today</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerPortfolio" id="partnerPortfolio_disp"><input type="hidden" id="partnerPortfolio" value=""></div></div>
+          <div class="field slider-field"><label for="partnerGainFrac">Partner unrealized gain <button type="button" class="info-btn" title="Share of her portfolio that is unrealized gain today; seeds her cost basis for capital-gains tax.">&#x24D8;</button> <span class="sv"><input type="number" id="partnerGainFrac" value="0" min="0" max="99" step="1" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
+            <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="partnerGainFrac" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+        </div>
+        </div>
+      </div>
     </section>
 
     <!-- PROPERTY -->
@@ -554,6 +584,7 @@
         <div class="leg-item"><div class="leg-dot" id="projLegDot" style="background:var(--s1c)"></div><span id="projLegName">A</span></div>
         <div class="leg-item" id="legPlan" style="display:none"><div class="leg-dash" id="legPlanDash" style="border-color:var(--s1c)"></div><span>Plan</span></div>
         <div class="leg-item"><div class="leg-line" id="projLegDash" style="border-color:var(--s1c)"></div><span>FIRE Target</span></div>
+        <div class="leg-item" id="legPartner" style="display:none"><div class="leg-dash" style="border-color:var(--s4c)"></div><span>Partner portfolio</span></div>
       </div>
     </div>
     <div class="proj-canvas-wrap" style="position:relative;height:210px"><canvas id="fireChart"></canvas></div>
@@ -565,6 +596,8 @@
     </div>
     <div class="alloc-canvas-wrap" style="position:relative;height:260px"><canvas id="allocChart"></canvas></div>
   </div>
+
+  <div class="chart-card" id="partnerPanel" style="display:none"></div>
 
   <div class="tbl-card">
     <div class="tbl-hdr" role="button" tabindex="0" onclick="toggleTable()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTable();}" aria-expanded="true" aria-controls="tblWrap" id="tblToggle">

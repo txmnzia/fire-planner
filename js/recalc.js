@@ -2,7 +2,7 @@ import { el, eur, numVal } from "./util.js";
 import { state } from "./state.js";
 import { getGlobals, getScenario } from "./inputs.js";
 import { project } from "./engine.js";
-import { renderMilestone, renderSummaryTiles } from "./ui/cards.js";
+import { renderMilestone, renderSummaryTiles, renderPartnerAutonomy } from "./ui/cards.js";
 import { buildChart, buildFlowChart } from "./ui/charts.js";
 import { renderTable } from "./ui/table.js";
 import { renderExplanation } from "./ui/explanation.js";
@@ -31,6 +31,7 @@ export function recalc() {
   buildChart(projs,gl); buildFlowChart(projs,gl); renderTable(projs,gl);
   updateLabels();
   renderSummaryTiles(projs,gl,scenarios);
+  renderPartnerAutonomy(projs,gl,scenarios);
   renderExplanation(projs,gl,scenarios);
   // Monte Carlo results were computed for the previous inputs — flag them stale.
   markMcStale();

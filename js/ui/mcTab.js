@@ -66,11 +66,15 @@ function renderMcCards(){
   }).join('');
   const note=el('mcModeNote');
   if (note){
+    // two-person model: MC runs on YOUR projection (Partial FIRE); no household-level MC yet
+    const twoTxt = (mcGl && mcGl.partnerModel==='two')
+      ? '<strong>Two-person model:</strong> these runs use <em>your</em> projection (Partial FIRE): your portfolio, your net cost after your partner’s pro rata share. Her portfolio follows the same sampled returns but there is no household-level Monte Carlo yet.' : '';
     if (swr){
       note.style.display='block';
-      note.innerHTML='<strong>% of Portfolio mode:</strong> up to SWR% of the current portfolio funds each year’s budget (surpluses stay invested), so the portfolio can’t hit zero — depletion-based survival is ~100% by construction. The real question is <strong>budget adequacy</strong>: how often, and by how much, the available draw (plus pensions and partner income) falls short of your full yearly budget. The cards show the share of retirement years on budget; click one for how deep the shortfalls go. Switch to Fixed-Amount mode for a classic depletion-based survival rate.';
+      note.innerHTML=(twoTxt ? twoTxt+'<br><br>' : '')+'<strong>% of Portfolio mode:</strong> up to SWR% of the current portfolio funds each year’s budget (surpluses stay invested), so the portfolio can’t hit zero — depletion-based survival is ~100% by construction. The real question is <strong>budget adequacy</strong>: how often, and by how much, the available draw (plus pensions and partner income) falls short of your full yearly budget. The cards show the share of retirement years on budget; click one for how deep the shortfalls go. Switch to Fixed-Amount mode for a classic depletion-based survival rate.';
     } else {
-      note.style.display='none';
+      note.style.display=twoTxt ? 'block' : 'none';
+      note.innerHTML=twoTxt;
     }
   }
 }

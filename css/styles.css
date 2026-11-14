@@ -226,6 +226,9 @@ select option{background:var(--card);}
 .wd-pill input{display:none;}
 .wd-pill:has(input:checked){background:var(--dim);border-color:var(--s1c);color:var(--text);}
 .wd-pill:hover{border-color:var(--muted);}
+.pm-pill{font-family:inherit;}
+.sc-two-note{font-size:11px;color:var(--muted);line-height:1.45;margin-top:6px;}
+.pm-pill.on{background:var(--dim);border-color:var(--s4c);color:var(--text);}
 
 /* Info btn */
 .info-btn{background:none;border:none;cursor:help;color:var(--muted);font-size:11px;padding:0 2px;vertical-align:middle;}

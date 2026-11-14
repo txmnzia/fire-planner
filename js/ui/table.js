@@ -31,6 +31,12 @@ export function renderTable(projs,gl) {
     ['Rent Saved',        (r,i)=>money(r.rentSavings>0?r.rentSavings:null,'pos','+')],
     ['Purchase Cost',     (r,i)=>money(r.extraCost>0?r.extraCost:null,'neg','-')],
   ];
+  // two-person model: her pro rata share of shared costs and her own portfolio
+  if (proj.two && proj.two.household) {
+    ROWS.splice(7, 0, ['Partner Share', (r,i)=>money(r.partnerContribution>0?r.partnerContribution:null,'pos','+')]);
+    ROWS.push(['Partner share %',   (r,i)=>pct(Math.round((r.partnerShare||0)*100))]);
+    ROWS.push(['Partner portfolio', (r,i)=>money(r.partnerPort,'','')]);
+  }
   let body='';
   ROWS.forEach(([label,fn])=>{
     body+='<tr><td class="tbl-lbl">'+label+'</td>';

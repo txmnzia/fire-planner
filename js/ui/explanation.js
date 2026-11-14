@@ -2,7 +2,7 @@ import { el, eur } from "../util.js";
 import { state } from "../state.js";
 import { getScenarioName } from "../inputs.js";
 import { portReturnAt, yearOneBudget, project } from "../engine.js";
-import { computeCardMetrics } from "./cards.js";
+import { computeCardMetrics, twoNoteText } from "./cards.js";
 import { FLOW_COLORS } from "./charts.js";
 
 // ── EXPLANATION TAB ──────────────────────────────────────────────────────────
@@ -90,7 +90,11 @@ export function renderExplanation(projs, gl, scenarios) {
 
   // full annual outgoings in year idx, from the engine's own row composition
   // (same shape as the engine's retirement `budget` and yearOneBudget)
-  const budAnn = idx => { const r = rows[idx] || {}; return Math.max(0, (r.spending || 0) + (r.childCost || 0) + (r.mortgagePayment || 0) - (r.rentSavings || 0)); };
+  // (two-person model: minus her contribution to shared costs → your net cost)
+  const budAnn = idx => { const r = rows[idx] || {}; return Math.max(0, (r.spending || 0) + (r.childCost || 0) + (r.mortgagePayment || 0) - (r.rentSavings || 0) - (r.partnerContribution || 0)); };
+  const two = !!proj.two;
+  const herOn = two && sc.hasPartner;
+  const youNow = two ? "what you pay now" : "what your household lives on now";
   const nwToday = (gl.invested || 0) + gl.cash;
   const nowMo = budAnn(0) / 12;          // what the household actually lives on today (€/mo)
   const gfr = proj.gainFracAtRet != null ? proj.gainFracAtRet : gl.gainFrac;
@@ -185,7 +189,9 @@ export function renderExplanation(projs, gl, scenarios) {
   // partner milestones
   if (sc.hasPartner) {
     const prIdx = gl.partnerRetAge - off - currentAge;
-    if (prIdx > 0 && prIdx <= lastIdx) addEv(prIdx, "&#x1F91D;", "Your partner retires", "Their " + eur(gl.partnerInc) + "/mo salary (today's €) stops — until now it was covering part of the household budget.", "");
+    if (prIdx > 0 && prIdx <= lastIdx) addEv(prIdx, "&#x1F91D;", "Your partner retires", two
+      ? "Her " + eur(gl.partnerInc) + "/mo salary (today's €) stops, so her pro rata share of the shared costs drops to " + Math.round(((rows[prIdx] || {}).partnerShare || 0) * 100) + "% and your part goes up."
+      : "Their " + eur(gl.partnerInc) + "/mo salary (today's €) stops — until now it was covering part of the household budget.", "");
     const ppIdx = gl.partnerPensionAge - off - currentAge;
     if (ppIdx > 0 && ppIdx <= lastIdx) addEv(ppIdx, "&#x1F9D3;", "Partner's pension starts", "+" + eur(gl.partnerPension) + "/mo (today's €) of steady income the portfolio no longer has to provide.", "ok");
   }
@@ -224,7 +230,7 @@ export function renderExplanation(projs, gl, scenarios) {
     ? "You're <strong>" + currentAge + "</strong> with <strong>" + eur(nwToday) + "</strong> and already past this scenario's retirement age, so the plan draws down from day one. "
     : "You're <strong>" + currentAge + "</strong> with <strong>" + eur(nwToday) + "</strong>. Retire at <strong>" + retAge + "</strong> — in " + nAccum + " year" + (nAccum === 1 ? "" : "s") + ", " + m.retYear + " — and this plan gives you ")
     + "<strong>" + eur(budRetMoToday) + "/mo in today's money</strong> to live on"
-    + (vsNow(budRetMoToday) ? ", which is <strong>" + vsNow(budRetMoToday) + "</strong> of the " + eur(Math.round(nowMo)) + "/mo your household spends now." : ".");
+    + (vsNow(budRetMoToday) ? ", which is <strong>" + vsNow(budRetMoToday) + "</strong> of the " + eur(Math.round(nowMo)) + "/mo " + (two ? "you pay now" : "your household spends now") + "." : ".");
   const ledeMode = swr
     ? "Withdrawal strategy: <strong>" + pct(gl.swr) + " of whatever the portfolio is worth each year</strong> — it can never fully run out, but the amount it pays moves with the markets, so the question everywhere below is whether the draw <em>covers the budget</em>."
     : "Withdrawal strategy: a <strong>fixed budget grown with inflation</strong> — predictable income, but the portfolio can be depleted, so the question everywhere below is whether the money <em>lasts to age " + gl.lifeExp + "</em>.";
@@ -292,7 +298,7 @@ export function renderExplanation(projs, gl, scenarios) {
     if (p.key === "build") {
       const incMo = (rS.income || 0) / 12, saveMo = (rS.netFlow || 0) / 12;
       const saveRate = rS.income > 0 ? Math.round((rS.netFlow || 0) / rS.income * 100) : null;
-      lead = "For the next <strong>" + nYears + " years</strong> you keep working and investing. Of the " + eur(Math.round(incMo)) + "/mo " + (sc.hasPartner ? "your household earns" : "you earn") + ", about " + eur(Math.round(nowMo)) + " covers life today and <strong>" + eur(Math.round(saveMo)) + "/mo goes into the portfolio</strong>" + (saveRate != null ? " (a " + saveRate + "% saving rate)" : "") + ". The job of this phase is simple: grow " + eur(nwToday) + " into your " + eur(proj.fireTarget) + " FIRE number by " + m.retYear + " — contributions do the pushing early on, market growth takes over later.";
+      lead = "For the next <strong>" + nYears + " years</strong> you keep working and investing. Of the " + eur(Math.round(incMo)) + "/mo " + (sc.hasPartner && !two ? "your household earns" : "you earn") + ", about " + eur(Math.round(nowMo)) + " covers life today and <strong>" + eur(Math.round(saveMo)) + "/mo goes into the portfolio</strong>" + (saveRate != null ? " (a " + saveRate + "% saving rate)" : "") + ". The job of this phase is simple: grow " + eur(nwToday) + " into your " + eur(proj.fireTarget) + " FIRE number by " + m.retYear + " — contributions do the pushing early on, market growth takes over later.";
       side =
         meter("Your money today (per month)", [
           { k: "Income", frac: 1, v: eur(Math.round(incMo)), color: FLOW_COLORS.salary },
@@ -345,7 +351,7 @@ export function renderExplanation(projs, gl, scenarios) {
 
       if (p.key === "bridge") {
         const pensionLater = penIdx > p.e && penIdx <= lastIdx;
-        lead = "At <strong>" + ageAt(p.s) + "</strong> the paycheck stops" + (pensionLater ? ", and your state pension is still <strong>" + (gl.pensionAge - ageAt(p.s)) + " years away</strong>" : "") + ". For " + nYears + " years " + (sc.hasPartner && (rS.income || 0) > 0 ? "the portfolio and your partner's income carry" : "the portfolio alone carries") + " everything. Your budget: <strong>" + eur(Math.round(budSMoToday)) + "/mo in today's money</strong>" + (vsNow(budSMoToday) ? " — <strong>" + vsNow(budSMoToday) + "</strong> of what your household lives on now" : "") + ". " +
+        lead = "At <strong>" + ageAt(p.s) + "</strong> the paycheck stops" + (pensionLater ? ", and your state pension is still <strong>" + (gl.pensionAge - ageAt(p.s)) + " years away</strong>" : "") + ". For " + nYears + " years " + (herOn ? "your portfolio carries your personal spending and your part of the shared costs (your partner pays <strong>" + Math.round((rS.partnerShare || 0) * 100) + "%</strong> of them)" : (sc.hasPartner && (rS.income || 0) > 0 ? "the portfolio and your partner's income carry" : "the portfolio alone carries") + " everything") + ". Your budget: <strong>" + eur(Math.round(budSMoToday)) + "/mo in today's money</strong>" + (vsNow(budSMoToday) ? " — <strong>" + vsNow(budSMoToday) + "</strong> of " + youNow : "") + ". " +
           (swr
             ? "The plan funds it by selling <strong>" + pct(gl.swr) + " of whatever the portfolio is worth</strong> each year — about " + eur(m.netMonthly) + "/mo at the start, against a " + eur(m.targetMonthly) + "/mo budget in " + yearAt(p.s) + " money. "
             : "The plan funds it by selling whatever the budget needs — " + eur(Math.round(budSMo)) + "/mo in " + yearAt(p.s) + " money, rising with inflation. ") +
@@ -402,12 +408,13 @@ export function renderExplanation(projs, gl, scenarios) {
   // headline exactly (it always should in % mode; guarded so a future engine
   // change can never make this card silently show different math).
   if (swr) {
-    const budgetRet = yearOneBudget(retAge, sc, gl);
+    const budgetRet = yearOneBudget(retAge, sc, gl, two ? proj.two.shareAtRet : undefined);
     const inflRet = infl(nAccum);
     const penOff = retAge >= gl.pensionAge ? gl.pensionAmt * 12 * inflRet : 0;
-    const ppenOff = (sc.hasPartner && retAge + off >= gl.partnerPensionAge) ? gl.partnerPension * 12 * inflRet : 0;
+    const ppenOff = (!two && sc.hasPartner && retAge + off >= gl.partnerPensionAge) ? gl.partnerPension * 12 * inflRet : 0;
+    const risePV = two ? proj.two.partial.risePV : 0;   // her share falling later (two-person headline)
     const fromPort = Math.max(0, budgetRet - penOff - ppenOff);
-    const rebuilt = gl.swr > 0 ? Math.round(fromPort / netFracRet / gl.swr) : 0;
+    const rebuilt = gl.swr > 0 ? Math.round(fromPort / netFracRet / gl.swr + risePV) : 0;
     const exact = Math.abs(rebuilt - proj.fireTarget) <= Math.max(2, proj.fireTarget * 0.001);
     concepts.push(concept("Your FIRE number", eur(proj.fireTarget), "your budget, run backwards",
       (exact
@@ -416,11 +423,12 @@ export function renderExplanation(projs, gl, scenarios) {
           (penOff + ppenOff > 0 ? row("&minus; pensions already flowing then", "&minus;" + mo(penOff + ppenOff) + "/mo") : "") +
           row("&times; tax gross-up on selling", "&times;" + (1 / netFracRet).toFixed(2)) +
           row("&divide; your withdrawal rate", pct(gl.swr)) +
+          (risePV > 0 ? row("+ her share falling later (PV)", "+" + eur(risePV)) : "") +
           row("= your FIRE number", eur(proj.fireTarget), CV[i]) + "</div>"
         : '<div class="expl-rows">' + row("Your FIRE number", eur(proj.fireTarget), CV[i]) + "</div>") +
       "<p>Nothing more mystical than that: the pot at which " + pct(gl.swr) + " of it pays your entire budget after tax — from there, working is a choice.</p>" +
       (proj.fireTargetAdj < proj.fireTarget * 0.99
-        ? "<p>This headline gives <strong>no credit</strong> for income that isn't flowing on day one (your pension at " + gl.pensionAge + (sc.hasPartner ? ", your partner's remaining salary years" : "") + "). Counted in, the target drops to <strong>" + eur(proj.fireTargetAdj) + "</strong> — the cautious number stays the headline on purpose.</p>" : "")));
+        ? "<p>This headline gives <strong>no credit</strong> for income that isn't flowing on day one (your pension at " + gl.pensionAge + (sc.hasPartner ? (two ? ", your costs falling later" : ", your partner's remaining salary years") : "") + "). Counted in, the target drops to <strong>" + eur(proj.fireTargetAdj) + "</strong> — the cautious number stays the headline on purpose.</p>" : "")));
   } else {
     concepts.push(concept("Your FIRE number", eur(proj.fireTarget), "your budget, run backwards",
       '<div class="expl-rows">' +
@@ -484,14 +492,27 @@ export function renderExplanation(projs, gl, scenarios) {
 
   // inflation / today's € vs future € — the same lifestyle at three dates
   const midIdx = Math.min(lastIdx, retIdx + Math.max(1, Math.round((lastIdx - retIdx) / 2)));
+  const lifeNow = two ? Math.round(nowMo) : gl.spendNow;   // two-person: your net cost today
   concepts.push(concept("Today's € vs future €", "", "the same lifestyle at three dates",
     '<div class="expl-rows">' +
-    row("Your lifestyle today", eur(gl.spendNow) + "/mo") +
-    (nAccum > 0 ? row("Same lifestyle in " + m.retYear + " (retire)", eur(Math.round(gl.spendNow * infl(nAccum))) + "/mo") : "") +
-    (midIdx > retIdx ? row("Same lifestyle in " + yearAt(midIdx) + " (age " + ageAt(midIdx) + ")", eur(Math.round(gl.spendNow * infl(midIdx))) + "/mo") : "") +
-    row("Same lifestyle in " + yearAt(lastIdx) + " (age " + gl.lifeExp + ")", eur(Math.round(gl.spendNow * infl(lastIdx))) + "/mo") +
+    row("Your lifestyle today", eur(lifeNow) + "/mo") +
+    (nAccum > 0 ? row("Same lifestyle in " + m.retYear + " (retire)", eur(Math.round(lifeNow * infl(nAccum))) + "/mo") : "") +
+    (midIdx > retIdx ? row("Same lifestyle in " + yearAt(midIdx) + " (age " + ageAt(midIdx) + ")", eur(Math.round(lifeNow * infl(midIdx))) + "/mo") : "") +
+    row("Same lifestyle in " + yearAt(lastIdx) + " (age " + gl.lifeExp + ")", eur(Math.round(lifeNow * infl(lastIdx))) + "/mo") +
     "</div>" +
     "<p>Same life, bigger numbers — that's your " + pct(gl.inflation) + "/yr inflation assumption compounding. Charts and tables show the bigger (&ldquo;nominal&rdquo;) euros because that's what will actually leave your account; this page adds today's-€ tags so every future budget can be compared honestly against your life now.</p>"));
+
+  // two-person model: partial vs household FIRE (numbers from computeCardMetrics → engine)
+  if (herOn && m.two && m.two.household) {
+    const P = m.two.partial, H = m.two.household;
+    concepts.push(concept("Partial vs household FIRE", "", "two finish lines for two people",
+      '<div class="expl-rows">' +
+      row("Partial FIRE (you)", eur(P.target) + ' <span class="tgt">you&rsquo;d have ' + eur(P.nw) + "</span>", P.ok ? "ok" : "err") +
+      row("Household FIRE (both stop)", eur(H.target) + ' <span class="tgt">together ' + eur(Math.round(H.nw)) + "</span>", H.ok ? "ok" : "err") +
+      "</div>" +
+      "<p><strong>Partial FIRE</strong> is your own finish line: at " + retAge + " your portfolio pays your personal spending and your part of the shared costs, while your partner keeps working and pays her pro rata share. " + twoNoteText(m.two, gl) + "</p>" +
+      "<p><strong>Household FIRE</strong> is the stricter line: you both stop in " + m.retYear + ", and your combined portfolios (yours, hers, your cash) must carry the whole household, net of both pensions as they start. It is " + (H.ok ? "<strong>funded</strong>" : "<strong>short by " + eur(Math.round(H.target - H.nw)) + "</strong>") + " on this path. Monte Carlo runs on the Partial view (your projection).</p>"));
+  }
 
   // taxes on withdrawal
   concepts.push(concept("Tax when you sell", pct(gfr * gl.taxRate) + " effective", "why you must sell more than you spend",

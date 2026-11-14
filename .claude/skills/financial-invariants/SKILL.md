@@ -55,6 +55,10 @@ at 0. The retirement branch of `project()` builds the identical composition per-
 - SWR FIRE target — `computeFireTarget()` SWR branch calls `yearOneBudget`;
 - scenario-card / summary-tile target — `computeCardMetrics()` → `targetMonthly`;
 - Monte Carlo funding-ratio denominator — `rows[].swrTarget` from `project()`.
+Two-person model (`gl.partnerModel === 'two'`): both `yearOneBudget(…, share)` and the
+loop's `budget` come from `householdBudget().samCost`, with the share from
+`partnerShare()`; consumers pass `proj.two.shareAtRet`. The partner's income is never
+your income in that model (I9 applies to the simple model only).
 If you add a budget component (a new cost or offset), it goes into **both**
 `yearOneBudget` and the `budget` expression in `project()`'s retirement branch, in the
 same commit, or the views drift apart.

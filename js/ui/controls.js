@@ -4,7 +4,7 @@ import { getScenarioName } from "../inputs.js";
 import { recalc } from "../recalc.js";
 import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js";
 import { renderTable } from "./table.js";
-import { renderSummaryTiles } from "./cards.js";
+import { renderSummaryTiles, renderPartnerAutonomy } from "./cards.js";
 import { resizeMcCharts } from "./mcTab.js";
 
 // ── TAB SWITCHING ──────────────────────────────────────────────────────────
@@ -120,6 +120,7 @@ export function setActiveScenario(idx) {
   updateLabels();
   if (state.lastProjs && state.lastGl && state.lastScenarios) {
     renderSummaryTiles(state.lastProjs, state.lastGl, state.lastScenarios);
+    renderPartnerAutonomy(state.lastProjs, state.lastGl, state.lastScenarios);
     buildChart(state.lastProjs, state.lastGl);
     buildFlowChart(state.lastProjs, state.lastGl);
     renderTable(state.lastProjs, state.lastGl);

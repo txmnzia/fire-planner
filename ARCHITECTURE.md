@@ -19,7 +19,10 @@ js/
   inputs.js             Reads the form into plain objects: getGlobals(), getScenario(),
                         plus country tax table and scenario names.
   engine.js             PURE financial engine — no DOM, no shared state. Projection
-                        loop, FIRE targets, annuities, mortgage, plan-vs-actual.
+                        loop, FIRE targets, annuities, mortgage, plan-vs-actual, and
+                        the two-person household model (partnerShare, householdBudget,
+                        partner portfolio loop, Partial/Household FIRE targets,
+                        partnerAutonomy).
   montecarlo.js         PURE Monte Carlo engine — historical block bootstrap, seeded
                         PRNG, percentile bands. Depends only on engine.js.
   recalc.js             Orchestrator: inputs → engine → all renderers, then persistence.
@@ -30,7 +33,9 @@ js/
   ui/
     controls.js         Tabs, feature toggles, age sliders, withdrawal-mode switch,
                         labels, active-scenario selection, mobile nav.
-    cards.js            Scenario milestone cards + Results summary tiles.
+    cards.js            Scenario milestone cards + Results summary tiles
+                        (computeCardMetrics), two-person rows/note, and the
+                        Results-tab partner autonomy panel.
     charts.js           Projection & allocation charts (Chart.js) and shared palette.
     table.js            Year-by-year detail table + CSV export.
     mcTab.js            Monte Carlo tab UI (cards, tiles, fan & histogram charts).
@@ -43,11 +48,13 @@ js/
     ibkr.js             IBKR CSV import and holdings list.
     nwHistory.js        Net-worth snapshot editor (plan-vs-actual inputs) —
                         compact datapoint rows shared with the windfall list.
-    situation.js        My Situation tab enhancements: subject-card rail scroll-spy,
+    situation.js        My Situation tab enhancements (incl. the Simple | Two-person
+                        partner-model switch, setPartnerModel): subject-card rail scroll-spy,
                         year-picker popover (buildYpick), sliders over the numeric
                         inputs, and the dynamic windfall datapoint list. Progressive
                         enhancement — the id-bearing inputs stay the source of truth.
-tests/                  node:test unit tests for the two pure engines.
+tests/                  node:test unit tests for the two pure engines (+ twoperson.test.mjs
+                        for the two-person model and the simple-mode regression hash).
 .github/workflows/ci.yml  Syntax-checks every module and runs the tests on push/PR.
 ```
 

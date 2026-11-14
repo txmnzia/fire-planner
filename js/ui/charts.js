@@ -7,6 +7,7 @@ let chart = null, allocChart = null;
 
 // ── CHARTS ─────────────────────────────────────────────────────────────────
 export const FIRE_LINE   = "rgba(126,143,170,.75)"; // neutral horizontal FIRE-target reference line
+export const PARTNER_LINE = "rgba(244,114,182,.75)"; // partner's own portfolio (two-person model), partner accent
 export const COLORS      = ["#818cf8","#fbbf24","#34d399","#f472b6","#fb923c"];
 export const COLORS_FADE = ["rgba(129,140,248,.5)","rgba(251,191,36,.5)","rgba(52,211,153,.5)","rgba(244,114,182,.5)","rgba(251,146,60,.5)"];
 export const ALPHAS      = ["rgba(129,140,248,.07)","rgba(251,191,36,.07)","rgba(52,211,153,.07)","rgba(244,114,182,.07)","rgba(251,146,60,.07)"];
@@ -75,6 +76,14 @@ export function buildChart(projs,gl) {
     ];
     ds.push({label:"FIRE Target",data:labels.map(()=>proj.fireTarget),borderColor:FIRE_LINE,borderWidth:1.5,pointRadius:0,tension:0,fill:false,order:2});
   }
+  // two-person model: the partner's own portfolio (not part of your net worth)
+  const herVals = proj.two && proj.two.household ? proj.two.partnerValues : null;
+  if (herVals) {
+    const y0 = proj.years[0];
+    ds.push({label:"Partner portfolio",data:labels.map(y=>{const i=y-y0;return (i>=0&&i<herVals.length)?herVals[i]:null;}),
+      borderColor:PARTNER_LINE,borderWidth:1.5,borderDash:[2,3],pointRadius:0,pointHoverRadius:3,tension:.35,fill:false,order:4,spanGaps:true});
+  }
+  const lp=el("legPartner"); if (lp) lp.style.display = herVals ? "" : "none";
   if (chart) chart.destroy();
   chart=new Chart(ctx,{type:"line",data:{labels,datasets:ds},plugins:[makeRetPlugin([proj],gl)],options:{
     responsive:true,maintainAspectRatio:false,animation:{duration:300},interaction:{mode:"index",intersect:false},
@@ -95,6 +104,7 @@ const SURFACE = "#0b0e17";
 export const FLOW_COLORS = {
   salary:"#22c55e", withdraw:"#2dd4bf", market:"#4ade80", pension:"#14b8a6",
   partnerPension:"#a3e635", windfall:"#86efac", rent:"#5eead4", cashInt:"#bef264",
+  partnerShare:"#99f6e4",
   spend:"#ef4444", mortgage:"#f97316", child:"#fb7185", tax:"#e11d48", purchase:"#f59e0b",
 };
 // Revenue line items (green -> teal -> lime family). `get` pulls a single, non-
@@ -110,6 +120,8 @@ const REVENUE = [
   {key:"windfall", label:"Windfall",        color:FLOW_COLORS.windfall,       get:r=>r.windfall||0},
   {key:"rent",     label:"Rent Saved",      color:FLOW_COLORS.rent,           get:r=>r.rentSavings||0},
   {key:"cashInt",  label:"Cash Interest",   color:FLOW_COLORS.cashInt,        get:r=>Math.max(0,r.cashReturn||0)},
+  // two-person model: her pro rata contribution to the shared costs you pay (0 otherwise → dropped)
+  {key:"pShare",   label:"Partner Share",   color:FLOW_COLORS.partnerShare,   get:r=>r.partnerContribution||0},
 ];
 // Cost line items (red -> orange family). Plotted as negative so they stack
 // below zero; the magnitude is restored for display.

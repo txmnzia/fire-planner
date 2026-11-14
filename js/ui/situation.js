@@ -196,6 +196,26 @@ function bindGlobalClosers() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.ypick.open').forEach(o => o.classList.remove('open')); });
 }
 
+// ── PARTNER MODEL SWITCH (Simple | Two-person) ───────────────────────────────
+// The hidden #partnerModel input is the persisted value (SYNC_FIELDS); the two
+// pills only mirror it. Anything but 'two' (incl. old saved states) is simple.
+export function paintPartnerModel() {
+  const hid = el('partnerModel'); if (!hid) return;
+  const two = hid.value === 'two';
+  document.querySelectorAll('.pm-pill').forEach(b => {
+    const on = (b.dataset.pm === 'two') === two;
+    b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+  });
+  document.querySelectorAll('.pm-two, .pm-two-note').forEach(n => { n.style.display = two ? '' : 'none'; });
+  document.querySelectorAll('.pm-simple').forEach(n => { n.style.display = two ? 'none' : ''; });
+}
+export function setPartnerModel(mode) {
+  const hid = el('partnerModel'); if (!hid) return;
+  hid.value = mode === 'two' ? 'two' : 'simple';
+  paintPartnerModel();
+  recalc();
+}
+
 // Re-sync enhanced controls after applyState() rewrites the underlying inputs.
 export function refreshSituationControls() {
   document.querySelectorAll('input[type="range"][data-for]').forEach(range => {
@@ -203,6 +223,7 @@ export function refreshSituationControls() {
   });
   document.querySelectorAll('.ypick[data-target]').forEach(p => { if (p._paint) p._paint(); });
   document.querySelectorAll('.cur-in[data-target]').forEach(d => { if (d._paintCur) d._paintCur(); });
+  paintPartnerModel();
   renderWindfalls();
 }
 
@@ -212,5 +233,6 @@ export function initSituation() {
   initYearFields();
   initCurrency();
   renderWindfalls();
+  paintPartnerModel();
   initRail();
 }

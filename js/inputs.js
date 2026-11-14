@@ -73,6 +73,18 @@ export function getGlobals() {
     partnerPensionAge: numVal("partnerPensionAge",67),
     partnerSpendMult:  numVal("partnerSpendMult",1.5),
     partnerAgeOff,
+    // two-person household model (README "Partner Model"); 'simple' unless set
+    partnerModel:      (el("partnerModel") && el("partnerModel").value === "two") ? "two" : "simple",
+    samPersonalNow:    numVal("samPersonalNow",0),
+    samPersonalRet:    numVal("samPersonalRet",0),
+    sharedNow:         numVal("sharedNow",0),
+    sharedRet:         numVal("sharedRet",0),
+    soloShared:        numVal("soloShared",0),
+    partnerPersonal:   numVal("partnerPersonal",0),
+    partnerPortfolio:  numVal("partnerPortfolio",0),
+    partnerGainFrac:   Math.max(0, Math.min(0.99, numVal("partnerGainFrac",0)/100)),
+    shareMin:          Math.max(0, Math.min(1, numVal("shareMin",0)/100)),
+    shareMax:          Math.max(0, Math.min(1, numVal("shareMax",50)/100)),
     // global property config
     propBuyYear:      optVal("propBuyYear") || numVal("propBuyYear",2029),
     propPrice:        numVal("propPrice",0),

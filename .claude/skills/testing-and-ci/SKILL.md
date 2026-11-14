@@ -12,8 +12,10 @@ node --test tests/*.test.mjs                              # all tests (Node ≥ 
 for f in js/*.js js/ui/*.js; do node --check "$f"; done   # syntax check (CI runs both)
 ```
 
-Current state (verified): **25 tests, 25 pass** — 17 in `tests/engine.test.mjs`,
-8 in `tests/montecarlo.test.mjs`.
+Current state (verified): **42 tests, 42 pass** — 17 in `tests/engine.test.mjs`,
+8 in `tests/montecarlo.test.mjs`, 17 in `tests/twoperson.test.mjs` (two-person model +
+the simple-mode regression hash: if a deliberate simple-mode change moves it, recompute
+the hash and say why in the commit).
 
 There is no package.json and no test framework. Tests use only `node:test` and
 `node:assert/strict`. **Never add a framework, an npm dependency, or a build step** —

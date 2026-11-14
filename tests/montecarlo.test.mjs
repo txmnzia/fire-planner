@@ -21,6 +21,9 @@ function makeGl(over = {}) {
     propMortgageRate: 0.035, propMortgageTerm: 25, propRentSaved: 1000,
     childBirthYear: 2034, childCostYearly: 10000, childCostUntilAge: 22,
     childMaternityMonths: 6, childMaternityIncome: 2000,
+    // two-person model inputs (inert while partnerModel is 'simple')
+    partnerModel: 'simple', samPersonalNow: 0, samPersonalRet: 0, sharedNow: 0, sharedRet: 0,
+    soloShared: 0, partnerPersonal: 0, partnerPortfolio: 0, partnerGainFrac: 0, shareMin: 0, shareMax: 0.5,
     ...over,
   };
 }
