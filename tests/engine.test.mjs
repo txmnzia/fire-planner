@@ -20,11 +20,11 @@ function makeGl(over = {}) {
     pensionAmt: 700, pensionAge: 67, cash: 10000, cashReturn: 0.01,
     windfalls: [], wdMode: 'swr', swr: 0.04,
     invested: 150000,
-    partnerInc: 2000, partnerRetAge: 65, partnerPension: 500, partnerPensionAge: 67,
-    partnerSpendMult: 1.4, partnerAgeOff: 0,
-    propBuyYear: 2030, propPrice: 350000, propDownPct: 0.2, propTxCostPct: 0.08,
+    partnerInc: 1800, partnerRetAge: 65, partnerPension: 500, partnerPensionAge: 67,
+    partnerSpendMult: 1.5, partnerAgeOff: 0,
+    propBuyYear: 2032, propPrice: 300000, propDownPct: 0.2, propTxCostPct: 0.08,
     propMortgageRate: 0.035, propMortgageTerm: 25, propRentSaved: 1000,
-    childBirthYear: 2034, childCostYearly: 10000, childCostUntilAge: 22,
+    childBirthYear: 2034, childCostYearly: 9000, childCostUntilAge: 22,
     childMaternityMonths: 6, childMaternityIncome: 2000,
     // two-person model (made-up numbers); partnerModel 'simple' = original model
     partnerModel: 'simple', samPersonalNow: 1200, samPersonalRet: 1100,
@@ -60,7 +60,7 @@ test('mortgageAnnual: zero rate amortises linearly', () => {
 
 test('mortgageAnnual: standard annuity payment for 3.5% / 25y', () => {
   const gl = makeGl();
-  const principal = 350000 * 0.8, mr = 0.035 / 12, nm = 300;
+  const principal = 300000 * 0.8, mr = 0.035 / 12, nm = 300;
   const expected = principal * mr * Math.pow(1 + mr, nm) / (Math.pow(1 + mr, nm) - 1) * 12;
   assert.ok(Math.abs(mortgageAnnual(gl) - expected) < 1e-6);
 });
@@ -84,7 +84,7 @@ test('yearOneBudget: base case is inflated retirement spending', () => {
 test('yearOneBudget: partner multiplier and child cost add up', () => {
   const gl = makeGl(), sc = makeSc({ hasPartner: true, hasChild: true });
   const inflF = Math.pow(1.02, 10);
-  const expected = 2400 * 1.4 * 12 * inflF + 10000 * inflF; // child born 2034, still <22 in 2036
+  const expected = 2400 * 1.5 * 12 * inflF + 9000 * inflF; // child born 2034, still <22 in 2036
   assert.ok(Math.abs(yearOneBudget(45, sc, gl) - expected) < 1e-6);
 });
 
@@ -210,12 +210,12 @@ test('two-person 4 — share switches to the pension ratio in her retirement yea
 });
 
 test('two-person 5 — after your retirement your share-income = pension + SWR draw net of CGT', () => {
-  // Retire now (35), pension already flowing; start portfolio 250,000 at 25%
-  // gain, France 30%: 900·12 + 250,000·0.04·(1 − 0.25·0.30) = 10,800 + 9,250.
+  // Retire now (35), pension already flowing; start portfolio 150,000 at 25%
+  // gain, France 30%: 700·12 + 150,000·0.04·(1 − 0.25·0.30) = 8,400 + 5,550.
   for (const wdMode of ['swr', 'fixed']) {
     const gl = flat({ wdMode, pensionAge: 35, pensionAmt: 700 });
     const p = project(makeSc({ hasPartner: true, retAge: 35 }), gl);
-    assert.equal(p.rows[0].samShareIncome, 20050, wdMode);
+    assert.equal(p.rows[0].samShareIncome, 13950, wdMode);
   }
 });
 
@@ -236,19 +236,19 @@ test('two-person 6 — scenario without partner: budget = your personal + solo s
 });
 
 test('two-person 7 — child cost and mortgage are shared costs split by the share', () => {
-  // 2032: child aged 1 (12,000/yr), 0% mortgage 240,000/25 = 9,600/yr, rent
+  // 2034: child aged 1 (12,000/yr), 0% mortgage 240,000/25 = 9,600/yr, rent
   // saved 500/mo. Shared = 36,000 + 12,000 + 9,600 − 6,000 = 51,600; share 25%
   // → contribution 12,900; your cost = 12,000 + 51,600 − 12,900 = 50,700.
   const gl = flat({ samPersonalNow: 1000, sharedNow: 3000, partnerInc: 2000,
-                    childBirthYear: 2034, childCostYearly: 12000, propBuyYear: 2030, propPrice: 300000,
+                    childBirthYear: 2033, childCostYearly: 12000, propBuyYear: 2032, propPrice: 300000,
                     propDownPct: 0.2, propMortgageRate: 0, propMortgageTerm: 25, propRentSaved: 500 });
   const sc = makeSc({ hasPartner: true, hasChild: true, hasProp: true });
-  const c = twoPersonCost(2032, sc, gl, 6000 * 12, 0, false);
+  const c = twoPersonCost(2034, sc, gl, 6000 * 12, 0, false);
   assert.ok(near(c.shared, 51600));
   assert.ok(near(c.contrib, 12900));
   assert.ok(near(c.samCost, 50700));
   const p = project({ ...sc, income: 6000 }, gl);
-  const r = p.rows[p.years.indexOf(2032)];
+  const r = p.rows[p.years.indexOf(2034)];
   assert.equal(r.partnerContrib, 12900);
   assert.equal(r.netFlow, 72000 - 50700);
 });
@@ -341,8 +341,8 @@ test('two-person: separation check and contribution note come from the projectio
   const sep = partnerSeparation(p, sc, gl);
   assert.deepEqual(sep.map(s => s.herAge), [45, 50, 67]);
   const s50 = sep[1];
-  assert.equal(s50.income, 2000);                            // still working at 50
-  assert.equal(s50.gap, 2000 - (700 + 1500));
+  assert.equal(s50.income, 1800);                            // still working at 50
+  assert.equal(s50.gap, 1800 - (700 + 1500));
   const n = partnerContributionNote(sc, gl, p);
   assert.equal(n.untilHerAge, 65);
   assert.ok(n.contribMonthly > 0 && n.costAfterMonthly > n.costMonthly); // her retiring raises your cost

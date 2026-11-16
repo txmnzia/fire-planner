@@ -95,10 +95,10 @@ import('./js/engine.js').then(({project, yearOneBudget}) => {
     inflation:0.02, gainFrac:0.25, stockRet:0.07, bondRet:0.03, stockAlloc:1,
     bondAllocRet:0.4, taxRate:0.30, pensionAmt:700, pensionAge:67, cash:10000,
     cashReturn:0.01, windfalls:[], wdMode:'swr', swr:0.04, invested:150000,
-    partnerInc:2000, partnerRetAge:65, partnerPension:500, partnerPensionAge:67,
-    partnerSpendMult:1.4, partnerAgeOff:0, propBuyYear:2030, propPrice:350000,
+    partnerInc:1800, partnerRetAge:65, partnerPension:500, partnerPensionAge:67,
+    partnerSpendMult:1.5, partnerAgeOff:0, propBuyYear:2032, propPrice:300000,
     propDownPct:0.2, propTxCostPct:0.08, propMortgageRate:0.035, propMortgageTerm:25,
-    propRentSaved:1000, childBirthYear:2034, childCostYearly:10000,
+    propRentSaved:1000, childBirthYear:2034, childCostYearly:9000,
     childCostUntilAge:22, childMaternityMonths:6, childMaternityIncome:2000 };
   const sc = { id:1, retAge:45, income:5000, chgYear:null, chgInc:null,
     hasPartner:false, hasProp:false, hasChild:false };
