@@ -1,9 +1,9 @@
-import { el, eur } from "../util.js?v=8.1.1";
-import { state } from "../state.js?v=8.1.1";
-import { getScenarioName } from "../inputs.js?v=8.1.1";
-import { portReturnAt, yearOneBudget, project, partnerSeparation } from "../engine.js?v=8.1.1";
-import { computeCardMetrics } from "./cards.js?v=8.1.1";
-import { FLOW_COLORS } from "./charts.js?v=8.1.1";
+import { el, eur } from "../util.js?v=8.2";
+import { state } from "../state.js?v=8.2";
+import { getScenarioName } from "../inputs.js?v=8.2";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, project, partnerSeparation } from "../engine.js?v=8.2";
+import { computeCardMetrics } from "./cards.js?v=8.2";
+import { FLOW_COLORS } from "./charts.js?v=8.2";
 
 // ── EXPLANATION TAB ──────────────────────────────────────────────────────────
 // "Your plan, explained": turns the selected scenario's projection into a
@@ -410,20 +410,22 @@ export function renderExplanation(projs, gl, scenarios) {
   // headline exactly (it always should in % mode; guarded so a future engine
   // change can never make this card silently show different math).
   if (swr) {
-    const budgetRet = yearOneBudget(retAge, sc, gl);
+    const budgetRet = yearOnePermBudget(retAge, sc, gl);   // lifelong part (v8.2)
+    const setAside = proj.tempPV || 0;                     // costs that end, at present value
     const inflRet = infl(nAccum);
     const penOff = retAge >= gl.pensionAge ? gl.pensionAmt * 12 * inflRet : 0;
     const ppenOff = (sc.hasPartner && retAge + off >= gl.partnerPensionAge) ? gl.partnerPension * 12 * inflRet : 0;
     const fromPort = Math.max(0, budgetRet - penOff - ppenOff);
-    const rebuilt = gl.swr > 0 ? Math.round(fromPort / netFracRet / gl.swr) : 0;
+    const rebuilt = gl.swr > 0 ? Math.round(fromPort / netFracRet / gl.swr + setAside) : 0;
     const exact = Math.abs(rebuilt - proj.fireTarget) <= Math.max(2, proj.fireTarget * 0.001);
     concepts.push(concept("Your FIRE number", eur(proj.fireTarget), "your budget, run backwards",
       (exact
         ? '<div class="expl-rows">' +
-          row("Your year-one budget", mo(budgetRet) + '/mo <span class="tgt">' + eur(Math.round(budgetRet)) + "/yr in " + m.retYear + " money</span>") +
+          row(setAside > 0 ? "Your lifelong year-one budget" : "Your year-one budget", mo(budgetRet) + '/mo <span class="tgt">' + eur(Math.round(budgetRet)) + "/yr in " + m.retYear + " money</span>") +
           (penOff + ppenOff > 0 ? row("&minus; pensions already flowing then", "&minus;" + mo(penOff + ppenOff) + "/mo") : "") +
           row("&times; tax gross-up on selling", "&times;" + (1 / netFracRet).toFixed(2)) +
           row("&divide; your withdrawal rate", pct(gl.swr)) +
+          (setAside > 0 ? row("+ set aside for costs that end", "+" + eur(Math.round(setAside)) + ' <span class="tgt">child, mortgage: their remaining years only</span>') : "") +
           row("= your FIRE number", eur(proj.fireTarget), CV[i]) + "</div>"
         : '<div class="expl-rows">' + row("Your FIRE number", eur(proj.fireTarget), CV[i]) + "</div>") +
       "<p>Nothing more mystical than that: the pot at which " + pct(gl.swr) + " of it pays your entire budget after tax — from there, working is a choice.</p>" +

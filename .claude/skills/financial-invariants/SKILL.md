@@ -59,6 +59,13 @@ If you add a budget component (a new cost or offset), it goes into **both**
 `yearOneBudget` and the `budget` expression in `project()`'s retirement branch, in the
 same commit, or the views drift apart.
 
+**I2b — Costs that end are set aside, not perpetuated (v8.2).** In SWR mode the FIRE
+target is `yearOnePermBudget × taxMult / swr + tempCostPV`, the card's `targetMonthly`
+is the lifelong part, its SWR income is on `portRet − cash − proj.tempPV`, and the
+projection pays `rows[].tempCost` in full on top of the capped draw. Household FIRE uses
+the same split. `yearOneBudget` stays the total (I2); `tempCostAt` is the one source for
+the temporary part. Fixed mode is unaffected.
+
 **I3 — SWR mode is %-of-current-portfolio, not Bengen.**
 It withdraws up to `SWR% × current portfolio` each year and by construction **cannot
 deplete**. Therefore in SWR mode: no survival chips, no "success rate" headlines, no

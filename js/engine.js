@@ -59,18 +59,20 @@ export function partnerIncomeAt(yr, gl, herDrawAnn) {
 // Household cost components in year yr (nominal €/yr). `shared` is what gets
 // split: joint living costs + child costs + mortgage − rent saved (floored at 0).
 // A property purchase cost is not shared (it stays on your side, like today).
-export function householdCosts(yr, sc, gl, samRetired) {
+// noTemp: leave out the costs that end (child costs, mortgage payments) — used to
+// split your cost into a lifelong part and a temporary part (v8.2, see tempCostPV).
+export function householdCosts(yr, sc, gl, samRetired, noTemp) {
   const t = yr - gl.baseYear, infl = Math.pow(1+gl.inflation, t);
   const samPersonal = (samRetired ? gl.samPersonalRet : gl.samPersonalNow)*12*infl;
   const sharedBase  = (samRetired ? gl.sharedRet : gl.sharedNow)*12*infl;
   const partnerPersonal = (gl.partnerPersonal || 0)*12*infl;
   let child = 0, mortgage = 0, rentSaved = 0;
-  if (sc.hasChild) {
+  if (sc.hasChild && !noTemp) {
     const childAge = yr - gl.childBirthYear;
     if (childAge >= 0 && childAge < gl.childCostUntilAge) child = gl.childCostYearly*infl;
   }
   if (sc.hasProp) {
-    if (yr >= gl.propBuyYear && yr < gl.propBuyYear + gl.propMortgageTerm) mortgage = mortgageAnnual(gl);
+    if (!noTemp && yr >= gl.propBuyYear && yr < gl.propBuyYear + gl.propMortgageTerm) mortgage = mortgageAnnual(gl);
     if (yr >= gl.propBuyYear) rentSaved = gl.propRentSaved*12*infl;
   }
   const shared = Math.max(0, sharedBase + child + mortgage - rentSaved);
@@ -78,8 +80,8 @@ export function householdCosts(yr, sc, gl, samRetired) {
 }
 
 // Your net cost in year yr given YOUR income for the share (samInc, nominal €/yr).
-export function twoPersonCost(yr, sc, gl, samInc, herDrawAnn, samRetired) {
-  const hc = householdCosts(yr, sc, gl, samRetired);
+export function twoPersonCost(yr, sc, gl, samInc, herDrawAnn, samRetired, noTemp) {
+  const hc = householdCosts(yr, sc, gl, samRetired, noTemp);
   const her = partnerIncomeAt(yr, gl, herDrawAnn);
   const share = partnerShare(her.total, samInc, gl);
   const contrib = share*hc.shared;
@@ -91,8 +93,8 @@ export function twoPersonCost(yr, sc, gl, samInc, herDrawAnn, samRetired) {
 // so your income for the share is max(cost, pension). Solves the fixed point
 // c = P + S·(1 − share(h, c)) in closed form: c² + c(h−P−S) − P·h = 0 (positive
 // root); the clamp on the share keeps the fixed point (share(c) is monotone).
-export function selfFundedCost(yr, sc, gl, samPensionAnn, herDrawAnn) {
-  const hc = householdCosts(yr, sc, gl, true);
+export function selfFundedCost(yr, sc, gl, samPensionAnn, herDrawAnn, noTemp) {
+  const hc = householdCosts(yr, sc, gl, true, noTemp);
   const her = partnerIncomeAt(yr, gl, herDrawAnn);
   const P = hc.samPersonal, S = hc.shared, h = her.total, pen = samPensionAnn || 0;
   let c = (P + S - h + Math.sqrt((h - P - S)*(h - P - S) + 4*P*h)) / 2;
@@ -120,8 +122,16 @@ export function computeHouseholdTarget(fromAge, sc, gl, taxMult) {
                + (age + off >= gl.partnerPensionAge ? gl.partnerPension*12*infl : 0);
     return Math.max(0, hc.samPersonal + hc.partnerPersonal + hc.shared - pens);
   };
-  if (gl.wdMode === "swr") return gl.swr > 0 ? Math.round(need(fromYear)*taxMult/gl.swr) : 0;
   const r = portReturnAt(gl, fromAge, sc.retAge);
+  if (gl.wdMode === "swr") {
+    // v8.2, same rule as your own target: the lifelong need × 1/SWR, plus the
+    // household's costs that end (child, mortgage) at present value.
+    if (!(gl.swr > 0)) return 0;
+    const temp = yr => { const hc = householdCosts(yr, sc, gl, true); return hc.child + hc.mortgage; };
+    let pv = 0;
+    for (let k = 0; k < gl.lifeExp - fromAge; k++) pv += temp(fromYear + k)*taxMult/Math.pow(1+r, k+1);
+    return Math.round(Math.max(0, need(fromYear) - temp(fromYear))*taxMult/gl.swr + pv);
+  }
   let pv = 0;
   for (let k = 0; k < gl.lifeExp - fromAge; k++) pv += need(fromYear + k)*taxMult/Math.pow(1+r, k+1);
   if (sc.hasProp && gl.propBuyYear >= fromYear)
@@ -229,6 +239,46 @@ export function yearOneBudget(fromAge, sc, gl, herDrawAnn) {
   return Math.max(0, budget);
 }
 
+// ── Costs that end (v8.2) ───────────────────────────────────────────────────
+// Child costs and mortgage payments stop at a known year. In %-of-portfolio mode
+// they are no longer priced as if they lasted forever (year-one budget × 1/SWR):
+// the lifelong part of the budget gets the SWR multiple, and the costs that end
+// are set aside at their present value over their remaining years only, and paid
+// in full from that set-aside in the projection.
+//
+// YOUR temporary cost in year yr (nominal €): child costs + mortgage payments, or
+// in the two-person model with the partner on, your part of them (the difference
+// your net cost makes with and without them, at the same share).
+export function tempCostAt(yr, sc, gl, herDrawAnn) {
+  if (isTwoPerson(gl) && sc.hasPartner) {
+    const t = yr - gl.baseYear, age = gl.currentAge + t;
+    const pen = age >= gl.pensionAge ? gl.pensionAmt*12*Math.pow(1+gl.inflation, t) : 0;
+    return Math.max(0, selfFundedCost(yr, sc, gl, pen, herDrawAnn).samCost
+                     - selfFundedCost(yr, sc, gl, pen, herDrawAnn, true).samCost);
+  }
+  const hc = householdCosts(yr, sc, gl, true);
+  return hc.child + hc.mortgage;
+}
+// Present value at fromAge of the temporary costs from fromAge to life expectancy,
+// grossed up for tax (taxMult), discounted at the portfolio return at fromAge,
+// paid at year end like the DCF annuities (k+1). herDraw: { t: her draw } map.
+export function tempCostPV(fromAge, sc, gl, taxMult, herDraw) {
+  if (fromAge >= gl.lifeExp) return 0;
+  const fromYear = gl.baseYear + fromAge - gl.currentAge, r = portReturnAt(gl, fromAge, sc.retAge);
+  let pv = 0;
+  for (let k = 0; k < gl.lifeExp - fromAge; k++) {
+    const yr = fromYear + k, c = tempCostAt(yr, sc, gl, (herDraw || {})[yr - gl.baseYear] || 0);
+    if (c > 0) pv += c*taxMult/Math.pow(1+r, k+1);
+  }
+  return pv;
+}
+// The lifelong part of the year-one budget: yearOneBudget minus that year's
+// temporary costs. The full yearOneBudget stays the definition of the budget (I2).
+export function yearOnePermBudget(fromAge, sc, gl, herDrawAnn) {
+  const fromYear = gl.baseYear + fromAge - gl.currentAge;
+  return Math.max(0, yearOneBudget(fromAge, sc, gl, herDrawAnn) - tempCostAt(fromYear, sc, gl, herDrawAnn));
+}
+
 export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
   opts = opts || {};
   if (fromAge>=gl.lifeExp) return 0;
@@ -269,7 +319,10 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
     };
     const a0 = at(fromYear);
     if (gl.wdMode === "swr") {
-      let target = gl.swr>0 ? Math.max(0, a0.c.samCost - a0.pen)*taxMult/gl.swr : 0;
+      // lifelong part × 1/SWR, plus the costs that end at their present value (v8.2)
+      const perm0 = Math.max(0, a0.c.samCost - tempCostAt(fromYear, sc, gl, herDraw[tFrom] || 0));
+      let target = gl.swr>0 ? Math.max(0, perm0 - a0.pen)*taxMult/gl.swr : 0;
+      target += tempCostPV(fromAge, sc, gl, taxMult, herDraw);
       if (opts.otherIncomeCredit) {
         // Adjusted: credit your pension starting later, and price later changes
         // in the partner's share (she retires: share falls, your cost rises; her
@@ -298,12 +351,15 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
     // SWR% delivers the full year-one budget AFTER capital-gains tax (taxMult),
     // net of income streams already flowing at retirement. Partner salary is
     // deliberately excluded from the headline (it is temporary income).
-    const budget = yearOneBudget(fromAge, sc, gl);
+    // v8.2: only the lifelong part of the budget gets the SWR multiple; costs
+    // that end (child, mortgage) are added at their present value.
+    const budget = yearOnePermBudget(fromAge, sc, gl);
     const pensionOffset = fromAge>=gl.pensionAge ? pensionNom : 0;
     let partnerPenOff = 0;
     if (sc.hasPartner && fromAge+off>=gl.partnerPensionAge) partnerPenOff = gl.partnerPension*12*Math.pow(1+gl.inflation,tFrom);
     const annualFromPort = Math.max(0,budget-pensionOffset-partnerPenOff);
     let target = gl.swr>0 ? annualFromPort*taxMult/gl.swr : 0;
+    target += tempCostPV(fromAge, sc, gl, taxMult);
     if (opts.otherIncomeCredit) {
       // Adjusted (non-headline) number: also credit the PV of income the headline
       // ignores — pensions that start after retirement, and partner salary until
@@ -608,12 +664,22 @@ export function project(sc, gl, opts) {
         // but only what the budget needs (after other income) is actually sold —
         // no needless realisation of gains; the rest stays invested. The adequacy
         // metrics (swrIncome/swrTarget, used by Monte Carlo) use the full draw.
+        // v8.2: costs that end (child, mortgage) are paid in full from the
+        // set-aside priced into the FIRE number (tempCostPV); only the lifelong
+        // part of the budget is capped by the SWR draw. Other income covers the
+        // lifelong part first, then the temporary part.
+        const tempCost = twoP
+          ? Math.max(0, budget - Math.max(0, twoPersonCost(yr, sc, gl, pAnn + samDrawStart, herDraw, true, true).samCost))
+          : Math.min(budget, childCost + mortgageAnnRet);
+        const permBudget = Math.max(0, budget - tempCost);
         const potentialGross=portAfterGrowth*gl.swr;
-        const needGross=Math.max(0,budget-otherInc)/netFrac;
-        gross=Math.min(potentialGross,needGross);
+        const permNeedGross=Math.max(0,permBudget-otherInc)/netFrac;
+        const tempNeed=Math.max(0, tempCost - Math.max(0, otherInc-permBudget));
+        gross=Math.min(potentialGross,permNeedGross)+tempNeed/netFrac;
         if (purchaseCost>0) gross+=purchaseCost/netFrac;   // one-time purchase is funded regardless
         surplus=Math.max(0,otherInc-budget);               // pension/partner income beyond budget is saved
-        row.swrIncome=Math.round(potentialGross*netFrac+otherInc);
+        row.tempCost=Math.round(tempCost);
+        row.swrIncome=Math.round(potentialGross*netFrac+otherInc+tempNeed);
         row.swrTarget=Math.round(budget);
       } else {
         const needNet=budget+purchaseCost-otherInc;        // net cash the portfolio must produce
@@ -683,6 +749,8 @@ export function project(sc, gl, opts) {
 
   const out = {years,values,fireNums,retYear,allocations,rows,
           fireTarget:fireAtRetirement, fireTargetAdj, gainFracAtRet,
+          // v8.2: % mode only — the part of the FIRE number set aside for costs that end
+          tempPV: gl.wdMode==="swr" ? tempCostPV(sc.retAge, sc, gl, taxMultRet, herDrawByT) : 0,
           infeasibleYear, finalNetWorth: portfolio+cashVal};
   if (twoP) {
     // Full household FIRE: combined net worth (you + partner + cash) vs the

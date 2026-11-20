@@ -185,8 +185,11 @@ pensions/partner salary is reinvested.
 
 The scenario card compares your **effective monthly income** at retirement
 (after capital-gains tax, plus pensions and partner salary where active) with the
-**complete year-one budget** (spending × partner multiplier + child costs +
-mortgage − rent saved, inflation-adjusted).
+**lifelong part of the year-one budget** (spending × partner multiplier − rent
+saved, inflation-adjusted). Since v8.2, costs that end (child costs, mortgage
+payments) are not part of that comparison: they are covered by a set-aside (see
+"Costs that end" below), so the SWR income is computed on the portfolio minus
+that set-aside.
 
 ---
 
@@ -204,13 +207,30 @@ Year-One Budget = Retirement Spending × partnerMult
                 + Mortgage (if active at retirement) − Rent Saved
                                     ...all inflation-adjusted to retirement date
 
-FIRE Number (headline) = max(0, Budget − pensions already flowing at retirement)
-                         × TaxMult / SWR rate
+Lifelong Budget = Year-One Budget − costs that end in that year (child, mortgage)
+Set-aside       = Σ over the remaining years of (child costs + mortgage payments)
+                  × TaxMult / (1 + r)^(k+1)          r = portfolio return at retirement
+
+FIRE Number (headline) = max(0, Lifelong Budget − pensions already flowing at retirement)
+                         × TaxMult / SWR rate  +  Set-aside
 
 FIRE Number (adjusted) = headline − PV(state pension starting later)
                                   − PV(partner pension starting later)
                                   − PV(partner salary until partner retires)
 ```
+
+**Costs that end (v8.2).** Child costs and mortgage payments stop at a known
+year. Until v8.2 the headline priced the whole year-one budget × 1/SWR, so a
+mortgage with one year left counted as a cost for life (×25 at 4%) and the FIRE
+number fell off a cliff the year it ended (a scenario could not be funded until
+the payoff year, then showed a margin of several hundred thousand). Now only the
+lifelong part gets the SWR multiple and the costs that end are **set aside at
+their present value over their remaining years** (`tempCostPV()` in
+`js/engine.js`; your share of them in the two-person model). The projection pays
+them **in full** on top of the capped SWR draw (`rows[].tempCost`), so in % mode
+the portfolio *can* now run short during those years if it was too small; that
+flows through the usual deficit chain (`infeasibleYear`). Household FIRE uses the
+same rule. Fixed mode is unchanged (its DCF already prices every year).
 
 `TaxMult = 1 / (1 − gainFrac_at_retirement × taxRate)` grosses the target up so
 that the **after-tax** proceeds of the SWR draw cover the budget — a portfolio
@@ -511,10 +531,12 @@ Monthly Income: €3,100/mo  / €3,800 target
   - Partner pension (if enabled and partner is at pension age), inflation-adjusted
   - Partner salary (if enabled and partner is still working), inflation-adjusted
 
-- **Target** = the complete year-one budget at retirement date:
+- **Target** = the lifelong part of the year-one budget at retirement date:
   - Base retirement spending × partner multiplier (if enabled) × inflation factor
-  - Plus child costs per month (if child is still a dependent at retirement year)
-  - Plus mortgage − rent saved (if property enabled and active at retirement)
+  - Minus rent saved (if property enabled and bought)
+  - Child costs and mortgage payments are not in the target: they are paid from
+    the set-aside, which is subtracted from the portfolio before the SWR income
+    is computed (v8.2)
 
 **Green** = income ≥ target. **Red** = income < target. The chip shows
 **✓ Funded / × Short** accordingly.
@@ -949,7 +971,7 @@ The Monte Carlo tab reuses the exact same `project()` cash-flow engine as the ot
 8. **Child costs are constant in real terms** — `childCostYearly` is in today's money and grows with inflation.
 9. **Spending is constant in real terms** in retirement — you spend the same amount (inflation-adjusted) every year. No dynamic withdrawal strategy.
 10. **Cost basis tracking** uses a simplified proportional method. It is not a substitute for actual tax advice.
-11. **% of Portfolio mode** makes `SWR% × current portfolio` available each year and sells only what the budget needs — this is **not** the classic Bengen/Trinity rule (fixed real withdrawals set at retirement), and by construction it cannot fully deplete the portfolio. Its risk is income variability, reported as budget-adequacy metrics. Use **Fixed Amount** mode for Bengen-style depletion analysis.
+11. **% of Portfolio mode** makes `SWR% × current portfolio` available each year for the lifelong budget and sells only what it needs, plus, since v8.2, the costs that end in full — this is **not** the classic Bengen/Trinity rule (fixed real withdrawals set at retirement), and outside those temporary costs it cannot fully deplete the portfolio. Its risk is income variability, reported as budget-adequacy metrics. Use **Fixed Amount** mode for Bengen-style depletion analysis.
 12. **Your return inputs are compound (CAGR/geometric) returns.** The deterministic tabs compound them directly, and Monte Carlo recentering anchors the geometric mean to them, so the two views agree at the median.
 13. **Surplus income is reinvested.** In retirement, pension/partner income beyond the year's budget is added back to the portfolio (raising its cost basis) rather than discarded.
 14. **Accumulation deficits draw down cash** after the portfolio; if both run out, the year is flagged ⚠ Underfunded on the scenario card rather than silently forgiven.

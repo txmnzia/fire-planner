@@ -1,8 +1,8 @@
-import { el, eur, fmtK } from "../util.js?v=8.1.1";
-import { scenarioIssues } from "../checks.js?v=8.1.1";
-import { state } from "../state.js?v=8.1.1";
-import { getScenarioName } from "../inputs.js?v=8.1.1";
-import { portReturnAt, yearOneBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project } from "../engine.js?v=8.1.1";
+import { el, eur, fmtK } from "../util.js?v=8.2";
+import { scenarioIssues } from "../checks.js?v=8.2";
+import { state } from "../state.js?v=8.2";
+import { getScenarioName } from "../inputs.js?v=8.2";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project } from "../engine.js?v=8.2";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -50,7 +50,9 @@ export function computeCardMetrics(sc, gl, proj) {
   }
   if (gl.wdMode === 'swr') {
     const cashAtRet   = (proj.rows[iRet] || {}).cashVal || 0;
-    const investAtRet = Math.max(0, portRet - cashAtRet);
+    // v8.2: the set-aside for costs that end (proj.tempPV) is not available for the
+    // SWR draw; the SWR income only has to cover the lifelong part of the budget.
+    const investAtRet = Math.max(0, portRet - cashAtRet - (proj.tempPV || 0));
     // net of CGT at the *tracked* gain fraction at retirement, not today's
     const gfr = proj.gainFracAtRet != null ? proj.gainFracAtRet : gl.gainFrac;
     const swrPortfolio = Math.round(investAtRet * gl.swr * (1 - gfr * gl.taxRate) / 12);
@@ -67,7 +69,9 @@ export function computeCardMetrics(sc, gl, proj) {
     m.incomeBreakdown = { portfolio: swrPortfolio, pension: pensionMonthly,
                           partnerPension: partnerPensionMonthly, partnerSalary: partnerSalMonthly };
     // target = the same complete year-one budget the engine and Monte Carlo use
-    m.targetMonthly = Math.round(yearOneBudget(sc.retAge, sc, gl, herDrawRet) / 12);
+    m.targetMonthly = Math.round(yearOnePermBudget(sc.retAge, sc, gl, herDrawRet) / 12);
+    m.budgetMonthly = Math.round(yearOneBudget(sc.retAge, sc, gl, herDrawRet) / 12);   // incl. costs that end
+    m.tempPV = proj.tempPV || 0;
     m.incomeOk = m.netMonthly >= m.targetMonthly;
   } else {
     m.surplus = portRet - proj.fireTarget;

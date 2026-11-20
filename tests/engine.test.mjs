@@ -165,11 +165,18 @@ test('two-person 1 — regression: simple mode is identical to the pre-change sn
     ['all', { hasPartner: true, hasProp: true, hasChild: true }, { windfalls: [{ yr: 2032, amt: 80000 }] }],
     ['early', { retAge: 40, chgYear: 2030, chgInc: 3000 }, {}],
   ];
+  // v8.2 deliberately changed %-mode scenarios with child or property costs (costs
+  // that end are priced at present value): those three are covered by
+  // tests/tempCosts.test.mjs and the regenerated v8 golden master instead. The
+  // fields v8.2 added (tempPV, rows[].tempCost) are not in this older snapshot.
+  const movedInV82 = new Set(['swr_prop', 'swr_child', 'swr_all']);
+  const strip = p => { delete p.tempPV; p.rows.forEach(r => delete r.tempCost); return p; };
   for (const wd of ['swr', 'fixed']) for (const [k, sco, glo] of cases) {
+    if (movedInV82.has(wd + '_' + k)) continue;
     const glS = makeGl({ wdMode: wd, ...glo });
     const glA = { ...glS }; delete glA.partnerModel;
     for (const g of [glS, glA]) {
-      const p = JSON.parse(JSON.stringify(project(makeSc(sco), g)));
+      const p = strip(JSON.parse(JSON.stringify(project(makeSc(sco), g))));
       assert.deepEqual(p, snap[wd + '_' + k], wd + '_' + k);
     }
   }

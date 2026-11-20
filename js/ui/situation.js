@@ -3,9 +3,9 @@
 // The source of truth for every value stays the id-bearing form control that
 // inputs.js / sync.js already read — this module only adds friendlier controls
 // (year-picker popover, sliders, the subject rail) and the dynamic windfall list.
-import { el } from "../util.js?v=8.1.1";
-import { state } from "../state.js?v=8.1.1";
-import { recalc } from "../recalc.js?v=8.1.1";
+import { el } from "../util.js?v=8.2";
+import { state } from "../state.js?v=8.2";
+import { recalc } from "../recalc.js?v=8.2";
 
 const YNOW = 2026;
 
