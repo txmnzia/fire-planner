@@ -9,6 +9,7 @@ import { renderExplanation } from "./ui/explanation.js";
 import { updateLabels } from "./ui/controls.js";
 import { markMcStale } from "./ui/mcTab.js";
 import { scheduleSave } from "./sync.js";
+import { renderIssues } from "./ui/issues.js";
 
 // ── RECALC ──────────────────────────────────────────────────────────────────
 export function updateMultPreview() {
@@ -27,6 +28,7 @@ export function recalc() {
   const scenarios=[1,2,3,4,5].map(s=>getScenario(s,gl));
   const projs=scenarios.map(sc=>project(sc,gl));
   renderScenarioGrid(projs,gl,scenarios);
+  renderIssues(scenarios,gl);
   state.lastProjs=projs; state.lastGl=gl; state.lastScenarios=scenarios;
   buildChart(projs,gl); buildFlowChart(projs,gl); renderTable(projs,gl);
   updateLabels();

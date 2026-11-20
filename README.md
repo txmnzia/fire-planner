@@ -469,7 +469,15 @@ the partner off read "no partner" there. Every cell comes from `scenarioGridResu
 `js/ui/cards.js`, which only formats `computeCardMetrics()`: the grid and the
 Results tiles can never disagree. Rows have fixed heights, so switching anything
 never shifts the layout; on a phone the label column stays pinned and the scenario
-columns scroll sideways. Every (i) button opens its explanation in a bubble on tap
+columns scroll sideways.
+
+**Missing inputs never show as a number.** `js/checks.js` flags spending that was
+never entered: the two-person model with both your personal and shared spending
+empty, the Simple model with no spending, or a two-person scenario without the
+partner while "housing & shared costs if alone" is empty. Those inputs otherwise
+count as €0, which prices a FIRE number of €0 and a false "Funded". Affected grid
+columns show "⚠ Missing input" and "—", and a red banner under the tabs names the
+field with a Fix button that jumps to it. Every (i) button opens its explanation in a bubble on tap
 or click (and on mouse hover); the text is the button's `title` in `index.html`.
 
 ### Monthly income vs target (Results tiles)

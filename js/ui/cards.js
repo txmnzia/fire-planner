@@ -1,4 +1,5 @@
 import { el, eur, fmtK } from "../util.js";
+import { scenarioIssues } from "../checks.js";
 import { state } from "../state.js";
 import { getScenarioName } from "../inputs.js";
 import { portReturnAt, yearOneBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote } from "../engine.js";
@@ -80,6 +81,9 @@ export function computeCardMetrics(sc, gl, proj) {
 // shared with the Results tiles (AUDIT.md T8): never re-derive a number here.
 export function scenarioGridResults(sc, gl, proj) {
   const m = computeCardMetrics(sc, gl, proj);
+  // A missing spending input makes the target 0 and the verdict "funded": show
+  // that the input is missing instead of a confident wrong number.
+  const blocking = scenarioIssues(sc, gl).filter(i => i.blocking);
   const swr = gl.wdMode === 'swr';
   const funded = swr ? !!m.incomeOk : !!m.ok;
   const gap = swr ? Math.max(0, m.targetMonthly - m.netMonthly) : Math.max(0, -m.surplus);
@@ -91,8 +95,18 @@ export function scenarioGridResults(sc, gl, proj) {
     ok: !!m.two.householdOk,
     text: m.two.householdOk ? '\u2713 Funded' : '\u00d7 Short ' + fmtK(Math.max(0, m.two.householdTarget - m.two.householdNW)),
   } : null;
+  if (blocking.length) {
+    return {
+      funded: false, status: '\u26a0 Missing input', gap: null, missing: blocking.map(i => i.key),
+      fireTarget: m.fireTarget, fireTargetText: '\u2014',
+      nwAtStop: m.portRet, nwAtStopText: fmtK(m.portRet),
+      depletionYear: m.depletionYear, depletionAge,
+      lastsOk: false, lasts: '\u2014',
+      household: household ? { ok: false, text: '\u2014' } : null,
+    };
+  }
   return {
-    funded, status, gap,
+    funded, status, gap, missing: [],
     fireTarget: m.fireTarget, fireTargetText: fmtK(m.fireTarget),
     nwAtStop: m.portRet, nwAtStopText: fmtK(m.portRet),
     depletionYear: m.depletionYear, depletionAge,
@@ -113,12 +127,13 @@ export function renderScenarioGrid(projs, gl, scenarios) {
       c.textContent = text; c.classList.remove('ok', 'err', 'muted'); if (cls) c.classList.add(cls);
     };
     set('status', r.status, r.funded ? 'ok' : 'err');
-    set('target', r.fireTargetText, '');
+    set('target', r.fireTargetText, r.missing.length ? 'muted' : '');
     set('nw', r.nwAtStopText, '');
-    set('lasts', r.lasts, r.lastsOk ? 'ok' : 'err');
+    set('lasts', r.lasts, r.missing.length ? 'muted' : (r.lastsOk ? 'ok' : 'err'));
     if (r.household) anyHousehold = true;
     // two-person model, partner off: there is no household to fund, say so instead of a bare dash
-    set('household', r.household ? r.household.text : 'no partner', r.household ? (r.household.ok ? 'ok' : 'err') : 'muted');
+    set('household', r.household ? r.household.text : 'no partner',
+        r.missing.length || !r.household ? 'muted' : (r.household.ok ? 'ok' : 'err'));
   });
   const hh = el('scgHouseholdRow'); if (hh) hh.hidden = !anyHousehold;
   // The pay what-ifs are collapsed by default: say how many are set, so a value

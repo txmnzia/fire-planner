@@ -29,6 +29,8 @@ js/
   recalc.js             Orchestrator: inputs → engine → all renderers, then persistence.
   sync.js               localStorage persistence + Supabase cross-device sync
                         (collectState/applyState, magic-link sign-in, polling).
+  checks.js             Pure missing-input checks (spending never entered); the
+                        grid shows "missing" instead of a €0 target.
   db.js                 Supabase client (shared txmnzia-dbs project, schema
                         fire_planner), lazy-loaded from a CDN, null when offline.
   ui/
@@ -48,6 +50,8 @@ js/
                         with a feature off quantify life-event impacts).
     infoTips.js         Tap/click/hover bubbles for every (i) button (text from its
                         title); placeTip() is the pure, tested placement.
+    issues.js           Red banner under the tabs listing missing inputs, with a
+                        Fix button that jumps to the field.
     ibkr.js             IBKR CSV import and holdings list.
     nwHistory.js        Net-worth snapshot editor (plan-vs-actual inputs) —
                         compact datapoint rows shared with the windfall list.
