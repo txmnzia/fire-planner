@@ -1,12 +1,13 @@
-import { el } from "./util.js?v=8.5";
-import { state, features } from "./state.js?v=8.5";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.5";
-import { recalc } from "./recalc.js?v=8.5";
-import { renderHoldings } from "./ui/ibkr.js?v=8.5";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.5";
-import { refreshSituationControls } from "./ui/situation.js?v=8.5";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.5";
-import { db } from "./db.js?v=8.5";
+import { el } from "./util.js?v=8.6";
+import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.6";
+import { state, features } from "./state.js?v=8.6";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.6";
+import { recalc } from "./recalc.js?v=8.6";
+import { renderHoldings } from "./ui/ibkr.js?v=8.6";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.6";
+import { refreshSituationControls } from "./ui/situation.js?v=8.6";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.6";
+import { db } from "./db.js?v=8.6";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
@@ -56,6 +57,7 @@ export function collectState() {
   return { v: 1, fields, wdMode: wdEl ? wdEl.value : 'fixed', features: feat,
     nwHistory: state.nwHistory,
     windfalls: state.windfalls,
+    payChanges: state.payChanges,
     mc: { recenter: mcRe ? mcRe.checked : true },
     ibkr: { total: state.ibkrTotal, holdings: state.ibkrHoldings } };
 }
@@ -110,6 +112,11 @@ function applyStateInner(data) {
     }
     state.windfalls = wfs;
   }
+  // v8.6: pay changes are plans. A payload without them predates v8.6: build
+  // them once from the old per-scenario fields (which stay saved, unused).
+  state.payChanges = Array.isArray(data.payChanges)
+    ? normalisePayChanges(data.payChanges)
+    : migrateFromFields(data.fields, data.fields?.baseYear);
   renderNwHistory();
   refreshSituationControls();
   for (let s = 1; s <= 5; s++) updateAge(s);

@@ -1,15 +1,15 @@
-import { el, eur, numVal } from "./util.js?v=8.5";
-import { state } from "./state.js?v=8.5";
-import { getGlobals, getScenario } from "./inputs.js?v=8.5";
-import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.5";
-import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.5";
-import { renderTable } from "./ui/table.js?v=8.5";
-import { renderExplanation } from "./ui/explanation.js?v=8.5";
-import { updateLabels } from "./ui/controls.js?v=8.5";
-import { markMcStale } from "./ui/mcTab.js?v=8.5";
-import { scheduleSave } from "./sync.js?v=8.5";
-import { renderIssues } from "./ui/issues.js?v=8.5";
-import { renderPlans } from "./ui/plans.js?v=8.5";
+import { el, eur, numVal } from "./util.js?v=8.6";
+import { state } from "./state.js?v=8.6";
+import { getGlobals, getScenario } from "./inputs.js?v=8.6";
+import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.6";
+import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.6";
+import { renderTable } from "./ui/table.js?v=8.6";
+import { renderExplanation } from "./ui/explanation.js?v=8.6";
+import { updateLabels } from "./ui/controls.js?v=8.6";
+import { markMcStale } from "./ui/mcTab.js?v=8.6";
+import { scheduleSave } from "./sync.js?v=8.6";
+import { renderIssues } from "./ui/issues.js?v=8.6";
+import { renderPlans } from "./ui/plans.js?v=8.6";
 
 // ── RECALC ──────────────────────────────────────────────────────────────────
 export function updateMultPreview() {

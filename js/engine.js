@@ -290,6 +290,20 @@ export function taxMultAfter(taxMult, taxRate, r, years) {
   return 1/Math.max(0.001, 1 - g*taxRate);
 }
 
+// Your take-home in year yr (€/month, today's money). v8.6: sc.payChanges is a
+// list of { from, to, amt } (to inclusive, null = for good); when several apply,
+// the one that started latest wins; outside every change it is sc.income.
+// Without sc.payChanges, the pre-v8.6 single permanent change (chgYear/chgInc).
+export function payIncomeAt(sc, yr) {
+  if (Array.isArray(sc.payChanges)) {
+    let pay = sc.income, start = -Infinity;
+    for (const c of sc.payChanges)
+      if (yr >= c.from && (c.to === null || c.to === undefined || yr <= c.to) && c.from >= start) { pay = c.amt; start = c.from; }
+    return pay;
+  }
+  return (sc.chgYear !== null && sc.chgYear !== undefined && yr >= sc.chgYear && sc.chgInc !== null && sc.chgInc !== undefined) ? sc.chgInc : sc.income;
+}
+
 export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
   opts = opts || {};
   if (fromAge>=gl.lifeExp) return 0;
@@ -623,8 +637,7 @@ export function project(sc, gl, opts) {
       if (ov && ov.inc != null) {
         annInc = ov.inc*12; // real past income (nominal) — overrides all income logic
       } else {
-        annInc = sc.income*12*infl;
-        if (sc.chgYear!==null && yr>=sc.chgYear && sc.chgInc!==null) annInc=sc.chgInc*12*infl;
+        annInc = payIncomeAt(sc, yr)*12*infl;
         annInc = incomeInYear(yr, annInc, infl);
         // partner income until the partner retires; partner pension once they reach pension age
         // simple model only: the two-person model keeps her income on her side

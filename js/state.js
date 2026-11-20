@@ -5,7 +5,8 @@ export const state = {
   ibkrTotal: 0,
   ibkrHoldings: [],
   nwHistory: [],   // [{year,val,income,spend}] manual net-worth snapshots for plan-vs-actual
-  windfalls: [],   // [{yr,amt,off}] one-off future windfalls; off = scenario ids it is switched off for (v8.4)
+  windfalls: [],
+  payChanges: [],  // [{name,from,to,amt,on}] pay changes as plans (v8.6, js/payChanges.js)   // [{yr,amt,off}] one-off future windfalls; off = scenario ids it is switched off for (v8.4)
   activeScIdx: 0,
   lastProjs: null, lastGl: null, lastScenarios: null,
 };

@@ -415,6 +415,10 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .tog-sw.on-wf{background:rgba(251,191,36,.3);}
 .tog-sw.on-wf::after{transform:translateX(14px);background:var(--s2c);}
 .wf-chips{margin:6px 0 2px;}
+.pay-list{display:flex;flex-direction:column;gap:8px;}
+.pay-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bdrs);}
+.pay-in{height:34px;font-size:13px;}
+.pay-chips{margin-left:auto;}
 .tog-sw.on-child{background:rgba(52,211,153,.3);}
 .tog-sw.on-child::after{transform:translateX(14px);background:var(--s3c);}
 

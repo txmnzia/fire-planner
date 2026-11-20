@@ -1,15 +1,8 @@
-import { el, numVal, optVal } from "./util.js?v=8.5";
-import { state, features } from "./state.js?v=8.5";
-import { effectiveFeatures } from "./checks.js?v=8.5";
+import { el, numVal, optVal } from "./util.js?v=8.6";
+import { state, features } from "./state.js?v=8.6";
+import { effectiveFeatures } from "./checks.js?v=8.6";
+import { payChangesFor } from "./payChanges.js?v=8.6";
 
-export function incomeFor(s) {
-  const ov = el("s" + s + "_inc");
-  if (ov && ov.value.trim() !== "") {
-    const v = parseFloat(ov.value);
-    if (!isNaN(v)) return v;
-  }
-  return numVal("baseIncome", 0);
-}
 
 // Optional money field: null when empty (unlike optVal, 0 is a valid value).
 function optNum(id) {
@@ -126,9 +119,12 @@ export function getScenario(s, gl) {
   return {
     id:       s,
     retAge:   numVal("s"+s+"_ret", 38+(s-1)*4),
-    income:   incomeFor(s),
-    chgYear:  optVal("s"+s+"_chgYear"),
-    chgInc:   optVal("s"+s+"_chgInc"),
+    // v8.6: pay changes are plans (state.payChanges); the old per-scenario
+    // override and change fields are migrated once and no longer read here
+    income:   numVal("baseIncome", 0),
+    chgYear:  null,
+    chgInc:   null,
+    payChanges: payChangesFor(state.payChanges, s),
     // feature flags
     hasPartner: feat.partner,
     hasProp:    feat.prop,

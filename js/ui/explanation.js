@@ -1,9 +1,9 @@
-import { el, eur } from "../util.js?v=8.5";
-import { state } from "../state.js?v=8.5";
-import { getScenarioName } from "../inputs.js?v=8.5";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, project, partnerSeparation } from "../engine.js?v=8.5";
-import { computeCardMetrics } from "./cards.js?v=8.5";
-import { FLOW_COLORS } from "./charts.js?v=8.5";
+import { el, eur } from "../util.js?v=8.6";
+import { state } from "../state.js?v=8.6";
+import { getScenarioName } from "../inputs.js?v=8.6";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, project, partnerSeparation } from "../engine.js?v=8.6";
+import { computeCardMetrics } from "./cards.js?v=8.6";
+import { FLOW_COLORS } from "./charts.js?v=8.6";
 
 // ── EXPLANATION TAB ──────────────────────────────────────────────────────────
 // "Your plan, explained": turns the selected scenario's projection into a
@@ -134,13 +134,17 @@ export function renderExplanation(projs, gl, scenarios) {
   }
 
   // salary change (scenario input)
-  if (!already && sc.chgYear != null && sc.chgInc != null) {
-    const cIdx = sc.chgYear - baseYear;
+  // pay changes (v8.6 plans): one event when each starts, and when a temporary one ends
+  if (!already) (sc.payChanges || []).forEach(c => {
+    const cIdx = c.from - baseYear;
     if (cIdx > 0 && cIdx < retIdx) {
-      const up = sc.chgInc >= sc.income;
-      addEv(cIdx, "&#x1F4B6;", "Your income changes", "Salary " + (up ? "rises" : "drops") + " from " + eur(sc.income) + " to <strong>" + eur(sc.chgInc) + "/mo</strong> (today's €)" + (up ? ", accelerating the plan." : " — the plan absorbs the lower saving rate from here."), up ? "ok" : "warn");
+      const up = c.amt >= sc.income;
+      addEv(cIdx, "&#x1F4B6;", "Your income changes", "Take-home " + (up ? "rises" : "drops") + " from " + eur(sc.income) + " to <strong>" + eur(c.amt) + "/mo</strong> (today's €)" + (c.to != null ? " until " + c.to : "") + (up ? ", accelerating the plan." : " — the plan absorbs the lower saving rate from here."), up ? "ok" : "warn");
     }
-  }
+    const eIdx = c.to != null ? c.to + 1 - baseYear : null;
+    if (eIdx != null && eIdx > 0 && eIdx < retIdx)
+      addEv(eIdx, "&#x1F4B6;", "Pay back to normal", "The change from " + c.from + " ends; take-home returns to " + eur(sc.income) + "/mo (today's €).", "ok");
+  });
 
   // property purchase + mortgage payoff — impact measured by re-running the
   // pure engine with the feature off and diffing (no duplicated financial logic)

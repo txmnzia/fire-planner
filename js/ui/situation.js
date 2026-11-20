@@ -3,10 +3,10 @@
 // The source of truth for every value stays the id-bearing form control that
 // inputs.js / sync.js already read — this module only adds friendlier controls
 // (year-picker popover, sliders, the subject rail) and the dynamic windfall list.
-import { el } from "../util.js?v=8.5";
-import { toggleWindfall, LETTERS } from "./plans.js?v=8.5";
-import { state } from "../state.js?v=8.5";
-import { recalc } from "../recalc.js?v=8.5";
+import { el } from "../util.js?v=8.6";
+import { toggleWindfall, LETTERS, renderPayList } from "./plans.js?v=8.6";
+import { state } from "../state.js?v=8.6";
+import { recalc } from "../recalc.js?v=8.6";
 
 const YNOW = 2026;
 
@@ -234,6 +234,7 @@ export function refreshSituationControls() {
   document.querySelectorAll('.ypick[data-target]').forEach(p => { if (p._paint) p._paint(); });
   document.querySelectorAll('.cur-in[data-target]').forEach(d => { if (d._paintCur) d._paintCur(); });
   renderWindfalls();
+  renderPayList();   // pay changes (v8.6) after a load or a sync pull
 }
 
 export function initSituation() {

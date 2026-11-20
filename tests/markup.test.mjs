@@ -43,7 +43,7 @@ test('markup: every inline handler (HTML and renderers) is bound on window in ma
 test('scenario grid: every row has one label and five cells, in scenario order', () => {
   const panel = html.slice(html.indexOf('id="tab-panel-scenarios"'), html.indexOf('/tab-panel-scenarios'));
   const rows = panel.split('<div class="scg-row').slice(1);
-  assert.ok(rows.length >= 10, 'rows found: ' + rows.length);
+  assert.ok(rows.length >= 7, 'rows found: ' + rows.length);
   for (const r of rows) {
     const body = r.slice(0, r.indexOf('    </div>\n'));
     assert.equal((body.match(/class="scg-lbl"/g) || []).length, 1, 'one label');

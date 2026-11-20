@@ -29,6 +29,8 @@ js/
   recalc.js             Orchestrator: inputs → engine → all renderers, then persistence.
   sync.js               localStorage persistence + Supabase cross-device sync
                         (collectState/applyState, magic-link sign-in, polling).
+  payChanges.js         Pure: pay-change plans (normalise, completeness, per-scenario
+                        list, migration from the old per-scenario pay fields).
   checks.js             Pure missing-input checks (spending never entered) and the
                         plan set-up rule (plansSetUp / effectiveFeatures); the
                         grid shows "missing" instead of a €0 target.

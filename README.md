@@ -503,9 +503,8 @@ the rent that stops: it shows your **rent today**, entered once on My Situation.
 
 The Scenarios tab is one grid: labels once on the left, one column per scenario.
 Rows: the scenario **name**, the three **life events** (with partner, buy property,
-have a child, each an on/off switch per scenario), the collapsed **Pay what-ifs**
-(take-home override, pay change year and new take-home; the summary says how many
-are set), and the **result** rows below.
+have a child, each an on/off switch per scenario), one switch row per **windfall**
+and per **pay change** set up on the Plans tab, and the **result** rows below.
 
 **Stop ages are automatic (v8.1).** There is no stop-age input: each scenario stops
 at its **earliest funded age**. `earliestStopAge()` in `js/ui/cards.js` projects
@@ -860,20 +859,32 @@ it earlier when a windfall lands.
 
 ---
 
-## Income Change (Barista FIRE)
+## Pay Changes (v8.6)
 
-Each scenario supports an optional **income change** at a specified year:
-
-- `chgYear`: year the new income takes effect
-- `chgInc`: new monthly income from that year onward
+Pay changes are **plans** on the Plans tab: a name, a start year, an optional end
+year (inclusive; empty = for good) and the take-home per month during it (today's
+money; 0 = no pay, e.g. a year off), with an A–E switch per scenario. The scenario
+grid shows one row per pay change. Outside every change you earn your take-home
+from My Situation; when several apply in a year, the one that **started latest**
+wins (`payIncomeAt()` in `js/engine.js`).
 
 ```javascript
-annualIncome = income × 12 × inflFactor
-if (yr >= chgYear && chgYear !== null)
-  annualIncome = chgInc × 12 × inflFactor
+pay(yr) = income                                   // baseIncome
+for each change c switched on for this scenario:
+  if (yr >= c.from && (c.to === null || yr <= c.to) && c.from >= latestStart) pay(yr) = c.amt
+annualIncome = pay(yr) × 12 × inflFactor
 ```
 
-**Use case:** Scenario C is pre-configured as "Barista FIRE" — full-time work until a specified year, then part-time work at a much lower income, before fully retiring later. This lets you model the middle path between full accumulation and early retirement.
+Before v8.6 each scenario had a take-home override (`s{n}_inc`) and one permanent
+change (`s{n}_chgYear`, `s{n}_chgInc`). On the first load of an older payload they
+become plans (`migrateFromFields()` in `js/payChanges.js`): an override becomes a
+change from the plan start year, for good; identical changes in several scenarios
+become one plan switched on in each. The old fields stay saved (hidden) and are no
+longer read. A permanent pay-change plan projects exactly like the old field
+(tested on every golden case).
+
+**Use case:** a 4-day week from 2030, or a part-time "Barista FIRE" phase, or a
+year off: one row each, switched on in the scenarios that should include it.
 
 ---
 
@@ -887,7 +898,7 @@ if (yr >= chgYear && chgYear !== null)
 | D — With Partner | 42 | ✓ | ✗ | ✗ | Joint income, joint spending |
 | E — Full Picture | varies | ✓ | ✓ | ✓ | All add-ons enabled |
 
-You can rename scenarios and change the life-event switches, income override and income change fields on the Scenarios grid; the stop age follows automatically.
+You can rename scenarios and switch life events, windfalls and pay changes per scenario on the Scenarios grid; the stop age follows automatically.
 
 ---
 
