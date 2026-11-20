@@ -5,7 +5,7 @@ import { recalc } from "./recalc.js";
 import { loadState, initSync, scheduleSave, connectSync, disconnectSync,
          openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js";
 import { switchTab, toggleFeature, updateToggleUI, scrollToScenario, updateScNav,
-         updateAge, stepAge, clampAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js";
+         updateAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js";
 import { handleCSV } from "./ui/ibkr.js";
 import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js";
 import { initSituation, setPartnerModel } from "./ui/situation.js";
@@ -16,7 +16,7 @@ import { selectExplanationScenario } from "./ui/explanation.js";
 // The HTML uses inline on* attributes (and render functions emit them too), so
 // every function they reference must exist as a global.
 Object.assign(window, {
-  recalc, switchTab, toggleFeature, updateAge, stepAge, clampAge, onWdMode, setPartnerModel,
+  recalc, switchTab, toggleFeature, updateAge, onWdMode, setPartnerModel,
   toggleTable, downloadCSV, setActiveScenario, scrollToScenario,
   handleCSV, addNwRow, updateNwRow, removeNwRow,
   runMonteCarloUI, selectMcScenario, selectExplanationScenario,

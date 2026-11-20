@@ -34,10 +34,12 @@ js/
   db.js                 Supabase client (shared txmnzia-dbs project, schema
                         fire_planner), lazy-loaded from a CDN, null when offline.
   ui/
-    controls.js         Tabs, feature toggles, stop-age steppers, withdrawal-mode switch,
+    controls.js         Tabs, feature toggles, withdrawal-mode switch,
                         labels, active-scenario selection, mobile nav.
     cards.js            computeCardMetrics (single source of card numbers), the
-                        Scenarios grid result cells (scenarioGridResults /
+                        automatic stop ages (earliestStopAge / withStopAges,
+                        used by recalc and the Monte Carlo tab), the Scenarios
+                        grid result cells (scenarioGridResults /
                         renderScenarioGrid) and the Results summary tiles.
     charts.js           Projection & allocation charts (Chart.js) and shared palette.
     table.js            Year-by-year detail table + CSV export.

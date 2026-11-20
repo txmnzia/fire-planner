@@ -552,7 +552,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .scg-r-plan .scg-lbl{align-items:flex-start;padding-top:13px;}
 .scg-num{width:100%;max-width:120px;height:30px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;}
 .scg-out{font-family:'DM Mono',monospace;font-size:12px;color:var(--text);text-align:center;white-space:nowrap;}
-.scg-out.ok{color:var(--ok);} .scg-out.err{color:var(--err);} .scg-out.muted{color:var(--muted);}
+.scg-out.ok{color:var(--ok);} .scg-out.err{color:var(--err);} .scg-out.muted{color:var(--muted);} .scg-out.age{font-size:15px;font-weight:700;}
 .scg-sec{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--sec);padding:12px 0 4px;}
 .scg-sec-note{font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted);margin-left:6px;}
 .scg-more{border-top:1px solid var(--bdrs);margin-top:2px;}

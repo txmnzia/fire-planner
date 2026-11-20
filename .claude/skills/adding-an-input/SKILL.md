@@ -58,7 +58,7 @@ Rules:
   `mcRecenter`) use `onchange="scheduleSave()"` only — MC reads them at Run
   time in `js/ui/mcTab.js`, and rerunning deterministic recalc would be noise.
 - **Dedicated handlers**: if the input needs UI work beyond recalc (the
-  `s{n}_ret` number fields call `updateAge(n)` (input) / `clampAge(n)` (change), the `wdMode` radios call
+  `s{n}_ret` is a hidden field since v8.1 (stop ages are automatic); `updateAge(n)` remains for loading, the `wdMode` radios call
   `onWdMode()` — both in `js/ui/controls.js`, both call `recalc()` themselves),
   write the handler in the appropriate `js/ui/` module and **add it to the
   `Object.assign(window, {...})` block in `js/main.js`** — inline `on*`

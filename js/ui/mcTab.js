@@ -1,5 +1,6 @@
 import { el, fmt, fmtK } from "../util.js";
 import { getGlobals, getScenario, getScenarioName } from "../inputs.js";
+import { withStopAges } from "./cards.js";
 import { project } from "../engine.js";
 import { runMonteCarlo, mcPct } from "../montecarlo.js";
 import { COLORS, COLORS_FADE, ALPHAS, GC, FIRE_LINE } from "./charts.js";
@@ -20,7 +21,7 @@ export function runMonteCarloUI(){
   requestAnimationFrame(()=>setTimeout(()=>{
     try {
       const gl=getGlobals();
-      const scenarios=[1,2,3,4,5].map(s=>getScenario(s,gl));
+      const scenarios=withStopAges([1,2,3,4,5].map(s=>getScenario(s,gl)),gl).map(x=>x.sc);
       const cfg={ sims:parseInt(el('mcSims').value)||1000,
                   blockLen:parseInt(el('mcBlock').value)||5,
                   recenter:el('mcRecenter').checked };

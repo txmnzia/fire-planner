@@ -1,4 +1,4 @@
-import { el, numVal, stepClamp } from "../util.js";
+import { el, numVal } from "../util.js";
 import { state, features } from "../state.js";
 import { getScenarioName } from "../inputs.js";
 import { recalc } from "../recalc.js";
@@ -57,26 +57,12 @@ export function scrollToScenario(idx) {
   updateScNav(idx);
 }
 
-// ── STOP AGE (scenario grid) ───────────────────────────────────────────────
-// The stop age is a number field with − / + buttons. While typing, a value outside
-// [min, max] is ignored (no recalc on a half-typed "4"); leaving the field clamps it.
-function ageBounds(inp) { return [parseInt(inp.min, 10) || 30, parseInt(inp.max, 10) || 75]; }
+// ── STOP AGE ───────────────────────────────────────────────────────────────
+// Stop ages are automatic since v8.1 (earliestStopAge in js/ui/cards.js). The
+// s{n}_ret hidden inputs only keep the last saved value for older builds and for
+// scenarios with a missing input; loading state still calls this.
 export function updateAge(s) {
   const inp = el("s"+s+"_ret"); if (!inp) return;
-  const [min, max] = ageBounds(inp), v = parseInt(inp.value, 10);
-  if (isNaN(v) || v < min || v > max) return;
-  recalc();
-}
-export function clampAge(s) {
-  const inp = el("s"+s+"_ret"); if (!inp) return;
-  const [min, max] = ageBounds(inp);
-  inp.value = stepClamp(inp.value, 0, min, max);
-  recalc();
-}
-export function stepAge(s, delta) {
-  const inp = el("s"+s+"_ret"); if (!inp) return;
-  const [min, max] = ageBounds(inp);
-  inp.value = stepClamp(inp.value, delta, min, max);
   recalc();
 }
 

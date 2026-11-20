@@ -2,7 +2,7 @@ import { el, eur, fmtK } from "../util.js";
 import { scenarioIssues } from "../checks.js";
 import { state } from "../state.js";
 import { getScenarioName } from "../inputs.js";
-import { portReturnAt, yearOneBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote } from "../engine.js";
+import { portReturnAt, yearOneBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project } from "../engine.js";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -76,10 +76,49 @@ export function computeCardMetrics(sc, gl, proj) {
   return m;
 }
 
+// ── Automatic stop age (v8.1) ──────────────────────────────────────────────
+// A scenario's stop age is no longer typed: it is the earliest age at which the
+// scenario is funded (isFunded: the computeCardMetrics verdict, % mode → income
+// covers the year-one budget, fixed mode → net worth at stop ≥ FIRE number, AND
+// the money lasts to life expectancy). In the two-person model with the partner on
+// this is YOUR funding (she keeps working to her own retirement age); Household
+// FIRE stays a separate row. Every age from max(30, current age) to
+// min(75, life expectancy − 1) is projected in turn; the first funded one wins.
+// No funded age → found:false and the scenario is shown at the last age tried.
+export const STOP_AGE_MIN = 30, STOP_AGE_MAX = 75;
+// Funded = the scenario's verdict AND the money lasts: no year where portfolio and
+// cash run out (infeasibleYear) and, in fixed mode, no depletion before life
+// expectancy. The second half matters in fixed mode, where "net worth ≥ FIRE
+// number" can hold at the stop age while the path still runs dry later.
+export function isFunded(sc, gl, proj) {
+  const m = computeCardMetrics(sc, gl, proj);
+  const verdict = gl.wdMode === 'swr' ? !!m.incomeOk : !!m.ok;
+  return verdict && m.depletionYear == null && proj.infeasibleYear == null;
+}
+export function earliestStopAge(sc, gl) {
+  const lo = Math.max(STOP_AGE_MIN, gl.currentAge), hi = Math.min(STOP_AGE_MAX, gl.lifeExp - 1);
+  let last = null;
+  for (let a = lo; a <= hi; a++) {
+    const s = { ...sc, retAge: a }, p = project(s, gl);
+    last = { sc: s, proj: p };
+    if (isFunded(s, gl, p)) return { found: true, age: a, sc: s, proj: p };
+  }
+  return { found: false, age: last ? last.sc.retAge : sc.retAge, sc: last ? last.sc : sc, proj: last ? last.proj : project(sc, gl) };
+}
+// The scenarios every tab uses: each with its automatic stop age. A scenario with
+// a missing input (js/checks.js) is not searched (it would look funded at once);
+// it keeps its last saved age and the grid shows "missing".
+export function withStopAges(scenarios, gl) {
+  return scenarios.map(sc => {
+    if (scenarioIssues(sc, gl).some(i => i.blocking)) return { found: false, missing: true, age: sc.retAge, sc, proj: project(sc, gl) };
+    return { missing: false, ...earliestStopAge(sc, gl) };
+  });
+}
+
 // Scenario grid (v8, Scenarios tab): the few result cells shown under each
 // scenario column. Every figure comes from computeCardMetrics, the single source
 // shared with the Results tiles (AUDIT.md T8): never re-derive a number here.
-export function scenarioGridResults(sc, gl, proj) {
+export function scenarioGridResults(sc, gl, proj, stop) {
   const m = computeCardMetrics(sc, gl, proj);
   // A missing spending input makes the target 0 and the verdict "funded": show
   // that the input is missing instead of a confident wrong number.
@@ -95,8 +134,13 @@ export function scenarioGridResults(sc, gl, proj) {
     ok: !!m.two.householdOk,
     text: m.two.householdOk ? '\u2713 Funded' : '\u00d7 Short ' + fmtK(Math.max(0, m.two.householdTarget - m.two.householdNW)),
   } : null;
+  const stopFound = stop ? !!stop.found : true;
+  const stopAgeText = sc.retAge + ' \u00b7 ' + m.retYear;
+  const margin = m.portRet - m.fireTarget;
+  const marginText = (margin >= 0 ? '+' : '\u2212') + fmtK(Math.abs(margin));
   if (blocking.length) {
     return {
+      stopFound: false, stopAgeText: '\u2014', margin: null, marginText: '\u2014',
       funded: false, status: '\u26a0 Missing input', gap: null, missing: blocking.map(i => i.key),
       fireTarget: m.fireTarget, fireTargetText: '\u2014',
       nwAtStop: m.portRet, nwAtStopText: fmtK(m.portRet),
@@ -106,6 +150,7 @@ export function scenarioGridResults(sc, gl, proj) {
     };
   }
   return {
+    stopFound, stopAgeText: stopFound ? stopAgeText : 'not by ' + sc.retAge, margin, marginText,
     funded, status, gap, missing: [],
     fireTarget: m.fireTarget, fireTargetText: fmtK(m.fireTarget),
     nwAtStop: m.portRet, nwAtStopText: fmtK(m.portRet),
@@ -118,17 +163,16 @@ export function scenarioGridResults(sc, gl, proj) {
 
 // Writes the result rows of the scenario grid. Cells are plain text; colour comes
 // from the ok/err classes, so no value is ever interpolated into HTML.
-export function renderScenarioGrid(projs, gl, scenarios) {
+export function renderScenarioGrid(projs, gl, scenarios, stops) {
   let anyHousehold = false;
   scenarios.forEach((sc, i) => {
-    const n = i + 1, r = scenarioGridResults(sc, gl, projs[i]);
+    const n = i + 1, r = scenarioGridResults(sc, gl, projs[i], stops ? stops[i] : null);
     const set = (key, text, cls) => {
       const c = el('scr' + n + '_' + key); if (!c) return;
-      c.textContent = text; c.classList.remove('ok', 'err', 'muted'); if (cls) c.classList.add(cls);
+      c.textContent = text; c.classList.remove('ok', 'err', 'muted', 'age'); if (cls) c.classList.add(cls);
     };
-    set('status', r.status, r.funded ? 'ok' : 'err');
-    set('target', r.fireTargetText, r.missing.length ? 'muted' : '');
-    set('nw', r.nwAtStopText, '');
+    set('age', r.stopAgeText, r.missing.length ? 'muted' : (r.stopFound ? 'age' : 'err'));
+    set('margin', r.marginText, r.missing.length ? 'muted' : (r.margin >= 0 ? 'ok' : 'err'));
     set('lasts', r.lasts, r.missing.length ? 'muted' : (r.lastsOk ? 'ok' : 'err'));
     if (r.household) anyHousehold = true;
     // two-person model, partner off: there is no household to fund, say so instead of a bare dash

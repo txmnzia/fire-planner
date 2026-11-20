@@ -451,18 +451,33 @@ CoastNumber  = FIRE Number / growthFactor
 ### The scenario grid (v8)
 
 The Scenarios tab is one grid: labels once on the left, one column per scenario.
-Rows: the scenario **name**, **You stop at** (type the age or use − / +, clamped to
-30–75), the three **life events** (with partner, buy property, have a child, each an
-on/off switch per scenario), the collapsed **Pay what-ifs** (take-home override, pay
-change year and new take-home; the summary says how many are set), and four
-**result** rows:
+Rows: the scenario **name**, the three **life events** (with partner, buy property,
+have a child, each an on/off switch per scenario), the collapsed **Pay what-ifs**
+(take-home override, pay change year and new take-home; the summary says how many
+are set), and the **result** rows below.
+
+**Stop ages are automatic (v8.1).** There is no stop-age input: each scenario stops
+at its **earliest funded age**. `earliestStopAge()` in `js/ui/cards.js` projects
+every age from max(30, current age) to min(75, life expectancy − 1) and keeps the
+first where `isFunded()` holds: the card verdict (% mode: income covers the
+year-one budget; fixed mode: net worth at stop ≥ FIRE number) **and** the money
+lasts (no infeasible year, no depletion before life expectancy). In the
+two-person model with the partner on, "funded" means **your** costs are covered
+while she keeps working to her own retirement age; Household FIRE stays a separate
+row. A scenario with a missing input is not searched. No funded age → "not by 75",
+shown at 75. `withStopAges()` is what `recalc()` and the Monte Carlo tab both use,
+so every tab shows the same age. The old `s{n}_ret` values stay saved (hidden) for
+older builds.
 
 | Row | Meaning | Source |
 |---|---|---|
-| Funded when you stop | % mode: ✓ Funded or × Short €X/mo (target − income); fixed mode: ✓ +surplus or × Gap | `computeCardMetrics` (`incomeOk`, `netMonthly`, `targetMonthly`, `surplus`) |
-| FIRE number | the target at the stop age | `proj.fireTarget` |
-| Net worth when you stop | projected investable net worth at the stop age | `computeCardMetrics().portRet` |
+| Earliest stop age | first funded age · its year | `earliestStopAge()` |
+| Margin when you stop | net worth at that age − FIRE number at that age | `computeCardMetrics()` (`portRet`, `fireTarget`) |
 | Money lasts | "to {life expectancy}+" or "runs out at {age}" | `computeCardMetrics().depletionYear` |
+
+A large margin usually means a cost that ends soon after an earlier age (a
+mortgage's last year, a child's last dependent year) kept that earlier age from
+being funded: in % mode the FIRE number prices the year-one budget as permanent.
 
 A fifth row, **Household FIRE**, appears only in the two-person model; scenarios with
 the partner off read "no partner" there. Every cell comes from `scenarioGridResults()` in
@@ -819,7 +834,7 @@ if (yr >= chgYear && chgYear !== null)
 | D — With Partner | 42 | ✓ | ✗ | ✗ | Joint income, joint spending |
 | E — Full Picture | varies | ✓ | ✓ | ✓ | All add-ons enabled |
 
-You can rename scenarios and change all parameters on the Scenarios grid: stop age, life-event switches, income override, and income change fields.
+You can rename scenarios and change the life-event switches, income override and income change fields on the Scenarios grid; the stop age follows automatically.
 
 ---
 

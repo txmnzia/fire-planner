@@ -43,7 +43,7 @@ test('markup: every inline handler (HTML and renderers) is bound on window in ma
 test('scenario grid: every row has one label and five cells, in scenario order', () => {
   const panel = html.slice(html.indexOf('id="tab-panel-scenarios"'), html.indexOf('/tab-panel-scenarios'));
   const rows = panel.split('<div class="scg-row').slice(1);
-  assert.ok(rows.length >= 12, 'rows found: ' + rows.length);
+  assert.ok(rows.length >= 10, 'rows found: ' + rows.length);
   for (const r of rows) {
     const body = r.slice(0, r.indexOf('    </div>\n'));
     assert.equal((body.match(/class="scg-lbl"/g) || []).length, 1, 'one label');
@@ -56,7 +56,7 @@ test('scenario grid: every per-scenario control and result cell exists once', ()
   for (let n = 1; n <= 5; n++) {
     for (const id of ['sc' + n + 'name', 's' + n + '_ret', 's' + n + '_inc', 's' + n + '_chgYear', 's' + n + '_chgInc',
       'tog' + n + '_partner', 'tog' + n + '_prop', 'tog' + n + '_child',
-      'scr' + n + '_status', 'scr' + n + '_target', 'scr' + n + '_nw', 'scr' + n + '_lasts', 'scr' + n + '_household'])
+      'scr' + n + '_age', 'scr' + n + '_margin', 'scr' + n + '_lasts', 'scr' + n + '_household'])
       assert.equal(count(id), 1, id);
   }
   assert.equal(count('scgHouseholdRow'), 1);
@@ -66,16 +66,22 @@ test('scenario grid: the renderer writes exactly the result cells the markup has
   const cards = read('js/ui/cards.js');
   const fn = cards.slice(cards.indexOf('export function renderScenarioGrid'));
   const keys = [...fn.slice(0, fn.indexOf('\n}\n')).matchAll(/set\('(\w+)'/g)].map(m => m[1]).sort();
-  assert.deepEqual(keys, ['household', 'lasts', 'nw', 'status', 'target']);
+  assert.deepEqual(keys, ['age', 'household', 'lasts', 'margin']);
 });
 
-test('scenario grid: stop-age fields keep the 30-75 bounds the stepper clamps to', () => {
+test('scenario grid: stop ages are automatic (no input, saved value kept hidden for old builds)', () => {
   for (let n = 1; n <= 5; n++) {
     const tag = html.match(new RegExp('<input[^>]*id="s' + n + '_ret"[^>]*>'))[0];
-    assert.match(tag, /min="30"/); assert.match(tag, /max="75"/); assert.match(tag, /type="number"/);
-    assert.match(tag, new RegExp('oninput="updateAge\\(' + n + '\\)"'));
-    assert.match(tag, new RegExp('onchange="clampAge\\(' + n + '\\)"'));
+    assert.match(tag, /type="hidden"/);
   }
+  assert.ok(!/stepAge\(|clampAge\(/.test(html), 'no stop-age stepper left');
+  const main = read('js/main.js');
+  assert.ok(!/stepAge|clampAge/.test(main));
+});
+
+test('every tab uses the automatic stop ages (recalc and Monte Carlo)', () => {
+  assert.match(read('js/recalc.js'), /const stops=withStopAges\(\[1,2,3,4,5\]\.map\(s=>getScenario\(s,gl\)\),gl\);/);
+  assert.match(read('js/ui/mcTab.js'), /withStopAges\(\[1,2,3,4,5\]\.map\(s=>getScenario\(s,gl\)\),gl\)\.map\(x=>x\.sc\)/);
 });
 
 test('scenario grid: no retired card markup is left behind', () => {

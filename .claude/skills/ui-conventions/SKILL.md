@@ -117,7 +117,10 @@ the `financial-invariants` skill before touching it.
 
 ## The 5-scenario structure
 
-- Element id conventions: per-scenario inputs are `s{n}_ret`, `s{n}_inc`, `s{n}_chgYear`,
+- Stop ages are automatic since v8.1: `withStopAges()` (js/ui/cards.js) sets each
+  scenario's `retAge` to its earliest funded age; `recalc()` and `mcTab.js` both call
+  it. `s{n}_ret` is now a hidden input that only keeps the saved value.
+- Element id conventions: per-scenario inputs are `s{n}_ret` (hidden), `s{n}_inc`, `s{n}_chgYear`,
   `s{n}_chgInc`, names `sc{n}name`, toggle switches `tog{n}_partner|prop|child`, card
   grid result cells `scr{n}_status|target|nw|lasts|household`, n = 1..5 (v8 grid;
   the old `ms{n}` cards are gone, and `tests/markup.test.mjs` fails if they return). `getScenario(s, gl)` in `js/inputs.js` reads them.

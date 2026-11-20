@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.0.5">
+<link rel="stylesheet" href="css/styles.css?v=8.1">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.0.5</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.1</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -334,7 +334,8 @@
 ═══════════════════════════════════════════ -->
 <div class="tab-panel" id="tab-panel-scenarios" role="tabpanel">
 <div class="scg-shell">
-  <p class="scg-intro">One column per scenario. Numbers live on the Situation tab; here you choose when each scenario stops and which life events it includes.</p>
+  <p class="scg-intro">One column per scenario. Numbers live on the Situation tab; here you choose which life events each scenario includes, and the app works out the earliest age it lets you stop.</p>
+  <div class="scg-saved" hidden><input type="hidden" id="s1_ret" value="40"><input type="hidden" id="s2_ret" value="45"><input type="hidden" id="s3_ret" value="50"><input type="hidden" id="s4_ret" value="42"><input type="hidden" id="s5_ret" value="48"></div>
   <div class="scg-scroll">
   <div class="scg" role="table" aria-label="Scenarios side by side">
     <div class="scg-row scg-head" role="row">
@@ -344,14 +345,6 @@
       <div class="scg-cell c3" role="cell"><input class="sc-name" type="text" id="sc3name" value="Barista FIRE" aria-label="Scenario C name" oninput="recalc()" onchange="recalc()"></div>
       <div class="scg-cell c4" role="cell"><input class="sc-name" type="text" id="sc4name" value="With Partner" aria-label="Scenario D name" oninput="recalc()" onchange="recalc()"></div>
       <div class="scg-cell c5" role="cell"><input class="sc-name" type="text" id="sc5name" value="Everything" aria-label="Scenario E name" oninput="recalc()" onchange="recalc()"></div>
-    </div>
-    <div class="scg-row scg-r-age" role="row">
-      <div class="scg-lbl" role="rowheader">&#x1F3AF; You stop at <button type="button" class="info-btn" title="Your age when you stop working. Type it or use &#x2212; / +." aria-label="About: &#x1F3AF; You stop at">&#x24D8;</button></div>
-      <div class="scg-cell c1" role="cell"><div class="age-ctrl"><button type="button" class="age-btn" onclick="stepAge(1,-1)" aria-label="Scenario A: stop one year earlier">&#x2212;</button><input type="number" class="scg-age" id="s1_ret" value="40" min="30" max="75" step="1" inputmode="numeric" aria-label="Scenario A stop age" oninput="updateAge(1)" onchange="clampAge(1)"><button type="button" class="age-btn" onclick="stepAge(1,1)" aria-label="Scenario A: stop one year later">+</button></div></div>
-      <div class="scg-cell c2" role="cell"><div class="age-ctrl"><button type="button" class="age-btn" onclick="stepAge(2,-1)" aria-label="Scenario B: stop one year earlier">&#x2212;</button><input type="number" class="scg-age" id="s2_ret" value="45" min="30" max="75" step="1" inputmode="numeric" aria-label="Scenario B stop age" oninput="updateAge(2)" onchange="clampAge(2)"><button type="button" class="age-btn" onclick="stepAge(2,1)" aria-label="Scenario B: stop one year later">+</button></div></div>
-      <div class="scg-cell c3" role="cell"><div class="age-ctrl"><button type="button" class="age-btn" onclick="stepAge(3,-1)" aria-label="Scenario C: stop one year earlier">&#x2212;</button><input type="number" class="scg-age" id="s3_ret" value="50" min="30" max="75" step="1" inputmode="numeric" aria-label="Scenario C stop age" oninput="updateAge(3)" onchange="clampAge(3)"><button type="button" class="age-btn" onclick="stepAge(3,1)" aria-label="Scenario C: stop one year later">+</button></div></div>
-      <div class="scg-cell c4" role="cell"><div class="age-ctrl"><button type="button" class="age-btn" onclick="stepAge(4,-1)" aria-label="Scenario D: stop one year earlier">&#x2212;</button><input type="number" class="scg-age" id="s4_ret" value="42" min="30" max="75" step="1" inputmode="numeric" aria-label="Scenario D stop age" oninput="updateAge(4)" onchange="clampAge(4)"><button type="button" class="age-btn" onclick="stepAge(4,1)" aria-label="Scenario D: stop one year later">+</button></div></div>
-      <div class="scg-cell c5" role="cell"><div class="age-ctrl"><button type="button" class="age-btn" onclick="stepAge(5,-1)" aria-label="Scenario E: stop one year earlier">&#x2212;</button><input type="number" class="scg-age" id="s5_ret" value="48" min="30" max="75" step="1" inputmode="numeric" aria-label="Scenario E stop age" oninput="updateAge(5)" onchange="clampAge(5)"><button type="button" class="age-btn" onclick="stepAge(5,1)" aria-label="Scenario E: stop one year later">+</button></div></div>
     </div>
     <div class="scg-sec" role="presentation">Life events <span class="scg-sec-note">switch on per scenario</span></div>
     <div class="scg-row scg-r-plan" role="row">
@@ -409,30 +402,22 @@
     </div>
   </details>
   <div class="scg" role="table" aria-label="Results per scenario">
-    <div class="scg-sec" role="presentation">Result <span class="scg-sec-note">at the stop age</span></div>
+    <div class="scg-sec" role="presentation">Result <span class="scg-sec-note">at the earliest funded age</span></div>
     <div class="scg-row scg-r-out" role="row">
-      <div class="scg-lbl" role="rowheader">Funded when you stop <button type="button" class="info-btn" title="Whether your portfolio and pensions cover your budget at the stop age (Results tab for the detail)." aria-label="About: Funded when you stop">&#x24D8;</button></div>
-      <div class="scg-cell c1" role="cell"><span class="scg-out" id="scr1_status">&#x2014;</span></div>
-      <div class="scg-cell c2" role="cell"><span class="scg-out" id="scr2_status">&#x2014;</span></div>
-      <div class="scg-cell c3" role="cell"><span class="scg-out" id="scr3_status">&#x2014;</span></div>
-      <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_status">&#x2014;</span></div>
-      <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_status">&#x2014;</span></div>
+      <div class="scg-lbl" role="rowheader">Earliest stop age <button type="button" class="info-btn" title="The first age at which this scenario is funded, worked out by trying every age from today to 75. With your partner: your own costs are covered while she keeps working to her retirement age (Household FIRE below is the both-stop check)." aria-label="About: Earliest stop age">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><span class="scg-out" id="scr1_age">&#x2014;</span></div>
+      <div class="scg-cell c2" role="cell"><span class="scg-out" id="scr2_age">&#x2014;</span></div>
+      <div class="scg-cell c3" role="cell"><span class="scg-out" id="scr3_age">&#x2014;</span></div>
+      <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_age">&#x2014;</span></div>
+      <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_age">&#x2014;</span></div>
     </div>
     <div class="scg-row scg-r-out" role="row">
-      <div class="scg-lbl" role="rowheader">FIRE number <button type="button" class="info-btn" title="What you need when you stop, after tax." aria-label="About: FIRE number">&#x24D8;</button></div>
-      <div class="scg-cell c1" role="cell"><span class="scg-out" id="scr1_target">&#x2014;</span></div>
-      <div class="scg-cell c2" role="cell"><span class="scg-out" id="scr2_target">&#x2014;</span></div>
-      <div class="scg-cell c3" role="cell"><span class="scg-out" id="scr3_target">&#x2014;</span></div>
-      <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_target">&#x2014;</span></div>
-      <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_target">&#x2014;</span></div>
-    </div>
-    <div class="scg-row scg-r-out" role="row">
-      <div class="scg-lbl" role="rowheader">Net worth when you stop <button type="button" class="info-btn" title="Projected investable net worth at the stop age." aria-label="About: Net worth when you stop">&#x24D8;</button></div>
-      <div class="scg-cell c1" role="cell"><span class="scg-out" id="scr1_nw">&#x2014;</span></div>
-      <div class="scg-cell c2" role="cell"><span class="scg-out" id="scr2_nw">&#x2014;</span></div>
-      <div class="scg-cell c3" role="cell"><span class="scg-out" id="scr3_nw">&#x2014;</span></div>
-      <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_nw">&#x2014;</span></div>
-      <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_nw">&#x2014;</span></div>
+      <div class="scg-lbl" role="rowheader">Margin when you stop <button type="button" class="info-btn" title="Net worth when you stop minus the FIRE number at that age. Usually less than a year of growth plus savings; a large margin means a cost that ends soon (mortgage, child) kept an earlier age from being funded." aria-label="About: Margin when you stop">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><span class="scg-out" id="scr1_margin">&#x2014;</span></div>
+      <div class="scg-cell c2" role="cell"><span class="scg-out" id="scr2_margin">&#x2014;</span></div>
+      <div class="scg-cell c3" role="cell"><span class="scg-out" id="scr3_margin">&#x2014;</span></div>
+      <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_margin">&#x2014;</span></div>
+      <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_margin">&#x2014;</span></div>
     </div>
     <div class="scg-row scg-r-out" role="row">
       <div class="scg-lbl" role="rowheader">Money lasts <button type="button" class="info-btn" title="Age your money runs out, or the life expectancy it reaches." aria-label="About: Money lasts">&#x24D8;</button></div>

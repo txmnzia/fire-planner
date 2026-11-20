@@ -1,8 +1,7 @@
 import { el, eur, numVal } from "./util.js";
 import { state } from "./state.js";
 import { getGlobals, getScenario } from "./inputs.js";
-import { project } from "./engine.js";
-import { renderScenarioGrid, renderSummaryTiles } from "./ui/cards.js";
+import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js";
 import { buildChart, buildFlowChart } from "./ui/charts.js";
 import { renderTable } from "./ui/table.js";
 import { renderExplanation } from "./ui/explanation.js";
@@ -28,9 +27,11 @@ export function recalc() {
   // "If alone" costs left empty are 70% of shared costs: show the value used.
   const sd=el("soloShared_disp");
   if(sd) sd.placeholder = gl.soloSharedDerived && gl.soloShared>0 ? "\u2248 "+gl.soloShared.toLocaleString("fr-FR")+" (70% of shared)" : "";
-  const scenarios=[1,2,3,4,5].map(s=>getScenario(s,gl));
-  const projs=scenarios.map(sc=>project(sc,gl));
-  renderScenarioGrid(projs,gl,scenarios);
+  // Each scenario stops at its earliest funded age (v8.1); every tab uses these.
+  const stops=withStopAges([1,2,3,4,5].map(s=>getScenario(s,gl)),gl);
+  const scenarios=stops.map(x=>x.sc);
+  const projs=stops.map(x=>x.proj);
+  renderScenarioGrid(projs,gl,scenarios,stops);
   renderIssues(scenarios,gl);
   state.lastProjs=projs; state.lastGl=gl; state.lastScenarios=scenarios;
   buildChart(projs,gl); buildFlowChart(projs,gl); renderTable(projs,gl);
