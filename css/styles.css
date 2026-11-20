@@ -366,8 +366,8 @@ button.wd-pill{font:inherit;font-size:12px;}
 .dp-add svg{width:13px;height:13px;}
 
 /* ── SCENARIOS TAB ── */
-/* Fixed-height panel, cards fill it without scrolling */
-#tab-panel-scenarios{overflow:hidden;}
+/* v8: the scenario grid grows with plan rows, so the panel scrolls like the others */
+#tab-panel-scenarios{overflow-y:auto;overflow-x:hidden;}
 .sc-shell{height:100%;display:flex;flex-direction:column;padding:16px;gap:0;box-sizing:border-box;}
 .sc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;flex:1;min-height:0;}
 .sc-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden;min-height:0;}

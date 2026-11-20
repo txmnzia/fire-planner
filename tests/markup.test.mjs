@@ -102,3 +102,9 @@ test('markup: the Pay changes card is painted on start-up and after a load (v8.6
   assert.equal((pay.match(/buildYpick\(/g) || []).length, 2, 'From and Until are year pickers');
   assert.match(pay, /class="inp cur"><span class="pre">€<\/span>/);
 });
+
+test('markup: no tab panel is locked against scrolling (v8.6.3)', () => {
+  const css = read('css/styles.css');
+  const locked = [...css.matchAll(/#tab-panel-[\w-]+\{[^}]*overflow(-y)?:hidden/g)].map(m => m[0]);
+  assert.deepEqual(locked, [], 'a growing panel must scroll: ' + locked.join(' | '));
+});
