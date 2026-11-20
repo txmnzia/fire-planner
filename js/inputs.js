@@ -41,6 +41,15 @@ export const COUNTRY_TAX = { FR:30, PT:28, ES:26, DE:26, IT:26, NL:32, BE:0, LU:
 export const LEGACY_RATE_TO_CODE = { "30":"FR", "28":"PT", "26":"ES", "32":"NL", "0":"BE", "33":"IE",
                               "15":"GR", "10":"HR", "19":"PL", "25":"SI", "20":"EE", "27":"DK" };
 
+// Living alone costs about 70% of what two people spend on rent, bills, groceries
+// and leisure: the standard equivalence scales give 1/1.5 = 0.67 (OECD-modified)
+// and 1/sqrt(2) = 0.71 (square-root scale). Used when "your housing & living
+// costs if alone" is left empty (v8.0.5).
+export const SOLO_SHARE = 0.7;
+export function soloSharedFrom(entered, sharedNow) {
+  return entered != null ? entered : Math.round((sharedNow || 0) * SOLO_SHARE);
+}
+
 export function getGlobals() {
   const bondNow = numVal("bondAllocNow",0)/100;
   const sel = el("retCountry");
@@ -86,7 +95,8 @@ export function getGlobals() {
     samPersonalRet:    optNum("samPersonalRet") ?? numVal("samPersonalNow",0),
     sharedNow:         numVal("sharedNow",0),
     sharedRet:         optNum("sharedRet") ?? numVal("sharedNow",0),
-    soloShared:        numVal("soloShared",0),
+    soloShared:        soloSharedFrom(optNum("soloShared"), numVal("sharedNow",0)),
+    soloSharedDerived: optNum("soloShared") == null,
     partnerPersonal:   numVal("partnerPersonal",0),
     partnerPortfolio:  numVal("partnerPortfolio",0),
     partnerGainFrac:   Math.max(0, Math.min(0.99, numVal("partnerGainFrac",0)/100)),

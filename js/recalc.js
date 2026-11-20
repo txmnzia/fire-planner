@@ -25,6 +25,9 @@ export function recalc() {
   el("totalPortfolio").textContent=eur(port);
   el("totalPill").textContent=eur(port);
   el("calcTime").textContent=new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  // "If alone" costs left empty are 70% of shared costs: show the value used.
+  const sd=el("soloShared_disp");
+  if(sd) sd.placeholder = gl.soloSharedDerived && gl.soloShared>0 ? "\u2248 "+gl.soloShared.toLocaleString("fr-FR")+" (70% of shared)" : "";
   const scenarios=[1,2,3,4,5].map(s=>getScenario(s,gl));
   const projs=scenarios.map(sc=>project(sc,gl));
   renderScenarioGrid(projs,gl,scenarios);

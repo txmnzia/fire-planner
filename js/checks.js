@@ -15,16 +15,17 @@ const ISSUES = {
   twoSpend: { key: 'twoSpend', field: 'samPersonalNow_disp', blocking: true,
     text: 'The two-person model is on, but your personal and shared spending are empty, so scenarios with your partner count no spending. Fill them in the Partner section.' },
   soloPersonal: { key: 'soloPersonal', field: 'samPersonalNow_disp', blocking: true,
-    text: 'Scenarios without your partner use your personal spending + housing & shared costs if alone, and your personal spending is empty. Fill it in the Partner section.' },
-  soloHousing: { key: 'soloHousing', field: 'soloShared_disp', blocking: true,
-    text: 'Scenarios without your partner use your personal spending + housing & shared costs if alone, and housing if alone is empty. Fill it in the Partner section.' },
+    text: 'Scenarios without your partner use your personal spending + your housing & living costs if alone, and your personal spending is empty. Fill it in the Partner section.' },
+  soloHousing: { key: 'soloHousing', field: 'sharedNow_disp', blocking: true,
+    text: 'Scenarios without your partner use your personal spending + your housing & living costs if alone, which default to 70% of shared costs, and shared costs are empty. Fill shared costs (or the "if alone" amount) in the Partner section.' },
 };
 
 // Issues for one scenario.
 // Simple model: spending must be entered.
 // Two-person model, partner on: your personal or shared spending must be entered.
 // Two-person model, partner off: priced by soloSpend() in js/engine.js = your
-//   personal spending + housing if alone; both must be entered.
+//   personal spending + housing & living costs if alone (empty = 70% of shared
+//   costs, derived in js/inputs.js before gl reaches here); both must be > 0.
 export function scenarioIssues(sc, gl) {
   if (gl.partnerModel !== 'two') return spendEmpty(gl) ? [ISSUES.spend] : [];
   if (sc.hasPartner) return (!(gl.samPersonalNow > 0) && !(gl.sharedNow > 0)) ? [ISSUES.twoSpend] : [];

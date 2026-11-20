@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.0.4">
+<link rel="stylesheet" href="css/styles.css?v=8.0.5">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.0.4</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.0.5</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -260,7 +260,7 @@
           <div class="field"><label for="samPersonalRet_disp">Your personal spending (retirement) <button type="button" class="info-btn" title="Empty = same as now.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="samPersonalRet" id="samPersonalRet_disp" placeholder="same as now"><input type="hidden" id="samPersonalRet" value=""></div></div>
           <div class="field"><label for="sharedNow_disp">Shared costs (now) <button type="button" class="info-btn" title="Everything paid jointly: rent, utilities, groceries, joint leisure and holidays. Child costs and the mortgage are added on top and split the same way.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="sharedNow" id="sharedNow_disp"><input type="hidden" id="sharedNow" value=""></div></div>
           <div class="field"><label for="sharedRet_disp">Shared costs (retirement) <button type="button" class="info-btn" title="From your retirement year. Empty = same as now.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="sharedRet" id="sharedRet_disp" placeholder="same as now"><input type="hidden" id="sharedRet" value=""></div></div>
-          <div class="field"><label for="soloShared_disp">Housing & shared costs if alone <button type="button" class="info-btn" title="What rent and the other shared-type costs would cost one person living alone. Used for scenarios without the partner, and for the partner's separation check.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="soloShared" id="soloShared_disp"><input type="hidden" id="soloShared" value=""></div></div>
+          <div class="field"><label for="soloShared_disp">Your housing &amp; living costs if alone <button type="button" class="info-btn" title="Rent, bills, groceries and leisure if you lived alone, on top of your personal spending. Used by scenarios without your partner, and as her costs in the check of whether she could manage alone. Leave empty to use 70% of your shared costs: one person spends about 70% of what a couple does.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="soloShared" id="soloShared_disp"><input type="hidden" id="soloShared" value=""></div></div>
           <div class="field"><label for="partnerPersonal_disp">Partner personal spending</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerPersonal" id="partnerPersonal_disp"><input type="hidden" id="partnerPersonal" value=""></div></div>
           </div>
           <div class="subj-subhd">Partner finances</div>

@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { project, yearOneBudget, soloSpend } from '../js/engine.js';
 import { scenarioIssues, allIssues } from '../js/checks.js';
+import { soloSharedFrom, SOLO_SHARE } from '../js/inputs.js';
 import { scenarioGridResults } from '../js/ui/cards.js';
 import { state } from '../js/state.js';
 import { baseGl, baseSc, goldenCases } from './golden-cases.mjs';
@@ -91,4 +92,27 @@ test('markup: the banner exists, recalc renders it, and every field a check poin
     ...scenarioIssues(baseSc(), emptyTwo())].map(i => i.field));
   assert.equal(fields.size, 3);
   for (const f of fields) assert.match(html, new RegExp('id="' + f + '"'), f);
+});
+
+test('if-alone costs: empty = round(70% of shared costs); a typed value always wins', () => {
+  assert.equal(SOLO_SHARE, 0.7);
+  assert.equal(soloSharedFrom(null, 2501), 1751);   // 2,501 x 0.7 = 1,750.7
+  assert.equal(soloSharedFrom(null, 2400), 1680);
+  assert.equal(soloSharedFrom(2000, 2400), 2000);
+  assert.equal(soloSharedFrom(0, 2400), 0);         // an explicit 0 is respected (and then flagged)
+  assert.equal(soloSharedFrom(null, 0), 0);
+});
+
+test('if-alone costs: derived from shared costs, a solo scenario is complete and priced from it', () => {
+  const gl = baseGl({ partnerModel: 'two', samPersonalNow: 1200, samPersonalRet: 1200, sharedNow: 2400,
+    soloShared: soloSharedFrom(null, 2400), windfalls: [] });
+  assert.deepEqual(scenarioIssues(baseSc(), gl), []);
+  // hand (made-up numbers): (1,200 + 1,680) x 12 x 1.02^10 at a stop age of 45 from 35
+  assert.ok(Math.abs(yearOneBudget(45, baseSc(), gl) - (1200 + 1680) * 12 * Math.pow(1.02, 10)) < 1e-6);
+});
+
+test('markup: the if-alone field explains the 70% default in its bubble', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.match(html, /Your housing &amp; living costs if alone <button[^>]*title="[^"]*70% of your shared costs/);
+  assert.ok(!/Housing & shared costs if alone/.test(html));
 });

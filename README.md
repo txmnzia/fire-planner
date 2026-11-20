@@ -122,7 +122,7 @@ Two-person model inputs (used only when `partnerModel = two`; see [Two-person mo
 | Your personal spending (retirement) | `samPersonalRet` | same as now | EUR/month | From your retirement year; empty = the "now" value |
 | Shared costs (now) | `sharedNow` | — (0) | EUR/month | Everything paid jointly (rent, utilities, groceries, joint leisure and holidays) |
 | Shared costs (retirement) | `sharedRet` | same as now | EUR/month | From your retirement year; empty = the "now" value |
-| Housing & shared costs if alone | `soloShared` | — (0) | EUR/month | Replaces shared costs in scenarios **without** the partner; also her solo cost in the separation check |
+| Your housing & living costs if alone | `soloShared` | empty = 70% of `sharedNow` | EUR/month | Replaces shared costs in scenarios **without** the partner; also her solo cost in the separation check. 0.7 = one person spends about 70% of a couple (OECD-modified scale 1/1.5 = 0.67, square-root scale 1/√2 = 0.71) |
 | Partner personal spending | `partnerPersonal` | — (0) | EUR/month | Her own spending |
 | Partner invested assets | `partnerPortfolio` | — (0) | EUR | Her portfolio today |
 | Partner unrealized gain | `partnerGainFrac` | 0% | % | Seeds her cost basis |
@@ -613,7 +613,8 @@ yourCost(y)        = samPersonalNow|Ret × 12 × infl + shared(y) − herContrib
 - **Scenarios without the partner** use `samPersonal + soloShared` as your base
   spending (child and property costs as usual, all yours), always: the Simple
   model's "Monthly spending" never stands in, so the same fact is never entered
-  twice. If either field is empty the scenario shows "missing" (see
+  twice. `soloShared` left empty is `round(0.7 × sharedNow)` (`soloSharedFrom` in
+  `js/inputs.js`), shown as the field's placeholder. If either field is empty the scenario shows "missing" (see
   `js/checks.js`). One source: `soloSpend(gl, retired)` in `js/engine.js`.
 
 **Partial FIRE (you)** — the headline `fireTarget` of a partner scenario in two-person
