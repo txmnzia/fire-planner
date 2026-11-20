@@ -1,4 +1,5 @@
 import { el } from "./util.js";
+import { initInfoTips } from "./ui/infoTips.js";
 import { state } from "./state.js";
 import { recalc } from "./recalc.js";
 import { loadState, initSync, scheduleSave, connectSync, disconnectSync,
@@ -24,6 +25,9 @@ Object.assign(window, {
 
 // ── INIT ───────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
+  // Tap/click bubbles for every (i) button: native title tooltips never show on a phone.
+  initInfoTips();
+
   // Enhance the Situation-tab controls (sliders, year pickers, subject rail,
   // windfall list) BEFORE loadState — applyState() repaints them from saved data.
   initSituation();

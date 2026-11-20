@@ -46,6 +46,8 @@ js/
                         concept explainers grounded in the scenario's own numbers
                         (reuses computeCardMetrics + engine rows; engine re-runs
                         with a feature off quantify life-event impacts).
+    infoTips.js         Tap/click/hover bubbles for every (i) button (text from its
+                        title); placeTip() is the pure, tested placement.
     ibkr.js             IBKR CSV import and holdings list.
     nwHistory.js        Net-worth snapshot editor (plan-vs-actual inputs) —
                         compact datapoint rows shared with the windfall list.

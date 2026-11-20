@@ -110,14 +110,15 @@ export function renderScenarioGrid(projs, gl, scenarios) {
     const n = i + 1, r = scenarioGridResults(sc, gl, projs[i]);
     const set = (key, text, cls) => {
       const c = el('scr' + n + '_' + key); if (!c) return;
-      c.textContent = text; c.classList.remove('ok', 'err'); if (cls) c.classList.add(cls);
+      c.textContent = text; c.classList.remove('ok', 'err', 'muted'); if (cls) c.classList.add(cls);
     };
     set('status', r.status, r.funded ? 'ok' : 'err');
     set('target', r.fireTargetText, '');
     set('nw', r.nwAtStopText, '');
     set('lasts', r.lasts, r.lastsOk ? 'ok' : 'err');
     if (r.household) anyHousehold = true;
-    set('household', r.household ? r.household.text : '\u2014', r.household ? (r.household.ok ? 'ok' : 'err') : '');
+    // two-person model, partner off: there is no household to fund, say so instead of a bare dash
+    set('household', r.household ? r.household.text : 'no partner', r.household ? (r.household.ok ? 'ok' : 'err') : 'muted');
   });
   const hh = el('scgHouseholdRow'); if (hh) hh.hidden = !anyHousehold;
   // The pay what-ifs are collapsed by default: say how many are set, so a value

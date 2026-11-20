@@ -464,12 +464,13 @@ change year and new take-home; the summary says how many are set), and four
 | Net worth when you stop | projected investable net worth at the stop age | `computeCardMetrics().portRet` |
 | Money lasts | "to {life expectancy}+" or "runs out at {age}" | `computeCardMetrics().depletionYear` |
 
-A fifth row, **Household FIRE**, appears only in the two-person model for scenarios
-with the partner on. Every cell comes from `scenarioGridResults()` in
+A fifth row, **Household FIRE**, appears only in the two-person model; scenarios with
+the partner off read "no partner" there. Every cell comes from `scenarioGridResults()` in
 `js/ui/cards.js`, which only formats `computeCardMetrics()`: the grid and the
 Results tiles can never disagree. Rows have fixed heights, so switching anything
 never shifts the layout; on a phone the label column stays pinned and the scenario
-columns scroll sideways.
+columns scroll sideways. Every (i) button opens its explanation in a bubble on tap
+or click (and on mouse hover); the text is the button's `title` in `index.html`.
 
 ### Monthly income vs target (Results tiles)
 
