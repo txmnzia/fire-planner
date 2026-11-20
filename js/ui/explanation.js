@@ -1,9 +1,9 @@
-import { el, eur } from "../util.js?v=8.3.1";
-import { state } from "../state.js?v=8.3.1";
-import { getScenarioName } from "../inputs.js?v=8.3.1";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, project, partnerSeparation } from "../engine.js?v=8.3.1";
-import { computeCardMetrics } from "./cards.js?v=8.3.1";
-import { FLOW_COLORS } from "./charts.js?v=8.3.1";
+import { el, eur } from "../util.js?v=8.4";
+import { state } from "../state.js?v=8.4";
+import { getScenarioName } from "../inputs.js?v=8.4";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, project, partnerSeparation } from "../engine.js?v=8.4";
+import { computeCardMetrics } from "./cards.js?v=8.4";
+import { FLOW_COLORS } from "./charts.js?v=8.4";
 
 // ── EXPLANATION TAB ──────────────────────────────────────────────────────────
 // "Your plan, explained": turns the selected scenario's projection into a
@@ -199,7 +199,7 @@ export function renderExplanation(projs, gl, scenarios) {
   }
 
   // windfalls
-  (gl.windfalls || []).forEach(w => {
+  (gl.windfalls || []).filter(w => !(w.off && w.off.includes(sc.id))).forEach(w => {
     const wIdx = w.yr - baseYear;
     if (wIdx >= 0 && wIdx <= lastIdx) addEv(wIdx, "&#x1F381;", "Windfall", "+" + eur(w.amt) + " joins the portfolio in " + w.yr + ". Deliberately <strong>not</strong> credited against your FIRE number — it just moves the curve up when it lands.", "ok");
   });

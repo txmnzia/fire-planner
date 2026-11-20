@@ -54,7 +54,9 @@ js/
     infoTips.js         Tap/click/hover bubbles for every (i) button (text from its
                         title); placeTip() is the pure, tested placement.
     plans.js            Plans tab: set-up badges on the plan cards, hides grid rows
-                        of plans that are not set up (rule in checks.js).
+                        of plans that are not set up (rule in checks.js), and one
+                        grid row per windfall with a switch per scenario
+                        (windfallSwitches / flipWindfall, pure and tested).
     issues.js           Red banner under the tabs listing missing inputs, with a
                         Fix button that jumps to the field.
     ibkr.js             IBKR CSV import and holdings list.

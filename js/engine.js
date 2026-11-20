@@ -563,7 +563,8 @@ export function project(sc, gl, opts) {
     }
     fireNums.push(fireNum);
 
-    const windfall = (gl.windfalls||[]).filter(w=>w.yr===yr).reduce((s,w)=>s+w.amt,0);
+    // a windfall switched off for this scenario (w.off holds scenario ids, v8.4) doesn't arrive
+    const windfall = (gl.windfalls||[]).filter(w=>w.yr===yr && !(w.off && w.off.includes(sc.id))).reduce((s,w)=>s+w.amt,0);
     const portfolioBefore=portfolio, cashBefore=cashVal;
     const portGrowth=Math.round(portfolio*r), cashGrowth=Math.round(cashVal*gl.cashReturn);
     const row={yr,age,phase:yr<retYear?"acc":"ret",portReturn:portGrowth,cashReturn:cashGrowth,windfall,

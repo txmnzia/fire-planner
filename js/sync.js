@@ -1,12 +1,12 @@
-import { el } from "./util.js?v=8.3.1";
-import { state, features } from "./state.js?v=8.3.1";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.3.1";
-import { recalc } from "./recalc.js?v=8.3.1";
-import { renderHoldings } from "./ui/ibkr.js?v=8.3.1";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.3.1";
-import { refreshSituationControls } from "./ui/situation.js?v=8.3.1";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.3.1";
-import { db } from "./db.js?v=8.3.1";
+import { el } from "./util.js?v=8.4";
+import { state, features } from "./state.js?v=8.4";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.4";
+import { recalc } from "./recalc.js?v=8.4";
+import { renderHoldings } from "./ui/ibkr.js?v=8.4";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.4";
+import { refreshSituationControls } from "./ui/situation.js?v=8.4";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.4";
+import { db } from "./db.js?v=8.4";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
@@ -96,7 +96,9 @@ function applyStateInner(data) {
   if (Array.isArray(data.windfalls)) {
     state.windfalls = data.windfalls.map(w=>({
       yr:(w.yr==null||w.yr==='')?null:parseInt(w.yr),
-      amt:(w.amt==null||w.amt==='')?null:+w.amt
+      amt:(w.amt==null||w.amt==='')?null:+w.amt,
+      // v8.4: scenarios (1-5) the windfall is switched off for; absent = on everywhere
+      off:Array.isArray(w.off)?w.off.map(Number).filter(n=>n>=1&&n<=5):[]
     }));
   } else {
     const wfs = [];

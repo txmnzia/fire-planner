@@ -100,7 +100,7 @@ Your real values come from localStorage, or from Supabase once you sign in.
 |-----------|----------|---------|------|-------|
 | State Pension Amount (gross) | `pensionAmt` | — (0) | EUR/month | Monthly gross pension when eligible |
 | State Pension Age | `pensionAge` | 67 | years | Age when pension starts |
-| Windfalls (Year, Amount) | `state.windfalls` `[{yr,amt}]` | none | year, EUR | Add-as-many-as-needed one-time lump-sum inflows; a dynamic list persisted on state (legacy `wf0/1/2` fields auto-migrate) |
+| Windfalls (Year, Amount, Used in) | `state.windfalls` `[{yr,amt,off}]` | none | year, EUR, scenario ids | One-time lump-sum inflows on the **Plans** tab (v8.4); each has an A–E switch per scenario, also shown as a row in the scenario grid. `off` lists the scenarios it is switched off for; absent = on everywhere, so windfalls saved before v8.4 keep applying to every scenario (legacy `wf0/1/2` fields auto-migrate) |
 
 ### Partner (global, toggled per scenario)
 

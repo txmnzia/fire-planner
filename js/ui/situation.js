@@ -3,9 +3,10 @@
 // The source of truth for every value stays the id-bearing form control that
 // inputs.js / sync.js already read — this module only adds friendlier controls
 // (year-picker popover, sliders, the subject rail) and the dynamic windfall list.
-import { el } from "../util.js?v=8.3.1";
-import { state } from "../state.js?v=8.3.1";
-import { recalc } from "../recalc.js?v=8.3.1";
+import { el } from "../util.js?v=8.4";
+import { toggleWindfall, LETTERS } from "./plans.js?v=8.4";
+import { state } from "../state.js?v=8.4";
+import { recalc } from "../recalc.js?v=8.4";
 
 const YNOW = 2026;
 
@@ -147,6 +148,18 @@ export function renderWindfalls() {
       '<div class="inp cur mini"><span class="pre">€</span>' +
       '<input type="text" inputmode="decimal" autocomplete="off" placeholder="Amount" value="' + (w.amt == null ? '' : fmtMoney(w.amt)) + '"></div>' +
       '<button type="button" class="dp-del" aria-label="Remove windfall">×</button></div>';
+    // v8.4: one switch per scenario, like the other plans
+    const chips = document.createElement('div'); chips.className = 'subj-meta sc-chips wf-chips';
+    chips.setAttribute('role', 'group'); chips.setAttribute('aria-label', 'Scenarios using this windfall');
+    const lab = document.createElement('span'); lab.className = 'sc-chips-lbl'; lab.textContent = 'Used in'; chips.append(lab);
+    LETTERS.forEach((L, k) => {
+      const on = !(Array.isArray(w.off) && w.off.includes(k + 1));
+      const c = document.createElement('button'); c.type = 'button'; c.className = 'sc-chip' + (on ? ' on' : '');
+      c.textContent = L; c.setAttribute('aria-pressed', String(on));
+      c.addEventListener('click', () => { toggleWindfall(i, k + 1); renderWindfalls(); });
+      chips.append(c);
+    });
+    row.appendChild(chips);
     host.appendChild(row);
     buildYpick(row.querySelector('.ypick'), {
       min: 2024, max: 2080,

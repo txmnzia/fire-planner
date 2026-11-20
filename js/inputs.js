@@ -1,6 +1,6 @@
-import { el, numVal, optVal } from "./util.js?v=8.3.1";
-import { state, features } from "./state.js?v=8.3.1";
-import { effectiveFeatures } from "./checks.js?v=8.3.1";
+import { el, numVal, optVal } from "./util.js?v=8.4";
+import { state, features } from "./state.js?v=8.4";
+import { effectiveFeatures } from "./checks.js?v=8.4";
 
 export function incomeFor(s) {
   const ov = el("s" + s + "_inc");
@@ -30,7 +30,7 @@ export function currentAgeFromDOB() {
 export function getWindfalls() {
   // Dynamic list held on state.windfalls ([{yr,amt}]); only complete, positive rows feed the engine.
   return state.windfalls
-    .map(w => ({ yr: parseInt(w.yr), amt: parseFloat(w.amt) }))
+    .map(w => ({ yr: parseInt(w.yr), amt: parseFloat(w.amt), off: Array.isArray(w.off) ? w.off.slice() : [] }))
     .filter(w => !isNaN(w.yr) && !isNaN(w.amt) && w.amt > 0);
 }
 
