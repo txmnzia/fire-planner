@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=7.3">
+<link rel="stylesheet" href="css/styles.css?v=8.0">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v7.3</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.0</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -332,243 +332,126 @@
      TAB 2 — SCENARIOS
 ═══════════════════════════════════════════ -->
 <div class="tab-panel" id="tab-panel-scenarios" role="tabpanel">
-<div class="sc-shell">
-<div class="sc-nav" id="scNav">
-  <button class="sc-nav-dot active" style="color:var(--s1c)" onclick="scrollToScenario(0)" aria-label="Scenario A"></button>
-  <button class="sc-nav-dot" style="color:var(--s2c)" onclick="scrollToScenario(1)" aria-label="Scenario B"></button>
-  <button class="sc-nav-dot" style="color:var(--s3c)" onclick="scrollToScenario(2)" aria-label="Scenario C"></button>
-  <button class="sc-nav-dot" style="color:var(--s4c)" onclick="scrollToScenario(3)" aria-label="Scenario D"></button>
-  <button class="sc-nav-dot" style="color:var(--s5c)" onclick="scrollToScenario(4)" aria-label="Scenario E"></button>
-</div>
-<div class="sc-grid">
-
-  <!-- A -->
-  <div class="sc-card c1">
-    <div class="sc-hd">
-      <div class="sc-dot" style="background:var(--s1c)"></div>
-      <input class="sc-name" type="text" id="sc1name" value="Early Retirement" aria-label="Scenario A name" oninput="recalc()" onchange="recalc()">
+<div class="scg-shell">
+  <p class="scg-intro">One column per scenario. Numbers live on the Situation tab; here you choose when each scenario stops and which life events it includes.</p>
+  <div class="scg-scroll">
+  <div class="scg" role="table" aria-label="Scenarios side by side">
+    <div class="scg-row scg-head" role="row">
+      <div class="scg-lbl" role="rowheader"></div>
+      <div class="scg-cell c1" role="cell"><input class="sc-name" type="text" id="sc1name" value="Early Retirement" aria-label="Scenario A name" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c2" role="cell"><input class="sc-name" type="text" id="sc2name" value="Standard Path" aria-label="Scenario B name" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c3" role="cell"><input class="sc-name" type="text" id="sc3name" value="Barista FIRE" aria-label="Scenario C name" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c4" role="cell"><input class="sc-name" type="text" id="sc4name" value="With Partner" aria-label="Scenario D name" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c5" role="cell"><input class="sc-name" type="text" id="sc5name" value="Everything" aria-label="Scenario E name" oninput="recalc()" onchange="recalc()"></div>
     </div>
-    <div class="sc-bd">
-      <div class="field">
-        <label>Retire at age <span id="s1_retDisplay" style="color:var(--s1c);font-family:'DM Mono',monospace;font-weight:700">40</span></label>
-        <div class="age-ctrl">
-          <button class="age-btn" onclick="stepAge(1,-1)" style="color:var(--s1c)" aria-label="Later">&#x2212;</button>
-          <input type="range" id="s1_ret" value="40" min="30" max="75" step="1" oninput="updateAge(1)" onchange="updateAge(1)" style="color:var(--s1c)">
-          <button class="age-btn" onclick="stepAge(1,1)" style="color:var(--s1c)" aria-label="Earlier">&#x2B;</button>
-        </div>
-      </div>
-      <div class="field">
-        <label for="s1_inc">Income Override (net)</label>
-        <div class="unit-wrap"><input type="number" id="s1_inc" placeholder="uses base" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
-      </div>
-      <div class="field">
-        <label for="s1_chgYear">Income Change Year</label>
-        <input type="number" id="s1_chgYear" placeholder="none" min="2026" max="2080" oninput="recalc()" onchange="recalc()">
-      </div>
-      <div class="field">
-        <label for="s1_chgInc">New Income (net)</label>
-        <div class="unit-wrap"><input type="number" id="s1_chgInc" placeholder="&#x2014;" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
-      </div>
-      <div class="sc-toggles">
-        <div class="sc-toggle-row" onclick="toggleFeature(1,'partner')">
-          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F91D;</span> With Partner</span>
-          <div class="tog-sw" id="tog1_partner"></div>
-        </div>
-        <div class="sc-toggle-row" onclick="toggleFeature(1,'prop')">
-          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F3E0;</span> Buy Property</span>
-          <div class="tog-sw" id="tog1_prop"></div>
-        </div>
-        <div class="sc-toggle-row" onclick="toggleFeature(1,'child')">
-          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F476;</span> Have a Child</span>
-          <div class="tog-sw" id="tog1_child"></div>
-        </div>
-      </div>
+    <div class="scg-row scg-r-age" role="row">
+      <div class="scg-lbl" role="rowheader">&#x1F3AF; You stop at <button type="button" class="info-btn" title="Your age when you stop working. Type it or use &#x2212; / +." aria-label="About: &#x1F3AF; You stop at">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><div class="age-ctrl"><button type="button" class="age-btn" onclick="stepAge(1,-1)" aria-label="Scenario A: stop one year earlier">&#x2212;</button><input type="number" class="scg-age" id="s1_ret" value="40" min="30" max="75" step="1" inputmode="numeric" aria-label="Scenario A stop age" oninput="updateAge(1)" onchange="clampAge(1)"><button type="button" class="age-btn" onclick="stepAge(1,1)" aria-label="Scenario A: stop one year later">+</button></div></div>
+      <div class="scg-cell c2" role="cell"><div class="age-ctrl"><button type="button" class="age-btn" onclick="stepAge(2,-1)" aria-label="Scenario B: stop one year earlier">&#x2212;</button><input type="number" class="scg-age" id="s2_ret" value="45" min="30" max="75" step="1" inputmode="numeric" aria-label="Scenario B stop age" oninput="updateAge(2)" onchange="clampAge(2)"><button type="button" class="age-btn" onclick="stepAge(2,1)" aria-label="Scenario B: stop one year later">+</button></div></div>
+      <div class="scg-cell c3" role="cell"><div class="age-ctrl"><button type="button" class="age-btn" onclick="stepAge(3,-1)" aria-label="Scenario C: stop one year earlier">&#x2212;</button><input type="number" class="scg-age" id="s3_ret" value="50" min="30" max="75" step="1" inputmode="numeric" aria-label="Scenario C stop age" oninput="updateAge(3)" onchange="clampAge(3)"><button type="button" class="age-btn" onclick="stepAge(3,1)" aria-label="Scenario C: stop one year later">+</button></div></div>
+      <div class="scg-cell c4" role="cell"><div class="age-ctrl"><button type="button" class="age-btn" onclick="stepAge(4,-1)" aria-label="Scenario D: stop one year earlier">&#x2212;</button><input type="number" class="scg-age" id="s4_ret" value="42" min="30" max="75" step="1" inputmode="numeric" aria-label="Scenario D stop age" oninput="updateAge(4)" onchange="clampAge(4)"><button type="button" class="age-btn" onclick="stepAge(4,1)" aria-label="Scenario D: stop one year later">+</button></div></div>
+      <div class="scg-cell c5" role="cell"><div class="age-ctrl"><button type="button" class="age-btn" onclick="stepAge(5,-1)" aria-label="Scenario E: stop one year earlier">&#x2212;</button><input type="number" class="scg-age" id="s5_ret" value="48" min="30" max="75" step="1" inputmode="numeric" aria-label="Scenario E stop age" oninput="updateAge(5)" onchange="clampAge(5)"><button type="button" class="age-btn" onclick="stepAge(5,1)" aria-label="Scenario E: stop one year later">+</button></div></div>
     </div>
-    <div class="sc-result" id="ms1"></div>
+    <div class="scg-sec" role="presentation">Life events <span class="scg-sec-note">switch on per scenario</span></div>
+    <div class="scg-row scg-r-plan" role="row">
+      <div class="scg-lbl" role="rowheader">&#x1F91D; With partner <button type="button" class="info-btn" title="Includes your partner&#x2019;s income, savings and share of costs, as set on the Situation tab." aria-label="About: &#x1F91D; With partner">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(1,'partner')" aria-label="Scenario A: with partner"><span class="tog-sw" id="tog1_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c2" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(2,'partner')" aria-label="Scenario B: with partner"><span class="tog-sw" id="tog2_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c3" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(3,'partner')" aria-label="Scenario C: with partner"><span class="tog-sw" id="tog3_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c4" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(4,'partner')" aria-label="Scenario D: with partner"><span class="tog-sw" id="tog4_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c5" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(5,'partner')" aria-label="Scenario E: with partner"><span class="tog-sw" id="tog5_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+    </div>
+    <div class="scg-row scg-r-plan" role="row">
+      <div class="scg-lbl" role="rowheader">&#x1F3E0; Buy property <button type="button" class="info-btn" title="The purchase described on the Situation tab." aria-label="About: &#x1F3E0; Buy property">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(1,'prop')" aria-label="Scenario A: buy property"><span class="tog-sw" id="tog1_prop"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c2" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(2,'prop')" aria-label="Scenario B: buy property"><span class="tog-sw" id="tog2_prop"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c3" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(3,'prop')" aria-label="Scenario C: buy property"><span class="tog-sw" id="tog3_prop"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c4" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(4,'prop')" aria-label="Scenario D: buy property"><span class="tog-sw" id="tog4_prop"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c5" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(5,'prop')" aria-label="Scenario E: buy property"><span class="tog-sw" id="tog5_prop"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+    </div>
+    <div class="scg-row scg-r-plan" role="row">
+      <div class="scg-lbl" role="rowheader">&#x1F476; Have a child <button type="button" class="info-btn" title="The child costs and leave described on the Situation tab." aria-label="About: &#x1F476; Have a child">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(1,'child')" aria-label="Scenario A: have a child"><span class="tog-sw" id="tog1_child"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c2" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(2,'child')" aria-label="Scenario B: have a child"><span class="tog-sw" id="tog2_child"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c3" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(3,'child')" aria-label="Scenario C: have a child"><span class="tog-sw" id="tog3_child"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c4" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(4,'child')" aria-label="Scenario D: have a child"><span class="tog-sw" id="tog4_child"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c5" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(5,'child')" aria-label="Scenario E: have a child"><span class="tog-sw" id="tog5_child"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+    </div>
   </div>
-
-  <!-- B -->
-  <div class="sc-card c2">
-    <div class="sc-hd">
-      <div class="sc-dot" style="background:var(--s2c)"></div>
-      <input class="sc-name" type="text" id="sc2name" value="Standard Path" aria-label="Scenario B name" oninput="recalc()" onchange="recalc()">
+  <details class="scg-more">
+    <summary class="scg-sec scg-sum">Pay what-ifs <span class="scg-sec-note">per scenario, until they move to Plans</span> <span class="scg-sec-note scg-count" id="scgPayCount"></span></summary>
+    <div class="scg" role="table" aria-label="Pay what-ifs">
+    <div class="scg-row scg-r-std" role="row">
+      <div class="scg-lbl" role="rowheader">Take-home override <button type="button" class="info-btn" title="Leave empty to use the take-home from the Situation tab." aria-label="About: Take-home override">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><input type="number" class="scg-num" id="s1_inc" placeholder="uses base" min="0" step="100" aria-label="Scenario A take-home override" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c2" role="cell"><input type="number" class="scg-num" id="s2_inc" placeholder="uses base" min="0" step="100" aria-label="Scenario B take-home override" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c3" role="cell"><input type="number" class="scg-num" id="s3_inc" placeholder="uses base" min="0" step="100" aria-label="Scenario C take-home override" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c4" role="cell"><input type="number" class="scg-num" id="s4_inc" placeholder="uses base" min="0" step="100" aria-label="Scenario D take-home override" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c5" role="cell"><input type="number" class="scg-num" id="s5_inc" placeholder="uses base" min="0" step="100" aria-label="Scenario E take-home override" oninput="recalc()" onchange="recalc()"></div>
     </div>
-    <div class="sc-bd">
-      <div class="field">
-        <label>Retire at age <span id="s2_retDisplay" style="color:var(--s2c);font-family:'DM Mono',monospace;font-weight:700">45</span></label>
-        <div class="age-ctrl">
-          <button class="age-btn" onclick="stepAge(2,-1)" style="color:var(--s2c)" aria-label="Later">&#x2212;</button>
-          <input type="range" id="s2_ret" value="45" min="30" max="75" step="1" oninput="updateAge(2)" onchange="updateAge(2)" style="color:var(--s2c)">
-          <button class="age-btn" onclick="stepAge(2,1)" style="color:var(--s2c)" aria-label="Earlier">&#x2B;</button>
-        </div>
-      </div>
-      <div class="field">
-        <label for="s2_inc">Income Override (net)</label>
-        <div class="unit-wrap"><input type="number" id="s2_inc" placeholder="uses base" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
-      </div>
-      <div class="field">
-        <label for="s2_chgYear">Income Change Year</label>
-        <input type="number" id="s2_chgYear" placeholder="none" min="2026" max="2080" oninput="recalc()" onchange="recalc()">
-      </div>
-      <div class="field">
-        <label for="s2_chgInc">New Income (net)</label>
-        <div class="unit-wrap"><input type="number" id="s2_chgInc" placeholder="&#x2014;" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
-      </div>
-      <div class="sc-toggles">
-        <div class="sc-toggle-row" onclick="toggleFeature(2,'partner')">
-          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F91D;</span> With Partner</span>
-          <div class="tog-sw" id="tog2_partner"></div>
-        </div>
-        <div class="sc-toggle-row" onclick="toggleFeature(2,'prop')">
-          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F3E0;</span> Buy Property</span>
-          <div class="tog-sw" id="tog2_prop"></div>
-        </div>
-        <div class="sc-toggle-row" onclick="toggleFeature(2,'child')">
-          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F476;</span> Have a Child</span>
-          <div class="tog-sw" id="tog2_child"></div>
-        </div>
-      </div>
+    <div class="scg-row scg-r-std" role="row">
+      <div class="scg-lbl" role="rowheader">Pay changes in <button type="button" class="info-btn" title="Year a permanent pay change starts. Empty = none." aria-label="About: Pay changes in">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><input type="number" class="scg-num" id="s1_chgYear" placeholder="none" min="2026" max="2080" aria-label="Scenario A pay changes in" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c2" role="cell"><input type="number" class="scg-num" id="s2_chgYear" placeholder="none" min="2026" max="2080" aria-label="Scenario B pay changes in" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c3" role="cell"><input type="number" class="scg-num" id="s3_chgYear" placeholder="none" min="2026" max="2080" aria-label="Scenario C pay changes in" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c4" role="cell"><input type="number" class="scg-num" id="s4_chgYear" placeholder="none" min="2026" max="2080" aria-label="Scenario D pay changes in" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c5" role="cell"><input type="number" class="scg-num" id="s5_chgYear" placeholder="none" min="2026" max="2080" aria-label="Scenario E pay changes in" oninput="recalc()" onchange="recalc()"></div>
     </div>
-    <div class="sc-result" id="ms2"></div>
+    <div class="scg-row scg-r-std" role="row">
+      <div class="scg-lbl" role="rowheader">New take-home <button type="button" class="info-btn" title="Take-home from that year on, today&#x2019;s money." aria-label="About: New take-home">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><input type="number" class="scg-num" id="s1_chgInc" placeholder="&#x2014;" min="0" step="100" aria-label="Scenario A new take-home" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c2" role="cell"><input type="number" class="scg-num" id="s2_chgInc" placeholder="&#x2014;" min="0" step="100" aria-label="Scenario B new take-home" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c3" role="cell"><input type="number" class="scg-num" id="s3_chgInc" placeholder="&#x2014;" min="0" step="100" aria-label="Scenario C new take-home" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c4" role="cell"><input type="number" class="scg-num" id="s4_chgInc" placeholder="&#x2014;" min="0" step="100" aria-label="Scenario D new take-home" oninput="recalc()" onchange="recalc()"></div>
+      <div class="scg-cell c5" role="cell"><input type="number" class="scg-num" id="s5_chgInc" placeholder="&#x2014;" min="0" step="100" aria-label="Scenario E new take-home" oninput="recalc()" onchange="recalc()"></div>
+    </div>
+    </div>
+  </details>
+  <div class="scg" role="table" aria-label="Results per scenario">
+    <div class="scg-sec" role="presentation">Result <span class="scg-sec-note">at the stop age</span></div>
+    <div class="scg-row scg-r-out" role="row">
+      <div class="scg-lbl" role="rowheader">Funded when you stop <button type="button" class="info-btn" title="Whether your portfolio and pensions cover your budget at the stop age (Results tab for the detail)." aria-label="About: Funded when you stop">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><span class="scg-out" id="scr1_status">&#x2014;</span></div>
+      <div class="scg-cell c2" role="cell"><span class="scg-out" id="scr2_status">&#x2014;</span></div>
+      <div class="scg-cell c3" role="cell"><span class="scg-out" id="scr3_status">&#x2014;</span></div>
+      <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_status">&#x2014;</span></div>
+      <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_status">&#x2014;</span></div>
+    </div>
+    <div class="scg-row scg-r-out" role="row">
+      <div class="scg-lbl" role="rowheader">FIRE number <button type="button" class="info-btn" title="What you need when you stop, after tax." aria-label="About: FIRE number">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><span class="scg-out" id="scr1_target">&#x2014;</span></div>
+      <div class="scg-cell c2" role="cell"><span class="scg-out" id="scr2_target">&#x2014;</span></div>
+      <div class="scg-cell c3" role="cell"><span class="scg-out" id="scr3_target">&#x2014;</span></div>
+      <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_target">&#x2014;</span></div>
+      <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_target">&#x2014;</span></div>
+    </div>
+    <div class="scg-row scg-r-out" role="row">
+      <div class="scg-lbl" role="rowheader">Net worth when you stop <button type="button" class="info-btn" title="Projected investable net worth at the stop age." aria-label="About: Net worth when you stop">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><span class="scg-out" id="scr1_nw">&#x2014;</span></div>
+      <div class="scg-cell c2" role="cell"><span class="scg-out" id="scr2_nw">&#x2014;</span></div>
+      <div class="scg-cell c3" role="cell"><span class="scg-out" id="scr3_nw">&#x2014;</span></div>
+      <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_nw">&#x2014;</span></div>
+      <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_nw">&#x2014;</span></div>
+    </div>
+    <div class="scg-row scg-r-out" role="row">
+      <div class="scg-lbl" role="rowheader">Money lasts <button type="button" class="info-btn" title="Age your money runs out, or the life expectancy it reaches." aria-label="About: Money lasts">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><span class="scg-out" id="scr1_lasts">&#x2014;</span></div>
+      <div class="scg-cell c2" role="cell"><span class="scg-out" id="scr2_lasts">&#x2014;</span></div>
+      <div class="scg-cell c3" role="cell"><span class="scg-out" id="scr3_lasts">&#x2014;</span></div>
+      <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_lasts">&#x2014;</span></div>
+      <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_lasts">&#x2014;</span></div>
+    </div>
+    <div class="scg-row scg-r-out" role="row" id="scgHouseholdRow" hidden>
+      <div class="scg-lbl" role="rowheader">Household FIRE <button type="button" class="info-btn" title="Two-person model: your and her net worth together against the whole household&#x2019;s target." aria-label="About: Household FIRE">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><span class="scg-out" id="scr1_household">&#x2014;</span></div>
+      <div class="scg-cell c2" role="cell"><span class="scg-out" id="scr2_household">&#x2014;</span></div>
+      <div class="scg-cell c3" role="cell"><span class="scg-out" id="scr3_household">&#x2014;</span></div>
+      <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_household">&#x2014;</span></div>
+      <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_household">&#x2014;</span></div>
+    </div>
   </div>
-
-  <!-- C -->
-  <div class="sc-card c3">
-    <div class="sc-hd">
-      <div class="sc-dot" style="background:var(--s3c)"></div>
-      <input class="sc-name" type="text" id="sc3name" value="Barista FIRE" aria-label="Scenario C name" oninput="recalc()" onchange="recalc()">
-    </div>
-    <div class="sc-bd">
-      <div class="field">
-        <label>Retire at age <span id="s3_retDisplay" style="color:var(--s3c);font-family:'DM Mono',monospace;font-weight:700">50</span></label>
-        <div class="age-ctrl">
-          <button class="age-btn" onclick="stepAge(3,-1)" style="color:var(--s3c)" aria-label="Later">&#x2212;</button>
-          <input type="range" id="s3_ret" value="50" min="30" max="75" step="1" oninput="updateAge(3)" onchange="updateAge(3)" style="color:var(--s3c)">
-          <button class="age-btn" onclick="stepAge(3,1)" style="color:var(--s3c)" aria-label="Earlier">&#x2B;</button>
-        </div>
-      </div>
-      <div class="field">
-        <label for="s3_inc">Income Override (net)</label>
-        <div class="unit-wrap"><input type="number" id="s3_inc" placeholder="uses base" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
-      </div>
-      <div class="field">
-        <label for="s3_chgYear">Income Change Year</label>
-        <input type="number" id="s3_chgYear" value="" min="2026" max="2080" oninput="recalc()" onchange="recalc()">
-      </div>
-      <div class="field">
-        <label for="s3_chgInc">New Income (net)</label>
-        <div class="unit-wrap"><input type="number" id="s3_chgInc" value="" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
-      </div>
-      <div class="sc-toggles">
-        <div class="sc-toggle-row" onclick="toggleFeature(3,'partner')">
-          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F91D;</span> With Partner</span>
-          <div class="tog-sw" id="tog3_partner"></div>
-        </div>
-        <div class="sc-toggle-row" onclick="toggleFeature(3,'prop')">
-          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F3E0;</span> Buy Property</span>
-          <div class="tog-sw" id="tog3_prop"></div>
-        </div>
-        <div class="sc-toggle-row" onclick="toggleFeature(3,'child')">
-          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F476;</span> Have a Child</span>
-          <div class="tog-sw" id="tog3_child"></div>
-        </div>
-      </div>
-    </div>
-    <div class="sc-result" id="ms3"></div>
-  </div>
-
-  <!-- D -->
-  <div class="sc-card c4">
-    <div class="sc-hd">
-      <div class="sc-dot" style="background:var(--s4c)"></div>
-      <input class="sc-name" type="text" id="sc4name" value="With Partner" aria-label="Scenario D name" oninput="recalc()" onchange="recalc()">
-    </div>
-    <div class="sc-bd">
-      <div class="field">
-        <label>Retire at age <span id="s4_retDisplay" style="color:var(--s4c);font-family:'DM Mono',monospace;font-weight:700">42</span></label>
-        <div class="age-ctrl">
-          <button class="age-btn" onclick="stepAge(4,-1)" style="color:var(--s4c)" aria-label="Later">&#x2212;</button>
-          <input type="range" id="s4_ret" value="42" min="30" max="75" step="1" oninput="updateAge(4)" onchange="updateAge(4)" style="color:var(--s4c)">
-          <button class="age-btn" onclick="stepAge(4,1)" style="color:var(--s4c)" aria-label="Earlier">&#x2B;</button>
-        </div>
-      </div>
-      <div class="field">
-        <label for="s4_inc">Income Override (net)</label>
-        <div class="unit-wrap"><input type="number" id="s4_inc" placeholder="uses base" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
-      </div>
-      <div class="field">
-        <label for="s4_chgYear">Income Change Year</label>
-        <input type="number" id="s4_chgYear" placeholder="none" min="2026" max="2080" oninput="recalc()" onchange="recalc()">
-      </div>
-      <div class="field">
-        <label for="s4_chgInc">New Income (net)</label>
-        <div class="unit-wrap"><input type="number" id="s4_chgInc" placeholder="&#x2014;" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
-      </div>
-      <div class="sc-toggles">
-        <div class="sc-toggle-row" onclick="toggleFeature(4,'partner')">
-          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F91D;</span> With Partner</span>
-          <div class="tog-sw" id="tog4_partner"></div>
-        </div>
-        <div class="sc-toggle-row" onclick="toggleFeature(4,'prop')">
-          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F3E0;</span> Buy Property</span>
-          <div class="tog-sw" id="tog4_prop"></div>
-        </div>
-        <div class="sc-toggle-row" onclick="toggleFeature(4,'child')">
-          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F476;</span> Have a Child</span>
-          <div class="tog-sw" id="tog4_child"></div>
-        </div>
-      </div>
-    </div>
-    <div class="sc-result" id="ms4"></div>
-  </div>
-
-  <!-- E -->
-  <div class="sc-card c5">
-    <div class="sc-hd">
-      <div class="sc-dot" style="background:var(--s5c)"></div>
-      <input class="sc-name" type="text" id="sc5name" value="Everything" aria-label="Scenario E name" oninput="recalc()" onchange="recalc()">
-    </div>
-    <div class="sc-bd">
-      <div class="field">
-        <label>Retire at age <span id="s5_retDisplay" style="color:var(--s5c);font-family:'DM Mono',monospace;font-weight:700">48</span></label>
-        <div class="age-ctrl">
-          <button class="age-btn" onclick="stepAge(5,-1)" style="color:var(--s5c)" aria-label="Later">&#x2212;</button>
-          <input type="range" id="s5_ret" value="48" min="30" max="75" step="1" oninput="updateAge(5)" onchange="updateAge(5)" style="color:var(--s5c)">
-          <button class="age-btn" onclick="stepAge(5,1)" style="color:var(--s5c)" aria-label="Earlier">&#x2B;</button>
-        </div>
-      </div>
-      <div class="field">
-        <label for="s5_inc">Income Override (net)</label>
-        <div class="unit-wrap"><input type="number" id="s5_inc" placeholder="uses base" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
-      </div>
-      <div class="field">
-        <label for="s5_chgYear">Income Change Year</label>
-        <input type="number" id="s5_chgYear" placeholder="none" min="2026" max="2080" oninput="recalc()" onchange="recalc()">
-      </div>
-      <div class="field">
-        <label for="s5_chgInc">New Income (net)</label>
-        <div class="unit-wrap"><input type="number" id="s5_chgInc" placeholder="&#x2014;" min="0" step="100" oninput="recalc()" onchange="recalc()"><span class="u">&#x20AC;</span></div>
-      </div>
-      <div class="sc-toggles">
-        <div class="sc-toggle-row" onclick="toggleFeature(5,'partner')">
-          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F91D;</span> With Partner</span>
-          <div class="tog-sw" id="tog5_partner"></div>
-        </div>
-        <div class="sc-toggle-row" onclick="toggleFeature(5,'prop')">
-          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F3E0;</span> Buy Property</span>
-          <div class="tog-sw" id="tog5_prop"></div>
-        </div>
-        <div class="sc-toggle-row" onclick="toggleFeature(5,'child')">
-          <span class="sc-toggle-lbl"><span class="tog-icon">&#x1F476;</span> Have a Child</span>
-          <div class="tog-sw" id="tog5_child"></div>
-        </div>
-      </div>
-    </div>
-    <div class="sc-result" id="ms5"></div>
-  </div>
-
-</div><!-- /sc-grid -->
-</div><!-- /sc-shell -->
+  </div><!-- /scg-scroll -->
+</div><!-- /scg-shell -->
 </div><!-- /tab-panel-scenarios -->
 
 <!-- ═══════════════════════════════════════════

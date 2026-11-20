@@ -520,7 +520,54 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
    MOBILE (≤ 767px) — touch-first responsive layout
    All rules here are additive; desktop sees nothing below
 ══════════════════════════════════════════════════════════ */
+/* ── Scenario grid (v8): labels once on the left, one column per scenario ── */
+.scg-shell{padding:16px;display:flex;flex-direction:column;gap:10px;box-sizing:border-box;}
+.scg-intro{margin:0;font-size:12px;color:var(--sec);line-height:1.45;max-width:760px;}
+.scg-scroll{overflow-x:auto;background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:4px 10px 10px;}
+.scg{--scg-lbl:190px;display:flex;flex-direction:column;min-width:calc(var(--scg-lbl) + 5*124px);}
+.scg-row{display:grid;grid-template-columns:var(--scg-lbl) repeat(5,minmax(116px,1fr));column-gap:8px;border-top:1px solid var(--bdrs);height:46px;}
+.scg-row[hidden]{display:none;}
+.scg-row.scg-head{border-top:none;height:50px;}
+.scg-row.scg-r-plan{height:58px;}
+.scg-row.scg-r-out{height:38px;}
+.scg-lbl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);line-height:1.25;min-width:0;}
+.scg-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:0;}
+.scg-head .scg-cell{border-top:3px solid var(--sc,var(--bdr));border-radius:6px 6px 0 0;justify-content:center;padding:0 4px;}
+.scg-cell.c1{--sc:var(--s1c);} .scg-cell.c2{--sc:var(--s2c);} .scg-cell.c3{--sc:var(--s3c);}
+.scg-cell.c4{--sc:var(--s4c);} .scg-cell.c5{--sc:var(--s5c);}
+.scg-head .sc-name{width:100%;text-align:center;flex:none;}
+.scg-age{width:44px;height:26px;padding:0 2px;text-align:center;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--sc);-moz-appearance:textfield;}
+.scg-age::-webkit-outer-spin-button,.scg-age::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.scg-tog{background:none;border:none;padding:4px;cursor:pointer;display:flex;}
+.scg-tog:focus-visible{outline:2px solid var(--sec);border-radius:10px;}
+.scg-pills{display:block;height:18px;width:100%;}
+.scg-r-plan .scg-cell{justify-content:flex-start;padding-top:8px;}
+.scg-r-plan .scg-lbl{align-items:flex-start;padding-top:13px;}
+.scg-num{width:100%;max-width:120px;height:30px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;}
+.scg-out{font-family:'DM Mono',monospace;font-size:12px;color:var(--text);text-align:center;white-space:nowrap;}
+.scg-out.ok{color:var(--ok);} .scg-out.err{color:var(--err);}
+.scg-sec{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--sec);padding:12px 0 4px;}
+.scg-sec-note{font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted);margin-left:6px;}
+.scg-more{border-top:1px solid var(--bdrs);margin-top:2px;}
+.scg-count{color:var(--warn,#fbbf24);}
+.scg-sum{cursor:pointer;list-style:none;}
+.scg-sum::-webkit-details-marker{display:none;}
+.scg-sum::before{content:'\25B8  ';}
+.scg-more[open] .scg-sum::before{content:'\25BE  ';}
+
 @media(max-width:767px){
+  /* Scenario grid: labels stay pinned, columns scroll sideways */
+  .scg-shell{padding:12px;}
+  .scg{--scg-lbl:124px;min-width:calc(var(--scg-lbl) + 5*144px);}
+  .scg-row{grid-template-columns:var(--scg-lbl) repeat(5,144px);}
+  .scg-head .sc-name{font-size:16px;height:38px;}
+  .scg-r-plan .scg-lbl{padding-top:16px;}
+  .scg .age-btn{width:34px;height:34px;}
+  .scg-lbl{position:sticky;left:0;z-index:1;background:var(--card);font-size:12px;padding-right:4px;}
+  .scg-age{height:36px;width:48px;font-size:16px;}
+  .scg-num{height:36px;font-size:16px;}
+  .scg-row.scg-r-age{height:52px;}
+
   /* 100dvh = dynamic viewport height, shrinks when iOS browser chrome appears */
   body{height:100dvh;}
 

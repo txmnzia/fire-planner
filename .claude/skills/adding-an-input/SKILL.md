@@ -22,8 +22,8 @@ Pick the right home:
   (pension + the `wf{i}_yr`/`wf{i}_amt` windfall `field-row`s), Partner,
   Property Purchase, Having a Child. Add to the existing section that fits;
   only create a new section for a genuinely new topic.
-- **Per-scenario parameter** → Tab 2: five `.sc-card` blocks (A–E). You must add
-  the field to **all five cards**, ids prefixed `s1_`…`s5_`.
+- **Per-scenario parameter** → Tab 2: one `.scg-row` with five `.scg-cell c1…c5` cells (A–E). You must add
+  a cell for **all five scenarios**, ids prefixed `s1_`…`s5_`.
 - **Monte Carlo control** → Tab 4 `.mc-controls` (`.mc-ctl` wrapper).
 
 Copy these exact patterns:
@@ -58,7 +58,7 @@ Rules:
   `mcRecenter`) use `onchange="scheduleSave()"` only — MC reads them at Run
   time in `js/ui/mcTab.js`, and rerunning deterministic recalc would be noise.
 - **Dedicated handlers**: if the input needs UI work beyond recalc (the
-  `s{n}_ret` sliders call `updateAge(n)`, the `wdMode` radios call
+  `s{n}_ret` number fields call `updateAge(n)` (input) / `clampAge(n)` (change), the `wdMode` radios call
   `onWdMode()` — both in `js/ui/controls.js`, both call `recalc()` themselves),
   write the handler in the appropriate `js/ui/` module and **add it to the
   `Object.assign(window, {...})` block in `js/main.js`** — inline `on*`

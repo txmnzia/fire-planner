@@ -2,7 +2,7 @@ import { el, eur, numVal } from "./util.js";
 import { state } from "./state.js";
 import { getGlobals, getScenario } from "./inputs.js";
 import { project } from "./engine.js";
-import { renderMilestone, renderSummaryTiles } from "./ui/cards.js";
+import { renderScenarioGrid, renderSummaryTiles } from "./ui/cards.js";
 import { buildChart, buildFlowChart } from "./ui/charts.js";
 import { renderTable } from "./ui/table.js";
 import { renderExplanation } from "./ui/explanation.js";
@@ -26,7 +26,7 @@ export function recalc() {
   el("calcTime").textContent=new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
   const scenarios=[1,2,3,4,5].map(s=>getScenario(s,gl));
   const projs=scenarios.map(sc=>project(sc,gl));
-  scenarios.forEach((sc,i)=>renderMilestone(i+1,sc,gl,projs[i]));
+  renderScenarioGrid(projs,gl,scenarios);
   state.lastProjs=projs; state.lastGl=gl; state.lastScenarios=scenarios;
   buildChart(projs,gl); buildFlowChart(projs,gl); renderTable(projs,gl);
   updateLabels();

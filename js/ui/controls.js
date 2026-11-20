@@ -1,4 +1,4 @@
-import { el, numVal } from "../util.js";
+import { el, numVal, stepClamp } from "../util.js";
 import { state, features } from "../state.js";
 import { getScenarioName } from "../inputs.js";
 import { recalc } from "../recalc.js";
@@ -57,17 +57,27 @@ export function scrollToScenario(idx) {
   updateScNav(idx);
 }
 
-// ── AGE SLIDER ─────────────────────────────────────────────────────────────
+// ── STOP AGE (scenario grid) ───────────────────────────────────────────────
+// The stop age is a number field with − / + buttons. While typing, a value outside
+// [min, max] is ignored (no recalc on a half-typed "4"); leaving the field clamps it.
+function ageBounds(inp) { return [parseInt(inp.min, 10) || 30, parseInt(inp.max, 10) || 75]; }
 export function updateAge(s) {
-  const inp=el("s"+s+"_ret"), disp=el("s"+s+"_retDisplay");
-  const min=parseInt(inp.min),max=parseInt(inp.max),val=parseInt(inp.value);
-  inp.style.setProperty("--pct",((val-min)/(max-min)*100).toFixed(1)+"%");
-  disp.textContent=val; recalc();
+  const inp = el("s"+s+"_ret"); if (!inp) return;
+  const [min, max] = ageBounds(inp), v = parseInt(inp.value, 10);
+  if (isNaN(v) || v < min || v > max) return;
+  recalc();
 }
-export function stepAge(s,delta) {
-  const inp=el("s"+s+"_ret");
-  inp.value=Math.min(parseInt(inp.max),Math.max(parseInt(inp.min),parseInt(inp.value)+delta));
-  updateAge(s);
+export function clampAge(s) {
+  const inp = el("s"+s+"_ret"); if (!inp) return;
+  const [min, max] = ageBounds(inp);
+  inp.value = stepClamp(inp.value, 0, min, max);
+  recalc();
+}
+export function stepAge(s, delta) {
+  const inp = el("s"+s+"_ret"); if (!inp) return;
+  const [min, max] = ageBounds(inp);
+  inp.value = stepClamp(inp.value, delta, min, max);
+  recalc();
 }
 
 // ── TABLE TOGGLE ───────────────────────────────────────────────────────────

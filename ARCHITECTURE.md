@@ -32,9 +32,11 @@ js/
   db.js                 Supabase client (shared txmnzia-dbs project, schema
                         fire_planner), lazy-loaded from a CDN, null when offline.
   ui/
-    controls.js         Tabs, feature toggles, age sliders, withdrawal-mode switch,
+    controls.js         Tabs, feature toggles, stop-age steppers, withdrawal-mode switch,
                         labels, active-scenario selection, mobile nav.
-    cards.js            Scenario milestone cards + Results summary tiles.
+    cards.js            computeCardMetrics (single source of card numbers), the
+                        Scenarios grid result cells (scenarioGridResults /
+                        renderScenarioGrid) and the Results summary tiles.
     charts.js           Projection & allocation charts (Chart.js) and shared palette.
     table.js            Year-by-year detail table + CSV export.
     mcTab.js            Monte Carlo tab UI (cards, tiles, fan & histogram charts).
@@ -51,8 +53,13 @@ js/
                         year-picker popover (buildYpick), sliders over the numeric
                         inputs, and the dynamic windfall datapoint list. Progressive
                         enhancement — the id-bearing inputs stay the source of truth.
-tests/                  node:test unit tests for the two pure engines.
-  fixtures/             simple-mode-snapshot.json: project() output frozen before the
+tests/                  node:test suites: the two pure engines, the v8 golden master
+                        (golden.test.mjs + golden-cases.mjs), the scenario grid
+                        results, and markup wiring (ids, saved fields, handlers).
+  tools/gen-golden.mjs  Regenerates fixtures/v8-golden.json (only in a commit that
+                        deliberately changes a calculation).
+  fixtures/             v8-golden.json: 192 cases frozen from the v7.3 engine.
+                        simple-mode-snapshot.json: project() output frozen before the
                         two-person model, so simple mode is proven unchanged.
 .github/workflows/ci.yml  Syntax-checks every module and runs the tests on push/PR.
 ```

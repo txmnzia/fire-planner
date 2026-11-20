@@ -15,7 +15,7 @@ A browser-based, zero-build **Financial Independence / Retire Early** calculator
 7. [Capital Gains Tax Model](#capital-gains-tax-model)
 8. [Portfolio Return & Glide Path](#portfolio-return--glide-path)
 9. [Coast Number](#coast-number)
-10. [Scenario Cards (SWR Mode Display)](#scenario-cards-swr-mode-display)
+10. [Scenarios Tab and Result Tiles](#scenarios-tab-and-result-tiles)
 11. [Partner Model](#partner-model) (incl. [Two-person model](#two-person-model))
 12. [Child Cost Model](#child-cost-model)
 13. [Property Model](#property-model)
@@ -446,11 +446,34 @@ CoastNumber  = FIRE Number / growthFactor
 
 ---
 
-## Scenario Cards (SWR Mode Display)
+## Scenarios Tab and Result Tiles
 
-### Monthly Income vs Target
+### The scenario grid (v8)
 
-Each scenario card shows:
+The Scenarios tab is one grid: labels once on the left, one column per scenario.
+Rows: the scenario **name**, **You stop at** (type the age or use − / +, clamped to
+30–75), the three **life events** (with partner, buy property, have a child, each an
+on/off switch per scenario), the collapsed **Pay what-ifs** (take-home override, pay
+change year and new take-home; the summary says how many are set), and four
+**result** rows:
+
+| Row | Meaning | Source |
+|---|---|---|
+| Funded when you stop | % mode: ✓ Funded or × Short €X/mo (target − income); fixed mode: ✓ +surplus or × Gap | `computeCardMetrics` (`incomeOk`, `netMonthly`, `targetMonthly`, `surplus`) |
+| FIRE number | the target at the stop age | `proj.fireTarget` |
+| Net worth when you stop | projected investable net worth at the stop age | `computeCardMetrics().portRet` |
+| Money lasts | "to {life expectancy}+" or "runs out at {age}" | `computeCardMetrics().depletionYear` |
+
+A fifth row, **Household FIRE**, appears only in the two-person model for scenarios
+with the partner on. Every cell comes from `scenarioGridResults()` in
+`js/ui/cards.js`, which only formats `computeCardMetrics()`: the grid and the
+Results tiles can never disagree. Rows have fixed heights, so switching anything
+never shifts the layout; on a phone the label column stays pinned and the scenario
+columns scroll sideways.
+
+### Monthly income vs target (Results tiles)
+
+Each Results summary tile shows:
 
 ```
 Monthly Income: €3,100/mo  / €3,800 target
@@ -782,7 +805,7 @@ if (yr >= chgYear && chgYear !== null)
 | D — With Partner | 42 | ✓ | ✗ | ✗ | Joint income, joint spending |
 | E — Full Picture | varies | ✓ | ✓ | ✓ | All add-ons enabled |
 
-You can rename scenarios and change all parameters including the retirement age slider, income override, and income change fields.
+You can rename scenarios and change all parameters on the Scenarios grid: stop age, life-event switches, income override, and income change fields.
 
 ---
 

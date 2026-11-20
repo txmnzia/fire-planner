@@ -1,4 +1,4 @@
-import { el, eur } from "../util.js";
+import { el, eur, fmtK } from "../util.js";
 import { state } from "../state.js";
 import { getScenarioName } from "../inputs.js";
 import { portReturnAt, yearOneBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote } from "../engine.js";
@@ -75,6 +75,60 @@ export function computeCardMetrics(sc, gl, proj) {
   return m;
 }
 
+// Scenario grid (v8, Scenarios tab): the few result cells shown under each
+// scenario column. Every figure comes from computeCardMetrics, the single source
+// shared with the Results tiles (AUDIT.md T8): never re-derive a number here.
+export function scenarioGridResults(sc, gl, proj) {
+  const m = computeCardMetrics(sc, gl, proj);
+  const swr = gl.wdMode === 'swr';
+  const funded = swr ? !!m.incomeOk : !!m.ok;
+  const gap = swr ? Math.max(0, m.targetMonthly - m.netMonthly) : Math.max(0, -m.surplus);
+  const status = funded
+    ? (swr ? '\u2713 Funded' : '\u2713 +' + fmtK(m.surplus))
+    : (swr ? '\u00d7 Short ' + fmtK(gap) + '/mo' : '\u00d7 Gap ' + fmtK(gap));
+  const depletionAge = m.depletionYear != null ? gl.currentAge + m.depletionYear - gl.baseYear : null;
+  const household = m.two ? {
+    ok: !!m.two.householdOk,
+    text: m.two.householdOk ? '\u2713 Funded' : '\u00d7 Short ' + fmtK(Math.max(0, m.two.householdTarget - m.two.householdNW)),
+  } : null;
+  return {
+    funded, status, gap,
+    fireTarget: m.fireTarget, fireTargetText: fmtK(m.fireTarget),
+    nwAtStop: m.portRet, nwAtStopText: fmtK(m.portRet),
+    depletionYear: m.depletionYear, depletionAge,
+    lastsOk: depletionAge == null,
+    lasts: depletionAge == null ? 'to ' + gl.lifeExp + '+' : 'runs out at ' + depletionAge,
+    household,
+  };
+}
+
+// Writes the result rows of the scenario grid. Cells are plain text; colour comes
+// from the ok/err classes, so no value is ever interpolated into HTML.
+export function renderScenarioGrid(projs, gl, scenarios) {
+  let anyHousehold = false;
+  scenarios.forEach((sc, i) => {
+    const n = i + 1, r = scenarioGridResults(sc, gl, projs[i]);
+    const set = (key, text, cls) => {
+      const c = el('scr' + n + '_' + key); if (!c) return;
+      c.textContent = text; c.classList.remove('ok', 'err'); if (cls) c.classList.add(cls);
+    };
+    set('status', r.status, r.funded ? 'ok' : 'err');
+    set('target', r.fireTargetText, '');
+    set('nw', r.nwAtStopText, '');
+    set('lasts', r.lasts, r.lastsOk ? 'ok' : 'err');
+    if (r.household) anyHousehold = true;
+    set('household', r.household ? r.household.text : '\u2014', r.household ? (r.household.ok ? 'ok' : 'err') : '');
+  });
+  const hh = el('scgHouseholdRow'); if (hh) hh.hidden = !anyHousehold;
+  // The pay what-ifs are collapsed by default: say how many are set, so a value
+  // that changes the numbers is never hidden without a trace.
+  let nSet = 0;
+  for (let n = 1; n <= 5; n++) for (const k of ['_inc', '_chgYear', '_chgInc']) {
+    const f = el('s' + n + k); if (f && f.value.trim() !== '') nSet++;
+  }
+  const pc = el('scgPayCount'); if (pc) pc.textContent = nSet ? '\u00b7 ' + nSet + ' value' + (nSet > 1 ? 's' : '') + ' set' : '';
+}
+
 export function vsPlanRowHTML(m) {
   if (m.vsPlan === null) return '';
   const d = m.vsPlan, onPlan = d === 0 && !m.vsPlanOpen, ahead = d > 0 || m.vsPlanOpen, n = Math.abs(d);
@@ -119,47 +173,6 @@ export function fireNumRowHTML(m, gl, cc) {
     adj = ' <span class="tgt">/ '+eur(m.fireTargetAdj)+' w/ later changes</span>';
   }
   return '<div class="sc-result-row"><span class="k">'+(m.two ? 'FIRE Number (you)' : 'FIRE Number')+'</span><span class="v '+cc+'">'+eur(m.fireTarget)+adj+'</span></div>';
-}
-
-export function renderMilestone(idx, sc, gl, proj) {
-  const cc = SC_COLORS[idx-1];
-  const m  = computeCardMetrics(sc, gl, proj);
-  const retIdx = m.retIdx, portRet = m.portRet, retYearM = m.retYear;
-  const coastNow = m.coastNow, coasting = m.coasting, depletionYear = m.depletionYear;
-  const scName = getScenarioName(idx-1);
-  const coastRow = '<div class="sc-result-row"><span class="k">Coast Number</span><span class="v '+(coasting?'ok':'')+'">'+eur(coastNow)+(coasting?' \u2713':'')+'</span></div>';
-  const retireAgeRow = '<div class="sc-result-row"><span class="k">Retire age</span><span class="v '+cc+'">'+sc.retAge+' &middot; '+retYearM+'</span></div>';
-  const nwRetRow = '<div class="sc-result-row"><span class="k">NW at retirement</span><span class="v '+cc+'">'+eur(portRet)+'</span></div>';
-  const depRowErr = depletionYear
-    ? '<div class="sc-result-row"><span class="k">Runs out</span><span class="v err">'+depletionYear+' (age '+(gl.currentAge+depletionYear-gl.baseYear)+')</span></div>'
-    : '';
-  const vsPlanRow = vsPlanRowHTML(m);
-  const infeasRow = infeasibleRowHTML(m);
-  const fireNumRow = fireNumRowHTML(m, gl, cc);
-
-  let headChip, innerRows;
-  if (gl.wdMode === 'swr') {
-    // %-of-portfolio mode cannot meaningfully deplete, so the honest headline is
-    // budget adequacy, not a survival chip.
-    headChip = '<div class="ms-chip '+(m.incomeOk?'ok':'err')+'">'+(m.incomeOk?'\u2713 Funded':'\u00d7 Short')+'</div>';
-    const incomeRow = '<div class="sc-result-row"><span class="k">Monthly income</span><span class="v '+(m.incomeOk?'ok':'err')+'">'+eur(m.netMonthly)+' <span class="tgt">/ '+eur(m.targetMonthly)+'</span></span></div>';
-    innerRows = retireAgeRow + vsPlanRow + incomeRow + nwRetRow + fireNumRow + twoRowsHTML(m) + coastRow + depRowErr + infeasRow;
-  } else {
-    headChip = '<div class="ms-chip '+(m.ok?'ok':'err')+'">'+(m.ok?'\u2713 On Track':'\u00d7 Gap')+'</div>';
-    const surpRow = m.ok
-      ? '<div class="sc-result-row"><span class="k">Surplus</span><span class="v ok">+'+eur(m.surplus)+'</span></div>'
-      : '<div class="sc-result-row"><span class="k">Gap</span><span class="v err">'+eur(m.surplus)+'</span></div>';
-    const depRow = depletionYear ? depRowErr
-      : '<div class="sc-result-row"><span class="k">Survives to</span><span class="v ok">age '+gl.lifeExp+'+</span></div>';
-    innerRows = retireAgeRow + vsPlanRow + nwRetRow + fireNumRow + surpRow + twoRowsHTML(m) + coastRow + depRow + infeasRow;
-  }
-
-  el("ms"+idx).innerHTML =
-    '<div class="sc-result-head">'+
-      '<div class="sc-result-age" style="color:var(--'+cc+'c)">'+scName+' &middot; Age '+sc.retAge+'</div>'+
-      headChip+
-    '</div>'+
-    '<div class="sc-result-rows">'+innerRows+'</div>';
 }
 
 export function renderSummaryTiles(projs, gl, scenarios) {

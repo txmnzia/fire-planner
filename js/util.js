@@ -24,3 +24,11 @@ export function fmtK(n) {
   const abs = Math.abs(n);
   return "\u20ac" + (abs >= 1e6 ? (abs/1e6).toFixed(2)+"M" : abs >= 1e3 ? (abs/1e3).toFixed(1)+"k" : String(Math.round(abs)));
 }
+
+// Next value of a stepped integer field (scenario stop ages): clamped to
+// [min, max]; a blank or invalid current value restarts from min.
+export function stepClamp(current, delta, min, max) {
+  const v = parseInt(current, 10);
+  const base = isNaN(v) ? min : v;
+  return Math.min(max, Math.max(min, base + delta));
+}

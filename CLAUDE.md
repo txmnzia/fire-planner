@@ -30,7 +30,7 @@ There is no package.json, no npm install, no build step. Do not introduce one.
 | `supabase/migrations/` | SQL for the `fire_planner` schema (run by hand in the Supabase SQL editor). |
 | `js/main.js` | Entry point; binds every inline-handler function onto `window`. |
 | `js/ui/*` | Renderers: cards, charts, table, Monte Carlo tab, IBKR import, net-worth history. |
-| `tests/` | `node:test` suites for the two pure engines. |
+| `tests/` | `node:test` suites: the two pure engines, the v8 golden master (192 frozen cases; regenerate only with `node tests/tools/gen-golden.mjs` in a deliberate calculation change), the scenario grid, and markup wiring. |
 | `AUDIT.md` | The 2026-07 financial/technical audit and its resolution. **Read it before touching financial logic** — it is the list of mistakes already made once. |
 
 ## Iron rules

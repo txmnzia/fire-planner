@@ -12,8 +12,19 @@ node --test tests/*.test.mjs                              # all tests (Node ≥ 
 for f in js/*.js js/ui/*.js; do node --check "$f"; done   # syntax check (CI runs both)
 ```
 
-Current state (verified): **40 tests, 40 pass** — 31 in `tests/engine.test.mjs`,
-9 in `tests/montecarlo.test.mjs`. `tests/fixtures/simple-mode-snapshot.json` freezes simple-mode `project()` output (regression for the two-person model).
+Current state (verified, v8.0): **251 tests, all pass**: 31 in `tests/engine.test.mjs`,
+9 in `tests/montecarlo.test.mjs`, 195 in `tests/golden.test.mjs` (the v8 golden master:
+192 cases frozen from the v7.3 engine in `tests/fixtures/v8-golden.json`, built from
+`tests/golden-cases.mjs`, plus purity and determinism), 8 in `tests/scenarioGrid.test.mjs`
+(grid cells = `computeCardMetrics`), 8 in `tests/markup.test.mjs` (unique ids, every
+`SYNC_FIELDS` id has an input, every inline handler is on `window`, grid rows have five
+cells). `tests/fixtures/simple-mode-snapshot.json` freezes simple-mode `project()` output
+(regression for the two-person model).
+
+**Golden master rule (v8):** increments that only reorganise inputs must leave
+`v8-golden.json` untouched. A deliberate calculation change regenerates it with
+`node tests/tools/gen-golden.mjs` in its own commit, and the commit message says what
+moved and why.
 
 There is no package.json and no test framework. Tests use only `node:test` and
 `node:assert/strict`. **Never add a framework, an npm dependency, or a build step** —

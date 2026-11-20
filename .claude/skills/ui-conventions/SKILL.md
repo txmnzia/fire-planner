@@ -64,7 +64,7 @@ may be undefined — a top-level call breaks the whole app at load with a confus
 
 1. `getGlobals()` → `gl`; update portfolio pills and calc-time header.
 2. `getScenario(s, gl)` for s = 1..5, then `project(sc, gl)` for each → `projs[]`.
-3. `renderMilestone(i+1, sc, gl, projs[i])` for each scenario card.
+3. `renderScenarioGrid(projs, gl, scenarios)` fills the result rows of the Scenarios grid.
 4. Cache `state.lastProjs / lastGl / lastScenarios` (used by `setActiveScenario` and
    `downloadCSV` to re-render without recomputing).
 5. `buildChart(projs, gl)`, `buildFlowChart(projs, gl)`, `renderTable(projs, gl)`,
@@ -82,12 +82,12 @@ without a recalc, also call it from `setActiveScenario` in `js/ui/controls.js` u
 ## One source for card/tile numbers (AUDIT.md T8)
 
 `computeCardMetrics(sc, gl, proj)` in `js/ui/cards.js` is the single source of every
-financial figure shown on the Scenario cards AND the Results summary tiles
+financial figure shown on the Scenarios grid AND the Results summary tiles
 (`netMonthly`, `targetMonthly`, `fireTarget`, `coastNow`, `depletionYear`, `vsPlan`, …).
 The two views duplicated ~60 lines of this logic once and drifted (T8). **Never compute
 a display financial figure inline in a renderer** — extend `computeCardMetrics` (or the
 shared row helpers `vsPlanRowHTML`/`infeasibleRowHTML`/`fireNumRowHTML`) and consume the
-result in both `renderMilestone` and `renderSummaryTiles`. Check the agreement matrix in
+result in both `scenarioGridResults` and `renderSummaryTiles`. Check the agreement matrix in
 the `financial-invariants` skill before touching it.
 
 ## Chart.js conventions
@@ -119,7 +119,8 @@ the `financial-invariants` skill before touching it.
 
 - Element id conventions: per-scenario inputs are `s{n}_ret`, `s{n}_inc`, `s{n}_chgYear`,
   `s{n}_chgInc`, names `sc{n}name`, toggle switches `tog{n}_partner|prop|child`, card
-  result container `ms{n}`, n = 1..5. `getScenario(s, gl)` in `js/inputs.js` reads them.
+  grid result cells `scr{n}_status|target|nw|lasts|household`, n = 1..5 (v8 grid;
+  the old `ms{n}` cards are gone, and `tests/markup.test.mjs` fails if they return). `getScenario(s, gl)` in `js/inputs.js` reads them.
 - Colours: CSS custom properties `--s1c…--s5c` (+ alpha variants `--s1a…--s5a`) in
   `css/styles.css` `:root`; `SC_COLORS` in `js/ui/cards.js` maps index → `s1…s5` class
   names; `COLORS/COLORS_FADE/ALPHAS` in `js/ui/charts.js` are the canvas equivalents.
