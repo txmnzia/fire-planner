@@ -139,7 +139,7 @@ Two-person model inputs (used only when `partnerModel = two`; see [Two-person mo
 | Transaction Costs | `propTxCostPct` | 8% | % | Notary, taxes, fees on top of price |
 | Mortgage Rate | `propMortgageRate` | 3.5% | % p.a. | Fixed rate for entire term |
 | Mortgage Term | `propMortgageTerm` | 25 | years | Amortization period |
-| Rent Saved per Month | `propRentSaved` | — (0) | EUR/month | Rent you no longer pay after purchase |
+| Rent today (My Situation) | `propRentSaved` | — (0) | EUR/month | The rent you pay now (inside your spending or shared costs). Entered once; a scenario that buys stops paying it from the purchase year. Empty while a scenario buys → banner warning |
 
 ### Child (global, toggled per scenario)
 
@@ -478,7 +478,8 @@ for the home, a yearly cost or months of parental leave for the child
 (`plansSetUp()` in `js/checks.js`). A plan that is not set up has no row in the
 scenario grid, its card says so, and its switches are ignored by the calculation
 (`effectiveFeatures()` in `getScenario`), so a forgotten switch can never apply
-half a plan, such as rent saved without a purchase.
+half a plan, such as rent saved without a purchase. The home card does not ask for
+the rent that stops: it shows your **rent today**, entered once on My Situation.
 
 ### The scenario grid (v8)
 

@@ -10,6 +10,8 @@
 const spendEmpty = gl => !(gl.spendNow > 0) && !(gl.spendRet > 0);
 
 const ISSUES = {
+  rentNow: { key: 'rentNow', field: 'propRentSaved_disp', blocking: false,
+    text: 'A scenario buys a home but your rent today is empty, so the mortgage is added on top of a rent that never stops. Fill "Rent today" in Income & spending.' },
   spend: { key: 'spend', field: 'spendNow_disp', blocking: true,
     text: 'Monthly spending is empty, so scenarios count no spending. Fill it in Income & spending.' },
   twoSpend: { key: 'twoSpend', field: 'samPersonalNow_disp', blocking: true,
@@ -27,6 +29,14 @@ const ISSUES = {
 //   personal spending + housing & living costs if alone (empty = 70% of shared
 //   costs, derived in js/inputs.js before gl reaches here); both must be > 0.
 export function scenarioIssues(sc, gl) {
+  const out = spendingIssues(sc, gl);
+  // Buying without today's rent: the mortgage is added on top of a rent that
+  // never stops. Cautious, so the numbers still show; the banner names it.
+  if (sc.hasProp && !(gl.propRentSaved > 0)) out.push(ISSUES.rentNow);
+  return out;
+}
+
+function spendingIssues(sc, gl) {
   if (gl.partnerModel !== 'two') return spendEmpty(gl) ? [ISSUES.spend] : [];
   if (sc.hasPartner) return (!(gl.samPersonalNow > 0) && !(gl.sharedNow > 0)) ? [ISSUES.twoSpend] : [];
   const out = [];

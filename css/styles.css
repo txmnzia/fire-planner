@@ -553,6 +553,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .scg-num{width:100%;max-width:120px;height:30px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;}
 .scg-out{font-family:'DM Mono',monospace;font-size:12px;color:var(--text);text-align:center;white-space:nowrap;}
 .scg-out.ok{color:var(--ok);} .scg-out.err{color:var(--err);} .scg-out.muted{color:var(--muted);}
+.plan-derived{height:40px;display:flex;align-items:center;font-family:'DM Mono',monospace;font-size:13px;color:var(--sec);}
 .plan-state{font-size:11px;color:var(--ok);margin-left:4px;}
 .plan-state.off{color:var(--muted);}
 .plans-shell{height:100%;}

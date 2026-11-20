@@ -1,6 +1,6 @@
-import { el, numVal, optVal } from "./util.js?v=8.3";
-import { state, features } from "./state.js?v=8.3";
-import { effectiveFeatures } from "./checks.js?v=8.3";
+import { el, numVal, optVal } from "./util.js?v=8.3.1";
+import { state, features } from "./state.js?v=8.3.1";
+import { effectiveFeatures } from "./checks.js?v=8.3.1";
 
 export function incomeFor(s) {
   const ov = el("s" + s + "_inc");

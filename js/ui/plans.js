@@ -1,8 +1,8 @@
 // Plans tab (v8.3): which plans are set up, shown on the plan cards and in the
 // scenario grid (a plan that is not set up has no switch there). The rule itself
 // lives in js/checks.js (plansSetUp), which also gates the calculation.
-import { el } from "../util.js?v=8.3";
-import { plansSetUp } from "../checks.js?v=8.3";
+import { el, eur } from "../util.js?v=8.3.1";
+import { plansSetUp } from "../checks.js?v=8.3.1";
 
 const NAMES = { prop: "Buying a home", child: "Child" };
 
@@ -20,6 +20,8 @@ export function renderPlans(gl) {
   }
   const note = el("scgHiddenPlans");
   if (note) note.textContent = hidden.length ? "· not set up in Plans, so hidden: " + hidden.join(", ") : "";
+  const rs = el("planRentStops");
+  if (rs) rs.textContent = gl.propRentSaved > 0 ? eur(gl.propRentSaved) + "/mo \u00b7 your rent today" : "\u2014 enter your rent today on My Situation";
   const st = el("plansStatus");
   if (st) st.textContent = Object.values(up).filter(Boolean).length + " of " + Object.keys(NAMES).length + " set up";
 }

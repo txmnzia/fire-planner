@@ -29,11 +29,14 @@ test('a switch only counts once its plan is set up (no rent saved without a purc
 test('markup: the Plans tab holds the home and child cards; My Situation no longer does', () => {
   const plans = html.slice(html.indexOf('id="tab-panel-plans"'), html.indexOf('<!-- /tab-panel-plans -->'));
   const sit = html.slice(html.indexOf('id="tab-panel-situation"'), html.indexOf('<!-- /tab-panel-situation -->'));
-  for (const id of ['propPrice', 'propBuyYear', 'propRentSaved', 'childCostYearly', 'childBirthYear', 'childMaternityMonths']) {
+  for (const id of ['propPrice', 'propBuyYear', 'childCostYearly', 'childBirthYear', 'childMaternityMonths']) {
     assert.ok(plans.includes('id="' + id + '"'), id + ' on Plans');
     assert.ok(!sit.includes('id="' + id + '"'), id + ' not on My Situation');
   }
   assert.ok(sit.includes('id="subj-partner"'), 'the partner stays on My Situation');
+  // rent today is a fact: entered once on My Situation, shown (not asked) on the home card
+  assert.ok(sit.includes('id="propRentSaved"') && !plans.includes('id="propRentSaved"'));
+  assert.ok(plans.includes('id="planRentStops"'));
   assert.ok(!/data-t="subj-(property|child)"/.test(sit), 'rail has no links to moved cards');
   assert.match(html, /data-tab="plans"[^>]*onclick="switchTab\('plans'\)"/);
 });
@@ -44,4 +47,17 @@ test('markup: plan rows in the grid can be hidden, and the renderer runs on ever
   assert.match(html, /id="planState_prop"/); assert.match(html, /id="planState_child"/);
   assert.match(readFileSync(new URL('../js/recalc.js', import.meta.url), 'utf8'), /renderPlans\(gl\);/);
   assert.match(readFileSync(new URL('../js/inputs.js', import.meta.url), 'utf8'), /effectiveFeatures\(features\[s\], gl\)/);
+});
+
+test('rent today: buying without it is flagged, but cautious, so the numbers still show', async () => {
+  const { scenarioIssues } = await import('../js/checks.js');
+  const { scenarioGridResults } = await import('../js/ui/cards.js');
+  const { project } = await import('../js/engine.js');
+  const { baseSc } = await import('./golden-cases.mjs');
+  const gl = baseGl({ propRentSaved: 0 }), sc = baseSc({ hasProp: true });
+  const i = scenarioIssues(sc, gl);
+  assert.deepEqual(i.map(x => [x.key, x.blocking, x.field]), [['rentNow', false, 'propRentSaved_disp']]);
+  assert.deepEqual(scenarioIssues(baseSc(), gl), []);                 // no purchase, no issue
+  assert.deepEqual(scenarioIssues(sc, baseGl()), []);                 // rent filled
+  assert.deepEqual(scenarioGridResults(sc, gl, project(sc, gl)).missing, []);   // not blocking
 });

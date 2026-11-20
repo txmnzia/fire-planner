@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.3">
+<link rel="stylesheet" href="css/styles.css?v=8.3.1">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.3</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.3.1</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -121,6 +121,7 @@
         <div class="subj-grid">
           <div class="field"><label for="baseIncome_disp">Monthly income (net)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="baseIncome" id="baseIncome_disp"><input type="hidden" id="baseIncome" value=""></div></div>
           <div class="field"><label for="spendNow_disp">Monthly spending (now)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="spendNow" id="spendNow_disp"><input type="hidden" id="spendNow" value=""></div></div>
+          <div class="field"><label for="propRentSaved_disp">Rent today / month <button type="button" class="info-btn" title="The rent you pay now, part of your spending (Simple model) or of your shared costs (Two-person model). Entered once here: a scenario that buys a home on the Plans tab stops paying it from the purchase year.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="propRentSaved" id="propRentSaved_disp"><input type="hidden" id="propRentSaved" value=""></div></div>
         </div>
         <p class="sit-note pm-two" style="display:none">Two-person model is on: spending comes from Partner &#x2192; Spending split. The two monthly spending amounts here are only used by the Simple model.</p>
         <div class="subj-subhd">Withdrawal strategy</div>
@@ -316,7 +317,7 @@
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="propMortgageRate" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         <div class="field slider-field"><label for="propMortgageTerm">Mortgage term <span class="sv"><input type="number" id="propMortgageTerm" value="25" min="5" max="40" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="propMortgageTerm" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field"><label for="propRentSaved_disp">Rent saved / month</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="propRentSaved" id="propRentSaved_disp"><input type="hidden" id="propRentSaved" value=""></div></div>
+        <div class="field"><label>Rent that stops <button type="button" class="info-btn" title="Your rent today, entered once on My Situation (Income &amp; spending). A scenario that buys stops paying it from the purchase year, growing with inflation until then.">&#x24D8;</button></label><div class="plan-derived" id="planRentStops">&#x2014;</div></div>
       </div></div>
     </section>
 
@@ -613,6 +614,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.3"></script>
+<script type="module" src="js/main.js?v=8.3.1"></script>
 </body>
 </html>
