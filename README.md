@@ -472,9 +472,11 @@ never shifts the layout; on a phone the label column stays pinned and the scenar
 columns scroll sideways.
 
 **Missing inputs never show as a number.** `js/checks.js` flags spending that was
-never entered: the two-person model with both your personal and shared spending
-empty, the Simple model with no spending, or a two-person scenario without the
-partner while "housing & shared costs if alone" is empty. Those inputs otherwise
+never entered: the Simple model with no spending; in the two-person model, a
+partner scenario while both your personal and shared spending are empty, or a
+scenario without the partner while your personal spending is set but "housing &
+shared costs if alone" is empty (a solo scenario with neither falls back to the
+Simple spending, see the two-person model below). Those inputs would otherwise
 count as €0, which prices a FIRE number of €0 and a false "Funded". Affected grid
 columns show "⚠ Missing input" and "—", and a red banner under the tabs names the
 field with a Fix button that jumps to it. Every (i) button opens its explanation in a bubble on tap
@@ -610,7 +612,11 @@ yourCost(y)        = samPersonalNow|Ret × 12 × infl + shared(y) − herContrib
   is empty the year is flagged (`partnerInfeasibleYear`, "⚠ Partner short") and the
   shortfall is **not** moved onto your portfolio.
 - **Scenarios without the partner** use `samPersonal + soloShared` as your base
-  spending (child and property costs as usual, all yours).
+  spending (child and property costs as usual, all yours). When **none** of
+  `samPersonalNow`, `samPersonalRet` and `soloShared` was entered, the Simple
+  spending fields stand in (`spendNow` / `spendRet`, which are your own spending
+  before any partner multiplier), so the scenario is priced exactly as in Simple
+  mode instead of at €0. One source: `soloSpend(gl, retired)` in `js/engine.js`.
 
 **Partial FIRE (you)** — the headline `fireTarget` of a partner scenario in two-person
 mode (chart line, Coast number, Monte Carlo reference). Your own portfolio covers your

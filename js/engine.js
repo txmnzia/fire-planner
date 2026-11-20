@@ -186,6 +186,18 @@ export function partnerContributionNote(sc, gl, proj) {
            costMonthly: Math.round(r0.c.samCost/12/r0.infl), untilHerAge: untilAge, costAfterMonthly: costAfter };
 }
 
+// Monthly spending (today's €) of a scenario WITHOUT the partner in the two-person
+// model: your personal spending + housing & shared costs if alone. When none of
+// those three fields was ever entered, the Simple model's spending fields stand in
+// (spendNow / spendRet are your own spending, before any partner multiplier), so a
+// solo scenario is priced exactly as in the Simple model instead of at 0 (v8.0.3).
+// The single source for every solo path: yearOneBudget, computeFireTarget, project().
+export function soloSpend(gl, retired) {
+  const entered = gl.samPersonalNow > 0 || gl.samPersonalRet > 0 || gl.soloShared > 0;
+  if (!entered) return retired ? gl.spendRet : gl.spendNow;
+  return (retired ? gl.samPersonalRet : gl.samPersonalNow) + gl.soloShared;
+}
+
 // Full annual retirement budget in the first year of retirement at fromAge:
 // base spending (with partner multiplier) plus child costs, mortgage and rent
 // savings active in that year. Used by the %-of-portfolio FIRE target, the
@@ -196,7 +208,7 @@ export function partnerContributionNote(sc, gl, proj) {
 // partner's pro-rata contribution), priced at the share that holds when your
 // portfolio equals the target (selfFundedCost). herDrawAnn is the partner's
 // sustainable draw that year (nominal €/yr, from project()); 0 while she works.
-// For a scenario without the partner, base spending is samPersonalRet + soloShared.
+// For a scenario without the partner, base spending is soloSpend(gl, true).
 export function yearOneBudget(fromAge, sc, gl, herDrawAnn) {
   const tFrom = fromAge - gl.currentAge;
   const fromYear = gl.baseYear + tFrom;
@@ -206,7 +218,7 @@ export function yearOneBudget(fromAge, sc, gl, herDrawAnn) {
     return Math.max(0, selfFundedCost(fromYear, sc, gl, pen, herDrawAnn).samCost);
   }
   let budget = isTwoPerson(gl)
-    ? (gl.samPersonalRet + gl.soloShared)*12*inflF
+    ? soloSpend(gl, true)*12*inflF
     : gl.spendRet*(sc.hasPartner ? gl.partnerSpendMult : 1)*12*inflF;
   if (sc.hasChild) {
     const childAge = fromYear - gl.childBirthYear;
@@ -226,7 +238,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
   const off      = gl.partnerAgeOff || 0;   // partner's age = your age + off
   // effective retirement spending: partner multiplier increases it, child costs are time-limited
   const baseSpend = isTwoPerson(gl) && !sc.hasPartner
-    ? gl.samPersonalRet + gl.soloShared
+    ? soloSpend(gl, true)
     : gl.spendRet * (sc.hasPartner ? gl.partnerSpendMult : 1);
   const spendNom  = baseSpend*12*Math.pow(1+gl.inflation,tFrom);
   const pensionNom= gl.pensionAmt*12*Math.pow(1+gl.inflation,tFrom);
@@ -450,7 +462,7 @@ export function project(sc, gl, opts) {
     const t    = yr-startYear;
     const infl = Math.pow(1+gl.inflation,t);
     const baseSpend = two && !sc.hasPartner
-      ? gl.samPersonalRet + gl.soloShared
+      ? soloSpend(gl, true)
       : gl.spendRet*(sc.hasPartner ? gl.partnerSpendMult : 1);
     let annRetSpend = baseSpend*12*infl;
 
@@ -526,7 +538,7 @@ export function project(sc, gl, opts) {
         annSpendNow = tp.samPersonal + tp.shared - tp.child - tp.mortgage + tp.rentSaved;
         childCost   = tp.child;
       } else if (two) {
-        annSpendNow = (gl.samPersonalNow + gl.soloShared)*12*infl;
+        annSpendNow = soloSpend(gl, false)*12*infl;
         childCost   = childCostInYear(yr);
       } else {
         annSpendNow = gl.spendNow*12*infl*(sc.hasPartner ? gl.partnerSpendMult : 1);
