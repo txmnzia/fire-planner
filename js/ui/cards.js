@@ -1,8 +1,8 @@
-import { el, eur, fmtK } from "../util.js";
-import { scenarioIssues } from "../checks.js";
-import { state } from "../state.js";
-import { getScenarioName } from "../inputs.js";
-import { portReturnAt, yearOneBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project } from "../engine.js";
+import { el, eur, fmtK } from "../util.js?v=8.1.1";
+import { scenarioIssues } from "../checks.js?v=8.1.1";
+import { state } from "../state.js?v=8.1.1";
+import { getScenarioName } from "../inputs.js?v=8.1.1";
+import { portReturnAt, yearOneBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project } from "../engine.js?v=8.1.1";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];

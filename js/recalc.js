@@ -1,14 +1,14 @@
-import { el, eur, numVal } from "./util.js";
-import { state } from "./state.js";
-import { getGlobals, getScenario } from "./inputs.js";
-import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js";
-import { buildChart, buildFlowChart } from "./ui/charts.js";
-import { renderTable } from "./ui/table.js";
-import { renderExplanation } from "./ui/explanation.js";
-import { updateLabels } from "./ui/controls.js";
-import { markMcStale } from "./ui/mcTab.js";
-import { scheduleSave } from "./sync.js";
-import { renderIssues } from "./ui/issues.js";
+import { el, eur, numVal } from "./util.js?v=8.1.1";
+import { state } from "./state.js?v=8.1.1";
+import { getGlobals, getScenario } from "./inputs.js?v=8.1.1";
+import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.1.1";
+import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.1.1";
+import { renderTable } from "./ui/table.js?v=8.1.1";
+import { renderExplanation } from "./ui/explanation.js?v=8.1.1";
+import { updateLabels } from "./ui/controls.js?v=8.1.1";
+import { markMcStale } from "./ui/mcTab.js?v=8.1.1";
+import { scheduleSave } from "./sync.js?v=8.1.1";
+import { renderIssues } from "./ui/issues.js?v=8.1.1";
 
 // ── RECALC ──────────────────────────────────────────────────────────────────
 export function updateMultPreview() {

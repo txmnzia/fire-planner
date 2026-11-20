@@ -66,6 +66,8 @@ tests/                  node:test suites: the two pure engines, the v8 golden ma
                         results, and markup wiring (ids, saved fields, handlers).
   tools/gen-golden.mjs  Regenerates fixtures/v8-golden.json (only in a commit that
                         deliberately changes a calculation).
+  tools/set-version.mjs Sets the version in the header and as ?v= on css, main.js
+                        and every relative import (browser cache busting).
   fixtures/             v8-golden.json: 192 cases frozen from the v7.3 engine.
                         simple-mode-snapshot.json: project() output frozen before the
                         two-person model, so simple mode is proven unchanged.

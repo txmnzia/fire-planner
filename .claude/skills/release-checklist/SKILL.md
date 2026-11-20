@@ -36,16 +36,18 @@ Manual smoke flows to click through (inline-handler bugs — a function missing 
 
 ## 2. Version tag bump
 
-The user-visible version lives in `index.html` in the header logo:
-`<div class="logo">FIRE Planner <span class="logo-tag">v6.6</span></div>`.
-(The `<title>` says "FIRE Planner v2" — that is legacy text, not the version; leave it.)
+Run `node tests/tools/set-version.mjs <version>` (e.g. `8.2`). It sets, in one go,
+the header tag in `index.html`, the `?v=` on `css/styles.css` and `js/main.js`, and the
+`?v=` on **every relative import** in `js/`. `tests/version.test.mjs` fails if any of
+them drift apart. Never edit the tag by hand.
 
-Convention: `v6.x`, bump the minor for **any user-visible change** (behaviour, numbers,
-layout). History: commits 20f4085 and da28876 are standalone "Bump header version tag"
-commits; v6.5/v6.6 were bumped inside the feature commit (613c295, 629cc2d) with the
-version noted in the subject. Either style is fine — what matters is that the deployed
-page's tag changes, because step 8 uses it to prove the deploy actually landed
-(especially against iOS Safari caching, step 6).
+Why every import: GitHub Pages lets browsers reuse JS files for ~10 minutes, and the
+no-cache meta tags only cover the HTML. In v8.1 a fresh page ran with the previous
+release's `cards.js`, so the new grid rows stayed empty ("—") until the cache expired.
+
+Convention: bump the minor for **any user-visible change** (behaviour, numbers,
+layout), the patch for fixes. The deployed page's tag proves the deploy landed
+(step 8), especially against iOS Safari caching (step 6).
 
 ## 3. Docs sync (same commit as the code)
 

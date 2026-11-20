@@ -1,12 +1,12 @@
-import { el } from "./util.js";
-import { state, features } from "./state.js";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js";
-import { recalc } from "./recalc.js";
-import { renderHoldings } from "./ui/ibkr.js";
-import { renderNwHistory } from "./ui/nwHistory.js";
-import { refreshSituationControls } from "./ui/situation.js";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js";
-import { db } from "./db.js";
+import { el } from "./util.js?v=8.1.1";
+import { state, features } from "./state.js?v=8.1.1";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.1.1";
+import { recalc } from "./recalc.js?v=8.1.1";
+import { renderHoldings } from "./ui/ibkr.js?v=8.1.1";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.1.1";
+import { refreshSituationControls } from "./ui/situation.js?v=8.1.1";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.1.1";
+import { db } from "./db.js?v=8.1.1";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [

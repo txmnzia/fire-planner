@@ -45,6 +45,6 @@ test('every (i) button has text to show', () => {
 
 test('the bubbles are initialised on load', () => {
   const main = readFileSync(new URL('../js/main.js', import.meta.url), 'utf8');
-  assert.match(main, /import \{ initInfoTips \} from "\.\/ui\/infoTips\.js";/);
+  assert.match(main, /import \{ initInfoTips \} from "\.\/ui\/infoTips\.js(\?v=[^"]+)?";/);
   assert.match(main, /DOMContentLoaded[\s\S]{0,200}initInfoTips\(\);/);
 });

@@ -12,6 +12,7 @@ than a crash**, because a crash gets noticed.
 python3 -m http.server 8000        # run locally (ES modules don't load over file://)
 node --test tests/*.test.mjs       # unit tests (Node ≥ 20, zero dependencies)
 for f in js/*.js js/ui/*.js; do node --check "$f"; done   # syntax check (CI does both)
+node tests/tools/set-version.mjs 8.2   # bump the version: header tag + ?v= on css, main.js and every import
 ```
 
 There is no package.json, no npm install, no build step. Do not introduce one.
