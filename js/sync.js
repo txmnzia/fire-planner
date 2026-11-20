@@ -1,13 +1,13 @@
-import { el } from "./util.js?v=8.6.3";
-import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.6.3";
-import { state, features } from "./state.js?v=8.6.3";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.6.3";
-import { recalc } from "./recalc.js?v=8.6.3";
-import { renderHoldings } from "./ui/ibkr.js?v=8.6.3";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.6.3";
-import { refreshSituationControls } from "./ui/situation.js?v=8.6.3";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.6.3";
-import { db } from "./db.js?v=8.6.3";
+import { el } from "./util.js?v=8.7";
+import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.7";
+import { state, features } from "./state.js?v=8.7";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.7";
+import { recalc } from "./recalc.js?v=8.7";
+import { renderHoldings } from "./ui/ibkr.js?v=8.7";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.7";
+import { refreshSituationControls } from "./ui/situation.js?v=8.7";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.7";
+import { db } from "./db.js?v=8.7";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
@@ -27,7 +27,7 @@ const SYNC_FIELDS = [
   's1_chgInc','s2_chgInc','s3_chgInc','s4_chgInc','s5_chgInc',
   'mcSims','mcBlock',
   'gainFrac','partnerBirthYear',
-  'partnerModel','samPersonalNow','samPersonalRet','sharedNow','sharedRet','soloShared',
+  'partnerModel','samPersonalNow','samPersonalRet','sharedNow','sharedRet','soloShared','partnerPaysIn','yearlyItems','spendUpdated',
   'partnerPersonal','partnerPortfolio','partnerGainFrac','shareMin','shareMax',
 ];
 

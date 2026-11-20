@@ -1,7 +1,7 @@
-import { el, numVal, optVal } from "./util.js?v=8.6.3";
-import { state, features } from "./state.js?v=8.6.3";
-import { effectiveFeatures } from "./checks.js?v=8.6.3";
-import { payChangesFor } from "./payChanges.js?v=8.6.3";
+import { el, numVal, optVal } from "./util.js?v=8.7";
+import { state, features } from "./state.js?v=8.7";
+import { effectiveFeatures } from "./checks.js?v=8.7";
+import { payChangesFor } from "./payChanges.js?v=8.7";
 
 
 // Optional money field: null when empty (unlike optVal, 0 is a valid value).
@@ -40,8 +40,9 @@ export const LEGACY_RATE_TO_CODE = { "30":"FR", "28":"PT", "26":"ES", "32":"NL",
 // and 1/sqrt(2) = 0.71 (square-root scale). Used when "your housing & living
 // costs if alone" is left empty (v8.0.5).
 export const SOLO_SHARE = 0.7;
-export function soloSharedFrom(entered, sharedNow) {
-  return entered != null ? entered : Math.round((sharedNow || 0) * SOLO_SHARE);
+// v8.7: yearly items (€/yr, shared) count in the default too, as a monthly amount.
+export function soloSharedFrom(entered, sharedNow, yearlyItems) {
+  return entered != null ? entered : Math.round(((sharedNow || 0) + (yearlyItems || 0)/12) * SOLO_SHARE);
 }
 
 export function getGlobals() {
@@ -89,7 +90,9 @@ export function getGlobals() {
     samPersonalRet:    optNum("samPersonalRet") ?? numVal("samPersonalNow",0),
     sharedNow:         numVal("sharedNow",0),
     sharedRet:         optNum("sharedRet") ?? numVal("sharedNow",0),
-    soloShared:        soloSharedFrom(optNum("soloShared"), numVal("sharedNow",0)),
+    soloShared:        soloSharedFrom(optNum("soloShared"), numVal("sharedNow",0), numVal("yearlyItems",0)),
+    partnerPaysIn:     optNum("partnerPaysIn"),       // €/mo she pays into the joint account (v8.7)
+    yearlyItems:       numVal("yearlyItems",0),       // €/yr shared yearly items (v8.7)
     soloSharedDerived: optNum("soloShared") == null,
     partnerPersonal:   numVal("partnerPersonal",0),
     partnerPortfolio:  numVal("partnerPortfolio",0),

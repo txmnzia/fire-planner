@@ -118,11 +118,14 @@ Two-person model inputs (used only when `partnerModel = two`; see [Two-person mo
 
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
-| Your personal spending (now) | `samPersonalNow` | — (0) | EUR/month | Your own spending, not shared |
-| Your personal spending (retirement) | `samPersonalRet` | same as now | EUR/month | From your retirement year; empty = the "now" value |
-| Shared costs (now) | `sharedNow` | — (0) | EUR/month | Everything paid jointly (rent, utilities, groceries, joint leisure and holidays) |
-| Shared costs (retirement) | `sharedRet` | same as now | EUR/month | From your retirement year; empty = the "now" value |
-| Your housing & living costs if alone | `soloShared` | empty = 70% of `sharedNow` | EUR/month | Replaces shared costs in scenarios **without** the partner; also her solo cost in the separation check. 0.7 = one person spends about 70% of a couple (OECD-modified scale 1/1.5 = 0.67, square-root scale 1/√2 = 0.71) |
+| Joint account / month | `sharedNow` | — (0) | EUR/month | Spending refresh. Everything paid jointly, full amount (rent, bills, groceries, joint leisure) |
+| She pays in / month | `partnerPaysIn` | empty = pro rata | EUR/month | Spending refresh (v8.7). What she really puts into the joint account. Her share = `partnerPaysIn / sharedNow` (capped at 100%, floor/cap not applied) while you both work |
+| Your own spending / month | `samPersonalNow` | — (0) | EUR/month | Spending refresh. Your own spending, not shared |
+| Yearly items / year | `yearlyItems` | — (0) | EUR/year | Spending refresh (v8.7). Trips, courses, gifts: **shared** costs, added to the joint costs now and in retirement and split by her share |
+| (last refresh) | `spendUpdated` | — | date | Stamped when one of the four numbers above is edited; shown red after 6 months |
+| Your own spending in retirement | `samPersonalRet` | same as now | EUR/month | From your retirement year; empty = the "now" value |
+| Joint costs in retirement | `sharedRet` | same as now | EUR/month | From your retirement year; empty = the "now" value. Yearly items are added on top |
+| Your housing & living costs if alone | `soloShared` | empty = 70% of (`sharedNow` + `yearlyItems`/12) | EUR/month | Replaces shared costs in scenarios **without** the partner; also her solo cost in the separation check. 0.7 = one person spends about 70% of a couple (OECD-modified scale 1/1.5 = 0.67, square-root scale 1/√2 = 0.71) |
 | Partner personal spending | `partnerPersonal` | — (0) | EUR/month | Her own spending |
 | Partner invested assets | `partnerPortfolio` | — (0) | EUR | Her portfolio today |
 | Partner unrealized gain | `partnerGainFrac` | 0% | % | Seeds her cost basis |
@@ -660,12 +663,30 @@ samInc(y)  = before your retirement: your salary (income change, parental leave 
 herInc(y)  = partnerInc until HER partnerRetAge (her age via partnerBirthYear)
            + partnerPension from HER partnerPensionAge
            + once she stopped work: her start-of-year portfolio × SWR × her netFrac
-share(y)   = clamp(herInc / (herInc + samInc), shareMin, shareMax);  0 if both are 0
-shared(y)  = max(0, sharedNow|sharedRet × 12 × infl + child cost + mortgage − rent saved)
+share(y)   = while you BOTH work and partnerPaysIn is filled (v8.7):
+               min(1, partnerPaysIn / sharedNow)            (actualShare; her real share)
+             otherwise:
+               clamp(herInc / (herInc + samInc), shareMin, shareMax);  0 if both are 0
+shared(y)  = max(0, (sharedNow|sharedRet × 12 + yearlyItems) × infl
+                    + child cost + mortgage − rent saved)
 herContribution(y) = share(y) × shared(y)
 yourCost(y)        = samPersonalNow|Ret × 12 × infl + shared(y) − herContribution(y)
 ```
 
+- **Her real share (v8.7, decided with Sam).** The amount she actually pays in is a
+  fact, so it beats the pro-rata model while it is observable: while you both work.
+  Applied as a *fraction* of the joint total, it also covers her part of yearly items,
+  child costs and the mortgage. As soon as either of you stops working the pro-rata
+  rule above takes over (your pension + draw vs hers), so the FIRE targets
+  (`selfFundedCost`, household target) are priced exactly as before. Rejected: freezing
+  her share at your last working year's income ratio (bigger change to every partner
+  target), and keeping her real share for good (she would keep paying the same % after
+  your income stops).
+- **Yearly items are shared (decided with Sam):** split with her like the joint account,
+  and they continue in retirement (they raise the lifelong need, so the FIRE number).
+- **Read-outs** under the four numbers (`js/ui/spending.js`, one engine source
+  `investNowMonthly`): rent included in the joint account (from Rent today), her share
+  today (real or pro rata), and *You really invest* = take-home − your year-one cost.
 - `yourCost` replaces the simple model's `spendNow × partnerSpendMult` (accumulation)
   and `budget` (retirement) in your projection. Her salary and pension are **not**
   added to your income. A property purchase cost stays on your side (not shared).
@@ -680,7 +701,7 @@ yourCost(y)        = samPersonalNow|Ret × 12 × infl + shared(y) − herContrib
 - **Scenarios without the partner** use `samPersonal + soloShared` as your base
   spending (child and property costs as usual, all yours), always: the Simple
   model's "Monthly spending" never stands in, so the same fact is never entered
-  twice. `soloShared` left empty is `round(0.7 × sharedNow)` (`soloSharedFrom` in
+  twice. `soloShared` left empty is `round(0.7 × (sharedNow + yearlyItems / 12))` (`soloSharedFrom` in
   `js/inputs.js`), shown as the field's placeholder. If either field is empty the scenario shows "missing" (see
   `js/checks.js`). One source: `soloSpend(gl, retired)` in `js/engine.js`.
 

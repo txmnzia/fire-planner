@@ -68,6 +68,10 @@ js/
                         year-picker popover (buildYpick), sliders over the numeric
                         inputs, and the dynamic windfall datapoint list. Progressive
                         enhancement — the id-bearing inputs stay the source of truth.
+                        Also paints the Pay changes card (renderPayList).
+    spending.js         Spending refresh read-outs (v8.7): rent in the joint account,
+                        her share today, "You really invest" (engine
+                        investNowMonthly), and the last-refresh date stamp.
 tests/                  node:test suites: the two pure engines, the v8 golden master
                         (golden.test.mjs + golden-cases.mjs), the scenario grid
                         results, and markup wiring (ids, saved fields, handlers).

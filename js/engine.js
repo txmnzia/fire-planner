@@ -43,6 +43,15 @@ export function partnerShare(herInc, samInc, gl) {
   return Math.max(lo, Math.min(hi, herInc / tot));
 }
 
+// Her real share of shared costs today (v8.7, Spending refresh): what she pays
+// into the joint account / the joint account total, capped at 100%. null when
+// "she pays in" is empty or there is no joint total: the pro-rata rule applies.
+// It holds while you both work; once either of you stops, pro rata takes over.
+export function actualShare(gl) {
+  if (gl.partnerPaysIn == null || !(gl.sharedNow > 0)) return null;
+  return clamp01(gl.partnerPaysIn / gl.sharedNow);
+}
+
 // Partner's net income in calendar year yr (nominal €/yr): salary until HER
 // retirement age, pension from HER pension age (age offset applied), plus her
 // sustainable draw (herDrawAnn, supplied by the caller) once she has stopped work.
@@ -64,7 +73,8 @@ export function partnerIncomeAt(yr, gl, herDrawAnn) {
 export function householdCosts(yr, sc, gl, samRetired, noTemp) {
   const t = yr - gl.baseYear, infl = Math.pow(1+gl.inflation, t);
   const samPersonal = (samRetired ? gl.samPersonalRet : gl.samPersonalNow)*12*infl;
-  const sharedBase  = (samRetired ? gl.sharedRet : gl.sharedNow)*12*infl;
+  // yearly items (trips, courses, gifts; v8.7) are shared costs, now and retired
+  const sharedBase  = ((samRetired ? gl.sharedRet : gl.sharedNow)*12 + (gl.yearlyItems || 0))*infl;
   const partnerPersonal = (gl.partnerPersonal || 0)*12*infl;
   let child = 0, mortgage = 0, rentSaved = 0;
   if (sc.hasChild && !noTemp) {
@@ -83,9 +93,19 @@ export function householdCosts(yr, sc, gl, samRetired, noTemp) {
 export function twoPersonCost(yr, sc, gl, samInc, herDrawAnn, samRetired, noTemp) {
   const hc = householdCosts(yr, sc, gl, samRetired, noTemp);
   const her = partnerIncomeAt(yr, gl, herDrawAnn);
-  const share = partnerShare(her.total, samInc, gl);
+  const real = (!samRetired && her.working) ? actualShare(gl) : null;
+  const share = real != null ? real : partnerShare(her.total, samInc, gl);
   const contrib = share*hc.shared;
-  return { ...hc, her, samInc, share, contrib, samCost: hc.samPersonal + hc.shared - contrib };
+  return { ...hc, her, samInc, share, shareReal: real != null, contrib, samCost: hc.samPersonal + hc.shared - contrib };
+}
+
+// What you really invest per month today (v8.7, Spending refresh read-out):
+// take-home minus your own cost this year (no plans switched on), today's €.
+// Two-person model only; the same twoPersonCost the projection uses.
+export function investNowMonthly(gl, takeHome) {
+  const tp = twoPersonCost(gl.baseYear, { hasChild: false, hasProp: false }, gl, (takeHome || 0)*12, 0, false);
+  return { cost: tp.samCost/12, contrib: tp.contrib/12, share: tp.share, shareReal: tp.shareReal,
+           invest: (takeHome || 0) - tp.samCost/12 };
 }
 
 // Your retirement cost when your portfolio is exactly at target: then your

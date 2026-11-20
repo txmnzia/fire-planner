@@ -1,15 +1,16 @@
-import { el, eur, numVal } from "./util.js?v=8.6.3";
-import { state } from "./state.js?v=8.6.3";
-import { getGlobals, getScenario } from "./inputs.js?v=8.6.3";
-import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.6.3";
-import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.6.3";
-import { renderTable } from "./ui/table.js?v=8.6.3";
-import { renderExplanation } from "./ui/explanation.js?v=8.6.3";
-import { updateLabels } from "./ui/controls.js?v=8.6.3";
-import { markMcStale } from "./ui/mcTab.js?v=8.6.3";
-import { scheduleSave } from "./sync.js?v=8.6.3";
-import { renderIssues } from "./ui/issues.js?v=8.6.3";
-import { renderPlans } from "./ui/plans.js?v=8.6.3";
+import { el, eur, numVal } from "./util.js?v=8.7";
+import { state } from "./state.js?v=8.7";
+import { getGlobals, getScenario } from "./inputs.js?v=8.7";
+import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.7";
+import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.7";
+import { renderTable } from "./ui/table.js?v=8.7";
+import { renderExplanation } from "./ui/explanation.js?v=8.7";
+import { updateLabels } from "./ui/controls.js?v=8.7";
+import { markMcStale } from "./ui/mcTab.js?v=8.7";
+import { scheduleSave } from "./sync.js?v=8.7";
+import { renderIssues } from "./ui/issues.js?v=8.7";
+import { renderPlans } from "./ui/plans.js?v=8.7";
+import { renderSpendReadout } from "./ui/spending.js?v=8.7";
 
 // ── RECALC ──────────────────────────────────────────────────────────────────
 export function updateMultPreview() {
@@ -27,7 +28,8 @@ export function recalc() {
   el("calcTime").textContent=new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
   // "If alone" costs left empty are 70% of shared costs: show the value used.
   const sd=el("soloShared_disp");
-  if(sd) sd.placeholder = gl.soloSharedDerived && gl.soloShared>0 ? "\u2248 "+gl.soloShared.toLocaleString("fr-FR")+" (70% of shared)" : "";
+  if(sd) sd.placeholder = gl.soloSharedDerived && gl.soloShared>0 ? "\u2248 "+gl.soloShared.toLocaleString("fr-FR")+" (70% of joint + yearly)" : "";
+  renderSpendReadout(gl);
   // Each scenario stops at its earliest funded age (v8.1); every tab uses these.
   const stops=withStopAges([1,2,3,4,5].map(s=>getScenario(s,gl)),gl);
   const scenarios=stops.map(x=>x.sc);

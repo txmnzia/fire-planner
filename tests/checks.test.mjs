@@ -113,6 +113,6 @@ test('if-alone costs: derived from shared costs, a solo scenario is complete and
 
 test('markup: the if-alone field explains the 70% default in its bubble', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-  assert.match(html, /Your housing &amp; living costs if alone <button[^>]*title="[^"]*70% of your shared costs/);
+  assert.match(html, /Your housing &amp; living costs if alone <button[^>]*title="[^"]*70% of the joint account plus yearly items/);
   assert.ok(!/Housing & shared costs if alone/.test(html));
 });

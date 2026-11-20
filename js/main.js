@@ -1,17 +1,18 @@
-import { el } from "./util.js?v=8.6.3";
-import { initInfoTips } from "./ui/infoTips.js?v=8.6.3";
-import { state } from "./state.js?v=8.6.3";
-import { recalc } from "./recalc.js?v=8.6.3";
+import { el } from "./util.js?v=8.7";
+import { initInfoTips } from "./ui/infoTips.js?v=8.7";
+import { state } from "./state.js?v=8.7";
+import { recalc } from "./recalc.js?v=8.7";
 import { loadState, initSync, scheduleSave, connectSync, disconnectSync,
-         openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js?v=8.6.3";
+         openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js?v=8.7";
 import { switchTab, toggleFeature, updateToggleUI, scrollToScenario, updateScNav,
-         updateAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js?v=8.6.3";
-import { handleCSV } from "./ui/ibkr.js?v=8.6.3";
-import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js?v=8.6.3";
-import { initSituation, setPartnerModel } from "./ui/situation.js?v=8.6.3";
-import { downloadCSV } from "./ui/table.js?v=8.6.3";
-import { runMonteCarloUI, selectMcScenario } from "./ui/mcTab.js?v=8.6.3";
-import { selectExplanationScenario } from "./ui/explanation.js?v=8.6.3";
+         updateAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js?v=8.7";
+import { handleCSV } from "./ui/ibkr.js?v=8.7";
+import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js?v=8.7";
+import { initSituation, setPartnerModel } from "./ui/situation.js?v=8.7";
+import { initSpendTracking } from "./ui/spending.js?v=8.7";
+import { downloadCSV } from "./ui/table.js?v=8.7";
+import { runMonteCarloUI, selectMcScenario } from "./ui/mcTab.js?v=8.7";
+import { selectExplanationScenario } from "./ui/explanation.js?v=8.7";
 
 // The HTML uses inline on* attributes (and render functions emit them too), so
 // every function they reference must exist as a global.
@@ -31,6 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Enhance the Situation-tab controls (sliders, year pickers, subject rail,
   // windfall list) BEFORE loadState — applyState() repaints them from saved data.
   initSituation();
+  initSpendTracking();
 
   // Load state first — before updateAge/onWdMode which trigger recalc/scheduleSave
   // and would write empty defaults to localStorage before we get a chance to restore
