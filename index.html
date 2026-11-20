@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.2">
+<link rel="stylesheet" href="css/styles.css?v=8.3">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.2</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.3</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -33,17 +33,20 @@
   <button class="tab-btn active" role="tab" data-tab="situation" aria-selected="true" onclick="switchTab('situation')">
     <span class="tab-num">1</span> My Situation
   </button>
+  <button class="tab-btn" role="tab" data-tab="plans" aria-selected="false" onclick="switchTab('plans')">
+    <span class="tab-num">2</span> Plans
+  </button>
   <button class="tab-btn" role="tab" data-tab="scenarios" aria-selected="false" onclick="switchTab('scenarios')">
-    <span class="tab-num">2</span> Scenarios
+    <span class="tab-num">3</span> Scenarios
   </button>
   <button class="tab-btn" role="tab" data-tab="results" aria-selected="false" onclick="switchTab('results')">
-    <span class="tab-num">3</span> Results
+    <span class="tab-num">4</span> Results
   </button>
   <button class="tab-btn" role="tab" data-tab="montecarlo" aria-selected="false" onclick="switchTab('montecarlo')">
-    <span class="tab-num">4</span> Monte Carlo
+    <span class="tab-num">5</span> Monte Carlo
   </button>
   <button class="tab-btn" role="tab" data-tab="explanation" aria-selected="false" onclick="switchTab('explanation')">
-    <span class="tab-num">5</span> Explanation
+    <span class="tab-num">6</span> Explanation
   </button>
 </nav>
 <div class="issues" id="inputIssues" role="alert" hidden></div>
@@ -66,17 +69,15 @@
     <a class="rail-a" data-t="subj-tax"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V10l7-5 7 5v11"/><path d="M9 21v-6h6v6"/></svg><span>Tax</span></a>
     <a class="rail-a" data-t="subj-future"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9"/><path d="M12 8V21"/><path d="M12 8S9 3 6.5 4.5 8 8 12 8zM12 8s3-5 5.5-3.5S16 8 12 8z"/></svg><span>Future income</span></a>
     <a class="rail-a" data-t="subj-history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg><span>Net-worth history</span></a>
-    <div class="rail-grp">Life events <small>· per scenario</small></div>
+    <div class="rail-grp">Partner <small>· per scenario</small></div>
     <a class="rail-a" data-t="subj-partner" style="--acc:var(--s4c)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20c0-3 3-5 6-5s6 2 6 5"/><path d="M15 20c0-2 1.5-3.5 4-3.5"/></svg><span>Partner</span></a>
-    <a class="rail-a" data-t="subj-property" style="--acc:var(--s5c)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg><span>Property</span></a>
-    <a class="rail-a" data-t="subj-child" style="--acc:var(--s3c)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="3"/><path d="M12 10v6"/><path d="M8 13l4 2 4-2"/><path d="M9 21l3-5 3 5"/></svg><span>Child</span></a>
   </aside>
 
   <!-- CONTENT -->
   <main class="sit-content" id="sitContent">
     <div class="sit-callout">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-      <span>These are the facts of your life today — one shared set of numbers. On the <b>Scenarios</b> tab you compare futures; the <b>life events</b> below are switched on per scenario, right from their cards. The rail on the left maps every subject, and each card's accent colour tells you whose data you're editing.</span>
+      <span>These are the facts of your life today — one shared set of numbers. On the <b>Scenarios</b> tab you compare futures; your partner is switched on per scenario from her card, and the things that might happen (buying a home, a child) live on the <b>Plans</b> tab. The rail on the left maps every subject, and each card's accent colour tells you whose data you're editing.</span>
     </div>
 
     <div class="flow-hd"><h2>You &amp; your money</h2><span class="rule"></span><span class="note">Always applies</span></div>
@@ -219,7 +220,7 @@
       </div>
     </section>
 
-    <div class="flow-hd gap"><h2>Life events</h2><span class="rule"></span><span class="note">Toggle per scenario on each card &#x2192;</span></div>
+    <div class="flow-hd gap"><h2>Partner</h2><span class="rule"></span><span class="note">Toggle per scenario on the card &#x2192;</span></div>
 
     <!-- PARTNER -->
     <section class="subj life" id="subj-partner" style="--acc:var(--s4c)">
@@ -277,10 +278,26 @@
       </div>
     </section>
 
+  </main>
+</div>
+</div><!-- /tab-panel-situation -->
+
+<!-- ═══════════════════════════════════════════
+     TAB 2 — PLANS (might happen; each described once, switched on per scenario)
+═══════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-panel-plans" role="tabpanel">
+<div class="plans-shell">
+  <main class="sit-content plans-content" id="plansContent">
+    <div class="sit-callout">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <span>Things that <b>might</b> happen, each described once. Switch them on per scenario here or on the <b>Scenarios</b> tab. A plan with nothing entered is <b>not set up</b>: it gets no switch in the scenario grid until you fill it in.</span>
+    </div>
+    <div class="flow-hd"><h2>Plans</h2><span class="rule"></span><span class="note" id="plansStatus"></span></div>
+
     <!-- PROPERTY -->
     <section class="subj life" id="subj-property" style="--acc:var(--s5c)">
       <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></div>
-        <div class="subj-tt"><h3>Property purchase</h3><p>Buying a home, mortgage and rent saved</p></div>
+        <div class="subj-tt"><h3>Property purchase</h3><p>Buying a home, mortgage and rent saved <span class="plan-state" id="planState_prop"></span></p></div>
         <div class="subj-meta sc-chips" role="group" aria-label="Scenarios using Property"><span class="sc-chips-lbl">Used in</span>
           <button type="button" class="sc-chip" data-scenario="1" data-feat="prop" onclick="toggleFeature(1,'prop')" aria-pressed="false">A</button>
           <button type="button" class="sc-chip" data-scenario="2" data-feat="prop" onclick="toggleFeature(2,'prop')" aria-pressed="false">B</button>
@@ -306,7 +323,7 @@
     <!-- CHILD -->
     <section class="subj life" id="subj-child" style="--acc:var(--s3c)">
       <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="3"/><path d="M12 10v6"/><path d="M8 13l4 2 4-2"/><path d="M9 21l3-5 3 5"/></svg></div>
-        <div class="subj-tt"><h3>Child</h3><p>Raising a kid — costs and parental leave</p></div>
+        <div class="subj-tt"><h3>Child</h3><p>Raising a kid — costs and parental leave <span class="plan-state" id="planState_child"></span></p></div>
         <div class="subj-meta sc-chips" role="group" aria-label="Scenarios using Child"><span class="sc-chips-lbl">Used in</span>
           <button type="button" class="sc-chip" data-scenario="1" data-feat="child" onclick="toggleFeature(1,'child')" aria-pressed="false">A</button>
           <button type="button" class="sc-chip" data-scenario="2" data-feat="child" onclick="toggleFeature(2,'child')" aria-pressed="false">B</button>
@@ -327,10 +344,10 @@
 
   </main>
 </div>
-</div><!-- /tab-panel-situation -->
+</div><!-- /tab-panel-plans -->
 
 <!-- ═══════════════════════════════════════════
-     TAB 2 — SCENARIOS
+     TAB 3 — SCENARIOS
 ═══════════════════════════════════════════ -->
 <div class="tab-panel" id="tab-panel-scenarios" role="tabpanel">
 <div class="scg-shell">
@@ -346,7 +363,7 @@
       <div class="scg-cell c4" role="cell"><input class="sc-name" type="text" id="sc4name" value="With Partner" aria-label="Scenario D name" oninput="recalc()" onchange="recalc()"></div>
       <div class="scg-cell c5" role="cell"><input class="sc-name" type="text" id="sc5name" value="Everything" aria-label="Scenario E name" oninput="recalc()" onchange="recalc()"></div>
     </div>
-    <div class="scg-sec" role="presentation">Life events <span class="scg-sec-note">switch on per scenario</span></div>
+    <div class="scg-sec" role="presentation">Life events <span class="scg-sec-note">switch on per scenario</span> <span class="scg-sec-note" id="scgHiddenPlans"></span></div>
     <div class="scg-row scg-r-plan" role="row">
       <div class="scg-lbl" role="rowheader">&#x1F91D; With partner <button type="button" class="info-btn" title="Includes your partner&#x2019;s income, savings and share of costs, as set on the Situation tab." aria-label="About: &#x1F91D; With partner">&#x24D8;</button></div>
       <div class="scg-cell c1" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(1,'partner')" aria-label="Scenario A: with partner"><span class="tog-sw" id="tog1_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
@@ -355,7 +372,7 @@
       <div class="scg-cell c4" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(4,'partner')" aria-label="Scenario D: with partner"><span class="tog-sw" id="tog4_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
       <div class="scg-cell c5" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(5,'partner')" aria-label="Scenario E: with partner"><span class="tog-sw" id="tog5_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
     </div>
-    <div class="scg-row scg-r-plan" role="row">
+    <div class="scg-row scg-r-plan" role="row" id="scgRow_prop">
       <div class="scg-lbl" role="rowheader">&#x1F3E0; Buy property <button type="button" class="info-btn" title="The purchase described on the Situation tab." aria-label="About: &#x1F3E0; Buy property">&#x24D8;</button></div>
       <div class="scg-cell c1" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(1,'prop')" aria-label="Scenario A: buy property"><span class="tog-sw" id="tog1_prop"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
       <div class="scg-cell c2" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(2,'prop')" aria-label="Scenario B: buy property"><span class="tog-sw" id="tog2_prop"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
@@ -363,7 +380,7 @@
       <div class="scg-cell c4" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(4,'prop')" aria-label="Scenario D: buy property"><span class="tog-sw" id="tog4_prop"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
       <div class="scg-cell c5" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(5,'prop')" aria-label="Scenario E: buy property"><span class="tog-sw" id="tog5_prop"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
     </div>
-    <div class="scg-row scg-r-plan" role="row">
+    <div class="scg-row scg-r-plan" role="row" id="scgRow_child">
       <div class="scg-lbl" role="rowheader">&#x1F476; Have a child <button type="button" class="info-btn" title="The child costs and leave described on the Situation tab." aria-label="About: &#x1F476; Have a child">&#x24D8;</button></div>
       <div class="scg-cell c1" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(1,'child')" aria-label="Scenario A: have a child"><span class="tog-sw" id="tog1_child"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
       <div class="scg-cell c2" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(2,'child')" aria-label="Scenario B: have a child"><span class="tog-sw" id="tog2_child"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
@@ -596,6 +613,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.2"></script>
+<script type="module" src="js/main.js?v=8.3"></script>
 </body>
 </html>

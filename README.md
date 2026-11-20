@@ -468,6 +468,18 @@ CoastNumber  = FIRE Number / growthFactor
 
 ## Scenarios Tab and Result Tiles
 
+### Plans tab (v8.3)
+
+Buying a home and having a child are **plans**: things that might happen, each
+described once on the **Plans** tab (they moved there from My Situation; your
+partner stays on My Situation). Each card keeps its "Used in A–E" switches. A plan
+is **set up** once something that changes the numbers is entered: a purchase price
+for the home, a yearly cost or months of parental leave for the child
+(`plansSetUp()` in `js/checks.js`). A plan that is not set up has no row in the
+scenario grid, its card says so, and its switches are ignored by the calculation
+(`effectiveFeatures()` in `getScenario`), so a forgotten switch can never apply
+half a plan, such as rent saved without a purchase.
+
 ### The scenario grid (v8)
 
 The Scenarios tab is one grid: labels once on the left, one column per scenario.

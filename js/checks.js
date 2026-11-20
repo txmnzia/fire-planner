@@ -35,6 +35,21 @@ export function scenarioIssues(sc, gl) {
   return out;
 }
 
+// Plans (v8.3): a plan is "set up" once something that changes the numbers is
+// entered. A plan that is not set up gets no switch in the scenario grid, and
+// its switch is ignored by the calculation (getScenario), so a stale switch can
+// never apply half a plan (e.g. rent saved without a purchase).
+export function plansSetUp(gl) {
+  return {
+    prop:  gl.propPrice > 0,
+    child: gl.childCostYearly > 0 || gl.childMaternityMonths > 0,
+  };
+}
+export function effectiveFeatures(feat, gl) {
+  const up = plansSetUp(gl);
+  return { partner: !!feat.partner, prop: !!feat.prop && up.prop, child: !!feat.child && up.child };
+}
+
 // Every distinct issue across the scenarios, for the banner.
 export function allIssues(scenarios, gl) {
   const seen = new Map();

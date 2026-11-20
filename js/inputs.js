@@ -1,5 +1,6 @@
-import { el, numVal, optVal } from "./util.js?v=8.2";
-import { state, features } from "./state.js?v=8.2";
+import { el, numVal, optVal } from "./util.js?v=8.3";
+import { state, features } from "./state.js?v=8.3";
+import { effectiveFeatures } from "./checks.js?v=8.3";
 
 export function incomeFor(s) {
   const ov = el("s" + s + "_inc");
@@ -120,7 +121,8 @@ export function getGlobals() {
 }
 
 export function getScenario(s, gl) {
-  const feat = features[s];
+  // a switch only counts once its plan is set up (v8.3, js/checks.js)
+  const feat = effectiveFeatures(features[s], gl);
   return {
     id:       s,
     retAge:   numVal("s"+s+"_ret", 38+(s-1)*4),
