@@ -1,11 +1,11 @@
 // Plans tab (v8.3): which plans are set up, shown on the plan cards and in the
 // scenario grid (a plan that is not set up has no switch there). The rule itself
 // lives in js/checks.js (plansSetUp), which also gates the calculation.
-import { el, eur, fmtK } from "../util.js?v=8.6.1";
-import { state } from "../state.js?v=8.6.1";
-import { recalc } from "../recalc.js?v=8.6.1";
-import { isComplete } from "../payChanges.js?v=8.6.1";
-import { plansSetUp } from "../checks.js?v=8.6.1";
+import { el, eur, fmtK } from "../util.js?v=8.6.2";
+import { state } from "../state.js?v=8.6.2";
+import { recalc } from "../recalc.js?v=8.6.2";
+import { isComplete } from "../payChanges.js?v=8.6.2";
+import { plansSetUp } from "../checks.js?v=8.6.2";
 
 const NAMES = { prop: "Buying a home", child: "Child" };
 
@@ -16,6 +16,7 @@ export function windfallSwitches(windfalls) {
   return (windfalls || []).map((w, i) => ({ w, i }))
     .filter(({ w }) => Number.isFinite(+w.yr) && w.yr != null && +w.amt > 0)
     .map(({ w, i }) => ({ index: i, label: fmtK(+w.amt) + ' in ' + w.yr,
+      title: 'Windfall', sub: fmtK(+w.amt) + ' \u00b7 ' + w.yr,
       on: [1, 2, 3, 4, 5].map(s => !(Array.isArray(w.off) && w.off.includes(s))) }));
 }
 export function flipWindfall(windfalls, index, s) {
@@ -32,9 +33,7 @@ function renderWindfallRows() {
   for (const r of windfallSwitches(state.windfalls)) {
     const row = document.createElement("div");
     row.className = "scg-row scg-r-plan"; row.setAttribute("role", "row");
-    const lbl = document.createElement("div"); lbl.className = "scg-lbl"; lbl.setAttribute("role", "rowheader");
-    lbl.textContent = "\u{1F4B0} Windfall " + r.label;
-    row.append(lbl);
+    row.append(planLbl("\u{1F4B0}", r.title, r.sub));
     r.on.forEach((on, k) => {
       const cell = document.createElement("div"); cell.className = "scg-cell c" + (k + 1); cell.setAttribute("role", "cell");
       const b = document.createElement("button"); b.type = "button"; b.className = "scg-tog";
@@ -54,6 +53,18 @@ export function payLabel(p) {
   const amt = p.amt === 0 ? 'no pay' : fmtK(p.amt) + '/mo';
   return (p.name ? p.name + ': ' : '') + amt + ' from ' + p.from + (p.to != null ? ' to ' + p.to : '');
 }
+// Grid row label (v8.6.2): name on the first line, amount and date below it.
+export function payParts(p) {
+  const amt = p.amt === 0 ? 'No pay' : fmtK(p.amt) + '/mo';
+  const when = p.to != null ? p.from + '\u2013' + p.to : 'from ' + p.from;
+  return { title: p.name || 'Pay change', sub: amt + ' \u00b7 ' + when };
+}
+function planLbl(icon, title, sub) {
+  const lbl = document.createElement("div"); lbl.className = "scg-lbl scg-lbl2"; lbl.setAttribute("role", "rowheader");
+  const t = document.createElement("span"); t.className = "scg-lbl-t"; t.textContent = icon + " " + title; t.title = title;
+  const d = document.createElement("span"); d.className = "scg-lbl-d"; d.textContent = sub;
+  lbl.append(t, d); return lbl;
+}
 export function flipPay(list, index, s) {
   const p = list[index]; if (!p) return;
   const on = Array.isArray(p.on) ? p.on.slice() : [];
@@ -61,11 +72,10 @@ export function flipPay(list, index, s) {
 }
 export function togglePay(index, s) { flipPay(state.payChanges, index, s); recalc(); }
 
-function switchRow(label, on, ariaFor, onClick) {
+function switchRow(icon, parts, on, ariaFor, onClick) {
   const row = document.createElement("div");
   row.className = "scg-row scg-r-plan"; row.setAttribute("role", "row");
-  const lbl = document.createElement("div"); lbl.className = "scg-lbl"; lbl.setAttribute("role", "rowheader");
-  lbl.textContent = label; row.append(lbl);
+  row.append(planLbl(icon, parts.title, parts.sub));
   on.forEach((v, k) => {
     const cell = document.createElement("div"); cell.className = "scg-cell c" + (k + 1); cell.setAttribute("role", "cell");
     const b = document.createElement("button"); b.type = "button"; b.className = "scg-tog";
@@ -83,7 +93,7 @@ function renderPayRows() {
   host.replaceChildren();
   state.payChanges.forEach((p, i) => {
     if (!isComplete(p)) return;
-    host.append(switchRow("\u{1F4B6} " + payLabel(p), [1, 2, 3, 4, 5].map(s => p.on.includes(s)), payLabel(p), s => { togglePay(i, s); if (paintPayList) paintPayList(); }));
+    host.append(switchRow("\u{1F4B6}", payParts(p), [1, 2, 3, 4, 5].map(s => p.on.includes(s)), payLabel(p), s => { togglePay(i, s); if (paintPayList) paintPayList(); }));
   });
 }
 

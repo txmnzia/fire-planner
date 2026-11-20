@@ -55,3 +55,9 @@ test('markup: windfalls live on the Plans tab, with a slot for their rows in the
   assert.ok(plans.includes('id="wfList"') && plans.includes('id="subj-windfalls"'));
   assert.match(html, /id="scgWindfallRows"/);
 });
+
+test('windfallSwitches: grid label is "Windfall", then amount · year (v8.6.2)', () => {
+  const [r] = windfallSwitches([{ yr: 2030, amt: 100000 }]);
+  assert.equal(r.title, 'Windfall');
+  assert.equal(r.sub, '€100.0k · 2030');
+});

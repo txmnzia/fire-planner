@@ -1,7 +1,7 @@
-import { el, numVal, optVal } from "./util.js?v=8.6.1";
-import { state, features } from "./state.js?v=8.6.1";
-import { effectiveFeatures } from "./checks.js?v=8.6.1";
-import { payChangesFor } from "./payChanges.js?v=8.6.1";
+import { el, numVal, optVal } from "./util.js?v=8.6.2";
+import { state, features } from "./state.js?v=8.6.2";
+import { effectiveFeatures } from "./checks.js?v=8.6.2";
+import { payChangesFor } from "./payChanges.js?v=8.6.2";
 
 
 // Optional money field: null when empty (unlike optVal, 0 is a valid value).

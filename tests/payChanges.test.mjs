@@ -77,3 +77,9 @@ test('wiring: saved with the state, migrated on load, read per scenario; old fie
   assert.ok(plans.includes('id="payList"'));
   assert.match(html, /id="scgPayRows"/);
 });
+
+test('payParts: grid label is the name, then amount · date (v8.6.2)', async () => {
+  const { payParts } = await import('../js/ui/plans.js');
+  assert.deepEqual(payParts({ name: 'Barista job', from: 2031, to: null, amt: 1400 }), { title: 'Barista job', sub: '€1.4k/mo · from 2031' });
+  assert.deepEqual(payParts({ name: '', from: 2030, to: 2031, amt: 0 }), { title: 'Pay change', sub: 'No pay · 2030–2031' });
+});
