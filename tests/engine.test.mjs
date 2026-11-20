@@ -169,7 +169,8 @@ test('two-person 1 — regression: simple mode is identical to the pre-change sn
   // that end are priced at present value): those three are covered by
   // tests/tempCosts.test.mjs and the regenerated v8 golden master instead. The
   // fields v8.2 added (tempPV, rows[].tempCost) are not in this older snapshot.
-  const movedInV82 = new Set(['swr_prop', 'swr_child', 'swr_all']);
+  // v8.5 then moved every fixed-mode case (tax priced on a rising gain fraction).
+  const movedInV82 = new Set(['swr_prop', 'swr_child', 'swr_all', ...cases.map(c => 'fixed_' + c[0])]);
   const strip = p => { delete p.tempPV; p.rows.forEach(r => delete r.tempCost); return p; };
   for (const wd of ['swr', 'fixed']) for (const [k, sco, glo] of cases) {
     if (movedInV82.has(wd + '_' + k)) continue;
@@ -268,8 +269,14 @@ test('two-person 8 — household target equals a hand-computed two-period PV', (
                      samPersonalRet: 1000, partnerPersonal: 700, sharedRet: 2000,
                      pensionAmt: 800, pensionAge: 65, partnerPension: 400, partnerPensionAge: 65 });
   const sc = makeSc({ hasPartner: true, retAge: 60 });
-  const a5 = (1 - Math.pow(1.05, -5)) / 0.05;
-  const expected = 1.1 * (44400 * a5 + 30000 * a5 / Math.pow(1.05, 5));
+  // v8.5: the tax gross-up rises each year as the remaining portfolio grows:
+  // g0 = (1 - 1/1.1)/t, g_k = 1 - (1 - g0)/1.05^(k+1), tm_k = 1/(1 - g_k t).
+  const t = gl.taxRate, g0 = (1 - 1 / 1.1) / t;
+  let expected = 0;
+  for (let k = 0; k < 10; k++) {
+    const g = 1 - (1 - g0) / Math.pow(1.05, k + 1), need = k < 5 ? 44400 : 30000;
+    expected += need / (1 - g * t) / Math.pow(1.05, k + 1);
+  }
   assert.equal(computeHouseholdTarget(60, sc, gl, 1.1), Math.round(expected));
   // % mode: year-one need over SWR
   assert.equal(computeHouseholdTarget(60, sc, { ...gl, wdMode: 'swr' }, 1.1), Math.round(44400 * 1.1 / 0.04));
@@ -337,8 +344,13 @@ test('two-person: partial target (SWR) prices your year-one net cost; fixed = ye
   const glF = twoGl({ wdMode: 'fixed', partnerInc: 0, partnerPension: 0, inflation: 0,
                       stockRet: 0.05, bondRet: 0.05, lifeExp: 70, pensionAmt: 500, pensionAge: 65 });
   const scF = makeSc({ hasPartner: true, retAge: 60 });
-  const a5 = (1 - Math.pow(1.05, -5)) / 0.05;
-  const exp = 1.2 * ((1100 + 2200) * 12 * a5 + (3300 - 500) * 12 * a5 / Math.pow(1.05, 5));
+  // v8.5: rising gain fraction, as in the household test above
+  const t = glF.taxRate, g0 = (1 - 1 / 1.2) / t;
+  let exp = 0;
+  for (let k = 0; k < 10; k++) {
+    const g = 1 - (1 - g0) / Math.pow(1.05, k + 1), need = k < 5 ? (1100 + 2200) * 12 : (3300 - 500) * 12;
+    exp += need / (1 - g * t) / Math.pow(1.05, k + 1);
+  }
   assert.equal(computeFireTarget(60, scF, glF, 1.2, { herDraw: {} }), Math.round(exp));
 });
 

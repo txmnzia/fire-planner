@@ -262,7 +262,25 @@ FIRE Number = PV(spending, pre-pension) + PV(spending - pension, post-pension)
             − PV(partner salary credit, until partner's retirement age)
 ```
 
-The **annuity PV formula** used is:
+**Since v8.5 the sum is taken year by year**, because the tax gross-up is not
+constant. Selling proportionally keeps the portfolio's gain fraction, but every
+year of growth on what remains adds gain with no cost basis, so a sale k years
+into retirement is taxed on a larger share:
+
+```
+g(k)       = 1 − (1 − g_ret) / (1 + r)^(k+1)          g_ret = gain fraction at retirement
+TaxMult(k) = 1 / (1 − g(k) × taxRate)                (taxMultAfter() in js/engine.js)
+FIRE Number = Σ_k  net cash need(k) × TaxMult(k) / (1 + r)^(k+1)  (+ purchase in retirement)
+```
+
+The old constant `TaxMult(g_ret)` understated the target: in the 192-household test
+set, 96 stop ages looked funded (net worth up to 14.7% above the target) and still
+ran out of money; with the rising gain fraction none does beyond a 2% margin. With
+the tax held flat the year-by-year sum equals the closed form below to the euro
+(tested). The two-person Partial and Household fixed-mode targets use the same
+rising gross-up.
+
+The **annuity PV formula** (the pre-v8.5 closed form, kept for that equivalence test) is:
 
 ```
 PV(C, r, g, n) = C × [1 − ((1+g)/(1+r))^n] / (r − g)

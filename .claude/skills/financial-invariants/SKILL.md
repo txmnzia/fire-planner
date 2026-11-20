@@ -43,6 +43,10 @@ Converting a net (after-tax) need into a gross withdrawal always uses
 - for the FIRE target, Coast number, and scenario cards: `proj.gainFracAtRet`, the
   fraction the loop tracked to the retirement year.
 `gl.gainFrac` (today's value) is only ever the *seed* for the initial cost basis.
+Fixed-mode (DCF) targets go one step further since v8.5: a sale k years into
+retirement uses `taxMultAfter(taxMultRet, taxRate, r, k+1)`, because growth keeps
+raising the gain fraction of what is left. A flat gross-up over decades understated
+the target by up to ~15% (households "funded" that ran dry).
 Using today's fraction for a retirement-era quantity was bugs F1, F4 and T6 —
 it understates targets and overstates card income by 8–18%.
 

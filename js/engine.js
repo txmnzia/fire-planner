@@ -132,8 +132,8 @@ export function computeHouseholdTarget(fromAge, sc, gl, taxMult) {
     for (let k = 0; k < gl.lifeExp - fromAge; k++) pv += temp(fromYear + k)*taxMult/Math.pow(1+r, k+1);
     return Math.round(Math.max(0, need(fromYear) - temp(fromYear))*taxMult/gl.swr + pv);
   }
-  let pv = 0;
-  for (let k = 0; k < gl.lifeExp - fromAge; k++) pv += need(fromYear + k)*taxMult/Math.pow(1+r, k+1);
+  let pv = 0;   // v8.5: rising gain fraction, like your own fixed-mode target
+  for (let k = 0; k < gl.lifeExp - fromAge; k++) pv += need(fromYear + k)*taxMultAfter(taxMult, gl.taxRate, r, k+1)/Math.pow(1+r, k+1);
   if (sc.hasProp && gl.propBuyYear >= fromYear)
     pv += gl.propPrice*(gl.propDownPct + gl.propTxCostPct)*taxMult/Math.pow(1+r, gl.propBuyYear - fromYear);
   return Math.round(Math.max(0, pv));
@@ -279,6 +279,17 @@ export function yearOnePermBudget(fromAge, sc, gl, herDrawAnn) {
   return Math.max(0, yearOneBudget(fromAge, sc, gl, herDrawAnn) - tempCostAt(fromYear, sc, gl, herDrawAnn));
 }
 
+// Tax gross-up for a sale `years` after the point where it is taxMult. Selling
+// proportionally keeps the gain fraction, but every year of growth on what is
+// left adds gain with no cost basis: g(n) = 1 − (1 − g0)/(1+r)^n. The flat
+// taxMult used for decades understated the fixed-mode target (v8.5).
+export function taxMultAfter(taxMult, taxRate, r, years) {
+  if (!(taxRate > 0)) return taxMult;
+  const g0 = Math.min(1, Math.max(0, (1 - 1/taxMult)/taxRate));
+  const g = Math.min(1, Math.max(g0, 1 - (1 - g0)/Math.pow(1 + Math.max(0, r), years)));
+  return 1/Math.max(0.001, 1 - g*taxRate);
+}
+
 export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
   opts = opts || {};
   if (fromAge>=gl.lifeExp) return 0;
@@ -337,12 +348,13 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
       return Math.round(target);
     }
     let pv = 0;
+    // v8.5: tax gross-up rises with the gain fraction year by year (taxMultAfter)
     for (let k = 0; k < n; k++) {
       const ak = at(fromYear + k);
-      pv += Math.max(0, ak.c.samCost - ak.pen)*taxMult/Math.pow(1+rFrom, k+1);
+      pv += Math.max(0, ak.c.samCost - ak.pen)*taxMultAfter(taxMult, gl.taxRate, rFrom, k+1)/Math.pow(1+rFrom, k+1);
     }
     if (sc.hasProp && gl.propBuyYear >= fromYear)
-      pv += gl.propPrice*(gl.propDownPct + gl.propTxCostPct)*taxMult/Math.pow(1+rFrom, gl.propBuyYear - fromYear);
+      pv += gl.propPrice*(gl.propDownPct + gl.propTxCostPct)*taxMultAfter(taxMult, gl.taxRate, rFrom, Math.max(0, gl.propBuyYear - fromYear))/Math.pow(1+rFrom, gl.propBuyYear - fromYear);
     return Math.round(Math.max(0, pv));
   }
 
@@ -427,6 +439,40 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
       pv -= pvRent / Math.pow(1+rFrom, nDelayRent);
     }
     return pv;
+  }
+
+  // Fixed-mode target (v8.5): year by year, with the gain fraction rising as the
+  // portfolio keeps growing. opts.closedForm / opts.dcfLoop === 'flat' keep the
+  // pre-v8.5 constant-tax pricing, for the equivalence test only.
+  if (!opts.closedForm) return dcfLoop(opts.dcfLoop === 'flat' ? () => taxMult : k => taxMultAfter(taxMult, gl.taxRate, rFrom, k + 1));
+
+  // Year-by-year form of the closed-form DCF below (v8.5). tm(k) is the tax
+  // gross-up for a sale k years after fromAge. With a constant tm it equals the
+  // closed form to the euro (tested); with taxMultAfter it prices the gain
+  // fraction that rises as the remaining portfolio keeps growing.
+  function dcfLoop(tm) {
+    const fromYear = gl.baseYear + tFrom, n = Math.max(0, gl.lifeExp - fromAge);
+    let pv = 0;
+    for (let k = 0; k < n; k++) {
+      const age = fromAge + k, yr = fromYear + k, infl = Math.pow(1+gl.inflation, yr - gl.baseYear);
+      const spend = baseSpend*12*infl, pen = gl.pensionAmt*12*infl;
+      let flow = age >= gl.pensionAge ? Math.max(0, spend - pen) : spend;
+      if (sc.hasChild && yr >= gl.childBirthYear && yr < gl.childBirthYear + gl.childCostUntilAge) flow += gl.childCostYearly*infl;
+      if (sc.hasProp) {
+        if (yr >= gl.propBuyYear && yr < gl.propBuyYear + gl.propMortgageTerm) flow += mortgageAnnual(gl);
+        if (yr >= gl.propBuyYear) flow -= gl.propRentSaved*12*infl;
+      }
+      if (sc.hasPartner) {
+        if (gl.partnerPension > 0 && age + off >= gl.partnerPensionAge) flow -= gl.partnerPension*12*infl;
+        if (gl.partnerInc > 0 && age + off < gl.partnerRetAge) flow -= gl.partnerInc*12*infl;
+      }
+      pv += flow*tm(k)/Math.pow(1+rFrom, k+1);
+    }
+    if (sc.hasProp && gl.propBuyYear >= fromYear) {
+      const d = gl.propBuyYear - fromYear;
+      pv += gl.propPrice*(gl.propDownPct + gl.propTxCostPct)*tm(Math.max(0, d-1))/Math.pow(1+rFrom, d);
+    }
+    return Math.round(Math.max(0, pv));
   }
 
   if (fromAge>=gl.pensionAge) {
