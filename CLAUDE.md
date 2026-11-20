@@ -33,6 +33,7 @@ There is no package.json, no npm install, no build step. Do not introduce one.
 | `js/ui/*` | Renderers: cards, charts, table, Monte Carlo tab, IBKR import, net-worth history. |
 | `tests/` | `node:test` suites: the two pure engines, the v8 golden master (192 frozen cases; regenerate only with `node tests/tools/gen-golden.mjs` in a deliberate calculation change), the scenario grid, and markup wiring. |
 | `AUDIT.md` | The 2026-07 financial/technical audit and its resolution. **Read it before touching financial logic** — it is the list of mistakes already made once. |
+| `DECISIONS.md` | Product and modelling decisions taken with the owner, newest first, with reasons and rejected options. Add an entry whenever a decision is made; never contradict one silently. |
 
 ## Iron rules
 
@@ -63,8 +64,8 @@ There is no package.json, no npm install, no build step. Do not introduce one.
    in localStorage and the Supabase row. Defaults, fixtures, docs and examples use
    made-up numbers. History was rewritten once to remove baked-in data (AUDIT.md S3,
    v7.2); never reintroduce a baked default state.
-8. **Docs move with code.** If behaviour changes, update README.md (calculation logic)
-   and ARCHITECTURE.md (module layout) in the same commit. README↔code drift caused an
+8. **Docs move with code.** If behaviour changes, update README.md (calculation logic),
+   ARCHITECTURE.md (module layout) and DECISIONS.md (any decision taken) in the same commit. README↔code drift caused an
    entire audit section (AUDIT.md Part 5).
 
 ## Skills — load before you act
