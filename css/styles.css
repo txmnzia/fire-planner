@@ -416,9 +416,11 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .tog-sw.on-wf::after{transform:translateX(14px);background:var(--s2c);}
 .wf-chips{margin:6px 0 2px;}
 .pay-list{display:flex;flex-direction:column;gap:8px;}
-.pay-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bdrs);}
-.pay-in{height:34px;font-size:13px;}
-.pay-chips{margin-left:auto;}
+.pay-row{display:grid;grid-template-columns:minmax(150px,1.4fr) 120px 120px minmax(150px,1fr) auto;gap:10px 14px;align-items:end;padding:10px 0;border-bottom:1px solid var(--bdrs);}
+.pay-row .field{margin:0;min-width:0;}
+.pay-row .pay-name{width:100%;}
+.pay-side{display:flex;align-items:center;gap:8px;height:40px;}
+.pay-chips{margin:0;}
 .tog-sw.on-child{background:rgba(52,211,153,.3);}
 .tog-sw.on-child::after{transform:translateX(14px);background:var(--s3c);}
 
@@ -575,6 +577,9 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .scg-more[open] .scg-sum::before{content:'\25BE  ';}
 
 @media(max-width:767px){
+  .pay-row{grid-template-columns:1fr 1fr;}
+  .pay-row .pay-what,.pay-row .pay-amt,.pay-row .pay-side{grid-column:1/-1;}
+
   /* Scenario grid: labels stay pinned, columns scroll sideways */
   .scg-shell{padding:12px;}
   .scg{--scg-lbl:124px;min-width:calc(var(--scg-lbl) + 5*144px);}

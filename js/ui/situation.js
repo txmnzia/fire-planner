@@ -3,10 +3,11 @@
 // The source of truth for every value stays the id-bearing form control that
 // inputs.js / sync.js already read — this module only adds friendlier controls
 // (year-picker popover, sliders, the subject rail) and the dynamic windfall list.
-import { el } from "../util.js?v=8.6";
-import { toggleWindfall, LETTERS, renderPayList } from "./plans.js?v=8.6";
-import { state } from "../state.js?v=8.6";
-import { recalc } from "../recalc.js?v=8.6";
+import { el } from "../util.js?v=8.6.1";
+import { toggleWindfall, LETTERS, togglePay, setPayListPainter } from "./plans.js?v=8.6.1";
+import { normalisePayChanges } from "../payChanges.js?v=8.6.1";
+import { state } from "../state.js?v=8.6.1";
+import { recalc } from "../recalc.js?v=8.6.1";
 
 const YNOW = 2026;
 
@@ -48,7 +49,8 @@ function initCurrency() {
 // buildYpick enhances a `.ypick` element into a decade-grid popover. Value flows
 // through getVal/setVal so the same component drives hidden form inputs AND the
 // state-backed datapoint rows. Returns { paint } to re-sync the button label.
-export function buildYpick(pick, { min, max, getVal, setVal, optional }) {
+export function buildYpick(pick, { min, max, getVal, setVal, optional, emptyLabel }) {
+  const emptyTxt = emptyLabel || 'Same as you';
   pick.innerHTML =
     '<button class="ypick-btn" type="button" aria-haspopup="dialog"><span class="yv"></span>' +
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></button>' +
@@ -56,7 +58,7 @@ export function buildYpick(pick, { min, max, getVal, setVal, optional }) {
       '<button type="button" data-nav="-1" aria-label="Earlier years">‹</button><span class="yrange"></span>' +
       '<button type="button" data-nav="1" aria-label="Later years">›</button></div>' +
       '<div class="ypick-grid"></div>' +
-      (optional ? '<button type="button" class="ypick-clear">Same as you</button>' : '') +
+      (optional ? '<button type="button" class="ypick-clear"></button>' : '') +
     '</div>';
   const btn = pick.querySelector('.ypick-btn'), pop = pick.querySelector('.ypick-pop'),
         grid = pick.querySelector('.ypick-grid'), yv = pick.querySelector('.yv'),
@@ -64,7 +66,7 @@ export function buildYpick(pick, { min, max, getVal, setVal, optional }) {
   let page = 0;
   const paint = () => {
     const v = getVal();
-    yv.textContent = v == null ? (optional ? 'Same as you' : '—') : v;
+    yv.textContent = v == null ? (optional ? emptyTxt : '—') : v;
     pick.classList.toggle('empty', v == null);
   };
   const render = () => {
@@ -89,6 +91,7 @@ export function buildYpick(pick, { min, max, getVal, setVal, optional }) {
   pop.addEventListener('click', e => e.stopPropagation());
   pick.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => { page += (+b.dataset.nav) * 12; render(); }));
   const clr = pick.querySelector('.ypick-clear');
+  if (clr) clr.textContent = emptyTxt;
   if (clr) clr.addEventListener('click', () => { setVal(null); paint(); close(); });
   paint();
   pick._paint = paint;
@@ -136,6 +139,54 @@ function initSliders() {
     }));
   });
 }
+
+// ── PAY CHANGES (v8.6, Plans tab) ───────────────────────────────────────────
+// One row per change: what, from (year picker), until (year picker, "For good"
+// when empty), take-home (€ field), A-E chips, remove. Typing updates the plan and
+// the numbers without redrawing (focus stays); pickers, chips and add/remove redraw.
+export function renderPayList() {
+  const host = el('payList'); if (!host) return;
+  host.innerHTML = '';
+  const upd = (i, key, val) => { state.payChanges[i] = normalisePayChanges([{ ...state.payChanges[i], [key]: val }])[0]; recalc(); };
+  state.payChanges.forEach((p, i) => {
+    const row = document.createElement('div'); row.className = 'pay-row';
+    row.innerHTML =
+      '<div class="field pay-what"><label>What</label><input type="text" class="pay-name" placeholder="e.g. 4-day week" autocomplete="off"></div>' +
+      '<div class="field pay-yr"><label>From</label><div class="ypick pay-from"></div></div>' +
+      '<div class="field pay-yr"><label>Until</label><div class="ypick pay-to"></div></div>' +
+      '<div class="field pay-amt"><label>Take-home / month</label><div class="inp cur"><span class="pre">€</span>' +
+        '<input type="text" inputmode="decimal" autocomplete="off" placeholder="0 = no pay"></div></div>' +
+      '<div class="pay-side"><div class="sc-chips pay-chips" role="group" aria-label="Scenarios using this pay change"><span class="sc-chips-lbl">Used in</span></div>' +
+      '<button type="button" class="dp-del" aria-label="Remove pay change">×</button></div>';
+    const name = row.querySelector('.pay-name'); name.value = p.name || '';
+    name.addEventListener('input', () => upd(i, 'name', name.value));
+    buildYpick(row.querySelector('.pay-from'), { min: 2024, max: 2080,
+      getVal: () => state.payChanges[i].from, setVal: y => { upd(i, 'from', y); renderPayList(); } });
+    buildYpick(row.querySelector('.pay-to'), { min: 2024, max: 2080, optional: true, emptyLabel: 'For good',
+      getVal: () => state.payChanges[i].to, setVal: y => { upd(i, 'to', y); renderPayList(); } });
+    const amt = row.querySelector('.pay-amt input');
+    amt.value = p.amt == null ? '' : fmtMoney(p.amt);
+    amt.addEventListener('input', () => { const raw = cleanMoney(amt.value); amt.value = raw === '' ? '' : fmtMoney(raw); upd(i, 'amt', raw); });
+    const chips = row.querySelector('.pay-chips');
+    LETTERS.forEach((L, k) => {
+      const on = p.on.includes(k + 1);
+      const c = document.createElement('button'); c.type = 'button'; c.className = 'sc-chip' + (on ? ' on' : '');
+      c.textContent = L; c.setAttribute('aria-pressed', String(on)); c.setAttribute('aria-label', 'Use in scenario ' + L);
+      c.addEventListener('click', () => { togglePay(i, k + 1); renderPayList(); });
+      chips.appendChild(c);
+    });
+    row.querySelector('.dp-del').addEventListener('click', () => { state.payChanges.splice(i, 1); renderPayList(); recalc(); });
+    host.appendChild(row);
+  });
+  const add = document.createElement('button'); add.type = 'button'; add.className = 'dp-add';
+  add.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add pay change';
+  add.addEventListener('click', () => {
+    state.payChanges.push({ name: '', from: YNOW + 1, to: null, amt: null, on: [] });
+    renderPayList(); recalc();
+  });
+  host.appendChild(add);
+}
+setPayListPainter(renderPayList);
 
 // ── WINDFALLS (dynamic datapoint list, shares the compact row with nw-history) ─
 export function renderWindfalls() {
@@ -243,6 +294,7 @@ export function initSituation() {
   initYearFields();
   initCurrency();
   renderWindfalls();
+  renderPayList();
   initRail();
   updatePartnerModelUI();
 }

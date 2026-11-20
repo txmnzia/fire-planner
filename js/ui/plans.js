@@ -1,11 +1,11 @@
 // Plans tab (v8.3): which plans are set up, shown on the plan cards and in the
 // scenario grid (a plan that is not set up has no switch there). The rule itself
 // lives in js/checks.js (plansSetUp), which also gates the calculation.
-import { el, eur, fmtK } from "../util.js?v=8.6";
-import { state } from "../state.js?v=8.6";
-import { recalc } from "../recalc.js?v=8.6";
-import { normalisePayChanges, isComplete } from "../payChanges.js?v=8.6";
-import { plansSetUp } from "../checks.js?v=8.6";
+import { el, eur, fmtK } from "../util.js?v=8.6.1";
+import { state } from "../state.js?v=8.6.1";
+import { recalc } from "../recalc.js?v=8.6.1";
+import { isComplete } from "../payChanges.js?v=8.6.1";
+import { plansSetUp } from "../checks.js?v=8.6.1";
 
 const NAMES = { prop: "Buying a home", child: "Child" };
 
@@ -59,7 +59,7 @@ export function flipPay(list, index, s) {
   const on = Array.isArray(p.on) ? p.on.slice() : [];
   p.on = (on.includes(s) ? on.filter(x => x !== s) : [...on, s]).sort();
 }
-function togglePay(index, s) { flipPay(state.payChanges, index, s); renderPayList(); recalc(); }
+export function togglePay(index, s) { flipPay(state.payChanges, index, s); recalc(); }
 
 function switchRow(label, on, ariaFor, onClick) {
   const row = document.createElement("div");
@@ -83,56 +83,17 @@ function renderPayRows() {
   host.replaceChildren();
   state.payChanges.forEach((p, i) => {
     if (!isComplete(p)) return;
-    host.append(switchRow("\u{1F4B6} " + payLabel(p), [1, 2, 3, 4, 5].map(s => p.on.includes(s)), payLabel(p), s => togglePay(i, s)));
+    host.append(switchRow("\u{1F4B6} " + payLabel(p), [1, 2, 3, 4, 5].map(s => p.on.includes(s)), payLabel(p), s => { togglePay(i, s); if (paintPayList) paintPayList(); }));
   });
 }
 
-// The Pay changes card: one row per change; typing updates the plan and the
-// numbers without redrawing the list (focus stays), chips and add/remove redraw.
-export function renderPayList() {
-  const host = el("payList"); if (!host) return;
-  host.replaceChildren();
-  state.payChanges.forEach((p, i) => {
-    const row = document.createElement("div"); row.className = "pay-row";
-    const field = (key, ph, w, type) => {
-      const inp = document.createElement("input"); inp.type = type || "text"; inp.className = "pay-in";
-      inp.placeholder = ph; inp.style.width = w; inp.setAttribute("aria-label", ph);
-      if (key !== "name") inp.inputMode = "numeric";
-      inp.value = p[key] == null ? "" : String(p[key]);
-      inp.addEventListener("input", () => {
-        const next = normalisePayChanges([{ ...state.payChanges[i], [key]: inp.value }])[0];
-        state.payChanges[i] = next; recalc();
-      });
-      return inp;
-    };
-    row.append(field("name", "What (e.g. 4-day week)", "190px"), field("from", "From year", "92px"),
-               field("to", "Until (empty = for good)", "170px"), field("amt", "Take-home €/mo (0 = none)", "190px"));
-    const chips = document.createElement("div"); chips.className = "sc-chips pay-chips";
-    LETTERS.forEach((L, k) => {
-      const on = p.on.includes(k + 1);
-      const c = document.createElement("button"); c.type = "button"; c.className = "sc-chip" + (on ? " on" : "");
-      c.textContent = L; c.setAttribute("aria-pressed", String(on)); c.setAttribute("aria-label", "Use in scenario " + L);
-      c.addEventListener("click", () => togglePay(i, k + 1));
-      chips.append(c);
-    });
-    const del = document.createElement("button"); del.type = "button"; del.className = "dp-del"; del.textContent = "\u00d7";
-    del.setAttribute("aria-label", "Remove pay change");
-    del.addEventListener("click", () => { state.payChanges.splice(i, 1); renderPayList(); recalc(); });
-    row.append(chips, del);
-    host.append(row);
-  });
-  const add = document.createElement("button"); add.type = "button"; add.className = "dp-add"; add.textContent = "+ Add pay change";
-  add.addEventListener("click", () => {
-    state.payChanges.push({ name: "", from: new Date().getFullYear() + 1, to: null, amt: null, on: [] });
-    renderPayList(); recalc();
-  });
-  host.append(add);
-}
+// set by situation.js so a grid switch also repaints the Plans card chips
+let paintPayList = null;
+export function setPayListPainter(fn) { paintPayList = fn; }
 
 export function renderPlans(gl) {
   renderWindfallRows();
   renderPayRows();
-  if (el("payList") && !el("payList").children.length) renderPayList();
   const pb = el("planState_pay");
   if (pb) { const n = state.payChanges.filter(isComplete).length; pb.textContent = n ? "\u00b7 " + n + " set up" : "\u00b7 none yet"; pb.classList.toggle("off", !n); }
   const wfb = el("planState_wf");

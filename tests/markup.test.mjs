@@ -91,3 +91,14 @@ test('scenario grid: no retired card markup is left behind', () => {
   }
   assert.ok(!/renderMilestone/.test(read('js/recalc.js')));
 });
+
+test('markup: the Pay changes card is painted on start-up and after a load (v8.6.1)', () => {
+  const src = read('js/ui/situation.js');
+  const body = name => src.slice(src.indexOf('export function ' + name), src.indexOf('\n}\n', src.indexOf('export function ' + name)));
+  assert.match(body('initSituation'), /renderPayList\(\)/);
+  assert.match(body('refreshSituationControls'), /renderPayList\(\)/);
+  const pay = body('renderPayList');
+  for (const lbl of ['What', 'From', 'Until', 'Take-home / month']) assert.ok(pay.includes('<label>' + lbl + '</label>'), lbl);
+  assert.equal((pay.match(/buildYpick\(/g) || []).length, 2, 'From and Until are year pickers');
+  assert.match(pay, /class="inp cur"><span class="pre">€<\/span>/);
+});
