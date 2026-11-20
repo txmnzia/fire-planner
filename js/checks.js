@@ -14,22 +14,24 @@ const ISSUES = {
     text: 'Monthly spending is empty, so scenarios count no spending. Fill it in Income & spending.' },
   twoSpend: { key: 'twoSpend', field: 'samPersonalNow_disp', blocking: true,
     text: 'The two-person model is on, but your personal and shared spending are empty, so scenarios with your partner count no spending. Fill them in the Partner section.' },
-  solo: { key: 'solo', field: 'soloShared_disp', blocking: true,
-    text: 'Housing & shared costs if alone is empty while your personal spending is set, so scenarios without your partner count no rent or shared costs.' },
+  soloPersonal: { key: 'soloPersonal', field: 'samPersonalNow_disp', blocking: true,
+    text: 'Scenarios without your partner use your personal spending + housing & shared costs if alone, and your personal spending is empty. Fill it in the Partner section.' },
+  soloHousing: { key: 'soloHousing', field: 'soloShared_disp', blocking: true,
+    text: 'Scenarios without your partner use your personal spending + housing & shared costs if alone, and housing if alone is empty. Fill it in the Partner section.' },
 };
 
 // Issues for one scenario.
 // Simple model: spending must be entered.
 // Two-person model, partner on: your personal or shared spending must be entered.
-// Two-person model, partner off: priced by soloSpend() in js/engine.js, i.e. your
-//   personal + housing if alone, or the Simple spending fields when neither of the
-//   two-person solo fields was entered. Flag a half-entered pair, or nothing at all.
+// Two-person model, partner off: priced by soloSpend() in js/engine.js = your
+//   personal spending + housing if alone; both must be entered.
 export function scenarioIssues(sc, gl) {
   if (gl.partnerModel !== 'two') return spendEmpty(gl) ? [ISSUES.spend] : [];
   if (sc.hasPartner) return (!(gl.samPersonalNow > 0) && !(gl.sharedNow > 0)) ? [ISSUES.twoSpend] : [];
-  const entered = gl.samPersonalNow > 0 || gl.samPersonalRet > 0 || gl.soloShared > 0;
-  if (entered) return gl.soloShared > 0 ? [] : [ISSUES.solo];
-  return spendEmpty(gl) ? [ISSUES.spend] : [];
+  const out = [];
+  if (!(gl.samPersonalNow > 0) && !(gl.samPersonalRet > 0)) out.push(ISSUES.soloPersonal);
+  if (!(gl.soloShared > 0)) out.push(ISSUES.soloHousing);
+  return out;
 }
 
 // Every distinct issue across the scenarios, for the banner.

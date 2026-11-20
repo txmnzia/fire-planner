@@ -474,9 +474,8 @@ columns scroll sideways.
 **Missing inputs never show as a number.** `js/checks.js` flags spending that was
 never entered: the Simple model with no spending; in the two-person model, a
 partner scenario while both your personal and shared spending are empty, or a
-scenario without the partner while your personal spending is set but "housing &
-shared costs if alone" is empty (a solo scenario with neither falls back to the
-Simple spending, see the two-person model below). Those inputs would otherwise
+scenario without the partner while your personal spending or "housing & shared
+costs if alone" is empty. Those inputs would otherwise
 count as €0, which prices a FIRE number of €0 and a false "Funded". Affected grid
 columns show "⚠ Missing input" and "—", and a red banner under the tabs names the
 field with a Fix button that jumps to it. Every (i) button opens its explanation in a bubble on tap
@@ -612,11 +611,10 @@ yourCost(y)        = samPersonalNow|Ret × 12 × infl + shared(y) − herContrib
   is empty the year is flagged (`partnerInfeasibleYear`, "⚠ Partner short") and the
   shortfall is **not** moved onto your portfolio.
 - **Scenarios without the partner** use `samPersonal + soloShared` as your base
-  spending (child and property costs as usual, all yours). When **none** of
-  `samPersonalNow`, `samPersonalRet` and `soloShared` was entered, the Simple
-  spending fields stand in (`spendNow` / `spendRet`, which are your own spending
-  before any partner multiplier), so the scenario is priced exactly as in Simple
-  mode instead of at €0. One source: `soloSpend(gl, retired)` in `js/engine.js`.
+  spending (child and property costs as usual, all yours), always: the Simple
+  model's "Monthly spending" never stands in, so the same fact is never entered
+  twice. If either field is empty the scenario shows "missing" (see
+  `js/checks.js`). One source: `soloSpend(gl, retired)` in `js/engine.js`.
 
 **Partial FIRE (you)** — the headline `fireTarget` of a partner scenario in two-person
 mode (chart line, Coast number, Monte Carlo reference). Your own portfolio covers your

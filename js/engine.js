@@ -187,14 +187,12 @@ export function partnerContributionNote(sc, gl, proj) {
 }
 
 // Monthly spending (today's €) of a scenario WITHOUT the partner in the two-person
-// model: your personal spending + housing & shared costs if alone. When none of
-// those three fields was ever entered, the Simple model's spending fields stand in
-// (spendNow / spendRet are your own spending, before any partner multiplier), so a
-// solo scenario is priced exactly as in the Simple model instead of at 0 (v8.0.3).
+// model: your personal spending + housing & shared costs if alone, always. The
+// Simple model's "Monthly spending" never stands in: one fact, one field (v8.0.4,
+// Sam's decision; the v8.0.3 fallback is gone). Empty fields are flagged by
+// js/checks.js and the scenario shows "missing" instead of a €0 target.
 // The single source for every solo path: yearOneBudget, computeFireTarget, project().
 export function soloSpend(gl, retired) {
-  const entered = gl.samPersonalNow > 0 || gl.samPersonalRet > 0 || gl.soloShared > 0;
-  if (!entered) return retired ? gl.spendRet : gl.spendNow;
   return (retired ? gl.samPersonalRet : gl.samPersonalNow) + gl.soloShared;
 }
 
