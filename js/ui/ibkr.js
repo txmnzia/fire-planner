@@ -1,6 +1,6 @@
-import { el, eur } from "../util.js?v=8.7";
-import { state } from "../state.js?v=8.7";
-import { recalc } from "../recalc.js?v=8.7";
+import { el, eur } from "../util.js?v=8.8";
+import { state } from "../state.js?v=8.8";
+import { recalc } from "../recalc.js?v=8.8";
 
 // ── IBKR CSV ────────────────────────────────────────────────────────────────
 function parseLine(line) {

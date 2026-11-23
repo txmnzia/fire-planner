@@ -1,23 +1,23 @@
-import { el } from "./util.js?v=8.7";
-import { initInfoTips } from "./ui/infoTips.js?v=8.7";
-import { state } from "./state.js?v=8.7";
-import { recalc } from "./recalc.js?v=8.7";
+import { el } from "./util.js?v=8.8";
+import { initInfoTips } from "./ui/infoTips.js?v=8.8";
+import { state } from "./state.js?v=8.8";
+import { recalc } from "./recalc.js?v=8.8";
 import { loadState, initSync, scheduleSave, connectSync, disconnectSync,
-         openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js?v=8.7";
+         openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js?v=8.8";
 import { switchTab, toggleFeature, updateToggleUI, scrollToScenario, updateScNav,
-         updateAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js?v=8.7";
-import { handleCSV } from "./ui/ibkr.js?v=8.7";
-import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js?v=8.7";
-import { initSituation, setPartnerModel } from "./ui/situation.js?v=8.7";
-import { initSpendTracking } from "./ui/spending.js?v=8.7";
-import { downloadCSV } from "./ui/table.js?v=8.7";
-import { runMonteCarloUI, selectMcScenario } from "./ui/mcTab.js?v=8.7";
-import { selectExplanationScenario } from "./ui/explanation.js?v=8.7";
+         updateAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js?v=8.8";
+import { handleCSV } from "./ui/ibkr.js?v=8.8";
+import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js?v=8.8";
+import { initSituation } from "./ui/situation.js?v=8.8";
+import { initSpendTracking } from "./ui/spending.js?v=8.8";
+import { downloadCSV } from "./ui/table.js?v=8.8";
+import { runMonteCarloUI, selectMcScenario } from "./ui/mcTab.js?v=8.8";
+import { selectExplanationScenario } from "./ui/explanation.js?v=8.8";
 
 // The HTML uses inline on* attributes (and render functions emit them too), so
 // every function they reference must exist as a global.
 Object.assign(window, {
-  recalc, switchTab, toggleFeature, updateAge, onWdMode, setPartnerModel,
+  recalc, switchTab, toggleFeature, updateAge, onWdMode,
   toggleTable, downloadCSV, setActiveScenario, scrollToScenario,
   handleCSV, addNwRow, updateNwRow, removeNwRow,
   runMonteCarloUI, selectMcScenario, selectExplanationScenario,

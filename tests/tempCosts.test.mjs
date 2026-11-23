@@ -82,7 +82,7 @@ test('two-person: your part of the costs that end is between 0 and all of them; 
   const all = 9000 * Math.pow(1.02, 10) + mortgageAnnual(two());   // child (age 2 in 2036) + mortgage
   const mine = tempCostAt(2036, sc, two());
   assert.ok(mine > 0 && mine < all, `${mine} vs ${all}`);
-  assert.ok(Math.abs(tempCostAt(2036, sc, two({ shareMin: 0, shareMax: 0 })) - all) < 1e-6);
+  assert.ok(Math.abs(tempCostAt(2036, sc, two({ partnerInc: 0, partnerPension: 0 })) - all) < 1e-6);
 });
 
 test('nothing moves without costs that end, and fixed mode never moves', () => {
@@ -98,13 +98,4 @@ test('earliest stop age: with a mortgage it no longer waits for the payoff year'
   const r = earliestStopAge(sc, gl);
   assert.equal(r.found, true);
   assert.ok(r.age < 57, 'was the payoff year 2057 (age 66) under the old rule; got ' + r.age);
-});
-
-test('Household FIRE follows the same rule: lifelong need x 1/SWR + household costs that end at PV', async () => {
-  const { computeHouseholdTarget } = await import('../js/engine.js');
-  // flat economy, two-person: personal 1,000 + her 500 + shared 2,000 = 3,500/mo lifelong; child 12,000/yr x 17 years
-  const gl = flat({ partnerModel: 'two', samPersonalNow: 1000, samPersonalRet: 1000, partnerPersonal: 500,
-    sharedNow: 2000, sharedRet: 2000, soloShared: 1500, partnerPension: 0 });
-  const sc = baseSc({ retAge: 45, hasPartner: true, hasChild: true });
-  assert.equal(computeHouseholdTarget(45, sc, gl, 1), 3500 * 12 / 0.04 + 12000 * 17);   // 1,050,000 + 204,000
 });

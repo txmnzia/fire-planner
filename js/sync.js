@@ -1,23 +1,24 @@
-import { el } from "./util.js?v=8.7";
-import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.7";
-import { state, features } from "./state.js?v=8.7";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.7";
-import { recalc } from "./recalc.js?v=8.7";
-import { renderHoldings } from "./ui/ibkr.js?v=8.7";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.7";
-import { refreshSituationControls } from "./ui/situation.js?v=8.7";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.7";
-import { db } from "./db.js?v=8.7";
+import { el } from "./util.js?v=8.8";
+import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.8";
+import { state, features } from "./state.js?v=8.8";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.8";
+import { recalc } from "./recalc.js?v=8.8";
+import { renderHoldings } from "./ui/ibkr.js?v=8.8";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.8";
+import { refreshSituationControls } from "./ui/situation.js?v=8.8";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.8";
+import { db } from "./db.js?v=8.8";
+import { migrateSpending } from "./spendMigration.js?v=8.8";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
   'cash','cashReturn',
   'dob','lifeExp','baseYear',
-  'baseIncome','spendNow','spendRet','swr',
+  'baseIncome','swr',
   'stockRet','bondRet','inflation','bondAllocNow','bondAllocRet',
   'retCountry',
   'pensionAmt','pensionAge',
-  'partnerInc','partnerRetAge','partnerPension','partnerPensionAge','partnerSpendMult',
+  'partnerInc','partnerRetAge','partnerPension','partnerPensionAge',
   'propBuyYear','propPrice','propDownPct','propTxCostPct','propMortgageRate','propMortgageTerm','propRentSaved',
   'childBirthYear','childCostYearly','childCostUntilAge','childMaternityMonths','childMaternityIncome',
   'sc1name','sc2name','sc3name','sc4name','sc5name',
@@ -27,9 +28,16 @@ const SYNC_FIELDS = [
   's1_chgInc','s2_chgInc','s3_chgInc','s4_chgInc','s5_chgInc',
   'mcSims','mcBlock',
   'gainFrac','partnerBirthYear',
-  'partnerModel','samPersonalNow','samPersonalRet','sharedNow','sharedRet','soloShared','partnerPaysIn','yearlyItems','spendUpdated',
-  'partnerPersonal','partnerPortfolio','partnerGainFrac','shareMin','shareMax',
+  // v8.8 spending: four account numbers + one retirement change (js/spendMigration.js)
+  'samPersonalNow','samPaysIn','partnerPaysIn','yearlyItems','retSpendChange','spendUpdated',
 ];
+
+// Fields retired in v8.8 (one partner model). They are no longer read, but
+// carried through every save unchanged so nothing is lost and an older app
+// version can still read its own fields (payload changes stay additive).
+const RETIRED_FIELDS = ['spendNow','spendRet','partnerSpendMult','partnerModel','sharedNow','sharedRet',
+  'samPersonalRet','soloShared','partnerPersonal','partnerPortfolio','partnerGainFrac','shareMin','shareMax'];
+let retiredFields = {};
 
 // ── Per-account sync (Supabase, shared txmnzia-dbs project) ─────────────────
 // Sign-in is a magic link; the session lives in supabase-js's own storage. No
@@ -48,7 +56,7 @@ let localTs     = 0;
 let pollTimer   = null;
 
 export function collectState() {
-  const fields = {};
+  const fields = { ...retiredFields };
   SYNC_FIELDS.forEach(id => { const e = el(id); if (e) fields[id] = e.value; });
   const wdEl = document.querySelector('input[name="wdMode"]:checked');
   const feat = {};
@@ -74,11 +82,13 @@ export function applyState(data) {
 }
 
 function applyStateInner(data) {
-  // Payloads saved before the two-person model have no partnerModel: they load
-  // as the Simple model, whatever this tab showed before (outputs unchanged).
-  const pm = el('partnerModel');
-  if (pm && !(data.fields && 'partnerModel' in data.fields)) pm.value = 'simple';
-  Object.entries(data.fields || {}).forEach(([id, val]) => {
+  // v8.8: older payloads are mapped onto the four account numbers once.
+  const mig = migrateSpending(data.fields || {});
+  const fields = { ...(data.fields || {}) };
+  retiredFields = {};
+  for (const k of RETIRED_FIELDS) if (k in fields) retiredFields[k] = fields[k];
+  if (mig) for (const [k, v] of Object.entries(mig)) fields[k] = String(v);
+  Object.entries(fields).forEach(([id, val]) => {
     const e = el(id); if (!e) return;
     // migrate legacy numeric country values (rates were ambiguous across countries)
     if (id === 'retCountry' && LEGACY_RATE_TO_CODE[val]) val = LEGACY_RATE_TO_CODE[val];

@@ -2,8 +2,7 @@
 // Hand-computed with made-up numbers in a flat economy (no inflation, no returns).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { project, twoPersonCost, partnerShare, actualShare, investNowMonthly,
-         computeHouseholdTarget } from '../js/engine.js';
+import { project, twoPersonCost, partnerShare, actualShare, investNowMonthly } from '../js/engine.js';
 import { soloSharedFrom } from '../js/inputs.js';
 import { refreshedText } from '../js/ui/spending.js';
 
@@ -38,8 +37,8 @@ test('actualShare: paid in / joint total, capped at 100%; null when empty or no 
   assert.equal(actualShare(gl({ partnerPaysIn: 900, sharedNow: 0 })), null);
 });
 
-test('while you both work, her real share replaces pro rata (ignores floor and cap)', () => {
-  const g = gl({ partnerPaysIn: 900, shareMax: 0.2 });
+test('while you both work, her real share replaces pro rata', () => {
+  const g = gl({ partnerPaysIn: 900 });
   const tp = twoPersonCost(2026, sc(), g, 5000 * 12, 0, false);
   near(tp.share, 0.375); assert.equal(tp.shareReal, true);
   near(tp.contrib, 900 * 12);
@@ -54,7 +53,7 @@ test('once either of you stops, pro rata takes over again', () => {
   // you retired: pro rata on your pension + draw
   const ret = twoPersonCost(2040, sc(), g, 3000 * 12, 0, true);
   assert.equal(ret.shareReal, false);
-  near(ret.share, partnerShare(ret.her.total, 3000 * 12, g));
+  near(ret.share, partnerShare(ret.her.total, 3000 * 12));
   // she stopped first (her retirement age 36: from 2027 on, no salary, no pension yet)
   const g2 = gl({ partnerPaysIn: 900, partnerRetAge: 36 });
   const herOff = twoPersonCost(2027, sc(), g2, 5000 * 12, 0, false);
@@ -88,13 +87,6 @@ test('empty fields change nothing (pre-v8.7 payloads)', () => {
   assert.equal(b.fireTarget, a.fireTarget);
 });
 
-test('household target: yearly items raise the lifelong need by yearly ÷ SWR (tax multiplier 1)', () => {
-  const s = sc({ retAge: 45 });
-  const t0 = computeHouseholdTarget(45, s, gl(), 1);
-  const t1 = computeHouseholdTarget(45, s, gl({ yearlyItems: 1200 }), 1);
-  near(t1 - t0, 1200 / 0.04, 1e-3);                                 // 30,000
-});
-
 test('"if alone" default: 70% of joint account + yearly items / 12', () => {
   assert.equal(soloSharedFrom(null, 2400, 1200), 1750);             // (2,400 + 100) × 0.7
   assert.equal(soloSharedFrom(null, 2400), 1680);
@@ -106,4 +98,17 @@ test('refreshedText: date line, red after six months', () => {
   assert.deepEqual(refreshedText('2026-11-14', today), { text: 'last: 14 Nov 2026', stale: false });
   assert.deepEqual(refreshedText('2026-05-01', today), { text: 'last: 1 May 2026', stale: true });
   assert.deepEqual(refreshedText('', today), { text: '', stale: false });
+});
+
+test('v8.8: her real share holds only while your pay is today\'s (pay change or parental leave → pro rata)', () => {
+  const g = gl({ partnerPaysIn: 900, childBirthYear: 2027, childMaternityMonths: 12, childMaternityIncome: 2000 });
+  // pay change from 2028 to 1,800/mo: pro rata 1,800 / (1,800 + 1,800) = 50%
+  const s = sc({ retAge: 60, payChanges: [{ from: 2028, to: null, amt: 1800 }] });
+  const p = project(s, g);
+  near(p.rows[p.years.indexOf(2027)].partnerShare, 0.375);          // today's pay: real share
+  near(p.rows[p.years.indexOf(2028)].partnerShare, 0.5);            // pay changed: pro rata
+  // parental leave in 2027 (your income 2,000 for 12 months): pro rata 1,800 / 3,800
+  const k = project(sc({ retAge: 60, hasChild: true }), g);
+  near(k.rows[k.years.indexOf(2027)].partnerShare, 1800 / 3800);
+  near(k.rows[k.years.indexOf(2028)].partnerShare, 0.375);          // back to work: real share
 });

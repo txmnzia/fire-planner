@@ -29,6 +29,8 @@ js/
   recalc.js             Orchestrator: inputs → engine → all renderers, then persistence.
   sync.js               localStorage persistence + Supabase cross-device sync
                         (collectState/applyState, magic-link sign-in, polling).
+  spendMigration.js     Pure (v8.8): maps payloads saved before the one-model spending
+                        onto the four account numbers (migrateSpending).
   payChanges.js         Pure: pay-change plans (normalise, completeness, per-scenario
                         list, migration from the old per-scenario pay fields).
   checks.js             Pure missing-input checks (spending never entered) and the
@@ -69,7 +71,7 @@ js/
                         inputs, and the dynamic windfall datapoint list. Progressive
                         enhancement — the id-bearing inputs stay the source of truth.
                         Also paints the Pay changes card (renderPayList).
-    spending.js         Spending refresh read-outs (v8.7): rent in the joint account,
+    spending.js         Spending read-outs (v8.7, v8.8): rent in the joint account,
                         her share today, "You really invest" (engine
                         investNowMonthly), and the last-refresh date stamp.
 tests/                  node:test suites: the two pure engines, the v8 golden master

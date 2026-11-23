@@ -38,7 +38,7 @@ test('placeTip: never wider than the viewport minus margins', () => {
 test('every (i) button has text to show', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const btns = html.match(/<button[^>]*class="info-btn"[^>]*>/g) || [];
-  assert.ok(btns.length > 20, 'found ' + btns.length);
+  assert.ok(btns.length > 12, 'found ' + btns.length);
   const empty = btns.filter(b => !/\stitle="[^"]{8,}"/.test(b));
   assert.deepEqual(empty, []);
 });

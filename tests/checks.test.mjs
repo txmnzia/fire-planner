@@ -41,10 +41,9 @@ test('two-person, partner off: personal spending and housing if alone are both r
   assert.equal(scenarioIssues(baseSc(), emptyTwo()).length, 2);
 });
 
-test('simple model needs spending now or retired', () => {
-  assert.deepEqual(scenarioIssues(baseSc(), baseGl({ spendNow: 0, spendRet: 0 })).map(x => x.key), ['spend']);
-  assert.deepEqual(scenarioIssues(baseSc(), baseGl({ spendNow: 0, spendRet: 2400 })), []);
-  assert.deepEqual(scenarioIssues(baseSc({ hasPartner: true }), baseGl()), []);
+test('v8.8: one model, no Simple-model spending check is left', () => {
+  const src = readFileSync(new URL('../js/checks.js', import.meta.url), 'utf8');
+  assert.ok(!/spendNow|spendRet|partnerModel/.test(src));
 });
 
 test('allIssues: each issue once, across scenarios', () => {
@@ -88,9 +87,8 @@ test('markup: the banner exists, recalc renders it, and every field a check poin
   assert.match(html, /id="inputIssues"[^>]*role="alert"/);
   assert.match(recalc, /renderIssues\(scenarios,gl\)/);
   const fields = new Set([...allIssues([baseSc({ hasPartner: true })], emptyTwo()),
-    ...scenarioIssues(baseSc(), baseGl({ spendNow: 0, spendRet: 0 })),
     ...scenarioIssues(baseSc(), emptyTwo())].map(i => i.field));
-  assert.equal(fields.size, 3);
+  assert.deepEqual([...fields].sort(), ['samPaysIn_disp', 'samPersonalNow_disp']);
   for (const f of fields) assert.match(html, new RegExp('id="' + f + '"'), f);
 });
 
@@ -111,8 +109,9 @@ test('if-alone costs: derived from shared costs, a solo scenario is complete and
   assert.ok(Math.abs(yearOneBudget(45, baseSc(), gl) - (1200 + 1680) * 12 * Math.pow(1.02, 10)) < 1e-6);
 });
 
-test('markup: the if-alone field explains the 70% default in its bubble', () => {
+test('v8.8: costs if alone are always derived (no field); the banner names the 70% rule', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-  assert.match(html, /Your housing &amp; living costs if alone <button[^>]*title="[^"]*70% of the joint account plus yearly items/);
-  assert.ok(!/Housing & shared costs if alone/.test(html));
+  assert.ok(!/id="soloShared/.test(html));
+  const solo = scenarioIssues(baseSc(), emptyTwo()).find(i => i.key === 'soloHousing');
+  assert.match(solo.text, /70% of the joint account plus yearly items/);
 });

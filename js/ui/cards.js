@@ -1,8 +1,8 @@
-import { el, eur, fmtK } from "../util.js?v=8.7";
-import { scenarioIssues } from "../checks.js?v=8.7";
-import { state } from "../state.js?v=8.7";
-import { getScenarioName } from "../inputs.js?v=8.7";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project } from "../engine.js?v=8.7";
+import { el, eur, fmtK } from "../util.js?v=8.8";
+import { scenarioIssues } from "../checks.js?v=8.8";
+import { state } from "../state.js?v=8.8";
+import { getScenarioName } from "../inputs.js?v=8.8";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project } from "../engine.js?v=8.8";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -34,18 +34,14 @@ export function computeCardMetrics(sc, gl, proj) {
               vsPlan, vsPlanOpen: pos ? pos.open : false,
               fireTarget: proj.fireTarget, fireTargetAdj: proj.fireTargetAdj,
               infeasibleYear: proj.infeasibleYear };
-  // Two-person model, partner scenario: the headline target is Partial FIRE
-  // (your portfolio covers your net cost); Household FIRE compares the combined
-  // net worth with the whole household's target. Both come from project().
-  const twoP = isTwoPerson(gl) && sc.hasPartner && proj.household;
-  const herDrawRet = twoP ? (proj.partner.drawByT[proj.retYear - gl.baseYear] || 0) : 0;
+  // With the partner: the target is YOUR FIRE (your portfolio covers your cost:
+  // own spending + your part of shared costs). Household FIRE was removed in v8.8.
+  const twoP = isTwoPerson(gl) && sc.hasPartner;
+  const herDrawRet = 0;
   if (twoP) {
     m.two = {
       partialTarget: proj.fireTarget, partialNW: portRet, partialOk: portRet >= proj.fireTarget,
-      householdTarget: proj.household.target, householdNW: proj.household.nwAtRet,
-      householdOk: proj.household.funded,
       note: partnerContributionNote(sc, gl, proj),
-      partnerInfeasibleYear: proj.partnerInfeasibleYear,
     };
   }
   if (gl.wdMode === 'swr') {
@@ -84,9 +80,8 @@ export function computeCardMetrics(sc, gl, proj) {
 // A scenario's stop age is no longer typed: it is the earliest age at which the
 // scenario is funded (isFunded: the computeCardMetrics verdict, % mode → income
 // covers the year-one budget, fixed mode → net worth at stop ≥ FIRE number, AND
-// the money lasts to life expectancy). In the two-person model with the partner on
-// this is YOUR funding (she keeps working to her own retirement age); Household
-// FIRE stays a separate row. Every age from max(30, current age) to
+// the money lasts to life expectancy). With the partner on this is YOUR funding
+// (she keeps working to her own stop age). Every age from max(30, current age) to
 // min(75, life expectancy − 1) is projected in turn; the first funded one wins.
 // No funded age → found:false and the scenario is shown at the last age tried.
 export const STOP_AGE_MIN = 30, STOP_AGE_MAX = 75;
@@ -134,10 +129,6 @@ export function scenarioGridResults(sc, gl, proj, stop) {
     ? (swr ? '\u2713 Funded' : '\u2713 +' + fmtK(m.surplus))
     : (swr ? '\u00d7 Short ' + fmtK(gap) + '/mo' : '\u00d7 Gap ' + fmtK(gap));
   const depletionAge = m.depletionYear != null ? gl.currentAge + m.depletionYear - gl.baseYear : null;
-  const household = m.two ? {
-    ok: !!m.two.householdOk,
-    text: m.two.householdOk ? '\u2713 Funded' : '\u00d7 Short ' + fmtK(Math.max(0, m.two.householdTarget - m.two.householdNW)),
-  } : null;
   const stopFound = stop ? !!stop.found : true;
   const stopAgeText = sc.retAge + ' \u00b7 ' + m.retYear;
   const margin = m.portRet - m.fireTarget;
@@ -150,7 +141,6 @@ export function scenarioGridResults(sc, gl, proj, stop) {
       nwAtStop: m.portRet, nwAtStopText: fmtK(m.portRet),
       depletionYear: m.depletionYear, depletionAge,
       lastsOk: false, lasts: '\u2014',
-      household: household ? { ok: false, text: '\u2014' } : null,
     };
   }
   return {
@@ -161,14 +151,12 @@ export function scenarioGridResults(sc, gl, proj, stop) {
     depletionYear: m.depletionYear, depletionAge,
     lastsOk: depletionAge == null,
     lasts: depletionAge == null ? 'to ' + gl.lifeExp + '+' : 'runs out at ' + depletionAge,
-    household,
   };
 }
 
 // Writes the result rows of the scenario grid. Cells are plain text; colour comes
 // from the ok/err classes, so no value is ever interpolated into HTML.
 export function renderScenarioGrid(projs, gl, scenarios, stops) {
-  let anyHousehold = false;
   scenarios.forEach((sc, i) => {
     const n = i + 1, r = scenarioGridResults(sc, gl, projs[i], stops ? stops[i] : null);
     const set = (key, text, cls) => {
@@ -178,12 +166,7 @@ export function renderScenarioGrid(projs, gl, scenarios, stops) {
     set('age', r.stopAgeText, r.missing.length ? 'muted' : (r.stopFound ? 'age' : 'err'));
     set('margin', r.marginText, r.missing.length ? 'muted' : (r.margin >= 0 ? 'ok' : 'err'));
     set('lasts', r.lasts, r.missing.length ? 'muted' : (r.lastsOk ? 'ok' : 'err'));
-    if (r.household) anyHousehold = true;
-    // two-person model, partner off: there is no household to fund, say so instead of a bare dash
-    set('household', r.household ? r.household.text : 'no partner',
-        r.missing.length || !r.household ? 'muted' : (r.household.ok ? 'ok' : 'err'));
   });
-  const hh = el('scgHouseholdRow'); if (hh) hh.hidden = !anyHousehold;
 }
 
 export function vsPlanRowHTML(m) {
@@ -193,23 +176,20 @@ export function vsPlanRowHTML(m) {
   return '<div class="sc-result-row"><span class="k">vs Plan</span><span class="v '+(onPlan?'':(ahead?'ok':'err'))+'">'+(onPlan?'':(ahead?'▲ ':'▼ '))+txt+'</span></div>';
 }
 
-// Two-person rows: Partial FIRE (you) and Household FIRE, each target · net
-// worth at retirement · chip, plus the contribution note and her shortfall flag.
+// Partner scenario: your FIRE (target · net worth at retirement · chip) plus the
+// note on what she contributes and how your cost changes when her income does.
 export function twoRowsHTML(m, compact) {
   const t = m.two; if (!t) return '';
   const chip = (ok, yes, no) => '<span class="ms-chip sm '+(ok?'ok':'err')+'">'+(ok?'\u2713 '+yes:'\u00d7 '+no)+'</span>';
   const line = (k, tgt, nw, ok, yes, no) =>
     '<div class="sc-result-row two-row"><span class="k">'+k+' '+chip(ok, yes, no)+'</span><span class="v">'+eur(tgt)+' <span class="tgt">/ NW '+eur(nw)+'</span></span></div>';
-  let html = line('Partial FIRE (you)', t.partialTarget, t.partialNW, t.partialOk, 'Funded', 'Short')
-           + line('Household FIRE', t.householdTarget, t.householdNW, t.householdOk, 'Household funded', 'Household short');
+  let html = line('Your FIRE', t.partialTarget, t.partialNW, t.partialOk, 'Funded', 'Short');
   if (!compact && t.note) {
     const n = t.note;
     html += '<div class="sc-result-note">Assumes partner contributes '+eur(n.contribMonthly)+'/mo'
       + (n.untilHerAge != null ? ' until her age '+n.untilHerAge+(n.costAfterMonthly != null ? '; after that your cost becomes '+eur(n.costAfterMonthly)+'/mo' : '') : '')
       + ' (today\u2019s \u20ac).</div>';
   }
-  if (t.partnerInfeasibleYear != null)
-    html += '<div class="sc-result-row"><span class="k">\u26a0 Partner short</span><span class="v err">'+t.partnerInfeasibleYear+' (her savings exhausted)</span></div>';
   return html;
 }
 

@@ -16,7 +16,7 @@ A browser-based, zero-build **Financial Independence / Retire Early** calculator
 8. [Portfolio Return & Glide Path](#portfolio-return--glide-path)
 9. [Coast Number](#coast-number)
 10. [Scenarios Tab and Result Tiles](#scenarios-tab-and-result-tiles)
-11. [Partner Model](#partner-model) (incl. [Two-person model](#two-person-model))
+11. [Partner Model](#partner-model)
 12. [Child Cost Model](#child-cost-model)
 13. [Property Model](#property-model)
 14. [Pension / State Pension](#pension--state-pension)
@@ -73,8 +73,13 @@ Your real values come from localStorage, or from Supabase once you sign in.
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
 | Monthly Income (net) | `baseIncome` | — (0) | EUR/month | Your take-home income today |
-| Monthly Spending (now) | `spendNow` | — (0) | EUR/month | Pre-retirement lifestyle spending |
-| Monthly Spending (retirement) | `spendRet` | — (0) | EUR/month | Fixed-mode only; base for SWR target |
+| Rent today / month | `propRentSaved` | — (0) | EUR/month | Part of the joint account; a scenario that buys stops paying it from the purchase year |
+| Your own spending / month | `samPersonalNow` | — (0) | EUR/month | Spending (v8.8). Personal spending only, without your transfer to the joint account |
+| You pay into joint / month | `samPaysIn` | — (0) | EUR/month | Spending (v8.8). Your monthly transfer to the joint account |
+| She pays in / month | `partnerPaysIn` | — (0) | EUR/month | Spending. Her monthly transfer. Joint total = `samPaysIn + partnerPaysIn` |
+| Yearly items / year | `yearlyItems` | — (0) | EUR/year | Spending. Trips, courses, gifts: **shared**, split by her share, now and in retirement |
+| Spending in retirement | `retSpendChange` | 0% | % | One change on all spending once you stop (own, joint, yearly items, costs if alone); −50 to +50 |
+| (last refresh) | `spendUpdated` | — | date | Stamped when one of the four numbers is edited; red after 6 months |
 | Withdrawal Rate | `swr` | 4% | % | %-of-portfolio mode only; % of the current portfolio available annually |
 
 ### Market Assumptions
@@ -106,31 +111,17 @@ Your real values come from localStorage, or from Supabase once you sign in.
 
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
-| Partner Monthly Income (net) | `partnerInc` | — (0) | EUR/month | Added to income until partner retires |
-| Partner Retirement Age | `partnerRetAge` | 45 | years | Partner income stops at this age |
-| Partner Pension Amount (gross) | `partnerPension` | — (0) | EUR/month | Partner's monthly pension |
-| Partner Pension Age | `partnerPensionAge` | 67 | years | Age when partner's pension starts |
-| Spending Multiplier | `partnerSpendMult` | 1.5× | — | Simple model only (hidden in two-person mode): household spending = solo spending × this |
-| Partner Year of Birth | `partnerBirthYear` | — (same as you) | year | Optional; shifts when partner ret./pension ages are reached |
-| Partner Model | `partnerModel` | `simple` | `simple` / `two` | Global switch (segmented control). Saved states without it load as `simple`, outputs unchanged |
+| Her take-home / month | `partnerInc` | — (0) | EUR/month | Sets her share of shared costs once one of you stops working (or your pay changes). Never added to your income |
+| Age she stops working | `partnerRetAge` | 45 | years | Her age; her salary stops then |
+| Her year of birth | `partnerBirthYear` | — (same as you) | year | Optional; shifts when her stop and pension ages are reached |
+| Her pension / month | `partnerPension` | — (0) | EUR/month | From her pension age |
+| Her pension age | `partnerPensionAge` | 67 | years | |
 
-Two-person model inputs (used only when `partnerModel = two`; see [Two-person model](#two-person-model)):
-
-| Parameter | Input ID | Default | Unit | Notes |
-|-----------|----------|---------|------|-------|
-| Joint account / month | `sharedNow` | — (0) | EUR/month | Spending refresh. Everything paid jointly, full amount (rent, bills, groceries, joint leisure) |
-| She pays in / month | `partnerPaysIn` | empty = pro rata | EUR/month | Spending refresh (v8.7). What she really puts into the joint account. Her share = `partnerPaysIn / sharedNow` (capped at 100%, floor/cap not applied) while you both work |
-| Your own spending / month | `samPersonalNow` | — (0) | EUR/month | Spending refresh. Your own spending, not shared |
-| Yearly items / year | `yearlyItems` | — (0) | EUR/year | Spending refresh (v8.7). Trips, courses, gifts: **shared** costs, added to the joint costs now and in retirement and split by her share |
-| (last refresh) | `spendUpdated` | — | date | Stamped when one of the four numbers above is edited; shown red after 6 months |
-| Your own spending in retirement | `samPersonalRet` | same as now | EUR/month | From your retirement year; empty = the "now" value |
-| Joint costs in retirement | `sharedRet` | same as now | EUR/month | From your retirement year; empty = the "now" value. Yearly items are added on top |
-| Your housing & living costs if alone | `soloShared` | empty = 70% of (`sharedNow` + `yearlyItems`/12) | EUR/month | Replaces shared costs in scenarios **without** the partner; also her solo cost in the separation check. 0.7 = one person spends about 70% of a couple (OECD-modified scale 1/1.5 = 0.67, square-root scale 1/√2 = 0.71) |
-| Partner personal spending | `partnerPersonal` | — (0) | EUR/month | Her own spending |
-| Partner invested assets | `partnerPortfolio` | — (0) | EUR | Her portfolio today |
-| Partner unrealized gain | `partnerGainFrac` | 0% | % | Seeds her cost basis |
-| Partner share floor | `shareMin` | 0% | % | Lower clamp on her pro-rata share |
-| Partner share cap | `shareMax` | 50% | % | Upper clamp on her pro-rata share |
+Removed in v8.8 (still carried in saved payloads, never read): `spendNow`, `spendRet`,
+`partnerModel`, `partnerSpendMult`, `sharedNow` (now the sum of the two transfers),
+`sharedRet`, `samPersonalRet`, `soloShared` (always derived), `partnerPersonal`,
+`partnerPortfolio`, `partnerGainFrac`, `shareMin`, `shareMax`. Older payloads are mapped
+once by `js/spendMigration.js` (see [Partner Model](#partner-model)).
 
 ### Property (global, toggled per scenario)
 
@@ -229,11 +220,10 @@ number fell off a cliff the year it ended (a scenario could not be funded until
 the payoff year, then showed a margin of several hundred thousand). Now only the
 lifelong part gets the SWR multiple and the costs that end are **set aside at
 their present value over their remaining years** (`tempCostPV()` in
-`js/engine.js`; your share of them in the two-person model). The projection pays
+`js/engine.js`; your share of them with a partner). The projection pays
 them **in full** on top of the capped SWR draw (`rows[].tempCost`), so in % mode
 the portfolio *can* now run short during those years if it was too small; that
-flows through the usual deficit chain (`infeasibleYear`). Household FIRE uses the
-same rule. Fixed mode is unchanged (its DCF already prices every year).
+flows through the usual deficit chain (`infeasibleYear`). Fixed mode is unchanged (its DCF already prices every year).
 
 `TaxMult = 1 / (1 − gainFrac_at_retirement × taxRate)` grosses the target up so
 that the **after-tax** proceeds of the SWR draw cover the budget — a portfolio
@@ -280,8 +270,7 @@ The old constant `TaxMult(g_ret)` understated the target: in the 192-household t
 set, 96 stop ages looked funded (net worth up to 14.7% above the target) and still
 ran out of money; with the rising gain fraction none does beyond a 2% margin. With
 the tax held flat the year-by-year sum equals the closed form below to the euro
-(tested). The two-person Partial and Household fixed-mode targets use the same
-rising gross-up.
+(tested). The fixed-mode target with a partner uses the same rising gross-up.
 
 The **annuity PV formula** (the pre-v8.5 closed form, kept for that equivalence test) is:
 
@@ -514,10 +503,9 @@ at its **earliest funded age**. `earliestStopAge()` in `js/ui/cards.js` projects
 every age from max(30, current age) to min(75, life expectancy − 1) and keeps the
 first where `isFunded()` holds: the card verdict (% mode: income covers the
 year-one budget; fixed mode: net worth at stop ≥ FIRE number) **and** the money
-lasts (no infeasible year, no depletion before life expectancy). In the
-two-person model with the partner on, "funded" means **your** costs are covered
-while she keeps working to her own retirement age; Household FIRE stays a separate
-row. A scenario with a missing input is not searched. No funded age → "not by 75",
+lasts (no infeasible year, no depletion before life expectancy). With the
+partner on, "funded" means **your** costs are covered while she keeps working to
+her own stop age. A scenario with a missing input is not searched. No funded age → "not by 75",
 shown at 75. `withStopAges()` is what `recalc()` and the Monte Carlo tab both use,
 so every tab shows the same age. The old `s{n}_ret` values stay saved (hidden) for
 older builds.
@@ -532,18 +520,16 @@ A large margin usually means a cost that ends soon after an earlier age (a
 mortgage's last year, a child's last dependent year) kept that earlier age from
 being funded: in % mode the FIRE number prices the year-one budget as permanent.
 
-A fifth row, **Household FIRE**, appears only in the two-person model; scenarios with
-the partner off read "no partner" there. Every cell comes from `scenarioGridResults()` in
+(The Household FIRE row was removed in v8.8.) Every cell comes from `scenarioGridResults()` in
 `js/ui/cards.js`, which only formats `computeCardMetrics()`: the grid and the
 Results tiles can never disagree. Rows have fixed heights, so switching anything
 never shifts the layout; on a phone the label column stays pinned and the scenario
 columns scroll sideways.
 
 **Missing inputs never show as a number.** `js/checks.js` flags spending that was
-never entered: the Simple model with no spending; in the two-person model, a
-partner scenario while both your personal and shared spending are empty, or a
-scenario without the partner while your personal spending or "housing & shared
-costs if alone" is empty. Those inputs would otherwise
+never entered: a partner scenario while both your own spending and the joint
+transfers are empty, or a scenario without the partner while your own spending or
+the joint total (for the 70% "if alone" rule) is empty. Those inputs would otherwise
 count as €0, which prices a FIRE number of €0 and a false "Funded". Affected grid
 columns show "⚠ Missing input" and "—", and a red banner under the tabs names the
 field with a Fix button that jumps to it. Every (i) button opens its explanation in a bubble on tap
@@ -612,135 +598,77 @@ against a horizontal line made that gap explode into implausible values like
 
 ## Partner Model
 
-When you toggle **"With Partner"** for a scenario, the following changes apply:
+One model since v8.8 (the Simple model with its spending multiplier, Household FIRE
+and her savings ledger were removed: DECISIONS.md, 2026-11-23). Each person keeps their
+own money. Your FIRE number covers **your** cost: your own spending plus your part of
+the shared costs. Her salary and pension are never your income; they only set her share.
+All formulas live in `js/engine.js` (`actualShare`, `partnerShare`, `partnerIncomeAt`,
+`householdCosts`, `twoPersonCost`, `selfFundedCost`, `investNowMonthly`,
+`partnerContributionNote`, `soloSpend`); cards, tiles, charts, table, Explanation and
+Monte Carlo only consume them.
 
-### Income (Both Phases)
-
-- Partner's income (`partnerInc`) added to household income each year, inflation-adjusted.
-- Partner income stops when the **partner** reaches `partnerRetAge` — including
-  after *your* retirement. If you retire at 45 and your partner works to 67,
-  their salary offsets household withdrawals for those 22 years.
-- Partner pension (`partnerPension`) starts once the partner reaches `partnerPensionAge`.
-- The partner's age is assumed equal to yours unless you set
-  `partnerBirthYear` (Partner section), which shifts when their retirement and
-  pension ages are reached.
-
-### Spending
-
-- Household spending multiplied by `partnerSpendMult` in **all phases** (accumulation and retirement).
-- This applies to both `spendNow` (during accumulation) and `spendRet` (in retirement).
-- Default multiplier of 1.5× reflects that two people sharing a home cost ~50% more than one.
-
-**Example:** Solo spending €2,000/month → with partner: €2,000 × 1.5 = €3,000/month.
-
-### FIRE Number Impact
-
-- **% of Portfolio mode:** pensions already flowing at retirement reduce the
-  headline target; future pensions and the partner's remaining salary years are
-  credited only in the **adjusted** (secondary) number.
-- **Fixed mode:** the PV of the partner's pension *and* of their salary until
-  `partnerRetAge` are subtracted from the FIRE target as credits.
-- Spending increase raises the FIRE target; partner income lowers it.
-
-Everything above describes the **Simple** model (`partnerModel = simple`, the default).
-
-### Two-person model
-
-Switch **Partner → Partner model → Two-person** (`partnerModel = two`, global: it
-applies to every scenario with the partner on). Each person keeps their own money:
-shared costs are split pro rata to the two net incomes, and her surplus is her savings,
-not your income. All formulas live in `js/engine.js` (`partnerShare`,
-`partnerIncomeAt`, `householdCosts`, `twoPersonCost`, `selfFundedCost`,
-`computeHouseholdTarget`, `partnerSeparation`, `partnerContributionNote`); cards, tiles,
-charts, table, Explanation and Monte Carlo only consume them.
-
-Per projection year `y` (nominal, `infl = (1+inflation)^t`):
+Per projection year `y` (nominal, `infl = (1+inflation)^t`; `m = 1 + retSpendChange`
+once you have stopped, else 1):
 
 ```
-samInc(y)  = before your retirement: your salary (income change, parental leave as today)
+joint      = samPaysIn + partnerPaysIn                       (today's €/mo)
+samInc(y)  = before your retirement: your pay (pay changes, parental leave)
              after:  your pension (if started) + start-of-year portfolio × SWR × netFrac
              (netFrac = 1 − gainFrac × taxRate; SWR is used even in Fixed mode, for the share only)
 herInc(y)  = partnerInc until HER partnerRetAge (her age via partnerBirthYear)
-           + partnerPension from HER partnerPensionAge
-           + once she stopped work: her start-of-year portfolio × SWR × her netFrac
-share(y)   = while you BOTH work and partnerPaysIn is filled (v8.7):
-               min(1, partnerPaysIn / sharedNow)            (actualShare; her real share)
+           + partnerPension from HER partnerPensionAge        (no draw: her savings are not modelled)
+share(y)   = while you both work AND your pay is today's (no pay change, no leave):
+               min(1, partnerPaysIn / joint)                  (actualShare: what she really pays)
              otherwise:
-               clamp(herInc / (herInc + samInc), shareMin, shareMax);  0 if both are 0
-shared(y)  = max(0, (sharedNow|sharedRet × 12 + yearlyItems) × infl
-                    + child cost + mortgage − rent saved)
-herContribution(y) = share(y) × shared(y)
-yourCost(y)        = samPersonalNow|Ret × 12 × infl + shared(y) − herContribution(y)
+               herInc / (herInc + samInc);  0 if both are 0   (partnerShare, no floor or cap)
+shared(y)  = max(0, (joint × 12 + yearlyItems) × m × infl + child cost + mortgage − rent saved)
+yourCost(y)= samPersonalNow × 12 × m × infl + shared(y) × (1 − share(y))
 ```
 
-- **Her real share (v8.7, decided with Sam).** The amount she actually pays in is a
-  fact, so it beats the pro-rata model while it is observable: while you both work.
-  Applied as a *fraction* of the joint total, it also covers her part of yearly items,
-  child costs and the mortgage. As soon as either of you stops working the pro-rata
-  rule above takes over (your pension + draw vs hers), so the FIRE targets
-  (`selfFundedCost`, household target) are priced exactly as before. Rejected: freezing
-  her share at your last working year's income ratio (bigger change to every partner
-  target), and keeping her real share for good (she would keep paying the same % after
-  your income stops).
-- **Yearly items are shared (decided with Sam):** split with her like the joint account,
-  and they continue in retirement (they raise the lifelong need, so the FIRE number).
-- **Read-outs** under the four numbers (`js/ui/spending.js`, one engine source
-  `investNowMonthly`): rent included in the joint account (from Rent today), her share
-  today (real or pro rata), and *You really invest* = take-home − your year-one cost.
-- `yourCost` replaces the simple model's `spendNow × partnerSpendMult` (accumulation)
-  and `budget` (retirement) in your projection. Her salary and pension are **not**
-  added to your income. A property purchase cost stays on your side (not shared).
-- The share uses **start-of-year** values for both portfolios (no iteration), like the
-  rest of the loop.
-- **Her portfolio** runs its own loop on the same return path (deterministic or the
-  Monte Carlo sequence) with its own cost basis: inflow `salary + pension −
-  partnerPersonal − herContribution`; a surplus is invested (adds to her basis), a
-  deficit is sold with the CGT gross-up at her tracked gain fraction. If her portfolio
-  is empty the year is flagged (`partnerInfeasibleYear`, "⚠ Partner short") and the
-  shortfall is **not** moved onto your portfolio.
-- **Scenarios without the partner** use `samPersonal + soloShared` as your base
-  spending (child and property costs as usual, all yours), always: the Simple
-  model's "Monthly spending" never stands in, so the same fact is never entered
-  twice. `soloShared` left empty is `round(0.7 × (sharedNow + yearlyItems / 12))` (`soloSharedFrom` in
-  `js/inputs.js`), shown as the field's placeholder. If either field is empty the scenario shows "missing" (see
-  `js/checks.js`). One source: `soloSpend(gl, retired)` in `js/engine.js`.
+- **Why her real share only while nothing changes:** what she pays in is today's
+  arrangement between today's two incomes. When your pay changes (a pay-change plan,
+  parental leave) or either of you stops, the arrangement would be renegotiated, so the
+  share follows the two incomes. On the owner's saved values this keeps every stop age
+  identical to v8.7.
+- A property purchase cost stays on your side (not shared). Child costs and the
+  mortgage minus rent saved are shared, split by the same share.
+- The share uses **start-of-year** values (no iteration), like the rest of the loop.
+- **Scenarios without the partner** use `samPersonalNow + soloShared` (× m once you
+  stop), where `soloShared = round(0.7 × (joint + yearlyItems / 12))` always (one person
+  spends about 70% of a couple: OECD-modified scale 0.67, square-root scale 0.71).
+  Child and property costs are all yours. One source: `soloSpend(gl, retired)`.
+- **Read-outs** under the four numbers (`js/ui/spending.js`, engine `investNowMonthly`):
+  the joint total and the rent in it, her share today, and *You really invest* =
+  take-home − your year-one cost.
+- **Missing inputs** (`js/checks.js`): a partner scenario needs your own spending or a
+  joint total; a scenario without her needs your own spending and a joint total (for
+  the 70% rule). Otherwise the grid shows "missing", never a confident €0 target.
 
-**Partial FIRE (you)** — the headline `fireTarget` of a partner scenario in two-person
-mode (chart line, Coast number, Monte Carlo reference). Your own portfolio covers your
-net cost while she keeps contributing. Your cost is priced at the share that holds when
-your portfolio *equals* the target: then your sustainable draw plus pension equals your
-cost, so the share solves `c = P + S × (1 − share(herInc, c))` (closed form, `selfFundedCost`).
+**Your FIRE number with a partner** — the headline `fireTarget` (chart line, Coast
+number, Monte Carlo reference). Your cost is priced at the share that holds when your
+portfolio *equals* the target: then your sustainable draw plus pension equals your cost,
+so the share solves `c = P + S × (1 − share(herInc, c))` (closed form, `selfFundedCost`).
 
 - % of Portfolio: `max(0, yourCost(retYear) − your pension if flowing) × taxMult / SWR`
-  (year-one, like today). The **adjusted** number credits your later pension and prices
-  later changes in her share against the year-one share
-  (`Σ shared(y) × (share₀ − share(y)) × taxMult / (1+r)^(k+1)`). Because her share can
-  *fall* later (she retires before her pension), the adjusted number can sit **above**
-  the headline; the card then shows it as "w/ later changes".
-- Fixed: `Σₖ max(0, yourCost(y) − your pension(y)) × taxMult / (1+r)^(k+1)` year by year
-  to `lifeExp`, plus a retirement-era purchase cost.
-- `taxMult` uses your tracked gain fraction at retirement, as everywhere.
+  for the lifelong part, plus costs that end at present value (v8.2). The **adjusted**
+  number credits your later pension and later changes in her share
+  (`Σ shared(y) × (share₀ − share(y)) × taxMult / (1+r)^(k+1)`); because her share can
+  *fall* later (she stops before her pension), it can sit **above** the headline and the
+  card then shows it as "w/ later changes".
+- Fixed: `Σₖ max(0, yourCost(y) − your pension(y)) × taxMult_k / (1+r)^(k+1)` year by
+  year to `lifeExp`, plus a retirement-era purchase cost.
 - Card note: "Assumes partner contributes X €/mo (today's €) until her age N; after
-  that your cost becomes Y €/mo". The card's monthly target in % mode is this same
-  year-one cost (`yearOneBudget`), while Monte Carlo's per-year `swrTarget` uses the
-  share from your *actual* portfolio that year — equal when you are exactly on target,
-  intentionally different otherwise.
+  that your cost becomes Y €/mo".
 
-**Household FIRE** — both of you stop working in your retirement year. The combined
-portfolios must carry `samPersonalRet + partnerPersonal + shared(y)`, net of both
-pensions once they start, priced with the combined (you + partner) gain fraction at
-retirement: year-one × taxMult / SWR in % mode, year-by-year PV in Fixed mode. Compared
-with your net worth (portfolio + cash) plus her portfolio at the start of your
-retirement year: "✓ Household funded / × Household short".
+### Migration of saved payloads (v8.8)
 
-**Partner autonomy** (Explanation tab, partner scenarios): her portfolio today, at your
-retirement and at hers, her pension, any shortfall year, and a **separation check** —
-could she cover `partnerPersonal + soloShared` alone? Income = her salary while she
-works, otherwise her pension + her portfolio at a fixed **4%** draw net of CGT. Shown
-as a today's-€/mo gap at her age 50, at your retirement year and at her age 67.
-
-Monte Carlo in two-person mode simulates **your** projection (Partial FIRE); her
-portfolio rides the same paths. There is no household-level Monte Carlo yet.
+A payload without `samPaysIn` is mapped once (`migrateSpending`, pure, tested):
+joint = old `sharedNow`; she pays in = the old `partnerPaysIn`, else `joint × ` today's
+pro-rata share with the old floor/cap; you pay in = joint − she pays in (≥ 0); separate
+retirement amounts become one `retSpendChange` = total retired ÷ total now − 1 (rounded
+%). A Simple-model payload keeps its monthly spending as your own spending and leaves
+the joint transfers empty (the missing-input banner asks for them). The old fields are
+carried through every later save unchanged (`RETIRED_FIELDS` in `js/sync.js`).
 
 ---
 
@@ -1061,7 +989,7 @@ The Monte Carlo tab reuses the exact same `project()` cash-flow engine as the ot
 | Coast Number | `FIRE Number / ∏(1 + r_age)` |
 | Tax multiplier | `1 / (1 − gainFrac_at_retirement × taxRate)` |
 | Mortgage payment | `P × mr × (1+mr)^n / ((1+mr)^n − 1)` (or `P/n` at 0% rate) |
-| Partner spending | `spendRet × partnerSpendMult` |
+| Your cost with a partner | `own + shared × (1 − her share)` (see Partner Model) |
 | SWR monthly income | `portfolio × SWR × (1 − gainFrac_at_ret × taxRate) / 12` |
 | Total monthly income (card) | SWR income + pension + partner pension + partner salary (all inflation-adjusted) |
 | Monthly target (card) | `yearOneBudget(retAge) / 12` |

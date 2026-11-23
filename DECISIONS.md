@@ -5,6 +5,34 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-23 · v8.8 One partner model, fewer fields
+
+- **One model.** The Simple model (household spending × multiplier, her salary added
+  to your income) is gone; it was the wrong shape and doubled every spending field.
+  *Rejected:* "our total spending split pro rata" (her personal spending would count
+  as yours) and "my spending × a coefficient" (a guess where a measured number exists).
+- **Four numbers straight off the accounts:** your own spending, you pay into joint,
+  she pays in, yearly items. The joint total is the sum of the two transfers, so it
+  can never disagree with them.
+- **One rule for the split, no floor or cap.** Her real share (she pays in ÷ joint)
+  while you both work **and your pay is today's**; otherwise her income ÷ both incomes.
+  *Why the pay condition:* what she pays in is today's arrangement between today's
+  incomes. Without it, a scenario where your pay drops (or parental leave) kept her at
+  today's low share and pushed one stop age from 57 to 70 on the owner's values. With
+  it, every stop age is unchanged.
+- **Household FIRE removed**, with her savings, her own spending, her unrealized gain
+  and the "could she manage alone" check. *Why:* the owner never looks at it and she
+  does not plan to stop working; your stop ages only ever used your own FIRE number.
+  Consequence: after she stops, her income is her pension only (no draw from savings
+  that are no longer entered), which is slightly conservative for you.
+- **Retirement spending = one % change** on everything (own, joint, yearly items,
+  costs if alone) instead of two separate amounts. Costs if alone are always derived
+  (70%), no field.
+- **Migration:** older payloads keep today's numbers exactly (her amount = what she
+  paid in, else today's pro-rata share with the old cap); old fields stay in the saved
+  row, unread, so nothing is lost. The Simple-model engine path stays for the golden
+  master; removing it is a later cleanup.
+
 ## 2026-11-20 · v8.7 Spending refresh
 
 - **Four numbers, in bank order.** Joint account / month, she pays in / month, your

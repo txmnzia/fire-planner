@@ -66,12 +66,8 @@ test('grid results: a hand-built shortfall reads as short, with the exact monthl
   assert.ok(r.gap > 0);
 });
 
-test('grid results: household cell only for the two-person model with the partner on', () => {
-  for (const c of cases) {
-    const r = scenarioGridResults(c.sc, c.gl, project(c.sc, c.gl));
-    assert.equal(r.household !== null, isTwoPerson(c.gl) && c.sc.hasPartner, c.name);
-    if (r.household) assert.equal(r.household.text.startsWith('✓'), r.household.ok);
-  }
+test('grid results: no household cell any more (v8.8)', () => {
+  for (const c of cases) assert.equal('household' in scenarioGridResults(c.sc, c.gl, project(c.sc, c.gl)), false, c.name);
 });
 
 test('grid results: pure (inputs untouched, same answer twice)', () => {

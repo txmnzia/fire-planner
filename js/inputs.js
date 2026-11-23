@@ -1,7 +1,7 @@
-import { el, numVal, optVal } from "./util.js?v=8.7";
-import { state, features } from "./state.js?v=8.7";
-import { effectiveFeatures } from "./checks.js?v=8.7";
-import { payChangesFor } from "./payChanges.js?v=8.7";
+import { el, numVal, optVal } from "./util.js?v=8.8";
+import { state, features } from "./state.js?v=8.8";
+import { effectiveFeatures } from "./checks.js?v=8.8";
+import { payChangesFor } from "./payChanges.js?v=8.8";
 
 
 // Optional money field: null when empty (unlike optVal, 0 is a valid value).
@@ -55,13 +55,16 @@ export function getGlobals() {
   // Partner age offset: partnerAge = yourAge + offset (0 when no birth year given).
   const pby = optVal("partnerBirthYear");
   const partnerAgeOff = pby ? (baseYear - pby) - currentAge : 0;
+  const own = numVal("samPersonalNow",0);
+  const joint = numVal("samPaysIn",0) + numVal("partnerPaysIn",0);
+  const retMult = 1 + Math.max(-0.9, Math.min(1, numVal("retSpendChange",0)/100));
   return {
     currentAge,
     invested:     state.ibkrTotal,
     lifeExp:      numVal("lifeExp",100),
     baseYear,
-    spendNow:     numVal("spendNow",0),
-    spendRet:     numVal("spendRet",0),
+    spendNow:     0,               // Simple model removed in v8.8 (engine path kept for the golden master)
+    spendRet:     0,
     inflation:    numVal("inflation",2)/100,
     gainFrac:     Math.max(0, Math.min(0.99, numVal("gainFrac",25)/100)),
     stockRet:     numVal("stockRet",7)/100,
@@ -81,24 +84,24 @@ export function getGlobals() {
     partnerRetAge:     numVal("partnerRetAge",45),
     partnerPension:    numVal("partnerPension",0),
     partnerPensionAge: numVal("partnerPensionAge",67),
-    partnerSpendMult:  numVal("partnerSpendMult",1.5),
     partnerAgeOff,
-    // two-person household model (see README "Two-person model"). Retirement
-    // amounts left empty fall back to the "now" amount, never to 0.
-    partnerModel:      (el("partnerModel") && el("partnerModel").value === "two") ? "two" : "simple",
-    samPersonalNow:    numVal("samPersonalNow",0),
-    samPersonalRet:    optNum("samPersonalRet") ?? numVal("samPersonalNow",0),
-    sharedNow:         numVal("sharedNow",0),
-    sharedRet:         optNum("sharedRet") ?? numVal("sharedNow",0),
-    soloShared:        soloSharedFrom(optNum("soloShared"), numVal("sharedNow",0), numVal("yearlyItems",0)),
-    partnerPaysIn:     optNum("partnerPaysIn"),       // €/mo she pays into the joint account (v8.7)
-    yearlyItems:       numVal("yearlyItems",0),       // €/yr shared yearly items (v8.7)
-    soloSharedDerived: optNum("soloShared") == null,
-    partnerPersonal:   numVal("partnerPersonal",0),
-    partnerPortfolio:  numVal("partnerPortfolio",0),
-    partnerGainFrac:   Math.max(0, Math.min(0.99, numVal("partnerGainFrac",0)/100)),
-    shareMin:          Math.max(0, Math.min(1, numVal("shareMin",0)/100)),
-    shareMax:          Math.max(0, Math.min(1, numVal("shareMax",50)/100)),
+    // v8.8: one partner model. Spending = four numbers off your accounts; the
+    // joint total is what you both pay in; retirement = today × (1 + change).
+    // Simple model, multiplier, her savings, share floor/cap and Household FIRE
+    // are gone (DECISIONS.md, 2026-11-20).
+    partnerModel:      "two",
+    samPersonalNow:    own,
+    samPersonalRet:    own*retMult,
+    samPaysIn:         numVal("samPaysIn",0),
+    partnerPaysIn:     numVal("partnerPaysIn",0),
+    sharedNow:         joint,
+    sharedRet:         joint*retMult,
+    yearlyItems:       numVal("yearlyItems",0),
+    yearlyItemsRet:    numVal("yearlyItems",0)*retMult,
+    retSpendChange:    retMult - 1,
+    soloShared:        soloSharedFrom(null, joint, numVal("yearlyItems",0)),
+    soloSharedRet:     soloSharedFrom(null, joint, numVal("yearlyItems",0))*retMult,
+    soloSharedDerived: true,
     // global property config
     propBuyYear:      optVal("propBuyYear") || numVal("propBuyYear",2029),
     propPrice:        numVal("propPrice",0),

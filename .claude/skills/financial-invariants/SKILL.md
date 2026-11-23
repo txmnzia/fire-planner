@@ -50,6 +50,11 @@ the target by up to ~15% (households "funded" that ran dry).
 Using today's fraction for a retirement-era quantity was bugs F1, F4 and T6 —
 it understates targets and overstates card income by 8–18%.
 
+**v8.8 note:** the app always uses the two-person model (`gl.partnerModel = 'two'`, set
+in `getGlobals`); `spendNow`/`spendRet`/`partnerSpendMult` reach the engine as 0 and the
+Simple-model branches below survive only for the golden master. With a partner, the
+budget is your cost from `twoPersonCost`/`selfFundedCost`; without, `soloSpend`.
+
 **I2 — The retirement budget is defined once.**
 `yearOneBudget(fromAge, sc, gl)` in `js/engine.js` is THE definition of the annual
 retirement budget: `spendRet × (partner? partnerSpendMult : 1) × 12 × infl`
@@ -66,8 +71,7 @@ same commit, or the views drift apart.
 **I2b — Costs that end are set aside, not perpetuated (v8.2).** In SWR mode the FIRE
 target is `yearOnePermBudget × taxMult / swr + tempCostPV`, the card's `targetMonthly`
 is the lifelong part, its SWR income is on `portRet − cash − proj.tempPV`, and the
-projection pays `rows[].tempCost` in full on top of the capped draw. Household FIRE uses
-the same split. `yearOneBudget` stays the total (I2); `tempCostAt` is the one source for
+projection pays `rows[].tempCost` in full on top of the capped draw. `yearOneBudget` stays the total (I2); `tempCostAt` is the one source for
 the temporary part. Fixed mode is unaffected.
 
 **I3 — SWR mode is %-of-current-portfolio, not Bengen.**

@@ -33,14 +33,13 @@ export function isTwoPerson(gl) { return gl.partnerModel === 'two'; }
 
 const clamp01 = x => Math.max(0, Math.min(1, x));
 
-// Partner's share of shared costs: her income / (her + your income), clamped to
-// [shareMin, shareMax]; 0 when neither has any income.
-export function partnerShare(herInc, samInc, gl) {
+// Partner's share of shared costs once either of you has stopped working:
+// her income / (her + your income); 0 when neither has any income. No floor or
+// cap since v8.8 (one rule, no tuning knobs; DECISIONS.md).
+export function partnerShare(herInc, samInc) {
   const tot = herInc + samInc;
   if (!(tot > 0)) return 0;
-  const lo = gl.shareMin != null ? gl.shareMin : 0;
-  const hi = gl.shareMax != null ? gl.shareMax : 0.5;
-  return Math.max(lo, Math.min(hi, herInc / tot));
+  return clamp01(herInc / tot);
 }
 
 // Her real share of shared costs today (v8.7, Spending refresh): what she pays
@@ -53,8 +52,8 @@ export function actualShare(gl) {
 }
 
 // Partner's net income in calendar year yr (nominal €/yr): salary until HER
-// retirement age, pension from HER pension age (age offset applied), plus her
-// sustainable draw (herDrawAnn, supplied by the caller) once she has stopped work.
+// retirement age, pension from HER pension age (age offset applied). Her savings
+// are not modelled since v8.8, so a draw is only counted if a caller passes one.
 export function partnerIncomeAt(yr, gl, herDrawAnn) {
   const t = yr - gl.baseYear, infl = Math.pow(1+gl.inflation, t);
   const herAge  = gl.currentAge + t + (gl.partnerAgeOff || 0);
@@ -74,7 +73,8 @@ export function householdCosts(yr, sc, gl, samRetired, noTemp) {
   const t = yr - gl.baseYear, infl = Math.pow(1+gl.inflation, t);
   const samPersonal = (samRetired ? gl.samPersonalRet : gl.samPersonalNow)*12*infl;
   // yearly items (trips, courses, gifts; v8.7) are shared costs, now and retired
-  const sharedBase  = ((samRetired ? gl.sharedRet : gl.sharedNow)*12 + (gl.yearlyItems || 0))*infl;
+  const yearly      = samRetired && gl.yearlyItemsRet != null ? gl.yearlyItemsRet : (gl.yearlyItems || 0);
+  const sharedBase  = ((samRetired ? gl.sharedRet : gl.sharedNow)*12 + yearly)*infl;
   const partnerPersonal = (gl.partnerPersonal || 0)*12*infl;
   let child = 0, mortgage = 0, rentSaved = 0;
   if (sc.hasChild && !noTemp) {
@@ -90,11 +90,14 @@ export function householdCosts(yr, sc, gl, samRetired, noTemp) {
 }
 
 // Your net cost in year yr given YOUR income for the share (samInc, nominal €/yr).
-export function twoPersonCost(yr, sc, gl, samInc, herDrawAnn, samRetired, noTemp) {
+// payChanged: your pay differs from today's in yr (a pay change or parental leave). Her
+// real share is today's arrangement, so it only holds while both incomes are as
+// today; otherwise the pro-rata rule applies (v8.8).
+export function twoPersonCost(yr, sc, gl, samInc, herDrawAnn, samRetired, noTemp, payChanged) {
   const hc = householdCosts(yr, sc, gl, samRetired, noTemp);
   const her = partnerIncomeAt(yr, gl, herDrawAnn);
-  const real = (!samRetired && her.working) ? actualShare(gl) : null;
-  const share = real != null ? real : partnerShare(her.total, samInc, gl);
+  const real = (!samRetired && her.working && !payChanged) ? actualShare(gl) : null;
+  const share = real != null ? real : partnerShare(her.total, samInc);
   const contrib = share*hc.shared;
   return { ...hc, her, samInc, share, shareReal: real != null, contrib, samCost: hc.samPersonal + hc.shared - contrib };
 }
@@ -120,85 +123,22 @@ export function selfFundedCost(yr, sc, gl, samPensionAnn, herDrawAnn, noTemp) {
   let c = (P + S - h + Math.sqrt((h - P - S)*(h - P - S) + 4*P*h)) / 2;
   // c ≥ pension: your income is your cost (c). Otherwise the pension alone is
   // your income (no draw needed); the cost then stays below the pension.
-  const share = partnerShare(h, c >= pen ? c : pen, gl);
+  const share = partnerShare(h, c >= pen ? c : pen);
   const contrib = share*S;
   c = P + S - contrib;
   return { ...hc, her, samInc: Math.max(c, pen), share, contrib, samCost: c };
 }
 
-// Full household FIRE target: both stop working in your retirement year; the
-// combined portfolios cover samPersonal + partnerPersonal + shared, net of both
-// pensions once they start. SWR mode: year-one need × taxMult / SWR. Fixed mode:
-// PV of the year-by-year need (ordinary annuity timing, like annuityPV) plus a
-// retirement-era purchase cost.
-export function computeHouseholdTarget(fromAge, sc, gl, taxMult) {
-  if (fromAge >= gl.lifeExp) return 0;
-  const tFrom = fromAge - gl.currentAge, fromYear = gl.baseYear + tFrom;
-  const off = gl.partnerAgeOff || 0;
-  const need = yr => {
-    const t = yr - gl.baseYear, age = gl.currentAge + t, infl = Math.pow(1+gl.inflation, t);
-    const hc = householdCosts(yr, sc, gl, true);
-    const pens = (age >= gl.pensionAge ? gl.pensionAmt*12*infl : 0)
-               + (age + off >= gl.partnerPensionAge ? gl.partnerPension*12*infl : 0);
-    return Math.max(0, hc.samPersonal + hc.partnerPersonal + hc.shared - pens);
-  };
-  const r = portReturnAt(gl, fromAge, sc.retAge);
-  if (gl.wdMode === "swr") {
-    // v8.2, same rule as your own target: the lifelong need × 1/SWR, plus the
-    // household's costs that end (child, mortgage) at present value.
-    if (!(gl.swr > 0)) return 0;
-    const temp = yr => { const hc = householdCosts(yr, sc, gl, true); return hc.child + hc.mortgage; };
-    let pv = 0;
-    for (let k = 0; k < gl.lifeExp - fromAge; k++) pv += temp(fromYear + k)*taxMult/Math.pow(1+r, k+1);
-    return Math.round(Math.max(0, need(fromYear) - temp(fromYear))*taxMult/gl.swr + pv);
-  }
-  let pv = 0;   // v8.5: rising gain fraction, like your own fixed-mode target
-  for (let k = 0; k < gl.lifeExp - fromAge; k++) pv += need(fromYear + k)*taxMultAfter(taxMult, gl.taxRate, r, k+1)/Math.pow(1+r, k+1);
-  if (sc.hasProp && gl.propBuyYear >= fromYear)
-    pv += gl.propPrice*(gl.propDownPct + gl.propTxCostPct)*taxMult/Math.pow(1+r, gl.propBuyYear - fromYear);
-  return Math.round(Math.max(0, pv));
-}
-
-// Separation check: could the partner cover her solo costs (partnerPersonal +
-// soloShared) alone? Income = salary while working, else pension + her
-// portfolio at a 4% draw net of CGT. Today's €/mo, at her age 50 and 67 and at
-// your retirement year. Uses the partner ledger project() returns.
-export const SEPARATION_SWR = 0.04;
-export function partnerSeparation(proj, sc, gl) {
-  if (!proj || !proj.partner) return [];
-  const off = gl.partnerAgeOff || 0, out = [], seen = new Set();
-  const add = (label, yr) => {
-    const idx = yr - proj.years[0];
-    if (idx < 0 || idx >= proj.years.length || seen.has(yr) || yr < gl.baseYear) return;
-    seen.add(yr);
-    const t = yr - gl.baseYear, infl = Math.pow(1+gl.inflation, t);
-    const herAge = gl.currentAge + t + off;
-    const working = herAge < gl.partnerRetAge;
-    const port = proj.partner.values[idx] || 0;
-    const gf = (proj.rows[idx] && proj.rows[idx].partnerGainFrac) || 0;
-    const pension = herAge >= gl.partnerPensionAge ? gl.partnerPension : 0;
-    const draw = working ? 0 : port*SEPARATION_SWR*Math.max(0.001, 1 - gf*gl.taxRate)/12/infl;
-    const income = working ? gl.partnerInc : pension + draw;
-    const cost = (gl.partnerPersonal || 0) + (gl.soloShared || 0);
-    out.push({ label, yr, herAge, working, income: Math.round(income), pension: working ? 0 : Math.round(pension),
-               draw: Math.round(draw), cost: Math.round(cost), gap: Math.round(income - cost) });
-  };
-  add("Her age 50", gl.baseYear + 50 - off - gl.currentAge);
-  add("Your retirement", proj.retYear);
-  add("Her age 67", gl.baseYear + 67 - off - gl.currentAge);
-  return out.sort((a, b) => a.yr - b.yr);
-}
-
 // Card note: what the partner contributes (today's €/mo) when you retire, until
 // which of her ages, and what your cost becomes after that change.
 export function partnerContributionNote(sc, gl, proj) {
-  if (!isTwoPerson(gl) || !sc.hasPartner || !proj || !proj.partner) return null;
+  if (!isTwoPerson(gl) || !sc.hasPartner || !proj) return null;
   const off = gl.partnerAgeOff || 0;
   const at = yr => {
     const t = yr - gl.baseYear, age = gl.currentAge + t, infl = Math.pow(1+gl.inflation, t);
     const pen = age >= gl.pensionAge ? gl.pensionAmt*12*infl : 0;
     const idx = yr - proj.years[0];
-    const c = selfFundedCost(yr, sc, gl, pen, proj.partner.drawByT[t] || 0);
+    const c = selfFundedCost(yr, sc, gl, pen, 0);
     return { c, infl, ok: idx >= 0 && idx < proj.years.length };
   };
   const r0 = at(proj.retYear);
@@ -223,7 +163,8 @@ export function partnerContributionNote(sc, gl, proj) {
 // js/checks.js and the scenario shows "missing" instead of a €0 target.
 // The single source for every solo path: yearOneBudget, computeFireTarget, project().
 export function soloSpend(gl, retired) {
-  return (retired ? gl.samPersonalRet : gl.samPersonalNow) + gl.soloShared;
+  return retired ? gl.samPersonalRet + (gl.soloSharedRet != null ? gl.soloSharedRet : gl.soloShared)
+                 : gl.samPersonalNow + gl.soloShared;
 }
 
 // Full annual retirement budget in the first year of retirement at fromAge:
@@ -544,16 +485,11 @@ export function project(sc, gl, opts) {
   const off = gl.partnerAgeOff || 0;           // partner's age = your age + off
   let gainFracAtRet = null;                    // tracked gain fraction when retirement starts
   let infeasibleYear = null;                   // first year portfolio+cash can't fund the plan
-  // Two-person model: the partner's own portfolio runs alongside yours on the
-  // same return path, with its own cost basis. Her shortfalls are flagged, never
-  // moved onto your portfolio.
+  // Two-person model: her money stays hers. Since v8.8 only her income is
+  // modelled (it sets her share of shared costs); her savings are not.
   const two  = isTwoPerson(gl);
   const twoP = two && sc.hasPartner;
-  let herPort  = twoP ? (gl.partnerPortfolio || 0) : 0;
-  let herBasis = herPort*(1 - (gl.partnerGainFrac || 0));
-  let partnerInfeasibleYear = null;
-  let hhGainFracAtRet = null;                  // combined (you + partner) gain fraction at retirement
-  const herValues = [], herDrawByT = {}, fireNumMult = [];
+  const fireNumMult = [];
 
   // mortgage amortisation
   const monthlyMortgage = sc.hasProp ? mortgageAnnual(gl)/12 : 0;
@@ -614,20 +550,14 @@ export function project(sc, gl, opts) {
     // the FIRE target's tax gross-up is priced with it after the loop.
     if (gainFracAtRet===null && yr>=retYear) {
       gainFracAtRet = portfolio>0 ? Math.max(0,Math.min(1,(portfolio-costBasis)/portfolio)) : gl.gainFrac;
-      if (twoP) {
-        const tot = portfolio + herPort;
-        hhGainFracAtRet = tot>0 ? clamp01((tot-costBasis-herBasis)/tot) : gl.gainFrac;
-      }
     }
 
     // Two-person: start-of-year values drive this year's share (no iteration).
     // Your income for the share after retirement = pension + portfolio × SWR ×
-    // netFrac (SWR even in fixed mode); hers adds her draw once she stopped work.
-    let herDraw = 0, samDrawStart = 0;
+    // netFrac (SWR even in fixed mode); hers is her salary or pension.
+    const herDraw = 0;
+    let samDrawStart = 0;
     if (twoP) {
-      const gfH = herPort>0 ? clamp01((herPort-herBasis)/herPort) : 0;
-      if (age+off >= gl.partnerRetAge) herDraw = herPort*gl.swr*Math.max(0.001, 1-gfH*gl.taxRate);
-      herDrawByT[t] = herDraw;
       const gfS = portfolio>0 ? clamp01((portfolio-costBasis)/portfolio) : 0;
       samDrawStart = Math.max(0, portfolio)*gl.swr*Math.max(0.001, 1-gfS*gl.taxRate);
     }
@@ -668,7 +598,8 @@ export function project(sc, gl, opts) {
       if (ov && ov.sp != null) {
         annSpendNow = ov.sp*12; childCost = 0; // real past spending (includes living costs)
       } else if (twoP) {
-        tp = twoPersonCost(yr, sc, gl, annInc, herDraw, false);
+        // her real share holds while your pay is today's (no pay change, no parental leave)
+        tp = twoPersonCost(yr, sc, gl, annInc, herDraw, false, false, Math.abs(annInc - sc.income*12*infl) > 0.5);
         annSpendNow = tp.samPersonal + tp.shared - tp.child - tp.mortgage + tp.rentSaved;
         childCost   = tp.child;
       } else if (two) {
@@ -783,33 +714,13 @@ export function project(sc, gl, opts) {
       row.withdrawal=Math.round(gross); row.taxPaid=Math.round(gross*gainFracNow*gl.taxRate);
     }
 
-    // Partner's own portfolio (two-person model): salary + pension − her personal
-    // spending − her contribution. Surplus is invested (adds to basis); a deficit
-    // is sold with the CGT gross-up; an empty portfolio flags partnerInfeasibleYear.
+    // Two-person ledger rows (her income and contribution; v8.8: no savings ledger)
     if (twoP) {
-      const her = tp ? tp.her : partnerIncomeAt(yr, gl, herDraw);
-      const contrib = tp ? tp.contrib : 0;     // real past spending override: no split
-      const herBefore = herPort;
-      const herGfStart = herPort>0 ? clamp01((herPort-herBasis)/herPort) : 0;
-      const herPAG = herPort*(1+r);
-      const herNet = her.salary + her.pension - (gl.partnerPersonal||0)*12*infl - contrib;
-      let herGross = 0;
-      if (herNet >= 0) { herPort = herPAG + herNet; herBasis += herNet; }
-      else {
-        const gfN = herPAG>0 ? clamp01((herPAG-herBasis)/herPAG) : 0;
-        herGross = -herNet/Math.max(0.001, 1-gfN*gl.taxRate);
-        if (herGross <= herPAG) { herBasis = Math.max(0, herBasis*(1-herGross/herPAG)); herPort = herPAG-herGross; }
-        else { herPort = 0; herBasis = 0; if (partnerInfeasibleYear===null) partnerInfeasibleYear = yr; }
-      }
-      herValues.push(herBefore);
-      row.partnerContrib = Math.round(contrib);
+      const her = tp ? tp.her : partnerIncomeAt(yr, gl, 0);
+      row.partnerContrib = Math.round(tp ? tp.contrib : 0);   // real past spending override: no split
       row.partnerShare = tp ? tp.share : 0;
       row.samShareIncome = Math.round(tp ? tp.samInc : 0);
       row.partnerIncome = Math.round(her.salary + her.pension);
-      row.partnerDraw = Math.round(herDraw);
-      row.partnerWithdrawal = Math.round(herGross);
-      row.partnerPortfolio = Math.round(herBefore);
-      row.partnerGainFrac = herGfStart;
     }
 
     years.push(yr); values.push(portfolioBefore+cashBefore); rows.push(row);
@@ -819,7 +730,7 @@ export function project(sc, gl, opts) {
   // gross-up reflects what the portfolio will actually owe in CGT then, not today.
   if (gainFracAtRet===null) gainFracAtRet = gl.gainFrac;
   const taxMultRet = 1/Math.max(0.001,1-gainFracAtRet*gl.taxRate);
-  const tOpts = twoP ? { herDraw: herDrawByT } : undefined;
+  const tOpts = undefined;
   const fireAtRetirement = computeFireTarget(sc.retAge,sc,gl,taxMultRet,tOpts);
   const fireTargetAdj = gl.wdMode==="swr"
     ? computeFireTarget(sc.retAge,sc,gl,taxMultRet,{otherIncomeCredit:true, ...(tOpts||{})})
@@ -830,19 +741,8 @@ export function project(sc, gl, opts) {
   const out = {years,values,fireNums,retYear,allocations,rows,
           fireTarget:fireAtRetirement, fireTargetAdj, gainFracAtRet,
           // v8.2: % mode only — the part of the FIRE number set aside for costs that end
-          tempPV: gl.wdMode==="swr" ? tempCostPV(sc.retAge, sc, gl, taxMultRet, herDrawByT) : 0,
+          tempPV: gl.wdMode==="swr" ? tempCostPV(sc.retAge, sc, gl, taxMultRet) : 0,
           infeasibleYear, finalNetWorth: portfolio+cashVal};
-  if (twoP) {
-    // Full household FIRE: combined net worth (you + partner + cash) vs the
-    // household target, priced at the combined gain fraction at retirement.
-    const gfC = hhGainFracAtRet != null ? hhGainFracAtRet : gl.gainFrac;
-    const target = computeHouseholdTarget(sc.retAge, sc, gl, 1/Math.max(0.001, 1-gfC*gl.taxRate));
-    const iRet = Math.min(Math.max(0, retYear - loopStart), values.length - 1);
-    const nwAtRet = values[iRet] + herValues[iRet];
-    out.household = { target, nwAtRet, funded: nwAtRet >= target, gainFracAtRet: gfC };
-    out.partner = { values: herValues, drawByT: herDrawByT, finalPortfolio: herPort };
-    out.partnerInfeasibleYear = partnerInfeasibleYear;
-  }
   return out;
 }
 

@@ -1,9 +1,9 @@
-import { el, fmt, fmtK } from "../util.js?v=8.7";
-import { getGlobals, getScenario, getScenarioName } from "../inputs.js?v=8.7";
-import { withStopAges } from "./cards.js?v=8.7";
-import { project } from "../engine.js?v=8.7";
-import { runMonteCarlo, mcPct } from "../montecarlo.js?v=8.7";
-import { COLORS, COLORS_FADE, ALPHAS, GC, FIRE_LINE } from "./charts.js?v=8.7";
+import { el, fmt, fmtK } from "../util.js?v=8.8";
+import { getGlobals, getScenario, getScenarioName } from "../inputs.js?v=8.8";
+import { withStopAges } from "./cards.js?v=8.8";
+import { project } from "../engine.js?v=8.8";
+import { runMonteCarlo, mcPct } from "../montecarlo.js?v=8.8";
+import { COLORS, COLORS_FADE, ALPHAS, GC, FIRE_LINE } from "./charts.js?v=8.8";
 
 // Monte Carlo tab state (module-private)
 let mcFanChart = null, mcHistChart = null;
@@ -73,12 +73,9 @@ function renderMcCards(){
     } else {
       note.style.display='none';
     }
-    // Two-person model: MC simulates YOUR projection (Partial FIRE); the
-    // partner's portfolio rides the same paths but no household-level MC exists.
-    if (mcGl.partnerModel==='two'){
-      note.style.display='block';
-      note.innerHTML=(swr?note.innerHTML+'<br><br>':'')+'<strong>Two-person model:</strong> for scenarios with the partner, Monte Carlo runs on <em>your</em> projection (Partial FIRE: your portfolio covering your net cost, with the partner contributing her share). Household FIRE is not simulated here.';
-    }
+    // With a partner, MC simulates YOUR portfolio covering your cost (her money stays hers).
+    note.style.display='block';
+    note.innerHTML=(swr?note.innerHTML+'<br><br>':'')+'<strong>With your partner:</strong> Monte Carlo runs on <em>your</em> portfolio covering <em>your</em> cost: your own spending plus your part of the shared costs.';
   }
 }
 

@@ -56,17 +56,17 @@ test('scenario grid: every per-scenario control and result cell exists once', ()
   for (let n = 1; n <= 5; n++) {
     for (const id of ['sc' + n + 'name', 's' + n + '_ret', 's' + n + '_inc', 's' + n + '_chgYear', 's' + n + '_chgInc',
       'tog' + n + '_partner', 'tog' + n + '_prop', 'tog' + n + '_child',
-      'scr' + n + '_age', 'scr' + n + '_margin', 'scr' + n + '_lasts', 'scr' + n + '_household'])
+      'scr' + n + '_age', 'scr' + n + '_margin', 'scr' + n + '_lasts'])
       assert.equal(count(id), 1, id);
   }
-  assert.equal(count('scgHouseholdRow'), 1);
+  assert.equal(count('scgHouseholdRow'), 0);
 });
 
 test('scenario grid: the renderer writes exactly the result cells the markup has', () => {
   const cards = read('js/ui/cards.js');
   const fn = cards.slice(cards.indexOf('export function renderScenarioGrid'));
   const keys = [...fn.slice(0, fn.indexOf('\n}\n')).matchAll(/set\('(\w+)'/g)].map(m => m[1]).sort();
-  assert.deepEqual(keys, ['age', 'household', 'lasts', 'margin']);
+  assert.deepEqual(keys, ['age', 'lasts', 'margin']);
 });
 
 test('scenario grid: stop ages are automatic (no input, saved value kept hidden for old builds)', () => {

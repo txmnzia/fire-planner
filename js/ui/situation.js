@@ -3,11 +3,11 @@
 // The source of truth for every value stays the id-bearing form control that
 // inputs.js / sync.js already read — this module only adds friendlier controls
 // (year-picker popover, sliders, the subject rail) and the dynamic windfall list.
-import { el } from "../util.js?v=8.7";
-import { toggleWindfall, LETTERS, togglePay, setPayListPainter } from "./plans.js?v=8.7";
-import { normalisePayChanges } from "../payChanges.js?v=8.7";
-import { state } from "../state.js?v=8.7";
-import { recalc } from "../recalc.js?v=8.7";
+import { el } from "../util.js?v=8.8";
+import { toggleWindfall, LETTERS, togglePay, setPayListPainter } from "./plans.js?v=8.8";
+import { normalisePayChanges } from "../payChanges.js?v=8.8";
+import { state } from "../state.js?v=8.8";
+import { recalc } from "../recalc.js?v=8.8";
 
 const YNOW = 2026;
 
@@ -260,25 +260,8 @@ function bindGlobalClosers() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.ypick.open').forEach(o => o.classList.remove('open')); });
 }
 
-// ── PARTNER MODEL (Simple | Two-person segmented control) ───────────────────
-// The hidden #partnerModel input is the persistence key; this only mirrors it.
-export function updatePartnerModelUI() {
-  const pm = el('partnerModel'); if (!pm) return;
-  const two = pm.value === 'two';
-  document.querySelectorAll('.pm-pill').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.pm === pm.value || (!two && b.dataset.pm === 'simple'))));
-  document.querySelectorAll('.pm-two').forEach(n => { n.style.display = two ? '' : 'none'; });
-  document.querySelectorAll('.pm-simple').forEach(n => { n.style.display = two ? 'none' : ''; });
-}
-export function setPartnerModel(m) {
-  const pm = el('partnerModel'); if (!pm) return;
-  pm.value = m === 'two' ? 'two' : 'simple';
-  updatePartnerModelUI();
-  recalc();
-}
-
 // Re-sync enhanced controls after applyState() rewrites the underlying inputs.
 export function refreshSituationControls() {
-  updatePartnerModelUI();
   document.querySelectorAll('input[type="range"][data-for]').forEach(range => {
     const num = el(range.dataset.for); if (num) { if (num.value !== '') range.value = num.value; paintSlider(range, num); }
   });
@@ -296,5 +279,4 @@ export function initSituation() {
   renderWindfalls();
   renderPayList();
   initRail();
-  updatePartnerModelUI();
 }

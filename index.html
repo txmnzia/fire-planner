@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.7">
+<link rel="stylesheet" href="css/styles.css?v=8.8">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.7</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.8</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -120,10 +120,21 @@
       <div class="subj-body">
         <div class="subj-grid">
           <div class="field"><label for="baseIncome_disp">Monthly income (net)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="baseIncome" id="baseIncome_disp"><input type="hidden" id="baseIncome" value=""></div></div>
-          <div class="field"><label for="spendNow_disp">Monthly spending (now)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="spendNow" id="spendNow_disp"><input type="hidden" id="spendNow" value=""></div></div>
-          <div class="field"><label for="propRentSaved_disp">Rent today / month <button type="button" class="info-btn" title="The rent you pay now, part of your spending (Simple model) or of your shared costs (Two-person model). Entered once here: a scenario that buys a home on the Plans tab stops paying it from the purchase year.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="propRentSaved" id="propRentSaved_disp"><input type="hidden" id="propRentSaved" value=""></div></div>
+          <div class="field"><label for="propRentSaved_disp">Rent today / month <button type="button" class="info-btn" title="The rent you pay now, part of what goes into the joint account. Entered once here: a scenario that buys a home on the Plans tab stops paying it from the purchase year.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="propRentSaved" id="propRentSaved_disp"><input type="hidden" id="propRentSaved" value=""></div></div>
         </div>
-        <p class="sit-note pm-two" style="display:none">Two-person model is on: spending comes from Partner &#x2192; Spending split. The two monthly spending amounts here are only used by the Simple model.</p>
+        <div class="subj-subhd">Spending <span class="spend-upd" id="spendUpdatedTxt"></span><input type="hidden" id="spendUpdated" value=""></div>
+        <p class="sit-note">Four numbers read off your accounts, as monthly averages. Update them about twice a year.</p>
+        <div class="subj-grid spend-refresh">
+          <div class="field"><label for="samPersonalNow_disp">Your own spending / month <button type="button" class="info-btn" title="Your personal spending only, from your own account, without what you transfer to the joint account.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="samPersonalNow" id="samPersonalNow_disp"><input type="hidden" id="samPersonalNow" value=""></div></div>
+          <div class="field"><label for="samPaysIn_disp">You pay into joint / month <button type="button" class="info-btn" title="What you transfer to the joint account each month.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="samPaysIn" id="samPaysIn_disp"><input type="hidden" id="samPaysIn" value=""></div></div>
+          <div class="field"><label for="partnerPaysIn_disp">She pays in / month <button type="button" class="info-btn" title="What she transfers to the joint account each month. Her share of shared costs is what she pays in &#xF7; the joint total while you both work. Once either of you stops, it follows your two incomes.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerPaysIn" id="partnerPaysIn_disp"><input type="hidden" id="partnerPaysIn" value=""></div></div>
+          <div class="field"><label for="yearlyItems_disp">Yearly items / year <button type="button" class="info-btn" title="Trips, courses, gifts and other lumpy costs, as one yearly total. Shared: split with her like the joint account, now and in retirement.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="yearlyItems" id="yearlyItems_disp"><input type="hidden" id="yearlyItems" value=""></div></div>
+        </div>
+        <div class="spend-readout" id="spendReadout" aria-live="polite"></div>
+        <div class="subj-grid">
+          <div class="field"><label for="retSpendChange">Spending in retirement <button type="button" class="info-btn" title="How your spending changes once you stop working, as a % of today: 0 = same life, &#x2212;10 = 10% less, +10 = 10% more. Applies to your own spending, the joint account and yearly items.">&#x24D8;</button></label>
+            <div class="unit-wrap"><input type="number" id="retSpendChange" value="0" min="-50" max="50" step="5" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div></div>
+        </div>
         <div class="subj-subhd">Withdrawal strategy</div>
         <div class="subj-grid">
           <div class="field"><label>Strategy</label>
@@ -132,7 +143,6 @@
               <label class="wd-pill"><input type="radio" name="wdMode" value="swr" onchange="onWdMode()">% of portfolio</label>
             </div>
           </div>
-          <div class="field" id="spendRet_wrap"><label for="spendRet_disp">Monthly spending (retirement) <button type="button" class="info-btn" title="Your retirement budget in today's money. Drives the FIRE target in both modes and the budget-adequacy metrics in % of Portfolio mode.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="spendRet" id="spendRet_disp"><input type="hidden" id="spendRet" value=""></div></div>
           <div class="field slider-field" id="swr_wrap" style="display:none"><label for="swr">Withdrawal rate <button type="button" class="info-btn" title="Annual % of the current portfolio available to withdraw each year. This is a %-of-portfolio strategy: income varies with markets and the portfolio cannot fully deplete. It is NOT the classic Bengen fixed-real-amount rule (use Fixed Amount mode for that behaviour).">&#x24D8;</button> <span class="sv"><input type="number" id="swr" value="4" min="0.5" max="20" step="0.25" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
             <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="swr" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         </div>
@@ -224,7 +234,7 @@
     <!-- PARTNER -->
     <section class="subj life" id="subj-partner" style="--acc:var(--s4c)">
       <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20c0-3 3-5 6-5s6 2 6 5"/><path d="M15 20c0-2 1.5-3.5 4-3.5"/></svg></div>
-        <div class="subj-tt"><h3>Partner</h3><p>A second income, pension and shared costs</p></div>
+        <div class="subj-tt"><h3>Partner</h3><p>Her income sets her share of shared costs once one of you stops working</p></div>
         <div class="subj-meta sc-chips" role="group" aria-label="Scenarios using Partner"><span class="sc-chips-lbl">Used in</span>
           <button type="button" class="sc-chip" data-scenario="1" data-feat="partner" onclick="toggleFeature(1,'partner')" aria-pressed="false">A</button>
           <button type="button" class="sc-chip" data-scenario="2" data-feat="partner" onclick="toggleFeature(2,'partner')" aria-pressed="false">B</button>
@@ -234,52 +244,13 @@
         </div></div>
       <div class="subj-body">
         <div class="subj-grid">
-          <div class="field"><label>Partner model <button type="button" class="info-btn" title="Simple: the partner's salary is added to household income and all spending is multiplied. Two-person: each of you keeps your own money; shared costs are split pro rata to your two net incomes, her savings stay hers, and every scenario shows Partial FIRE (you) and Household FIRE.">&#x24D8;</button></label>
-            <div class="wd-toggle" role="group" aria-label="Partner model">
-              <button type="button" class="wd-pill pm-pill" data-pm="simple" aria-pressed="true" onclick="setPartnerModel('simple')">Simple</button>
-              <button type="button" class="wd-pill pm-pill" data-pm="two" aria-pressed="false" onclick="setPartnerModel('two')">Two-person</button>
-            </div><input type="hidden" id="partnerModel" value="simple"></div>
-        </div>
-        <div class="subj-grid">
-        <div class="field"><label for="partnerInc_disp">Partner income (net/mo)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerInc" id="partnerInc_disp"><input type="hidden" id="partnerInc" value=""></div></div>
-        <div class="field slider-field"><label for="partnerRetAge">Partner retirement age <span class="sv"><input type="number" id="partnerRetAge" value="45" min="25" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
+        <div class="field"><label for="partnerInc_disp">Her take-home / month</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerInc" id="partnerInc_disp"><input type="hidden" id="partnerInc" value=""></div></div>
+        <div class="field slider-field"><label for="partnerRetAge">Age she stops working <span class="sv"><input type="number" id="partnerRetAge" value="45" min="25" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="partnerRetAge" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field"><label>Partner year of birth <button type="button" class="info-btn" title="Optional. If empty, your partner is assumed to be the same age as you. Used to work out when the partner reaches their retirement and pension ages.">&#x24D8;</button></label><div class="ypick" data-target="partnerBirthYear" data-min="1940" data-max="2010" data-optional></div><input type="hidden" id="partnerBirthYear" value=""></div>
-        <div class="field"><label for="partnerPension_disp">Partner pension (gross/mo)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerPension" id="partnerPension_disp"><input type="hidden" id="partnerPension" value=""></div></div>
-        <div class="field slider-field"><label for="partnerPensionAge">Partner pension age <span class="sv"><input type="number" id="partnerPensionAge" value="67" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
+        <div class="field"><label>Her year of birth <button type="button" class="info-btn" title="Optional. If empty, your partner is assumed to be the same age as you. Used to work out when the partner reaches their retirement and pension ages.">&#x24D8;</button></label><div class="ypick" data-target="partnerBirthYear" data-min="1940" data-max="2010" data-optional></div><input type="hidden" id="partnerBirthYear" value=""></div>
+        <div class="field"><label for="partnerPension_disp">Her pension / month</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerPension" id="partnerPension_disp"><input type="hidden" id="partnerPension" value=""></div></div>
+        <div class="field slider-field"><label for="partnerPensionAge">Her pension age <span class="sv"><input type="number" id="partnerPensionAge" value="67" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="partnerPensionAge" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field slider-field pm-simple"><label for="partnerSpendMult">Spending multiplier <span class="sv"><input type="number" id="partnerSpendMult" value="1.5" min="1" max="3" step="0.1" oninput="recalc()" onchange="recalc()"><i>&#xD7;</i></span></label>
-          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="partnerSpendMult" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field pm-simple"><label>Combined monthly spending</label><div class="mult-preview2">Now <b id="multPreviewNow"></b></div></div>
-        </div>
-        <div class="pm-two" style="display:none">
-          <p class="sit-note">Two-person model: these amounts replace the monthly spending under Income &amp; spending, in every scenario. Scenarios without the partner use your personal spending plus the solo housing costs.</p>
-          <div class="subj-subhd">Spending refresh <span class="spend-upd" id="spendUpdatedTxt"></span><input type="hidden" id="spendUpdated" value=""></div>
-          <p class="sit-note">Four numbers, in the order you read them off your bank: update them about twice a year from your monthly averages.</p>
-          <div class="subj-grid spend-refresh">
-          <div class="field"><label for="sharedNow_disp">Joint account / month <button type="button" class="info-btn" title="Everything you pay together, full amount: rent, bills, groceries, joint leisure. Read it off the joint account&#39;s monthly average (both your top-ups). Child costs and the mortgage are added on top and split the same way.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="sharedNow" id="sharedNow_disp"><input type="hidden" id="sharedNow" value=""></div></div>
-          <div class="field"><label for="partnerPaysIn_disp">She pays in / month <button type="button" class="info-btn" title="What she actually puts into the joint account each month. Used while you both work; once either of you stops, the split goes back to pro rata to your incomes. Empty = pro rata from today.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerPaysIn" id="partnerPaysIn_disp"><input type="hidden" id="partnerPaysIn" value=""></div></div>
-          <div class="field"><label for="samPersonalNow_disp">Your own spending / month <button type="button" class="info-btn" title="Personal spending only, from your own account&#39;s monthly average, without your top-up to the joint account.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="samPersonalNow" id="samPersonalNow_disp"><input type="hidden" id="samPersonalNow" value=""></div></div>
-          <div class="field"><label for="yearlyItems_disp">Yearly items / year <button type="button" class="info-btn" title="Trips, courses, gifts and other lumpy costs, as one yearly total. Shared costs: split with her like the joint account, now and in retirement.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="yearlyItems" id="yearlyItems_disp"><input type="hidden" id="yearlyItems" value=""></div></div>
-          </div>
-          <div class="spend-readout" id="spendReadout" aria-live="polite"></div>
-          <div class="subj-subhd">Later in life <span class="spend-upd">rarely changes</span></div>
-          <div class="subj-grid">
-          <div class="field"><label for="samPersonalRet_disp">Your own spending in retirement <button type="button" class="info-btn" title="Empty = same as now.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="samPersonalRet" id="samPersonalRet_disp" placeholder="same as now"><input type="hidden" id="samPersonalRet" value=""></div></div>
-          <div class="field"><label for="sharedRet_disp">Joint costs in retirement <button type="button" class="info-btn" title="Monthly joint costs from your retirement year. Empty = same as now. Yearly items are added on top.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="sharedRet" id="sharedRet_disp" placeholder="same as now"><input type="hidden" id="sharedRet" value=""></div></div>
-          <div class="field"><label for="soloShared_disp">Your housing &amp; living costs if alone <button type="button" class="info-btn" title="Rent, bills, groceries, leisure and yearly items if you lived alone, on top of your own spending. Used by scenarios without your partner, and as her costs in the check of whether she could manage alone. Empty = 70% of the joint account plus yearly items: one person spends about 70% of what a couple does.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="soloShared" id="soloShared_disp"><input type="hidden" id="soloShared" value=""></div></div>
-          <div class="field"><label for="partnerPersonal_disp">Her own spending / month</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerPersonal" id="partnerPersonal_disp"><input type="hidden" id="partnerPersonal" value=""></div></div>
-          </div>
-          <div class="subj-subhd">Partner finances</div>
-          <div class="subj-grid">
-          <div class="field"><label for="partnerPortfolio_disp">Partner invested assets <button type="button" class="info-btn" title="Her own portfolio today. It grows with the same returns as yours and is never used to pay your costs.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerPortfolio" id="partnerPortfolio_disp"><input type="hidden" id="partnerPortfolio" value=""></div></div>
-          <div class="field slider-field"><label for="partnerGainFrac">Partner unrealized gain <button type="button" class="info-btn" title="Share of her portfolio that is unrealized gain today. Her withdrawals are taxed on the gain part at the same country rate.">&#x24D8;</button> <span class="sv"><input type="number" id="partnerGainFrac" value="0" min="0" max="99" step="1" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
-          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="partnerGainFrac" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-          <div class="field slider-field"><label for="shareMin">Partner share floor <button type="button" class="info-btn" title="Lowest share of shared costs the partner pays, whatever the income ratio.">&#x24D8;</button> <span class="sv"><input type="number" id="shareMin" value="0" min="0" max="50" step="5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
-          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="shareMin" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-          <div class="field slider-field"><label for="shareMax">Partner share cap <button type="button" class="info-btn" title="Highest share of shared costs the partner pays. Her share is her net income / both net incomes, clamped to floor and cap.">&#x24D8;</button> <span class="sv"><input type="number" id="shareMax" value="50" min="0" max="100" step="5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
-          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="shareMax" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-          </div>
         </div>
       </div>
     </section>
@@ -440,14 +411,6 @@
       <div class="scg-cell c3" role="cell"><span class="scg-out" id="scr3_lasts">&#x2014;</span></div>
       <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_lasts">&#x2014;</span></div>
       <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_lasts">&#x2014;</span></div>
-    </div>
-    <div class="scg-row scg-r-out" role="row" id="scgHouseholdRow" hidden>
-      <div class="scg-lbl" role="rowheader">Household FIRE <button type="button" class="info-btn" title="Two-person model: your and her net worth together against the whole household&#x2019;s target." aria-label="About: Household FIRE">&#x24D8;</button></div>
-      <div class="scg-cell c1" role="cell"><span class="scg-out" id="scr1_household">&#x2014;</span></div>
-      <div class="scg-cell c2" role="cell"><span class="scg-out" id="scr2_household">&#x2014;</span></div>
-      <div class="scg-cell c3" role="cell"><span class="scg-out" id="scr3_household">&#x2014;</span></div>
-      <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_household">&#x2014;</span></div>
-      <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_household">&#x2014;</span></div>
     </div>
   </div>
   </div><!-- /scg-scroll -->
@@ -610,6 +573,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.7"></script>
+<script type="module" src="js/main.js?v=8.8"></script>
 </body>
 </html>

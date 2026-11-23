@@ -5,8 +5,7 @@ import assert from 'node:assert/strict';
 import {
   annuityPV, mortgageAnnual, portReturnAt, yearOneBudget,
   computeFireTarget, project, buildPlanProj, planYearsAhead,
-  partnerShare, partnerIncomeAt, twoPersonCost, selfFundedCost, computeHouseholdTarget,
-  partnerSeparation, partnerContributionNote,
+  partnerShare, partnerIncomeAt, twoPersonCost, selfFundedCost, partnerContributionNote,
 } from '../js/engine.js';
 import { readFileSync } from 'node:fs';
 
@@ -197,10 +196,12 @@ test('two-person 2 — share math: 6,000 vs 2,000 → 25%, contribution 750, you
   assert.equal(p.rows[0].partnerPension, 0);                 // her pension is not your income
 });
 
-test('two-person 3 — clamp: 9,000 vs 1,000 with a 50% cap → 50%; floor applies too', () => {
-  assert.equal(partnerShare(9000, 1000, twoGl({ shareMax: 0.5 })), 0.5);
-  assert.equal(partnerShare(100, 9900, twoGl({ shareMin: 0.1 })), 0.1);
-  assert.equal(partnerShare(0, 0, twoGl({ shareMin: 0.1 })), 0);    // no income at all → 0
+test('two-person 3 — v8.8: no floor or cap, the share is the plain income ratio', () => {
+  assert.equal(partnerShare(9000, 1000), 0.9);
+  assert.equal(partnerShare(100, 9900), 0.01);
+  assert.equal(partnerShare(0, 0), 0);                      // no income at all → 0
+  // old floor/cap fields in gl are ignored
+  assert.equal(partnerShare(9000, 1000, twoGl({ shareMax: 0.5 })), 0.9);
 });
 
 test('two-person 4 — share switches to the pension ratio in her retirement year (age offset +3)', () => {
@@ -261,83 +262,51 @@ test('two-person 7 — child cost and mortgage are shared costs split by the sha
   assert.equal(r.netFlow, 72000 - 50700);
 });
 
-test('two-person 8 — household target equals a hand-computed two-period PV', () => {
-  // Fixed mode, no inflation, 5% flat return, retire 60 → 70 (n = 10). Need:
-  // 1,000 + 700 + 2,000 = 3,700/mo; both pensions (800 + 400) from 65.
-  // PV = 1.1·[44,400·a(5) + 30,000·a(5)/1.05⁵], a(5) = (1 − 1.05⁻⁵)/0.05.
-  const gl = twoGl({ wdMode: 'fixed', inflation: 0, stockRet: 0.05, bondRet: 0.05, lifeExp: 70,
-                     samPersonalRet: 1000, partnerPersonal: 700, sharedRet: 2000,
-                     pensionAmt: 800, pensionAge: 65, partnerPension: 400, partnerPensionAge: 65 });
-  const sc = makeSc({ hasPartner: true, retAge: 60 });
-  // v8.5: the tax gross-up rises each year as the remaining portfolio grows:
-  // g0 = (1 - 1/1.1)/t, g_k = 1 - (1 - g0)/1.05^(k+1), tm_k = 1/(1 - g_k t).
-  const t = gl.taxRate, g0 = (1 - 1 / 1.1) / t;
-  let expected = 0;
-  for (let k = 0; k < 10; k++) {
-    const g = 1 - (1 - g0) / Math.pow(1.05, k + 1), need = k < 5 ? 44400 : 30000;
-    expected += need / (1 - g * t) / Math.pow(1.05, k + 1);
-  }
-  assert.equal(computeHouseholdTarget(60, sc, gl, 1.1), Math.round(expected));
-  // % mode: year-one need over SWR
-  assert.equal(computeHouseholdTarget(60, sc, { ...gl, wdMode: 'swr' }, 1.1), Math.round(44400 * 1.1 / 0.04));
-  const p = project(sc, gl);
-  assert.equal(p.household.nwAtRet, p.values[25] + p.partner.values[25]);
-  assert.equal(p.household.funded, p.household.nwAtRet >= p.household.target);
+test('two-person 8 — v8.8: no household target, no partner savings ledger', () => {
+  const p = project(makeSc({ hasPartner: true }), twoGl());
+  assert.equal(p.household, undefined);
+  assert.equal(p.partner, undefined);
+  assert.equal(p.partnerInfeasibleYear, undefined);
+  assert.equal(p.rows[0].partnerPortfolio, undefined);
 });
 
-test('two-person 9a — partner contributions accumulate with returns', () => {
-  // 5% flat, she earns 3,000, spends 1,000, contributes 3/8 of 2,000 shared:
-  // net 36,000 − 12,000 − 9,000 = 15,000 → 10,000·1.05 + 15,000 = 25,500.
-  const gl = flat({ stockRet: 0.05, bondRet: 0.05, partnerInc: 3000, partnerPersonal: 1000,
-                    sharedNow: 2000, partnerPortfolio: 10000, partnerGainFrac: 0 });
-  const p = project(makeSc({ hasPartner: true }), gl);
-  assert.equal(p.rows[0].partnerContrib, 9000);
-  assert.equal(p.partner.values[0], 10000);
-  assert.ok(near(p.partner.values[1], 25500));
+test('two-person 9 — her spending and savings never change your numbers (not modelled since v8.8)', () => {
+  const sc = makeSc({ hasPartner: true });
+  const a = project(sc, twoGl({ partnerPersonal: 0, partnerPortfolio: 0 }));
+  const b = project(sc, twoGl({ partnerPersonal: 9000, partnerPortfolio: 500000 }));
+  assert.deepEqual(b.values, a.values);
+  assert.equal(b.fireTarget, a.fireTarget);
 });
 
-test('two-person 9b — partner deficit draws down with the CGT gross-up', () => {
-  // She earns 1,000, spends 3,000, pays 1/6 of 1,200 shared: net −26,400.
-  // After growth 105,000 with basis 50,000 → gain 55/105; netFrac 1 − 0.3·55/105.
-  const gl = flat({ stockRet: 0.05, bondRet: 0.05, partnerInc: 1000, partnerPersonal: 3000,
-                    sharedNow: 1200, partnerPortfolio: 100000, partnerGainFrac: 0.5 });
-  const p = project(makeSc({ hasPartner: true }), gl);
-  const gross = 26400 / (1 - 0.3 * 55000 / 105000);
-  assert.equal(p.rows[0].partnerWithdrawal, Math.round(gross));
-  assert.ok(near(p.partner.values[1], 105000 - gross));
-  assert.ok(p.partnerInfeasibleYear > 2026);                 // runs dry later, not in year 0
-});
-
-test('two-person 9c — empty partner portfolio is flagged and never touches yours', () => {
-  // Partner never retires within the horizon, so her portfolio cannot affect
-  // your share (no draw): your path must not depend on her spending at all.
-  const base = { partnerRetAge: 200, partnerPortfolio: 0 };
-  const ok  = project(makeSc({ hasPartner: true }), twoGl({ ...base, partnerPersonal: 0 }));
-  const bad = project(makeSc({ hasPartner: true }), twoGl({ ...base, partnerPersonal: 9000 }));
-  assert.equal(bad.partnerInfeasibleYear, 2026);
-  assert.equal(ok.partnerInfeasibleYear, null);
-  assert.deepEqual(bad.values, ok.values);
-  assert.equal(bad.infeasibleYear, ok.infeasibleYear);
-  assert.ok(bad.partner.values.every(v => v === 0));
+test('two-person 9b — after she stops, her income is her pension only (no draw from her savings)', () => {
+  // She stops at her 40 (2031), pension from 67: 2031 income 0 → share 0 until her pension.
+  const gl = flat({ partnerRetAge: 40, partnerPortfolio: 1e6 });
+  const p = project(makeSc({ hasPartner: true, retAge: 60 }), gl);
+  const r = p.rows[p.years.indexOf(2031)];
+  assert.equal(r.partnerIncome, 0);
+  assert.equal(r.partnerShare, 0);
+  assert.equal(r.partnerContrib, 0);
 });
 
 test('two-person: self-funded cost is a fixed point of the share rule', () => {
   // At target your income equals your cost, so share = clamp(h/(h+c)).
-  const gl = twoGl({ shareMax: 0.9 }), sc = makeSc({ hasPartner: true });
+  const gl = twoGl(), sc = makeSc({ hasPartner: true });
   const c = selfFundedCost(2036, sc, gl, 0, 0);
   const h = partnerIncomeAt(2036, gl).total;
   assert.ok(near(c.share, h / (h + c.samCost), 1e-9));
   assert.ok(near(c.samCost, c.samPersonal + c.shared * (1 - c.share), 1e-6));
-  // with the default 50% cap the clamped share is consistent too
+  // v8.8: no cap, a high earner pays the plain ratio (still a fixed point)
   const k = selfFundedCost(2036, sc, twoGl({ partnerInc: 20000 }), 0, 0);
-  assert.equal(k.share, 0.5);
+  const hk = partnerIncomeAt(2036, twoGl({ partnerInc: 20000 })).total;
+  assert.ok(k.share > 0.5);
+  assert.ok(near(k.share, hk / (hk + k.samCost), 1e-9));
 });
 
 test('two-person: partial target (SWR) prices your year-one net cost; fixed = year-by-year PV', () => {
   const gl = twoGl(), sc = makeSc({ hasPartner: true });
   const p = project(sc, gl);
   const taxMult = 1 / (1 - p.gainFracAtRet * gl.taxRate);
-  const y1 = yearOneBudget(45, sc, gl, p.partner.drawByT[10]);
+  const y1 = yearOneBudget(45, sc, gl, 0);
   assert.equal(p.fireTarget, Math.round(y1 * taxMult / gl.swr));          // no pension at 45
   // fixed mode with no partner income: share 0, so the target is the PV of
   // your full cost (personal + shared), pension netted from 67.
@@ -354,14 +323,9 @@ test('two-person: partial target (SWR) prices your year-one net cost; fixed = ye
   assert.equal(computeFireTarget(60, scF, glF, 1.2, { herDraw: {} }), Math.round(exp));
 });
 
-test('two-person: separation check and contribution note come from the projection', () => {
+test('two-person: the contribution note comes from the projection', () => {
   const gl = twoGl(), sc = makeSc({ hasPartner: true });
   const p = project(sc, gl);
-  const sep = partnerSeparation(p, sc, gl);
-  assert.deepEqual(sep.map(s => s.herAge), [45, 50, 67]);
-  const s50 = sep[1];
-  assert.equal(s50.income, 1800);                            // still working at 50
-  assert.equal(s50.gap, 1800 - (700 + 1500));
   const n = partnerContributionNote(sc, gl, p);
   assert.equal(n.untilHerAge, 65);
   assert.ok(n.contribMonthly > 0 && n.costAfterMonthly > n.costMonthly); // her retiring raises your cost
