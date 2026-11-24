@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.18.5">
+<link rel="stylesheet" href="css/styles.css?v=8.19">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.18.5</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.19</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -101,7 +101,7 @@
         <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
       </button>
       <div class="tile-body subj-body" id="tile-pension-body" hidden>
-<div class="subj-subhd">Gross, as printed on the statement <span class="spend-upd" id="pensionUpdatedTxt"></span><input type="hidden" id="pensionUpdated" value=""></div><div class="frows"><div class="frow"><div class="frow-l">Germany <button type="button" class="info-btn" title="Gross, as printed on the Renteninformation: the amount under &#x201C;H&#xF6;he der k&#xFC;nftigen Regelaltersrente&#x201D; that assumes no further contributions. Used as entered (not taxed in the model).">&#x24D8;</button></div><div class="frow-c"><div class="inp cur fc"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="pensionAmt" id="pensionAmt_disp"><input type="hidden" id="pensionAmt" value=""><span class="suf">/mo</span></div><span class="frow-sep">from</span><div class="step sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="pensionAge" aria-hidden="true" tabindex="-1"><span class="step-v"><input type="number" id="pensionAge" value="67" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div></div><div class="frow"><div class="frow-l">France <button type="button" class="info-btn" title="Gross, as printed on your relev&#xE9; (info-retraite.fr): basic + complementary (Agirc-Arrco) pension for the quarters you have now. Used as entered (not taxed in the model).">&#x24D8;</button></div><div class="frow-c"><div class="inp cur fc"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="pension2Amt" id="pension2Amt_disp"><input type="hidden" id="pension2Amt" value=""><span class="suf">/mo</span></div><span class="frow-sep">from</span><div class="step sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="pension2Age" aria-hidden="true" tabindex="-1"><span class="step-v"><input type="number" id="pension2Age" value="64" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div></div></div><div class="spend-readout" id="pensionReadout" aria-live="polite"></div>
+<div class="subj-subhd">Gross, as printed on the statement <span class="spend-upd" id="pensionUpdatedTxt"></span><input type="hidden" id="pensionUpdated" value=""></div><div class="frows"><div class="frow"><div class="frow-l">Germany <button type="button" class="info-btn" title="Gross, as printed on the Renteninformation: the amount under &#x201C;H&#xF6;he der k&#xFC;nftigen Regelaltersrente&#x201D; that assumes no further contributions. The plan uses it net of the health and social charges taken off at payout (what lands in your account); income tax is not deducted.">&#x24D8;</button></div><div class="frow-c"><div class="inp cur fc"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="pensionAmt" id="pensionAmt_disp"><input type="hidden" id="pensionAmt" value=""><span class="suf">/mo</span></div><span class="frow-sep">from</span><div class="step sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="pensionAge" aria-hidden="true" tabindex="-1"><span class="step-v"><input type="number" id="pensionAge" value="67" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div></div><div class="frow"><div class="frow-l">France <button type="button" class="info-btn" title="Gross, as printed on your relev&#xE9; (info-retraite.fr): basic + complementary (Agirc-Arrco) pension for the quarters you have now. The plan uses it net of the health and social charges taken off at payout (what lands in your account); income tax is not deducted.">&#x24D8;</button></div><div class="frow-c"><div class="inp cur fc"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="pension2Amt" id="pension2Amt_disp"><input type="hidden" id="pension2Amt" value=""><span class="suf">/mo</span></div><span class="frow-sep">from</span><div class="step sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="pension2Age" aria-hidden="true" tabindex="-1"><span class="step-v"><input type="number" id="pension2Age" value="64" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div></div><div id="pensionMoreList" class="frows-more"></div></div><div id="pensionMoreAdd"></div><div class="spend-readout" id="pensionReadout" aria-live="polite"></div>
       </div>
     </section>
     <section class="subj tile" id="tile-housing" style="--acc:var(--s1c)">
@@ -509,6 +509,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.18.5"></script>
+<script type="module" src="js/main.js?v=8.19"></script>
 </body>
 </html>

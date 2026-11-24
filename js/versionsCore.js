@@ -32,7 +32,7 @@ export function diffFields(a, b) {
     .map(id => ({ id, from: String(fa[id] ?? ''), to: String(fb[id] ?? '') }));
 }
 // Lists and switches that changed (plans, moves, scenario switches, mode).
-const LISTS = { windfalls: 'Windfalls', payChanges: 'Pay changes', rentMoves: 'Planned rents',
+const LISTS = { windfalls: 'Windfalls', payChanges: 'Pay changes', rentMoves: 'Planned rents', pensionsMore: 'Other pensions',
   residence: 'Planned moves abroad', features: 'Scenario switches', nwHistory: 'Net-worth history', wdMode: 'Withdrawal strategy' };
 export function diffLists(a, b) {
   return Object.keys(LISTS).filter(k => JSON.stringify((a || {})[k] ?? null) !== JSON.stringify((b || {})[k] ?? null)).map(k => LISTS[k]);

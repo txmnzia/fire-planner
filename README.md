@@ -133,10 +133,11 @@ first entry).
 
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
-| German pension / month | `pensionAmt` | — (0) | EUR/month | Gross, as printed on the statement (v8.9: one row per country) |
+| German pension / month | `pensionAmt` | — (0) | EUR/month | Gross, as printed on the statement (v8.9: one row per country); the plan uses it net (v8.19) |
 | German pension age | `pensionAge` | 67 | years | Legal age; change only to defer |
 | French pension / month | `pension2Amt` | — (0) | EUR/month | Gross, as printed (basic + Agirc-Arrco); empty = no rights in France |
 | French pension age | `pension2Age` | 64 | years | Legal age; change only to defer |
+| Other countries' pensions | `state.pensionsMore` `[{country, amt, age, ded}]` | none | code, EUR/month gross, years, % | "+ Add a country" (v8.19); `ded` = % taken off at payout, empty = 0; used net |
 | (last statement) | `pensionUpdated` | — | date | Stamped when a pension amount is edited; red after 12 months |
 | Windfalls (Name, Year, Amount) | `state.windfalls` `[{name,yr,amt,off}]` | none | text, year, EUR, scenario ids | One-time lump-sum inflows in the **Changes** tab, "Might happen" lane; switched per scenario in the scenario grid, one row per windfall labelled with its name (v8.18; "Windfall" when unnamed). A new windfall starts switched off everywhere (v8.18.4). `off` lists the scenarios it is switched off for; absent = on everywhere, so windfalls saved before v8.4 keep applying to every scenario (legacy `wf0/1/2` fields auto-migrate) |
 
@@ -817,16 +818,25 @@ If net is positive (costs > savings), it increases the FIRE number. If negative 
 ## Pension / State Pension
 
 Each state pension (v8.9: German `pensionAmt` from `pensionAge`, French `pension2Amt`
-from `pension2Age`) is treated as a **guaranteed inflation-linked annuity** from its own
+from `pension2Age`; v8.19: any other country in `state.pensionsMore`, added with
+"+ Add a country") is treated as a **guaranteed inflation-linked annuity** from its own
 age. One source for "pension at an age": `pensionMonthlyAt(gl, age)` in `js/engine.js`
 (the sum of the pensions started by then); the adjusted target credits each pension that
 starts after retirement separately (`pensionList`).
 
-Amounts are typed **gross, as printed**, and the plan uses them gross (not taxed; a known
-simplification, AUDIT.md Part 4). Next to them a read-out shows `≈ net` after the social
-charges that certainly apply (`js/pensions.js`): Germany 12.4% (health insurance for
-pensioners 7.3% + half the average add-on 1.45% + long-term care 3.6%), France 9.1%
-(CSG 8.3% + CRDS 0.5% + CASA 0.3%, full rate). Income tax is not included.
+Amounts are typed **gross, as printed**. Since v8.19 the plan uses them **net, what lands
+in your account** (the owner's choice): `getGlobals` converts each with `pensionNet` in
+`js/pensions.js`, so every engine figure (`pensionMonthlyAt`, `pensionList`, targets,
+projection, Monte Carlo) sees the net amount. Deductions: Germany 12.4% (health insurance
+for pensioners 7.3% + half the average add-on 1.45% + long-term care 3.6%), France 9.1%
+(CSG 8.3% + CRDS 0.5% + CASA 0.3%, full rate); another country has no preset: its row has
+a "taken off %" field (empty = 0%, the amount as printed). **Income tax is not deducted**
+(it depends on where you live and the household). A read-out shows net next to gross.
+
+```
+net pension (€/month, today's money) = gross × (1 − deduction)
+e.g. German 800 gross → 800 × (1 − 0.124) = 700.80 used by the plan
+```
 
 ### Inflation Adjustment
 

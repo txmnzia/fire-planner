@@ -1,15 +1,16 @@
-import { el } from "./util.js?v=8.18.5";
-import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.18.5";
-import { state, features } from "./state.js?v=8.18.5";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.18.5";
-import { recalc } from "./recalc.js?v=8.18.5";
-import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.18.5";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.18.5";
-import { refreshSituationControls } from "./ui/situation.js?v=8.18.5";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.18.5";
-import { db } from "./db.js?v=8.18.5";
-import { migrateSpending } from "./spendMigration.js?v=8.18.5";
-import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.18.5";
+import { el } from "./util.js?v=8.19";
+import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.19";
+import { state, features } from "./state.js?v=8.19";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.19";
+import { recalc } from "./recalc.js?v=8.19";
+import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.19";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.19";
+import { refreshSituationControls } from "./ui/situation.js?v=8.19";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.19";
+import { db } from "./db.js?v=8.19";
+import { migrateSpending } from "./spendMigration.js?v=8.19";
+import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.19";
+import { normalisePensionsMore } from "./pensions.js?v=8.19";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
@@ -68,6 +69,7 @@ export function collectState() {
     windfalls: state.windfalls,
     payChanges: state.payChanges,
     rentMoves: state.rentMoves,
+    pensionsMore: state.pensionsMore,
     residence: state.residence,
     versions: state.versions,
     review: state.review,
@@ -149,6 +151,7 @@ function applyStateInner(data) {
   state.review = data.review && typeof data.review === 'object' ? data.review : null;
   state.pendingFirstVersion = !Array.isArray(data.versions) && !!data.fields && Object.keys(data.fields).length > 0;
   state.rentMoves = normaliseRentMoves(data.rentMoves);
+  state.pensionsMore = normalisePensionsMore(data.pensionsMore);   // v8.19
   state.residence = normaliseResidence(data.residence);
   renderNwHistory();
   refreshSituationControls();

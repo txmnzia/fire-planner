@@ -1,7 +1,8 @@
-import { el, numVal, optVal } from "./util.js?v=8.18.5";
-import { state, features } from "./state.js?v=8.18.5";
-import { effectiveFeatures } from "./checks.js?v=8.18.5";
-import { payChangesFor } from "./payChanges.js?v=8.18.5";
+import { el, numVal, optVal } from "./util.js?v=8.19";
+import { state, features } from "./state.js?v=8.19";
+import { effectiveFeatures } from "./checks.js?v=8.19";
+import { payChangesFor } from "./payChanges.js?v=8.19";
+import { pensionNet, pensionsMoreNet } from "./pensions.js?v=8.19";
 
 
 // Optional money field: null when empty (unlike optVal, 0 is a valid value).
@@ -27,16 +28,16 @@ export function getWindfalls() {
     .filter(w => !isNaN(w.yr) && !isNaN(w.amt) && w.amt > 0);
 }
 
-export { COUNTRY_TAX } from "./taxTable.js?v=8.18.5";
-import { COUNTRY_TAX } from "./taxTable.js?v=8.18.5";
+export { COUNTRY_TAX } from "./taxTable.js?v=8.19";
+import { COUNTRY_TAX } from "./taxTable.js?v=8.19";
 // Legacy saved states stored the numeric rate as the select value; map to a country code.
 export const LEGACY_RATE_TO_CODE = { "30":"FR", "28":"PT", "26":"ES", "32":"NL", "0":"BE", "33":"IE",
                               "15":"GR", "10":"HR", "19":"PL", "25":"SI", "20":"EE", "27":"DK" };
 
 // Living alone costs about 70% of what two people spend: SOLO_SHARE lives in the
 // engine since v8.11 (one constant); re-exported for older importers.
-import { SOLO_SHARE, residenceAt } from "./engine.js?v=8.18.5";
-import { buildResidence, normaliseRentMoves, buyCostPreset, plansForScenario } from "./countries.js?v=8.18.5";
+import { SOLO_SHARE, residenceAt } from "./engine.js?v=8.19";
+import { buildResidence, normaliseRentMoves, buyCostPreset, plansForScenario } from "./countries.js?v=8.19";
 export { SOLO_SHARE };
 // v8.7: yearly items (€/yr, shared) count in the default too, as a monthly amount.
 export function soloSharedFrom(entered, sharedNow, yearlyItems) {
@@ -74,10 +75,13 @@ export function getGlobals() {
     stockAlloc:   1-bondNow,
     bondAllocRet: numVal("bondAllocRet",40)/100,
     taxRate,
-    pensionAmt:   numVal("pensionAmt",0),
+    // v8.19: pensions are typed gross (as printed) and reach the engine NET, what
+    // lands in your account (country social charges off, income tax not); see pensions.js
+    pensionAmt:   pensionNet('DE', numVal("pensionAmt",0)),
     pensionAge:   numVal("pensionAge",67),
-    pension2Amt:  numVal("pension2Amt",0),     // French pension (v8.9)
+    pension2Amt:  pensionNet('FR', numVal("pension2Amt",0)),     // French pension (v8.9)
     pension2Age:  numVal("pension2Age",64),
+    pensionsMore: pensionsMoreNet(state.pensionsMore),           // other countries (v8.19)
     cash:         numVal("cash",0),
     cashReturn:   numVal("cashReturn",1)/100,
     windfalls:    getWindfalls(),

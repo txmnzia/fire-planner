@@ -25,16 +25,22 @@ export const TODAY_MONEY = [
 
 // fields: the saved field values (strings); closingYear: the year being closed;
 // inflation: decimal. Returns the proposed changes [{id, label, from, to, checked}].
-export function yearEndChanges(fields, closingYear, inflation) {
+// more: pensions from other countries (v8.19), [{country, amt}] → ids 'pm:<index>'.
+export function yearEndChanges(fields, closingYear, inflation, more) {
   const refreshed = stamp => stamp && /^\d{4}-/.test(fields[stamp] || '') && +fields[stamp].slice(0, 4) >= closingYear;
-  return TODAY_MONEY
+  const pm = (more || []).map((p, i) => ({ p, i })).filter(({ p }) => p.amt > 0).map(({ p, i }) => {
+    const r = refreshed('pensionUpdated');
+    return { id: 'pm:' + i, label: 'Pension (' + p.country + ')', from: +p.amt, to: Math.round(p.amt * (1 + inflation)), checked: !r,
+             why: r ? 'refreshed in ' + closingYear : 'not refreshed in ' + closingYear };
+  });
+  return [...TODAY_MONEY
     .filter(f => fields[f.id] !== undefined && fields[f.id] !== '' && +fields[f.id] > 0)
     .map(f => {
       const from = +fields[f.id];
       return { id: f.id, label: f.label, from, to: Math.round(from * (1 + inflation)),
                checked: !f.pay && !refreshed(f.stamp),
                why: f.pay ? 'pay: type a raise instead' : refreshed(f.stamp) ? 'refreshed in ' + closingYear : 'not refreshed in ' + closingYear };
-    });
+    }), ...pm];
 }
 
 // The history row written for the closed year: net worth at the start of the new

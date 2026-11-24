@@ -1,11 +1,11 @@
 // Spending refresh (v8.7): read-outs under the four spending numbers and the
 // "last refreshed" date. The numbers come from the engine (investNowMonthly), so
 // the read-out is the same calculation the projection uses in year one.
-import { el, eur, numVal } from "../util.js?v=8.18.5";
-import { investNowMonthly } from "../engine.js?v=8.18.5";
-import { PENSION_COUNTRIES, pensionNetEstimate } from "../pensions.js?v=8.18.5";
-import { depositCheck } from "../ibkr.js?v=8.18.5";
-import { state } from "../state.js?v=8.18.5";
+import { el, eur, numVal } from "../util.js?v=8.19";
+import { investNowMonthly } from "../engine.js?v=8.19";
+import { pensionReadoutRows } from "./pensions.js?v=8.19";
+import { depositCheck } from "../ibkr.js?v=8.19";
+import { state } from "../state.js?v=8.19";
 
 export const REFRESH_FIELDS = ['samPersonalNow', 'samPaysIn', 'partnerPaysIn', 'yearlyItems'];
 export const STALE_DAYS = 183;
@@ -50,14 +50,14 @@ export function renderSpendReadout(gl) {
   host.innerHTML = lines.map(l => '<div>' + l + '</div>').join('');
 }
 
-// Pension read-out: the net estimate next to each statement amount.
+// Pension read-out (v8.19): the net the plan uses, next to each gross amount typed.
+const countryName = c => { const o = el('retCountry') && [...el('retCountry').options].find(x => x.value === c);
+  return o ? o.textContent.replace(/\s+[\d.]+%$/, '').replace(/^\S+\s/, '').trim() : c; };
 function renderPensionReadout(gl) {
   const host = el('pensionReadout'); if (!host) return;
-  const rows = [['DE', gl.pensionAmt, gl.pensionAge], ['FR', gl.pension2Amt, gl.pension2Age]]
-    .filter(([, a]) => a > 0)
-    .map(([c, a, age]) => '<div>' + PENSION_COUNTRIES[c].name + ' pension from ' + age + ': <b>\u2248 ' + eur(pensionNetEstimate(c, a)) +
-      ' net</b> of ' + eur(a) + ' gross <span class="tgt">after ' + PENSION_COUNTRIES[c].why + '; income tax not included</span></div>');
-  host.innerHTML = rows.length ? rows.join('') + '<div class="tgt">The plan uses the gross amounts, as typed.</div>' : '';
+  const rows = pensionReadoutRows({ de: numVal('pensionAmt', 0), deAge: gl.pensionAge, fr: numVal('pension2Amt', 0), frAge: gl.pension2Age }, state.pensionsMore)
+    .map(r => '<div>' + countryName(r.country) + ' from ' + r.age + ': <b>' + eur(r.net) + ' net</b> of ' + eur(r.gross) + ' gross <span class="tgt">(' + r.why + ')</span></div>');
+  host.innerHTML = rows.length ? rows.join('') + '<div class="tgt">The plan uses the net amounts: what lands in your account. Income tax is not deducted.</div>' : '';
 }
 
 // Any edit to a tile's numbers stamps today's date on that tile.

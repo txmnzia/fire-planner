@@ -1,11 +1,11 @@
-import { el, numVal } from "../util.js?v=8.18.5";
-import { state, features } from "../state.js?v=8.18.5";
-import { getScenarioName } from "../inputs.js?v=8.18.5";
-import { recalc } from "../recalc.js?v=8.18.5";
-import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js?v=8.18.5";
-import { renderTable } from "./table.js?v=8.18.5";
-import { renderSummaryTiles } from "./cards.js?v=8.18.5";
-import { resizeMcCharts } from "./mcTab.js?v=8.18.5";
+import { el, numVal } from "../util.js?v=8.19";
+import { state, features } from "../state.js?v=8.19";
+import { getScenarioName } from "../inputs.js?v=8.19";
+import { recalc } from "../recalc.js?v=8.19";
+import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js?v=8.19";
+import { renderTable } from "./table.js?v=8.19";
+import { renderSummaryTiles } from "./cards.js?v=8.19";
+import { resizeMcCharts } from "./mcTab.js?v=8.19";
 
 // ── TAB SWITCHING ──────────────────────────────────────────────────────────
 export function switchTab(name) {

@@ -35,7 +35,8 @@ js/
   versionsCore.js       Pure (v8.14): snapshots, diffs, impact lines, prompts, review.
   ibkr.js               Pure (v8.10): IBKR statement parser (total, positions, gain %,
                         as-of date, deposits) and the check-in read-outs.
-  pensions.js           Pure (v8.9): pension countries, legal ages and the net estimate.
+  pensions.js           Pure (v8.9): pension countries, legal ages, the net rule the plan
+                        uses (pensionNet, v8.19) and the other-country list.
   assumptions.js        Pure (v8.9): market-assumption defaults and which ones differ.
   spendMigration.js     Pure (v8.8): maps payloads saved before the one-model spending
                         onto the four account numbers (migrateSpending).
@@ -65,6 +66,8 @@ js/
                         with a feature off quantify life-event impacts).
     infoTips.js         Tap/click/hover bubbles for every (i) button (text from its
                         title); placeTip() is the pure, tested placement.
+    pensions.js         Pensions from other countries ("+ Add a country", v8.19) and
+                        the net read-out rows; the net rule itself is js/pensions.js.
     tiles.js            Changes tab (v8.17): tiles open in place, one-line summaries,
                         date badges, the phone impact bar. Tile bodies (v8.18.2) are
                         .frow fields (caption above controls) flowing side by

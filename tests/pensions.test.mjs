@@ -82,3 +82,53 @@ test('assumptions: only values that differ from the default are listed', async (
   assert.deepEqual(assumptionChanges({ ...Object.fromEntries(Object.entries(ASSUMPTION_DEFAULTS).map(([k, v]) => [k, String(v)])) }), []);
   assert.deepEqual(assumptionChanges({ stockRet: '6', bondRet: '3', inflation: '2.5' }), ['stocks 6% (default 7%)', 'inflation 2.5% (default 2%)']);
 });
+
+// v8.19: the plan uses NET pensions (what lands in your account: social charges
+// off, income tax not), and pensions from other countries ("+ Add a country").
+test('v8.19 pensionNet: gross × (1 − deduction), presets or a typed %, never negative (hand-computed)', async () => {
+  const { pensionNet, pensionsMoreNet, normalisePensionsMore } = await import('../js/pensions.js');
+  assert.ok(Math.abs(pensionNet('DE', 800) - 700.8) < 1e-9);     // 800 × (1 − 12.4%)
+  assert.ok(Math.abs(pensionNet('FR', 1000) - 909) < 1e-9);      // 1,000 × (1 − 9.1%)
+  assert.equal(pensionNet('PT', 500), 500);                        // no preset, nothing typed: as printed
+  assert.ok(Math.abs(pensionNet('PT', 500, 10) - 450) < 1e-9);    // 10% typed
+  assert.ok(Math.abs(pensionNet('DE', 1000, 5) - 950) < 1e-9);    // a typed % wins over the preset
+  assert.equal(pensionNet('ES', 500, 150), 0);                     // clamped to 100%
+  assert.equal(pensionNet('DE', 0), 0); assert.equal(pensionNet('DE', -5), 0); assert.equal(pensionNet('DE', null), 0);
+  assert.deepEqual(normalisePensionsMore([{ country: 'PT', amt: '300', age: '66', ded: '' }, { amt: 'x' }]),
+    [{ country: 'PT', amt: 300, age: 66, ded: null }, { country: 'XX', amt: null, age: 67, ded: null }]);
+  assert.deepEqual(pensionsMoreNet([{ country: 'PT', amt: 300, age: 66, ded: 10 }, { country: 'ES', amt: null, age: 65 }]), [{ amt: 270, age: 66 }]);
+});
+
+test('v8.19 engine: a pension from another country counts from its own age, exactly like the German row', () => {
+  const g = gl({ pensionsMore: [{ amt: 270, age: 66 }] });
+  assert.equal(pensionMonthlyAt(g, 63), 0); assert.equal(pensionMonthlyAt(g, 65), 400);
+  assert.equal(pensionMonthlyAt(g, 66), 670); assert.equal(pensionMonthlyAt(g, 67), 1470);
+  assert.deepEqual(pensionList(g), [{ amt: 800, age: 67 }, { amt: 400, age: 64 }, { amt: 270, age: 66 }]);
+  // equivalence: the German pension moved into the "other countries" list → same projection, both modes
+  for (const wdMode of ['swr', 'fixed']) {
+    const o = { inflation: 0.02, stockRet: 0.06, wdMode };
+    const a = project(sc({ retAge: 50 }), gl(o));
+    const b = project(sc({ retAge: 50 }), gl({ ...o, pensionAmt: 0, pensionsMore: [{ amt: 800, age: 67 }] }));
+    assert.deepEqual(b.values, a.values); assert.equal(b.fireTarget, a.fireTarget); assert.equal(b.fireTargetAdj, a.fireTargetAdj);
+  }
+  // % mode: 1,000 own + 2,000 alone − (800 + 400 + 270) flowing at 69 → (3,000 − 1,470) × 12 / 4% = 459,000
+  assert.equal(computeFireTarget(69, sc({ retAge: 69 }), gl({ lifeExp: 90, pensionsMore: [{ amt: 270, age: 66 }] }), 1), 459000);
+});
+
+test('v8.19 wiring: the form is gross, the engine gets net; saved and rolled over', async () => {
+  const src = f => readFileSync(new URL('../' + f, import.meta.url), 'utf8');
+  const inputs = src('js/inputs.js');
+  assert.match(inputs, /pensionAmt:\s+pensionNet\('DE', numVal\("pensionAmt",0\)\)/);
+  assert.match(inputs, /pension2Amt:\s+pensionNet\('FR', numVal\("pension2Amt",0\)\)/);
+  assert.match(inputs, /pensionsMore: pensionsMoreNet\(state\.pensionsMore\)/);
+  assert.match(src('js/sync.js'), /pensionsMore: state\.pensionsMore/);
+  assert.match(src('js/sync.js'), /state\.pensionsMore = normalisePensionsMore\(data\.pensionsMore\)/);
+  assert.match(src('index.html'), /id="pensionMoreList"/);
+  const { yearEndChanges } = await import('../js/yearEnd.js');
+  const ch = yearEndChanges({ pensionUpdated: '2025-03-01' }, 2026, 0.02, [{ country: 'PT', amt: 500 }, { country: 'ES', amt: null }]);
+  assert.deepEqual(ch, [{ id: 'pm:0', label: 'Pension (PT)', from: 500, to: 510, checked: true, why: 'not refreshed in 2026' }]);
+  assert.equal(yearEndChanges({ pensionUpdated: '2026-05-01' }, 2026, 0.02, [{ country: 'PT', amt: 500 }])[0].checked, false);
+  const { pensionReadoutRows } = await import('../js/ui/pensions.js');
+  assert.deepEqual(pensionReadoutRows({ de: 800, deAge: 67, fr: 0, frAge: 64 }, [{ country: 'PT', amt: 300, age: 66, ded: null }]).map(r => [r.country, r.net]),
+    [['DE', 701], ['PT', 300]]);
+});

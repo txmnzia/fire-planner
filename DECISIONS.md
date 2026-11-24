@@ -5,6 +5,17 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.19 Pensions net, any country
+
+- **The plan uses net pensions** (the owner: "what ends up in my bank account, not
+  considering income tax"). Typed gross as printed; Germany −12.4%, France −9.1% (health
+  and social charges). Income tax is still not deducted. *Effect on the owner's
+  scenarios:* stop ages unchanged (his pension starts after he stops, so the headline
+  target gives it no credit); the target that credits pensions rose by about €7–19k.
+- **"+ Add a country"** under Germany and France: country, gross amount, start age,
+  and the % taken off at payout (no preset outside Germany and France: empty = 0%).
+  Same row layout as Germany and France; included in the year-end inflation rollover.
+
 ## 2026-11-24 · v8.18.5 A light impact panel
 
 - **"Impact on your scenarios" shows only what matters** (the owner): per scenario, the

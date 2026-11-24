@@ -2,10 +2,10 @@
 // (plans). A tile shows a one-line summary and opens in place; one open tile per
 // lane. The fields inside are the same inputs as before (same ids), so saving,
 // sync and the engine are untouched. The impact panel sits beside the lanes.
-import { el, eur } from "../util.js?v=8.18.5";
-import { state } from "../state.js?v=8.18.5";
-import { refreshedText } from "./spending.js?v=8.18.5";
-import { plansSetUp } from "../checks.js?v=8.18.5";
+import { el, eur } from "../util.js?v=8.19";
+import { state } from "../state.js?v=8.19";
+import { refreshedText } from "./spending.js?v=8.19";
+import { plansSetUp } from "../checks.js?v=8.19";
 
 const OPEN_KEY = 'fire_open_tiles';
 const k = v => '€' + (v >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : v >= 1e4 ? Math.round(v / 1000) + 'k' : Math.round(v).toLocaleString('en-GB'));
@@ -60,8 +60,10 @@ export function renderTiles(gl) {
       sp.text, sp.stale);
   put('tile-pay', k(parseFloat(f('baseIncome')) || 0) + '/month take-home', '');
   const pe = refreshedText(f('pensionUpdated'), new Date(), 365);
-  const pens = [gl.pensionAmt > 0 ? 'Germany ' + k(gl.pensionAmt) + ' from ' + gl.pensionAge : '', gl.pension2Amt > 0 ? 'France ' + k(gl.pension2Amt) + ' from ' + gl.pension2Age : ''].filter(Boolean);
-  put('tile-pension', pens.join(' · ') || 'none entered', pe.text, pe.stale);
+  // v8.19: the net amounts the plan uses (gl), one per country
+  const pens = [gl.pensionAmt > 0 ? 'DE ' + k(gl.pensionAmt) + ' from ' + gl.pensionAge : '', gl.pension2Amt > 0 ? 'FR ' + k(gl.pension2Amt) + ' from ' + gl.pension2Age : '',
+    ...(state.pensionsMore || []).filter(p => p.amt > 0).map((p, i) => p.country + ' ' + k((gl.pensionsMore[i] || {}).amt || 0) + ' from ' + p.age)].filter(Boolean);
+  put('tile-pension', pens.length ? pens.join(' · ') + ' net' : 'none entered', pe.text, pe.stale);
   const nextRent = (state.rentMoves || []).filter(m => m.rent != null).sort((a, b) => a.from - b.from)[0];
   put('tile-housing', 'rent ' + k(gl.propRentSaved || 0) + '/month' + (nextRent ? ' · planned ' + k(nextRent.rent) + ' from ' + nextRent.from : ''), '');
   const sel = el('retCountry'), ctry = sel ? (sel.options[sel.selectedIndex] || {}).text || '' : '';

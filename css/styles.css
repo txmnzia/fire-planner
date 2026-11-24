@@ -480,6 +480,10 @@ button.wd-pill{font:inherit;font-size:12px;}
 .frow{display:flex;flex-direction:column;align-items:flex-start;gap:5px;max-width:100%;}
 .frow-l{font-size:11.5px;color:var(--sec);line-height:1.3;display:block;min-width:0;white-space:nowrap;}
 .frow-l .info-btn{display:inline;padding:0 0 0 3px;}
+/* v8.19: pensions from other countries sit in the same field flow as Germany and France */
+.frows-more{display:contents;}
+.frow-l select.pm-country{height:auto;width:auto;padding:0 2px;border:none;background:transparent;color:var(--sec);font:inherit;font-size:11.5px;cursor:pointer;}
+.frow-l select.pm-country:focus{outline:1px solid var(--sec);}
 /* v8.18.3: left-right alignment. Each line of fields fills the tile: fields grow,
    and inside a field the boxes grow (money, years, steppers), so every line ends on
    the tile's right edge. Words between boxes ("until age", "at") stay their size. */
@@ -497,7 +501,7 @@ button.wd-pill{font:inherit;font-size:12px;}
 .tile-body .step-v input{flex:1 1 auto;width:4.4ch;min-width:4.4ch;}
 .tile-body .inp.fc > :is(input,select){width:100%;min-width:0;}
 .tile-body .res-c select{width:100%;}
-.tile-body .unit-wrap.fc input{width:100%;}
+.tile-body .unit-wrap.fc input{width:100%;background:var(--dim);}
 .tile-body .wd-toggle{flex:1 1 auto;}
 .tile-body .wd-pill{flex:1 1 auto;justify-content:center;}
 .tile-body .item-c .dp-del{margin-left:0;}

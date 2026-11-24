@@ -89,11 +89,14 @@ export function mortgageAnnual(gl) {
 // incomes. Every two-person figure on screen comes from the functions below.
 export function isTwoPerson(gl) { return gl.partnerModel === 'two'; }
 
-// Your state pensions at a given age (today's €/month, gross as printed), v8.9:
-// one per country, each from its own start age. pension2 (France) is optional.
+// Your state pensions at a given age (today's €/month), v8.9: one per country,
+// each from its own start age. pension2 (France) and pensionsMore (other
+// countries, v8.19: [{amt, age}]) are optional. Since v8.19 the amounts reaching
+// the engine are net (getGlobals converts the gross typed on the statement).
 export function pensionMonthlyAt(gl, age) {
   let p = age >= gl.pensionAge ? (gl.pensionAmt || 0) : 0;
   if (gl.pension2Amt > 0 && age >= gl.pension2Age) p += gl.pension2Amt;
+  for (const x of gl.pensionsMore || []) if (x.amt > 0 && age >= x.age) p += x.amt;
   return p;
 }
 // ── Housing and where you live (v8.11) ──────────────────────────────────────
@@ -141,6 +144,7 @@ export function pensionList(gl) {
   const out = [];
   if (gl.pensionAmt > 0) out.push({ amt: gl.pensionAmt, age: gl.pensionAge });
   if (gl.pension2Amt > 0) out.push({ amt: gl.pension2Amt, age: gl.pension2Age });
+  for (const x of gl.pensionsMore || []) if (x.amt > 0) out.push({ amt: x.amt, age: x.age });
   return out;
 }
 
