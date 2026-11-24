@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.12">
+<link rel="stylesheet" href="css/styles.css?v=8.13">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.12</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.13</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -310,14 +310,20 @@
         <div class="field"><label for="propPrice_disp">Purchase price</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="propPrice" id="propPrice_disp"><input type="hidden" id="propPrice" value=""></div></div>
         <div class="field slider-field"><label for="propDownPct">Down payment <span class="sv"><input type="number" id="propDownPct" value="20" min="0" max="100" step="1" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="propDownPct" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field slider-field"><label for="propTxCostPct">Transaction costs <span class="sv"><input type="number" id="propTxCostPct" value="8" min="0" max="20" step="0.5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
+        <div class="field slider-field"><label for="propTxCostPct">Buying costs <button type="button" class="info-btn" title="Transfer tax, notary, land registry and agent, in % of the price. Empty = the default of the country you live in that year: Germany about 10%, France about 8%, elsewhere 8%.">&#x24D8;</button> <span class="sv"><input type="number" id="propTxCostPct" value="" placeholder="10" min="0" max="20" step="0.5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="propTxCostPct" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         <div class="field slider-field"><label for="propMortgageRate">Mortgage rate <span class="sv"><input type="number" id="propMortgageRate" value="3.5" min="0" max="15" step="0.1" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="propMortgageRate" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         <div class="field slider-field"><label for="propMortgageTerm">Mortgage term <span class="sv"><input type="number" id="propMortgageTerm" value="25" min="5" max="40" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="propMortgageTerm" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+                <div class="field"><label for="propFixedYears">Rate fixed for <button type="button" class="info-btn" title="How many years the rate is fixed in the offer (Germany: often 10 or 15; France: usually the whole loan). Empty = fixed for the whole loan.">&#x24D8;</button></label><div class="unit-wrap"><input type="number" id="propFixedYears" value="" placeholder="whole loan" min="0" max="40" step="1" oninput="recalc()" onchange="recalc()"><span class="u">yrs</span></div></div>
+        <div class="field"><label for="propRateAfter">Rate after <button type="button" class="info-btn" title="The rate you expect when the fixed period ends: try a higher one to see the refinancing risk. Empty = same rate.">&#x24D8;</button></label><div class="unit-wrap"><input type="number" id="propRateAfter" value="" placeholder="same" min="0" max="15" step="0.1" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div></div>
+        <div class="field"><label for="propCharges_disp">Ownership charges + upkeep / month <button type="button" class="info-btn" title="Co-ownership charges (Hausgeld / charges de copropri&#xE9;t&#xE9;), property tax and an upkeep reserve, per month in today&#x2019;s money. They replace part of what rent covered and last for good. Typical flat: &#x20AC;300&#x2013;400.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="propCharges" id="propCharges_disp" placeholder="e.g. 350"><input type="hidden" id="propCharges" value=""></div></div>
+        <div class="field"><label for="propHerShare">Her share of down payment + costs <button type="button" class="info-btn" title="The part of the down payment and buying costs she pays from her savings, in scenarios with her. The loan payments are shared like the other joint costs.">&#x24D8;</button></label><div class="unit-wrap"><input type="number" id="propHerShare" value="" placeholder="0" min="0" max="100" step="5" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div></div>
         <div class="field"><label>Rent that stops <button type="button" class="info-btn" title="Your rent today, entered once on My Situation (Income &amp; spending). A scenario that buys stops paying it from the purchase year, growing with inflation until then.">&#x24D8;</button></label><div class="plan-derived" id="planRentStops">&#x2014;</div></div>
-      </div></div>
+      </div>
+      <div class="spend-readout" id="propReadout" aria-live="polite"></div>
+      </div>
     </section>
 
     <!-- CHILD -->
@@ -437,6 +443,14 @@
       <div class="scg-cell c3" role="cell"><span class="scg-out" id="scr3_lasts">&#x2014;</span></div>
       <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_lasts">&#x2014;</span></div>
       <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_lasts">&#x2014;</span></div>
+    </div>
+    <div class="scg-row scg-r-out" role="row" id="scgEquityRow" hidden>
+      <div class="scg-lbl" role="rowheader">Home equity when you stop <button type="button" class="info-btn" title="Scenarios that buy: the home&#x2019;s value (price growing with inflation, no real price growth) minus the loan left, when you stop. In your net worth, not in the FIRE number: you live in it." aria-label="About: Home equity">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><span class="scg-out" id="scr1_equity">&#x2014;</span></div>
+      <div class="scg-cell c2" role="cell"><span class="scg-out" id="scr2_equity">&#x2014;</span></div>
+      <div class="scg-cell c3" role="cell"><span class="scg-out" id="scr3_equity">&#x2014;</span></div>
+      <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_equity">&#x2014;</span></div>
+      <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_equity">&#x2014;</span></div>
     </div>
   </div>
   </div><!-- /scg-scroll -->
@@ -599,6 +613,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.12"></script>
+<script type="module" src="js/main.js?v=8.13"></script>
 </body>
 </html>

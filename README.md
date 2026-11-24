@@ -163,10 +163,23 @@ once by `js/spendMigration.js` (see [Partner Model](#partner-model)).
 | Purchase Year | `propBuyYear` | 2029 | year | Year of purchase |
 | Purchase Price | `propPrice` | — (0) | EUR | Total property price |
 | Down Payment | `propDownPct` | 20% | % | % of price paid up front |
-| Transaction Costs | `propTxCostPct` | 8% | % | Notary, taxes, fees on top of price |
-| Mortgage Rate | `propMortgageRate` | 3.5% | % p.a. | Fixed rate for entire term |
+| Buying costs | `propTxCostPct` | country default | % | Transfer tax, notary, land registry, agent. Empty = default of the country you live in that purchase year (Germany 10%, France 8%, elsewhere 8%; `buyCostPreset`) |
+| Mortgage Rate | `propMortgageRate` | 3.5% | % p.a. | Rate while it is fixed |
+| Rate fixed for | `propFixedYears` | whole loan | years | v8.13. Empty = fixed for the whole loan |
+| Rate after | `propRateAfter` | same | % p.a. | v8.13. Rate on the balance left after the fixed period, same end date |
+| Ownership charges + upkeep | `propCharges` | — (0) | EUR/month | v8.13. From the purchase year, for good, inflation-indexed; shared like the joint costs. Empty while a scenario buys → banner warning |
+| Her share of down payment + costs | `propHerShare` | 0% | % | v8.13. Paid from her savings in scenarios with her |
 | Mortgage Term | `propMortgageTerm` | 25 | years | Amortization period |
-| Rent today (My Situation) | `propRentSaved` | — (0) | EUR/month | The rent you pay now (inside your spending or shared costs). Entered once; a scenario that buys stops paying it from the purchase year. Empty while a scenario buys → banner warning |
+| Rent today (My Situation) | `propRentSaved` | — (0) | EUR/month | The rent you pay now (inside the joint account). Entered once; a scenario that buys stops paying whatever rent applies from the purchase year. Empty while a scenario buys → banner warning |
+
+**How buying counts (v8.13).** `mortgageSchedule` gives the payment while the rate is
+fixed and, with a rate after, the payment on the balance left over the remaining years
+(`mortgagePaymentAt(gl, yr)`; still a cost that ends, set aside at PV in % mode).
+Ownership charges are a lifelong housing cost (`ownershipAnnual`; not scaled by cost of
+living). Your part of the down payment and buying costs is `purchaseCostFor` (minus her
+share with her). The grid's **Home equity when you stop** row = price growing with
+inflation from the purchase year minus the loan left (`homeEquityAt`); it is part of your
+net worth, never of the FIRE number.
 
 ### Child (global, toggled per scenario)
 

@@ -8,6 +8,8 @@
 //   blocking true → the scenario's FIRE number and funded verdict are meaningless
 
 const ISSUES = {
+  ownCharges: { key: 'ownCharges', field: 'propCharges_disp', blocking: false,
+    text: 'A scenario buys a home but the monthly ownership charges + upkeep are empty, so owning looks cheaper than it is (often \u20ac300\u2013400 a month). Fill them on the Plans tab.' },
   rentNow: { key: 'rentNow', field: 'propRentSaved_disp', blocking: false,
     text: 'A scenario buys a home but your rent today is empty, so the mortgage is added on top of a rent that never stops. Fill "Rent today" in Income & spending.' },
   twoSpend: { key: 'twoSpend', field: 'samPersonalNow_disp', blocking: true,
@@ -27,6 +29,7 @@ export function scenarioIssues(sc, gl) {
   // Buying without today's rent: the mortgage is added on top of a rent that
   // never stops. Cautious, so the numbers still show; the banner names it.
   if (sc.hasProp && !(gl.propRentSaved > 0)) out.push(ISSUES.rentNow);
+  if (sc.hasProp && !(gl.propCharges > 0)) out.push(ISSUES.ownCharges);
   return out;
 }
 

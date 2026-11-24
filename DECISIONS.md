@@ -5,6 +5,18 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.13 Buying
+
+- **Fixed-rate period and rate after** from a bank offer; the payment is recomputed on
+  the balance left, same end date.
+- **Ownership charges + upkeep** count for good from the purchase year. Left empty they
+  count as 0 but the banner warns (owning would look cheaper than it is).
+- **Her share** of the down payment and buying costs comes from her savings.
+- **Buying costs default to the country you live in that year** (Germany 10%, France 8%).
+- **Home equity** is shown when you stop (price growing with inflation, no real price
+  growth assumed) and is never counted in the FIRE number: you live in it.
+- Not done: "Did you buy?" owner mode (with the prompts, v8.15).
+
 ## 2026-11-24 · v8.12 Her parental leave
 
 - Her leave (months, leave pay) lowers her income in the birth year; that year the split

@@ -15,6 +15,64 @@ export function annuityPV(C,r,g,n) {
 }
 
 // Flat annual mortgage payment (0 when no property price). Handles 0% rate.
+// ── Buying (v8.13) ──────────────────────────────────────────────────────────
+// Monthly annuity payment on P over `months` at an annual rate; balance left after
+// paying `pay` for `months`.
+function annuityPay(P, rate, months) {
+  if (!(months > 0) || !(P > 0)) return 0;
+  if (!(rate > 0)) return P/months;
+  const mr = rate/12;
+  return P*mr*Math.pow(1+mr, months)/(Math.pow(1+mr, months)-1);
+}
+function balanceAfter(P, rate, pay, months) {
+  if (!(rate > 0)) return Math.max(0, P - pay*months);
+  const mr = rate/12, g = Math.pow(1+mr, months);
+  return Math.max(0, P*g - pay*(g-1)/mr);
+}
+// The loan: payment while the rate is fixed (pay1, €/yr) and after it (pay2, at
+// propRateAfter on the balance left, same end date). Fixed for the whole loan
+// when propFixedYears is empty or ≥ the term, or no rate after is given.
+export function mortgageSchedule(gl) {
+  const P = (gl.propPrice || 0)*(1 - gl.propDownPct), n = (gl.propMortgageTerm || 0)*12;
+  const p1 = annuityPay(P, gl.propMortgageRate, n);
+  const F = gl.propFixedYears > 0 ? Math.min(n, Math.round(gl.propFixedYears*12)) : n;
+  const r2 = gl.propRateAfter;
+  if (F >= n || r2 == null || r2 === gl.propMortgageRate) return { principal: P, pay1: p1*12, pay2: p1*12, fixedYears: n/12 };
+  const p2 = annuityPay(balanceAfter(P, gl.propMortgageRate, p1, F), r2, n - F);
+  return { principal: P, pay1: p1*12, pay2: p2*12, fixedYears: F/12 };
+}
+// Payment in calendar year yr (nominal €/yr, flat like a real loan); 0 outside the loan.
+export function mortgagePaymentAt(gl, yr) {
+  if (!(gl.propPrice > 0) || yr < gl.propBuyYear || yr >= gl.propBuyYear + gl.propMortgageTerm) return 0;
+  const s = mortgageSchedule(gl);
+  return (yr - gl.propBuyYear) < s.fixedYears ? s.pay1 : s.pay2;
+}
+// Loan left at the start of calendar year yr.
+export function mortgageBalanceAt(gl, yr) {
+  if (!(gl.propPrice > 0) || yr <= gl.propBuyYear) return yr === gl.propBuyYear ? (gl.propPrice || 0)*(1 - gl.propDownPct) : 0;
+  const s = mortgageSchedule(gl), P = s.principal, m = Math.min(gl.propMortgageTerm*12, (yr - gl.propBuyYear)*12);
+  const F = s.fixedYears*12;
+  if (m <= F) return balanceAfter(P, gl.propMortgageRate, s.pay1/12, m);
+  const bF = balanceAfter(P, gl.propMortgageRate, s.pay1/12, F);
+  return balanceAfter(bF, gl.propRateAfter ?? gl.propMortgageRate, s.pay2/12, m - F);
+}
+// Ownership charges + upkeep (today's €/month, inflated) from the purchase year, for good.
+export function ownershipAnnual(gl, sc, yr) {
+  if (!sc.hasProp || !(gl.propCharges > 0) || yr < gl.propBuyYear) return 0;
+  return gl.propCharges*12*Math.pow(1+gl.inflation, yr - gl.baseYear);
+}
+// Your part of the down payment + buying costs: with your partner she pays her share.
+export function purchaseCostFor(gl, sc) {
+  const all = (gl.propPrice || 0)*(gl.propDownPct + gl.propTxCostPct);
+  return isTwoPerson(gl) && sc.hasPartner ? all*(1 - (gl.propHerShare || 0)) : all;
+}
+// Your home equity at the start of yr (nominal): the price, growing with inflation
+// from the purchase year (no real price growth assumed), minus the loan left.
+export function homeEquityAt(gl, sc, yr) {
+  if (!sc.hasProp || !(gl.propPrice > 0) || yr < gl.propBuyYear) return 0;
+  return gl.propPrice*Math.pow(1+gl.inflation, yr - gl.propBuyYear) - mortgageBalanceAt(gl, yr);
+}
+
 export function mortgageAnnual(gl) {
   if (!(gl.propPrice > 0) || !(gl.propMortgageTerm > 0)) return 0;
   const principal = gl.propPrice*(1-gl.propDownPct);
@@ -135,11 +193,12 @@ export function householdCosts(yr, sc, gl, samRetired, noTemp) {
     if (childAge >= 0 && childAge < gl.childCostUntilAge) child = gl.childCostYearly*infl;
   }
   if (sc.hasProp) {
-    if (!noTemp && yr >= gl.propBuyYear && yr < gl.propBuyYear + gl.propMortgageTerm) mortgage = mortgageAnnual(gl);
+    if (!noTemp) mortgage = mortgagePaymentAt(gl, yr);
     rentSaved = rentSavedMonthly(gl, sc, yr)*12*infl;
   }
-  const shared = Math.max(0, sharedBase + child + mortgage - rentSaved);
-  return { samPersonal, sharedBase, partnerPersonal, child, mortgage, rentSaved, shared };
+  const ownership = ownershipAnnual(gl, sc, yr);   // v8.13: charges + upkeep, shared like the rest
+  const shared = Math.max(0, sharedBase + child + mortgage + ownership - rentSaved);
+  return { samPersonal, sharedBase, partnerPersonal, child, mortgage, ownership, rentSaved, shared };
 }
 
 // Your net cost in year yr given YOUR income for the share (samInc, nominal €/yr).
@@ -257,7 +316,7 @@ export function yearOneBudget(fromAge, sc, gl, herDrawAnn) {
     if (childAge >= 0 && childAge < gl.childCostUntilAge) budget += gl.childCostYearly*inflF;
   }
   if (sc.hasProp) {
-    if (fromYear >= gl.propBuyYear && fromYear < gl.propBuyYear + gl.propMortgageTerm) budget += mortgageAnnual(gl);
+    budget += mortgagePaymentAt(gl, fromYear) + ownershipAnnual(gl, sc, fromYear);
     budget -= rentSavedMonthly(gl, sc, fromYear)*12*inflF;
   }
   return Math.max(0, budget);
@@ -410,7 +469,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
       pv += Math.max(0, ak.c.samCost - ak.pen)*tmAt(k+1)/Math.pow(1+rFrom, k+1);
     }
     if (sc.hasProp && gl.propBuyYear >= fromYear)
-      pv += gl.propPrice*(gl.propDownPct + gl.propTxCostPct)*tmAt(Math.max(0, gl.propBuyYear - fromYear))/Math.pow(1+rFrom, gl.propBuyYear - fromYear);
+      pv += purchaseCostFor(gl, sc)*tmAt(Math.max(0, gl.propBuyYear - fromYear))/Math.pow(1+rFrom, gl.propBuyYear - fromYear);
     return Math.round(Math.max(0, pv));
   }
 
@@ -516,7 +575,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
       let flow = Math.max(0, spend - pen);
       if (sc.hasChild && yr >= gl.childBirthYear && yr < gl.childBirthYear + gl.childCostUntilAge) flow += gl.childCostYearly*infl;
       if (sc.hasProp) {
-        if (yr >= gl.propBuyYear && yr < gl.propBuyYear + gl.propMortgageTerm) flow += mortgageAnnual(gl);
+        flow += mortgagePaymentAt(gl, yr) + ownershipAnnual(gl, sc, yr);
         flow -= rentSavedMonthly(gl, sc, yr)*12*infl;
       }
       if (sc.hasPartner) {
@@ -527,7 +586,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
     }
     if (sc.hasProp && gl.propBuyYear >= fromYear) {
       const d = gl.propBuyYear - fromYear;
-      pv += gl.propPrice*(gl.propDownPct + gl.propTxCostPct)*tm(Math.max(0, d-1))/Math.pow(1+rFrom, d);
+      pv += purchaseCostFor(gl, sc)*tm(Math.max(0, d-1))/Math.pow(1+rFrom, d);
     }
     return Math.round(Math.max(0, pv));
   }
@@ -574,7 +633,6 @@ export function project(sc, gl, opts) {
   const fireNumMult = [];
 
   // mortgage amortisation
-  const monthlyMortgage = sc.hasProp ? mortgageAnnual(gl)/12 : 0;
 
   // child cost helper: annual cost in year yr
   function childCostInYear(yr) {
@@ -692,15 +750,16 @@ export function project(sc, gl, opts) {
         childCost   = childCostInYear(yr);
       }
       // property
-      let extraCost=0, mortgageAnn=0, rentSavingsAnn=0;
+      let extraCost=0, mortgageAnn=0, rentSavingsAnn=0, ownAnn=0;
       if (sc.hasProp) {
-        if (yr===gl.propBuyYear) { extraCost=gl.propPrice*(gl.propDownPct+gl.propTxCostPct); row.extraCost=extraCost; }
-        if (yr>=gl.propBuyYear && yr<gl.propBuyYear+gl.propMortgageTerm) { mortgageAnn=monthlyMortgage*12; row.mortgagePayment=Math.round(mortgageAnn); }
+        if (yr===gl.propBuyYear) { extraCost=purchaseCostFor(gl, sc); row.extraCost=extraCost; }
+        mortgageAnn=mortgagePaymentAt(gl, yr); row.mortgagePayment=Math.round(mortgageAnn);
+        ownAnn=ownershipAnnual(gl, sc, yr); row.ownership=Math.round(ownAnn);
         if (yr>=gl.propBuyYear) { rentSavingsAnn=rentSavedMonthly(gl, sc, yr)*12*infl; row.rentSavings=Math.round(rentSavingsAnn); }
       }
       const netFlow = tp
         ? annInc - tp.samCost - extraCost          // your net cost = personal + shared − her contribution
-        : annInc-annSpendNow-childCost-extraCost-mortgageAnn+rentSavingsAnn;
+        : annInc-annSpendNow-childCost-extraCost-mortgageAnn-ownAnn+rentSavingsAnn;
       cashVal = cashVal*(1+gl.cashReturn);
       let portEnd = portfolio*(1+r)+netFlow+windfall;
       if (portEnd < 0) {
@@ -733,15 +792,16 @@ export function project(sc, gl, opts) {
       if (sc.hasPartner && !two && age+off<gl.partnerRetAge)      partnerSalAnn=gl.partnerInc*12*infl;
 
       // property cash flows continue into retirement
-      let mortgageAnnRet=0, rentSavingsAnnRet=0, purchaseCost=0;
+      let mortgageAnnRet=0, rentSavingsAnnRet=0, purchaseCost=0, ownAnnRet=0;
       if (sc.hasProp) {
-        if (yr===gl.propBuyYear) { purchaseCost=gl.propPrice*(gl.propDownPct+gl.propTxCostPct); row.extraCost=purchaseCost; }
-        if (yr>=gl.propBuyYear && yr<gl.propBuyYear+gl.propMortgageTerm) { mortgageAnnRet=monthlyMortgage*12; row.mortgagePayment=Math.round(mortgageAnnRet); }
+        if (yr===gl.propBuyYear) { purchaseCost=purchaseCostFor(gl, sc); row.extraCost=purchaseCost; }
+        mortgageAnnRet=mortgagePaymentAt(gl, yr); row.mortgagePayment=Math.round(mortgageAnnRet);
+        ownAnnRet=ownershipAnnual(gl, sc, yr); row.ownership=Math.round(ownAnnRet);
         if (yr>=gl.propBuyYear) { rentSavingsAnnRet=rentSavedMonthly(gl, sc, yr)*12*infl; row.rentSavings=Math.round(rentSavingsAnnRet); }
       }
 
       let childCost=childCostInYear(yr);
-      let budget=Math.max(0, annRetSpend+childCost+mortgageAnnRet-rentSavingsAnnRet);
+      let budget=Math.max(0, annRetSpend+childCost+mortgageAnnRet+ownAnnRet-rentSavingsAnnRet);
       if (twoP) {
         // your net cost, with your share-income = pension + start-of-year sustainable draw
         tp = twoPersonCost(yr, sc, gl, pAnn + samDrawStart, herDraw, true);

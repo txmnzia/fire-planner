@@ -1,7 +1,7 @@
 // Where you live (v8.11, pure): country presets for tax on gains and the
 // residence periods the engine reads (gl.residence). Rates are flat-rate
 // approximations on the GAIN part of a sale (README "Tax"); not tax advice.
-import { COUNTRY_TAX } from "./taxTable.js?v=8.12";
+import { COUNTRY_TAX } from "./taxTable.js?v=8.13";
 
 // One line per country on where its rate comes from and what is left out.
 export const COUNTRY_NOTES = {
@@ -9,6 +9,12 @@ export const COUNTRY_NOTES = {
   FR: "30% flat tax (12.8% income tax + 17.2% social charges). Not modelled: a PEA after 5 years (17.2% only), the extra health levy for people with little earned income (CSM).",
 };
 export const countryNote = code => COUNTRY_NOTES[code] || ((COUNTRY_TAX[code] ?? 30) + "% flat rate on gains (approximation).");
+
+// Buying costs in % of the price, by country (v8.13): transfer tax, notary, land
+// registry and agent. Germany about 10% (Grunderwerbsteuer 3.5–6.5% + notary ~2% + agent ~3.6%),
+// France about 8% (notary fees and taxes ~7.5% on older homes). Elsewhere 8%.
+export const BUY_COSTS = { DE: 10, FR: 8 };
+export const buyCostPreset = code => BUY_COSTS[code] ?? 8;
 
 // Moves saved on the payload: [{from, country, tax (% or null), col (% or null)}].
 export function normaliseResidence(list) {

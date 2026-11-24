@@ -1,8 +1,8 @@
-import { el, eur, fmtK } from "../util.js?v=8.12";
-import { scenarioIssues } from "../checks.js?v=8.12";
-import { state } from "../state.js?v=8.12";
-import { getScenarioName } from "../inputs.js?v=8.12";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project, pensionMonthlyAt, taxRateAt } from "../engine.js?v=8.12";
+import { el, eur, fmtK } from "../util.js?v=8.13";
+import { scenarioIssues } from "../checks.js?v=8.13";
+import { state } from "../state.js?v=8.13";
+import { getScenarioName } from "../inputs.js?v=8.13";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt } from "../engine.js?v=8.13";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -132,6 +132,9 @@ export function scenarioGridResults(sc, gl, proj, stop) {
   const stopFound = stop ? !!stop.found : true;
   const stopAgeText = sc.retAge + ' \u00b7 ' + m.retYear;
   const margin = m.portRet - m.fireTarget;
+  // v8.13: scenarios that buy: home equity when you stop (net worth, not FIRE)
+  const equity = sc.hasProp ? homeEquityAt(gl, sc, m.retYear) : null;
+  const equityText = equity == null ? 'no purchase' : (m.retYear < gl.propBuyYear ? 'buys in ' + gl.propBuyYear : fmtK(equity));
   const marginText = (margin >= 0 ? '+' : '\u2212') + fmtK(Math.abs(margin));
   if (blocking.length) {
     return {
@@ -140,7 +143,7 @@ export function scenarioGridResults(sc, gl, proj, stop) {
       fireTarget: m.fireTarget, fireTargetText: '\u2014',
       nwAtStop: m.portRet, nwAtStopText: fmtK(m.portRet),
       depletionYear: m.depletionYear, depletionAge,
-      lastsOk: false, lasts: '\u2014',
+      lastsOk: false, lasts: '\u2014', equity, equityText: equity == null ? 'no purchase' : '\u2014',
     };
   }
   return {
@@ -151,12 +154,14 @@ export function scenarioGridResults(sc, gl, proj, stop) {
     depletionYear: m.depletionYear, depletionAge,
     lastsOk: depletionAge == null,
     lasts: depletionAge == null ? 'to ' + gl.lifeExp + '+' : 'runs out at ' + depletionAge,
+    equity, equityText,
   };
 }
 
 // Writes the result rows of the scenario grid. Cells are plain text; colour comes
 // from the ok/err classes, so no value is ever interpolated into HTML.
 export function renderScenarioGrid(projs, gl, scenarios, stops) {
+  let anyProp = false;
   scenarios.forEach((sc, i) => {
     const n = i + 1, r = scenarioGridResults(sc, gl, projs[i], stops ? stops[i] : null);
     const set = (key, text, cls) => {
@@ -166,7 +171,10 @@ export function renderScenarioGrid(projs, gl, scenarios, stops) {
     set('age', r.stopAgeText, r.missing.length ? 'muted' : (r.stopFound ? 'age' : 'err'));
     set('margin', r.marginText, r.missing.length ? 'muted' : (r.margin >= 0 ? 'ok' : 'err'));
     set('lasts', r.lasts, r.missing.length ? 'muted' : (r.lastsOk ? 'ok' : 'err'));
+    set('equity', r.equityText, r.equity == null || r.missing.length ? 'muted' : '');
+    if (sc.hasProp) anyProp = true;
   });
+  const eq = el('scgEquityRow'); if (eq) eq.hidden = !anyProp;
 }
 
 export function vsPlanRowHTML(m) {

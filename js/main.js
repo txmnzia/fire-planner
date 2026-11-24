@@ -1,18 +1,18 @@
-import { el } from "./util.js?v=8.12";
-import { initInfoTips } from "./ui/infoTips.js?v=8.12";
-import { state } from "./state.js?v=8.12";
-import { recalc } from "./recalc.js?v=8.12";
+import { el } from "./util.js?v=8.13";
+import { initInfoTips } from "./ui/infoTips.js?v=8.13";
+import { state } from "./state.js?v=8.13";
+import { recalc } from "./recalc.js?v=8.13";
 import { loadState, initSync, scheduleSave, connectSync, disconnectSync,
-         openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js?v=8.12";
+         openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js?v=8.13";
 import { switchTab, toggleFeature, updateToggleUI, scrollToScenario, updateScNav,
-         updateAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js?v=8.12";
-import { handleCSV, saveManualTotal } from "./ui/ibkr.js?v=8.12";
-import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js?v=8.12";
-import { initSituation, resetAssumptions } from "./ui/situation.js?v=8.12";
-import { initSpendTracking } from "./ui/spending.js?v=8.12";
-import { downloadCSV } from "./ui/table.js?v=8.12";
-import { runMonteCarloUI, selectMcScenario } from "./ui/mcTab.js?v=8.12";
-import { selectExplanationScenario } from "./ui/explanation.js?v=8.12";
+         updateAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js?v=8.13";
+import { handleCSV, saveManualTotal } from "./ui/ibkr.js?v=8.13";
+import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js?v=8.13";
+import { initSituation, resetAssumptions } from "./ui/situation.js?v=8.13";
+import { initSpendTracking } from "./ui/spending.js?v=8.13";
+import { downloadCSV } from "./ui/table.js?v=8.13";
+import { runMonteCarloUI, selectMcScenario } from "./ui/mcTab.js?v=8.13";
+import { selectExplanationScenario } from "./ui/explanation.js?v=8.13";
 
 // The HTML uses inline on* attributes (and render functions emit them too), so
 // every function they reference must exist as a global.

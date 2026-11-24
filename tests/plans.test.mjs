@@ -54,10 +54,11 @@ test('rent today: buying without it is flagged, but cautious, so the numbers sti
   const { scenarioGridResults } = await import('../js/ui/cards.js');
   const { project } = await import('../js/engine.js');
   const { baseSc } = await import('./golden-cases.mjs');
-  const gl = baseGl({ propRentSaved: 0 }), sc = baseSc({ hasProp: true });
+  const gl = baseGl({ propRentSaved: 0, propCharges: 300 }), sc = baseSc({ hasProp: true });
   const i = scenarioIssues(sc, gl);
   assert.deepEqual(i.map(x => [x.key, x.blocking, x.field]), [['rentNow', false, 'propRentSaved_disp']]);
   assert.deepEqual(scenarioIssues(baseSc(), gl), []);                 // no purchase, no issue
-  assert.deepEqual(scenarioIssues(sc, baseGl()), []);                 // rent filled
+  assert.deepEqual(scenarioIssues(sc, baseGl({ propCharges: 300 })), []);   // rent and charges filled
+  assert.deepEqual(scenarioIssues(sc, baseGl()).map(x => [x.key, x.blocking]), [['ownCharges', false]]);   // v8.13: charges empty
   assert.deepEqual(scenarioGridResults(sc, gl, project(sc, gl)).missing, []);   // not blocking
 });

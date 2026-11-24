@@ -66,7 +66,7 @@ test('scenario grid: the renderer writes exactly the result cells the markup has
   const cards = read('js/ui/cards.js');
   const fn = cards.slice(cards.indexOf('export function renderScenarioGrid'));
   const keys = [...fn.slice(0, fn.indexOf('\n}\n')).matchAll(/set\('(\w+)'/g)].map(m => m[1]).sort();
-  assert.deepEqual(keys, ['age', 'lasts', 'margin']);
+  assert.deepEqual(keys, ['age', 'equity', 'lasts', 'margin']);
 });
 
 test('scenario grid: stop ages are automatic (no input, saved value kept hidden for old builds)', () => {

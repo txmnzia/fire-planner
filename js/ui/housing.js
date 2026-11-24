@@ -1,12 +1,13 @@
 // Housing moves and where you live (v8.11). Two dynamic lists on My Situation:
 // planned rents (state.rentMoves) and planned moves abroad (state.residence),
 // plus the rent-today edit that keeps the joint transfers consistent.
-import { el, eur } from "../util.js?v=8.12";
-import { state } from "../state.js?v=8.12";
-import { recalc } from "../recalc.js?v=8.12";
-import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.12";
-import { COUNTRY_TAX } from "../taxTable.js?v=8.12";
-import { countryNote } from "../countries.js?v=8.12";
+import { el, eur } from "../util.js?v=8.13";
+import { state } from "../state.js?v=8.13";
+import { recalc } from "../recalc.js?v=8.13";
+import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.13";
+import { COUNTRY_TAX } from "../taxTable.js?v=8.13";
+import { countryNote } from "../countries.js?v=8.13";
+import { mortgageSchedule } from "../engine.js?v=8.13";
 
 const YNOW = new Date().getFullYear();
 const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
@@ -111,4 +112,17 @@ export function renderResNotes() {
     const k = r.code + own; if (seen.has(k)) return ''; seen.add(k);
     return '<div><b>' + r.code + '</b> (' + r.when + '): ' + countryNote(r.code) + own + '</div>';
   }).join('') + '<div class="tgt">Cost of living scales all spending except housing (rent and mortgage); 100% = as today.</div>';
+}
+
+// Buying read-out (v8.13): the loan, its payments before and after the fixed
+// period, and the buying costs used (your default or the country's).
+export function renderPropReadout(gl) {
+  const host = el('propReadout'); if (!host) return;
+  if (!(gl.propPrice > 0)) { host.innerHTML = ''; return; }
+  const s = mortgageSchedule(gl);
+  const lines = ['<div>Loan <b>' + eur(s.principal) + '</b>: <b>' + eur(s.pay1 / 12) + '/month</b>' +
+    (s.pay2 !== s.pay1 ? ' for ' + s.fixedYears + ' years, then <b>' + eur(s.pay2 / 12) + '/month</b> at ' + (gl.propRateAfter * 100).toFixed(1) + '%' : ' for ' + gl.propMortgageTerm + ' years') + '</div>',
+    '<div>Buying costs ' + (gl.propTxCostPct * 100).toFixed(1) + '% <span class="tgt">' + (el('propTxCostPct')?.value === '' ? '(default of the country you live in that year)' : '(your value)') + '</span></div>'];
+  if (gl.propCharges > 0) lines.push('<div>Ownership charges + upkeep ' + eur(gl.propCharges) + '/month, for good <span class="tgt">(shared like the joint costs with her)</span></div>');
+  host.innerHTML = lines.join('');
 }
