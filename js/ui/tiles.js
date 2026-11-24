@@ -2,10 +2,10 @@
 // (plans). A tile shows a one-line summary and opens in place; one open tile per
 // lane. The fields inside are the same inputs as before (same ids), so saving,
 // sync and the engine are untouched. The impact panel sits beside the lanes.
-import { el, eur } from "../util.js?v=8.17.2";
-import { state, features } from "../state.js?v=8.17.2";
-import { refreshedText } from "./spending.js?v=8.17.2";
-import { plansSetUp } from "../checks.js?v=8.17.2";
+import { el, eur } from "../util.js?v=8.17.3";
+import { state, features } from "../state.js?v=8.17.3";
+import { refreshedText } from "./spending.js?v=8.17.3";
+import { plansSetUp } from "../checks.js?v=8.17.3";
 
 const L = ['A', 'B', 'C', 'D', 'E'];
 const OPEN_KEY = 'fire_open_tiles';

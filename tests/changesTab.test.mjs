@@ -82,3 +82,9 @@ test('v8.17.1: focusing a tile header does not open it (only fields inside the b
   const h = src.slice(src.indexOf("addEventListener('focusin'"), src.indexOf("addEventListener('focusin'") + 300);
   assert.match(h, /closest\('\.tile-body'\)/);
 });
+
+test('v8.17.3: a closed tile body stays hidden whatever display its open state uses', () => {
+  const css = readFileSync(new URL('../css/styles.css', import.meta.url), 'utf8');
+  assert.match(css, /\.tile-body\[hidden\]\{display:none;\}/);
+  assert.ok(css.indexOf('.tile-body[hidden]') < css.indexOf('.tile-body{container-type'), 'the hidden rule comes first and wins by specificity');
+});

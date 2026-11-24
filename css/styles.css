@@ -442,6 +442,7 @@ button.wd-pill{font:inherit;font-size:12px;}
 .subj-badge{margin:0;}
 
 /* tile body: one rhythm for every form */
+.tile-body[hidden]{display:none;}   /* v8.17.3: the flex rule below must not override hidden */
 .tile-body{container-type:inline-size;border-top:1px solid var(--bdrs);padding:18px 18px 20px;display:flex;flex-direction:column;gap:16px;}
 .tile-body > *{margin:0;}
 .tile-body .subj-subhd{margin:6px 0 -4px;padding:0;border:none;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--sec);}
