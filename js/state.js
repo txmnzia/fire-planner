@@ -21,8 +21,7 @@ export const state = {
 // s = 1..5, feat = 'partner'|'prop'|'child'
 export const features = {};
 for (let s = 1; s <= 5; s++) features[s] = { partner: false, prop: false, child: false };
-// defaults: D has partner on, E has all on
+// defaults: D and E with the partner. Plans (buying, child) start off everywhere
+// (v8.18.4): a plan is switched on only where you choose, in the Scenarios grid.
 features[4].partner = true;
 features[5].partner = true;
-features[5].prop    = true;
-features[5].child   = true;

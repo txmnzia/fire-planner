@@ -1,7 +1,7 @@
 // Where you live (v8.11, pure): country presets for tax on gains and the
 // residence periods the engine reads (gl.residence). Rates are flat-rate
 // approximations on the GAIN part of a sale (README "Tax"); not tax advice.
-import { COUNTRY_TAX } from "./taxTable.js?v=8.18.3";
+import { COUNTRY_TAX } from "./taxTable.js?v=8.18.4";
 
 // One line per country on where its rate comes from and what is left out.
 export const COUNTRY_NOTES = {
@@ -19,6 +19,13 @@ export const buyCostPreset = code => BUY_COSTS[code] ?? 8;
 // v8.17: scenarios (1-5) a planned move is switched off for; absent = on everywhere
 const offList = off => Array.isArray(off) ? off.map(Number).filter(n => n >= 1 && n <= 5) : [];
 // The plan lists one scenario uses (only the moves switched on for it).
+// v8.18.4: a flat move that starts in or after the purchase year changes nothing in
+// a scenario that buys: from the purchase you own, so there is no rent to replace
+// (the rent that year is exactly what buying saves). Returns those scenario ids.
+export function rentMoveNoEffect(m, gl, features) {
+  if (!m || m.from == null || m.rent == null || !(gl.propPrice > 0) || !(m.from >= gl.propBuyYear)) return [];
+  return [1, 2, 3, 4, 5].filter(s => !(m.off || []).includes(s) && features && features[s] && features[s].prop);
+}
 export function plansForScenario(gl, s) {
   const on = m => !(m.off || []).includes(s);
   return { rentMoves: (gl.rentMoves || []).filter(on), residence: (gl.residence || []).filter((p, i) => i === 0 || on(p)) };

@@ -1,13 +1,14 @@
 // Housing moves and where you live (v8.11). Two dynamic lists on My Situation:
 // planned rents (state.rentMoves) and planned moves abroad (state.residence),
 // plus the rent-today edit that keeps the joint transfers consistent.
-import { el, eur } from "../util.js?v=8.18.3";
-import { state } from "../state.js?v=8.18.3";
-import { recalc } from "../recalc.js?v=8.18.3";
-import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.18.3";
-import { COUNTRY_TAX } from "../taxTable.js?v=8.18.3";
-import { countryNote } from "../countries.js?v=8.18.3";
-import { mortgageSchedule } from "../engine.js?v=8.18.3";
+import { el, eur } from "../util.js?v=8.18.4";
+import { state, features } from "../state.js?v=8.18.4";
+import { recalc } from "../recalc.js?v=8.18.4";
+import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.18.4";
+import { NEW_PLAN_OFF } from "./plans.js?v=8.18.4";
+import { COUNTRY_TAX } from "../taxTable.js?v=8.18.4";
+import { countryNote, rentMoveNoEffect } from "../countries.js?v=8.18.4";
+import { mortgageSchedule } from "../engine.js?v=8.18.4";
 
 const YNOW = new Date().getFullYear();
 const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
@@ -24,7 +25,8 @@ export function renderRentMoves() {
     const row = document.createElement('div'); row.className = 'item move-row';
     row.innerHTML = '<div class="item-c"><span class="frow-sep">from</span><div class="ypick fc"></div>' +
       '<div class="inp cur fc"><span class="pre">€</span><input type="text" inputmode="decimal" autocomplete="off" placeholder="New rent" aria-label="New rent per month"><span class="suf">/mo</span></div>' +
-      '<button type="button" class="dp-del" aria-label="Remove move">×</button></div>';
+      '<button type="button" class="dp-del" aria-label="Remove move">×</button></div><div class="item-note warn" hidden></div>';
+    row.dataset.i = i;
     const inp = row.querySelector('.cur input'); inp.value = m.rent == null ? '' : fmtMoney(m.rent);
     host.appendChild(row);
     buildYpick(row.querySelector('.ypick'), { min: 2024, max: 2080, getVal: () => m.from, setVal: y => { m.from = y; recalc(); } });
@@ -32,7 +34,7 @@ export function renderRentMoves() {
     row.querySelector('.dp-del').addEventListener('click', () => { state.rentMoves.splice(i, 1); renderRentMoves(); recalc(); });
   });
   host.appendChild(addButton('Add a move (new rent)', () => {
-    state.rentMoves.push({ from: YNOW + 1, rent: null }); renderRentMoves();
+    state.rentMoves.push({ from: YNOW + 1, rent: null, off: NEW_PLAN_OFF() }); renderRentMoves();
   }));
 }
 
@@ -94,7 +96,7 @@ export function renderResidence() {
     row.querySelector('.dp-del').addEventListener('click', () => { state.residence.splice(i, 1); renderResidence(); recalc(); });
   });
   host.appendChild(addButton('Add a move abroad', () => {
-    state.residence.push({ from: YNOW + 1, country: 'FR', tax: null, col: null }); renderResidence(); recalc();
+    state.residence.push({ from: YNOW + 1, country: 'FR', tax: null, col: null, off: NEW_PLAN_OFF() }); renderResidence(); recalc();
   }));
   renderResNotes();
 }
@@ -113,9 +115,22 @@ export function renderResNotes() {
   }).join('') + '<div class="tgt">Cost of living scales all spending except housing (rent and mortgage); 100% = as today.</div>';
 }
 
+// v8.18.4: say when a flat move changes nothing because you own by then.
+const LTR = ['A', 'B', 'C', 'D', 'E'];
+export function renderRentMoveNotes(gl) {
+  document.querySelectorAll('#rentMovesList .move-row').forEach(row => {
+    const m = state.rentMoves[+row.dataset.i], note = row.querySelector('.item-note'); if (!m || !note) return;
+    const none = rentMoveNoEffect(m, gl, features);
+    note.hidden = !none.length;
+    note.textContent = none.length ? '⚠ No effect in ' + none.map(s => LTR[s - 1]).join(', ') + ': you buy in ' + gl.propBuyYear +
+      ', so from then there is no rent to change. Move it before ' + gl.propBuyYear + ', or switch buying off there.' : '';
+  });
+}
+
 // Buying read-out (v8.13): the loan, its payments before and after the fixed
 // period, and the buying costs used (your default or the country's).
 export function renderPropReadout(gl) {
+  renderRentMoveNotes(gl);
   const host = el('propReadout'); if (!host) return;
   if (!(gl.propPrice > 0)) { host.innerHTML = ''; return; }
   const s = mortgageSchedule(gl);

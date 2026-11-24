@@ -1,11 +1,12 @@
 // Plans tab (v8.3): which plans are set up, shown on the plan cards and in the
 // scenario grid (a plan that is not set up has no switch there). The rule itself
 // lives in js/checks.js (plansSetUp), which also gates the calculation.
-import { el, eur, fmtK } from "../util.js?v=8.18.3";
-import { state } from "../state.js?v=8.18.3";
-import { recalc } from "../recalc.js?v=8.18.3";
-import { isComplete } from "../payChanges.js?v=8.18.3";
-import { plansSetUp } from "../checks.js?v=8.18.3";
+import { el, eur, fmtK } from "../util.js?v=8.18.4";
+import { state, features } from "../state.js?v=8.18.4";
+import { rentMoveNoEffect } from "../countries.js?v=8.18.4";
+import { recalc } from "../recalc.js?v=8.18.4";
+import { isComplete } from "../payChanges.js?v=8.18.4";
+import { plansSetUp } from "../checks.js?v=8.18.4";
 
 const NAMES = { prop: "Buying a home", child: "Child" };
 
@@ -19,6 +20,9 @@ export function windfallSwitches(windfalls) {
       title: (w.name && w.name.trim()) || 'Windfall', sub: fmtK(+w.amt) + ' \u00b7 ' + w.yr,
       on: [1, 2, 3, 4, 5].map(s => !(Array.isArray(w.off) && w.off.includes(s))) }));
 }
+// v8.18.4: a new plan starts switched off in every scenario; you switch it on in the
+// Scenarios grid where you want it. (Saved plans without an off list stay on.)
+export const NEW_PLAN_OFF = () => [1, 2, 3, 4, 5];
 export function flipWindfall(windfalls, index, s) {
   const w = windfalls[index]; if (!w) return;
   const off = Array.isArray(w.off) ? w.off.filter(x => x !== s) : [];
@@ -104,13 +108,14 @@ export function flipOff(list, index, s) {
   const off = Array.isArray(m.off) ? m.off.slice() : [];
   m.off = (off.includes(s) ? off.filter(x => x !== s) : [...off, s]).sort();
 }
-function renderMoveRows() {
+function renderMoveRows(gl) {
   const host = el("scgMoveRows"); if (!host) return;
   host.replaceChildren();
   const on = m => [1, 2, 3, 4, 5].map(s => !(Array.isArray(m.off) && m.off.includes(s)));
   state.rentMoves.forEach((m, i) => {
     if (m.from == null || m.rent == null) return;
-    const parts = { title: "Flat move", sub: fmtK(m.rent) + "/mo \u00b7 from " + m.from };
+    const none = gl ? rentMoveNoEffect(m, gl, features) : [];
+    const parts = { title: "Flat move", sub: fmtK(m.rent) + "/mo \u00b7 from " + m.from + (none.length ? " \u00b7 \u26a0 no effect in " + none.map(s => LETTERS[s - 1]).join(", ") + " (you own from " + gl.propBuyYear + ")" : "") };
     host.append(switchRow("\u{1F3E0}", parts, on(m), "flat move from " + m.from, s => { flipOff(state.rentMoves, i, s); recalc(); }));
   });
   state.residence.forEach((p, i) => {
@@ -127,7 +132,7 @@ export function setPayListPainter(fn) { paintPayList = fn; }
 export function renderPlans(gl) {
   renderWindfallRows();
   renderPayRows();
-  renderMoveRows();
+  renderMoveRows(gl);
   const pb = el("planState_pay");
   if (pb) { const n = state.payChanges.filter(isComplete).length; pb.textContent = n ? "\u00b7 " + n + " set up" : "\u00b7 none yet"; pb.classList.toggle("off", !n); }
   const wfb = el("planState_wf");

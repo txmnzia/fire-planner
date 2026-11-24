@@ -111,7 +111,7 @@ The Markets card lists the assumptions you changed from these defaults, and **Re
 | Country today | `retCountry` | France | — | Where you live now (country code). Its preset rate applies until a planned move |
 | Tax on gains today | `taxNow` | preset | % | Optional override of today's preset |
 | Planned moves | `state.residence` `[{from, country, tax, col}]` | none | year, code, %, % | From a year: the country's preset tax rate (or your override) and a cost of living in % of today (100 = same) |
-| Planned rent changes | `state.rentMoves` `[{from, rent}]` | none | year, EUR/month | Replaces the rent today from that year (Income & spending) |
+| Planned rent changes (Flat move) | `state.rentMoves` `[{from, rent, off}]` | none | year, EUR/month, scenario ids | Replaces the rent today from that year, in the scenarios it is switched on for (a new one starts off everywhere, v8.18.4). In a scenario that buys, a move in or after the purchase year changes nothing (no rent once you own; the rent that year is what buying saves); the tile and the grid say so |
 
 **Per year.** `taxRateAt(gl, yr)` is the rate where you live in year `yr`: every sale in
 the projection, the tax gross-up at retirement, and the fixed-mode target's year-by-year
@@ -138,7 +138,7 @@ first entry).
 | French pension / month | `pension2Amt` | — (0) | EUR/month | Gross, as printed (basic + Agirc-Arrco); empty = no rights in France |
 | French pension age | `pension2Age` | 64 | years | Legal age; change only to defer |
 | (last statement) | `pensionUpdated` | — | date | Stamped when a pension amount is edited; red after 12 months |
-| Windfalls (Name, Year, Amount) | `state.windfalls` `[{name,yr,amt,off}]` | none | text, year, EUR, scenario ids | One-time lump-sum inflows in the **Changes** tab, "Might happen" lane; switched per scenario in the scenario grid, one row per windfall labelled with its name (v8.18; "Windfall" when unnamed). `off` lists the scenarios it is switched off for; absent = on everywhere, so windfalls saved before v8.4 keep applying to every scenario (legacy `wf0/1/2` fields auto-migrate) |
+| Windfalls (Name, Year, Amount) | `state.windfalls` `[{name,yr,amt,off}]` | none | text, year, EUR, scenario ids | One-time lump-sum inflows in the **Changes** tab, "Might happen" lane; switched per scenario in the scenario grid, one row per windfall labelled with its name (v8.18; "Windfall" when unnamed). A new windfall starts switched off everywhere (v8.18.4). `off` lists the scenarios it is switched off for; absent = on everywhere, so windfalls saved before v8.4 keep applying to every scenario (legacy `wf0/1/2` fields auto-migrate) |
 
 ### Partner (global, toggled per scenario)
 

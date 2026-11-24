@@ -5,6 +5,18 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.18.4 New plans start switched off; flat move after buying
+
+- **A new plan is on in no scenario** (the owner): a new pay change, flat move, move
+  abroad or windfall starts with every scenario switch off; you switch it on in the
+  Scenarios grid. Buying and the child are no longer on by default in scenario E for a
+  first visit either. Plans saved before keep their switches.
+- **A flat move in or after the purchase year has no effect where you buy** (found
+  from the owner's report that his flat move changed nothing: it started the year he
+  buys, in every scenario). That is correct, not a wiring bug: from the purchase there
+  is no rent, and the rent of that year is exactly what buying saves, with or without
+  the partner (tested). The tile and the grid row now say so and name the scenarios.
+
 ## 2026-11-24 · v8.18.3 Every line ends on the right edge
 
 - **Left-right alignment in every tile** (the owner): fields are packed by their real

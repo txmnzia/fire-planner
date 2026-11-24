@@ -79,3 +79,19 @@ test('v8.18.2: fields flow side by side, a caption above each; a field keeps its
   assert.match(css, /@container \(min-width:400px\)\{ \.tile-body \.frow-c,\.tile-body \.frow-grp\{flex-wrap:nowrap;\} \}/);
   assert.match(css, /\.tile-body \.inp\.cur\.fc input\{[^}]*padding:0;/);
 });
+
+test('v8.18.4: a new plan is switched on in no scenario (pay change, flat move, move abroad, windfall)', async () => {
+  const { NEW_PLAN_OFF, windfallSwitches } = await import('../js/ui/plans.js');
+  const { plansForScenario } = await import('../js/countries.js');
+  assert.deepEqual(NEW_PLAN_OFF(), [1, 2, 3, 4, 5]);
+  assert.notEqual(NEW_PLAN_OFF(), NEW_PLAN_OFF());   // a fresh list each time, never shared between plans
+  const sit = read('js/ui/situation.js'), hou = read('js/ui/housing.js');
+  assert.match(sit, /state\.payChanges\.push\(\{[^}]*on: \[\] \}\)/);
+  assert.match(sit, /state\.windfalls\.push\(\{[^}]*off: NEW_PLAN_OFF\(\) \}\)/);
+  assert.match(hou, /state\.rentMoves\.push\(\{[^}]*off: NEW_PLAN_OFF\(\) \}\)/);
+  assert.match(hou, /state\.residence\.push\(\{[^}]*off: NEW_PLAN_OFF\(\) \}\)/);
+  // and "off everywhere" really means no scenario uses it
+  assert.deepEqual(windfallSwitches([{ yr: 2030, amt: 1000, off: NEW_PLAN_OFF() }])[0].on, [false, false, false, false, false]);
+  const gl = { rentMoves: [{ from: 2030, rent: 900, off: NEW_PLAN_OFF() }], residence: [{ from: null, tax: 0.3, col: 1 }, { from: 2035, tax: 0, col: 1, off: NEW_PLAN_OFF() }] };
+  for (let s = 1; s <= 5; s++) assert.deepEqual(plansForScenario(gl, s), { rentMoves: [], residence: [gl.residence[0]] });
+});

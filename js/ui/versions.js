@@ -2,19 +2,19 @@
 // version and what it does to the five scenarios, Save update / Undo all, the
 // update log (compare, restore), the first-run review and "Did this happen?".
 // Edits still autosave as before; a version is a dated copy you can go back to.
-import { el, eur } from "../util.js?v=8.18.3";
-import { state, features } from "../state.js?v=8.18.3";
-import { recalc } from "../recalc.js?v=8.18.3";
-import { collectState, applyState } from "../sync.js?v=8.18.3";
-import { getScenarioName } from "../inputs.js?v=8.18.3";
+import { el, eur } from "../util.js?v=8.18.4";
+import { state, features } from "../state.js?v=8.18.4";
+import { recalc } from "../recalc.js?v=8.18.4";
+import { collectState, applyState } from "../sync.js?v=8.18.4";
+import { getScenarioName } from "../inputs.js?v=8.18.4";
 import { snapshotOf, resultsOf, diffFields, diffLists, changeCount, impactLines, addVersion,
-         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.18.3";
-import { rentShift } from "./housing.js?v=8.18.3";
-import { updateToggleUI } from "./controls.js?v=8.18.3";
-import { revealField } from "./tiles.js?v=8.18.3";
-import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.18.3";
-import { renderNwHistory } from "./nwHistory.js?v=8.18.3";
-import { refreshedText } from "./spending.js?v=8.18.3";
+         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.18.4";
+import { rentShift } from "./housing.js?v=8.18.4";
+import { updateToggleUI } from "./controls.js?v=8.18.4";
+import { revealField } from "./tiles.js?v=8.18.4";
+import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.18.4";
+import { renderNwHistory } from "./nwHistory.js?v=8.18.4";
+import { refreshedText } from "./spending.js?v=8.18.4";
 
 const fmtDay = ts => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));

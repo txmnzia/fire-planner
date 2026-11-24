@@ -109,3 +109,30 @@ test('markup: where you live and planned rents exist; inputs feed the engine', (
   const inputs = readFileSync(new URL('../js/inputs.js', import.meta.url), 'utf8');
   assert.match(inputs, /rentInJoint:\s+true/); assert.match(inputs, /residence,/);
 });
+
+// v8.18.4: a flat move in or after the purchase year changes nothing where you buy
+// (the rent of that year is exactly the rent buying saves); the app says so.
+test('flat move after buying: no effect on costs, and rentMoveNoEffect names those scenarios', async () => {
+  const { rentMoveNoEffect } = await import('../js/countries.js');
+  const g0 = base({ rentInJoint: true, propBuyYear: 2030 }), g1 = base({ rentInJoint: true, propBuyYear: 2030, rentMoves: [{ from: 2031, rent: 1700 }] });
+  // with the partner: the joint costs; alone: 70% of the rent in soloSpend, 70% saved by buying
+  for (const yr of [2029, 2031, 2045]) {
+    const s = sc({ hasProp: true });
+    assert.equal(householdCosts(yr, s, g1, false).shared, householdCosts(yr, s, g0, false).shared, 'partner ' + yr);
+    const solo = g => soloSpend(g, false, yr) - rentSavedMonthly(g, sc({ hasProp: true, hasPartner: false }), yr);
+    assert.ok(Math.abs(solo(g1) - solo(g0)) < 1e-9, 'alone ' + yr);
+  }
+  // the whole projection is unchanged, with and without the partner
+  for (const p of [true, false]) {
+    const a = project(sc({ hasProp: true, hasPartner: p }), g0), c = project(sc({ hasProp: true, hasPartner: p }), g1);
+    assert.ok(a.fireTarget > 0 && a.values.length > 10); assert.equal(c.fireTarget, a.fireTarget); assert.deepEqual(c.values, a.values); assert.equal(c.finalNetWorth, a.finalNetWorth);
+  }
+  // without buying the move does change the costs: +(1,700 − 1,200)×12 = +6,000 a year (joint)
+  assert.equal(householdCosts(2031, sc(), g1, false).shared - householdCosts(2031, sc(), g0, false).shared, 6000);
+  assert.ok(Math.abs(soloSpend(g1, false, 2031) - soloSpend(g0, false, 2031) - 0.7 * 500) < 1e-9);
+  const feats = { 1: { prop: true }, 2: { prop: false }, 3: { prop: true }, 4: { prop: true }, 5: { prop: true } };
+  assert.deepEqual(rentMoveNoEffect({ from: 2031, rent: 1700, off: [4] }, { propPrice: 1, propBuyYear: 2030 }, feats), [1, 3, 5]);
+  assert.deepEqual(rentMoveNoEffect({ from: 2030, rent: 1700 }, { propPrice: 1, propBuyYear: 2030 }, feats), [1, 3, 4, 5]);   // same year counts
+  assert.deepEqual(rentMoveNoEffect({ from: 2029, rent: 1700 }, { propPrice: 1, propBuyYear: 2030 }, feats), []);           // before buying: it matters
+  assert.deepEqual(rentMoveNoEffect({ from: 2031, rent: 1700 }, { propPrice: 0, propBuyYear: 2030 }, feats), []);           // no purchase set up
+});

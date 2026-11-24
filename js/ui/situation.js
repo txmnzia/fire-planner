@@ -3,13 +3,13 @@
 // The source of truth for every value stays the id-bearing form control that
 // inputs.js / sync.js already read — this module only adds friendlier controls
 // (year-picker popover, sliders, the subject rail) and the dynamic windfall list.
-import { el } from "../util.js?v=8.18.3";
-import { setPayListPainter } from "./plans.js?v=8.18.3";
-import { normalisePayChanges } from "../payChanges.js?v=8.18.3";
-import { state } from "../state.js?v=8.18.3";
-import { recalc } from "../recalc.js?v=8.18.3";
-import { ASSUMPTION_DEFAULTS, assumptionChanges } from "../assumptions.js?v=8.18.3";
-import { renderRentMoves, renderResidence, initRentToday, renderResNotes } from "./housing.js?v=8.18.3";
+import { el } from "../util.js?v=8.18.4";
+import { setPayListPainter, NEW_PLAN_OFF } from "./plans.js?v=8.18.4";
+import { normalisePayChanges } from "../payChanges.js?v=8.18.4";
+import { state } from "../state.js?v=8.18.4";
+import { recalc } from "../recalc.js?v=8.18.4";
+import { ASSUMPTION_DEFAULTS, assumptionChanges } from "../assumptions.js?v=8.18.4";
+import { renderRentMoves, renderResidence, initRentToday, renderResNotes } from "./housing.js?v=8.18.4";
 
 const YNOW = 2026;
 
@@ -210,7 +210,7 @@ export function renderWindfalls() {
   add.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add windfall';
   add.addEventListener('click', () => {
     const ny = state.windfalls.length ? Math.max(...state.windfalls.map(w => +w.yr || YNOW)) + 1 : 2030;
-    state.windfalls.push({ name: '', yr: ny, amt: null }); renderWindfalls();
+    state.windfalls.push({ name: '', yr: ny, amt: null, off: NEW_PLAN_OFF() }); renderWindfalls();
   });
   host.appendChild(add);
 }

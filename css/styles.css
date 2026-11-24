@@ -541,6 +541,8 @@ button.wd-pill{font:inherit;font-size:12px;}
 .item .inp,.item .ypick-btn,.item input,.item .step-v,.item select{background:var(--card);}
 .item-hd .item-name{flex:1 1 160px;height:34px;min-width:0;font-family:'DM Sans',sans-serif;font-size:13px;}
 .item-hd .dp-del,.item-c .dp-del{margin-left:auto;}
+.item-note{font-size:11.5px;line-height:1.45;color:var(--sec);}
+.item-note.warn{color:var(--warn,#f59e0b);}
 .tile-body .dp-row{padding:10px 12px;gap:10px;}
 .tile-body .dp-main{flex-wrap:wrap;}
 .dp-src{font-size:11px;color:var(--muted);padding:0 2px;}
