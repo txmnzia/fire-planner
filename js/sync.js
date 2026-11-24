@@ -1,14 +1,15 @@
-import { el } from "./util.js?v=8.10";
-import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.10";
-import { state, features } from "./state.js?v=8.10";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.10";
-import { recalc } from "./recalc.js?v=8.10";
-import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.10";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.10";
-import { refreshSituationControls } from "./ui/situation.js?v=8.10";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.10";
-import { db } from "./db.js?v=8.10";
-import { migrateSpending } from "./spendMigration.js?v=8.10";
+import { el } from "./util.js?v=8.11";
+import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.11";
+import { state, features } from "./state.js?v=8.11";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.11";
+import { recalc } from "./recalc.js?v=8.11";
+import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.11";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.11";
+import { refreshSituationControls } from "./ui/situation.js?v=8.11";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.11";
+import { db } from "./db.js?v=8.11";
+import { migrateSpending } from "./spendMigration.js?v=8.11";
+import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.11";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
@@ -17,7 +18,7 @@ const SYNC_FIELDS = [
   'baseIncome','swr',
   'stockRet','bondRet','inflation','bondAllocNow','bondAllocRet',
   'retCountry',
-  'pensionAmt','pensionAge','pension2Amt','pension2Age','pensionUpdated',
+  'taxNow','pensionAmt','pensionAge','pension2Amt','pension2Age','pensionUpdated',
   'partnerInc','partnerRetAge','partnerPension','partnerPensionAge',
   'propBuyYear','propPrice','propDownPct','propTxCostPct','propMortgageRate','propMortgageTerm','propRentSaved',
   'childBirthYear','childCostYearly','childCostUntilAge','childMaternityMonths','childMaternityIncome',
@@ -66,6 +67,8 @@ export function collectState() {
     nwHistory: state.nwHistory,
     windfalls: state.windfalls,
     payChanges: state.payChanges,
+    rentMoves: state.rentMoves,
+    residence: state.residence,
     mc: { recenter: mcRe ? mcRe.checked : true },
     ibkr: { total: state.ibkrTotal, holdings: state.ibkrHoldings, asOf: state.ibkrAsOf, source: state.ibkrSource, imports: state.ibkrImports } };
 }
@@ -134,6 +137,8 @@ function applyStateInner(data) {
   state.payChanges = Array.isArray(data.payChanges)
     ? normalisePayChanges(data.payChanges)
     : migrateFromFields(data.fields, data.fields?.baseYear);
+  state.rentMoves = normaliseRentMoves(data.rentMoves);
+  state.residence = normaliseResidence(data.residence);
   renderNwHistory();
   refreshSituationControls();
   for (let s = 1; s <= 5; s++) updateAge(s);

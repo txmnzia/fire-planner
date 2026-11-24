@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.10">
+<link rel="stylesheet" href="css/styles.css?v=8.11">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.10</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.11</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -66,7 +66,7 @@
     <a class="rail-a" data-t="subj-port"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg><span>Portfolio</span></a>
     <a class="rail-a" data-t="subj-income"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20"/><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Income &amp; spending</span></a>
     <a class="rail-a" data-t="subj-markets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 7-7"/><path d="M17 8h4v4"/></svg><span>Markets</span></a>
-    <a class="rail-a" data-t="subj-tax"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V10l7-5 7 5v11"/><path d="M9 21v-6h6v6"/></svg><span>Tax</span></a>
+    <a class="rail-a" data-t="subj-tax"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V10l7-5 7 5v11"/><path d="M9 21v-6h6v6"/></svg><span>Where you live</span></a>
     <a class="rail-a" data-t="subj-future"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9"/><path d="M12 8V21"/><path d="M12 8S9 3 6.5 4.5 8 8 12 8zM12 8s3-5 5.5-3.5S16 8 12 8z"/></svg><span>Future income</span></a>
     <a class="rail-a" data-t="subj-history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg><span>Net-worth history</span></a>
     <div class="rail-grp">Partner <small>· per scenario</small></div>
@@ -130,6 +130,9 @@
           <div class="field"><label for="baseIncome_disp">Monthly income (net)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="baseIncome" id="baseIncome_disp"><input type="hidden" id="baseIncome" value=""></div></div>
           <div class="field"><label for="propRentSaved_disp">Rent today / month <button type="button" class="info-btn" title="The rent you pay now, part of what goes into the joint account. Entered once here: a scenario that buys a home on the Plans tab stops paying it from the purchase year.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="propRentSaved" id="propRentSaved_disp"><input type="hidden" id="propRentSaved" value=""></div></div>
         </div>
+        <div class="sit-note rent-note" id="rentNote" aria-live="polite"></div>
+        <div class="subj-subhd">Planned rent changes <button type="button" class="info-btn" title="A new flat or a known rent step: from a year, the new rent including charges. The rest of the joint costs stay as entered; only the rent is swapped. A scenario that buys stops whatever rent applies in its purchase year.">&#x24D8;</button></div>
+        <div class="dp-list" id="rentMovesList"></div>
         <div class="subj-subhd">Spending <span class="spend-upd" id="spendUpdatedTxt"></span><input type="hidden" id="spendUpdated" value=""></div>
         <p class="sit-note">Four numbers read off your accounts, as monthly averages. Update them about twice a year.</p>
         <div class="subj-grid spend-refresh">
@@ -180,13 +183,13 @@
     <!-- TAX -->
     <section class="subj" id="subj-tax" style="--acc:var(--s1c)">
       <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V10l7-5 7 5v11"/><path d="M9 21v-6h6v6"/></svg></div>
-        <div class="subj-tt"><h3>Tax</h3><p>Where you'll retire and how gains are taxed</p></div></div>
+        <div class="subj-tt"><h3>Where you live</h3><p>Tax on gains and cost of living follow you, year by year</p></div></div>
       <div class="subj-body"><div class="subj-grid">
-        <div class="field"><label for="retCountry">Country of residence</label><div class="inp"><select id="retCountry" oninput="recalc()" onchange="recalc()">
+        <div class="field"><label for="retCountry">Country today <button type="button" class="info-btn" title="Where you live now. Gains you sell are taxed at this country&#x2019;s rate until a planned move below. Rates are flat approximations on the gain part of a sale.">&#x24D8;</button></label><div class="inp"><select id="retCountry" oninput="recalc()" onchange="recalc()">
           <option value="FR" selected>&#x1F1EB;&#x1F1F7; France 30%</option>
           <option value="PT">&#x1F1F5;&#x1F1F9; Portugal 28%</option>
           <option value="ES">&#x1F1EA;&#x1F1F8; Spain 26%</option>
-          <option value="DE">&#x1F1E9;&#x1F1EA; Germany 26%</option>
+          <option value="DE">&#x1F1E9;&#x1F1EA; Germany 18.5%</option>
           <option value="IT">&#x1F1EE;&#x1F1F9; Italy 26%</option>
           <option value="NL">&#x1F1F3;&#x1F1F1; Netherlands 32%</option>
           <option value="BE">&#x1F1E7;&#x1F1EA; Belgium 0%</option>
@@ -210,9 +213,14 @@
           <option value="DK">&#x1F1E9;&#x1F1F0; Denmark 27%</option>
           <option value="FI">&#x1F1EB;&#x1F1EE; Finland 30%</option>
         </select></div></div>
+        <div class="field"><label for="taxNow">Tax on gains today <button type="button" class="info-btn" title="Empty = the country&#x2019;s preset. Type a rate to override it; the note below then marks it as yours.">&#x24D8;</button></label><div class="unit-wrap"><input type="number" id="taxNow" step="0.5" min="0" max="60" placeholder="preset" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div></div>
         <div class="field slider-field"><label for="gainFrac">Unrealized gain fraction <button type="button" class="info-btn" title="Share of your portfolio that is unrealized capital gain today. Auto-filled when you import an IBKR CSV. Withdrawals are taxed on the gain portion only; the projection tracks how this fraction evolves over time.">&#x24D8;</button> <span class="sv"><input type="number" id="gainFrac" value="25" min="0" max="99" step="1" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="gainFrac" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-      </div></div>
+      </div>
+      <div class="subj-subhd">Planned moves</div>
+      <div class="res-list" id="resList"></div>
+      <div class="res-notes" id="resNotes"></div>
+      </div>
     </section>
 
     <!-- FUTURE INCOME -->
@@ -588,6 +596,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.10"></script>
+<script type="module" src="js/main.js?v=8.11"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
-import { el, numVal, optVal } from "./util.js?v=8.10";
-import { state, features } from "./state.js?v=8.10";
-import { effectiveFeatures } from "./checks.js?v=8.10";
-import { payChangesFor } from "./payChanges.js?v=8.10";
+import { el, numVal, optVal } from "./util.js?v=8.11";
+import { state, features } from "./state.js?v=8.11";
+import { effectiveFeatures } from "./checks.js?v=8.11";
+import { payChangesFor } from "./payChanges.js?v=8.11";
 
 
 // Optional money field: null when empty (unlike optVal, 0 is a valid value).
@@ -27,19 +27,17 @@ export function getWindfalls() {
     .filter(w => !isNaN(w.yr) && !isNaN(w.amt) && w.amt > 0);
 }
 
-// Capital-gains tax rate per country (flat-rate approximation; see README).
-export const COUNTRY_TAX = { FR:30, PT:28, ES:26, DE:26, IT:26, NL:32, BE:0, LU:0, AT:28, IE:33, GR:15,
-                      CY:0, MT:0, HR:10, HU:15, RO:10, BG:10, PL:19, SI:25, EE:20, LV:20, LT:15,
-                      SK:19, SE:30, DK:27, FI:30 };
+export { COUNTRY_TAX } from "./taxTable.js?v=8.11";
+import { COUNTRY_TAX } from "./taxTable.js?v=8.11";
 // Legacy saved states stored the numeric rate as the select value; map to a country code.
 export const LEGACY_RATE_TO_CODE = { "30":"FR", "28":"PT", "26":"ES", "32":"NL", "0":"BE", "33":"IE",
                               "15":"GR", "10":"HR", "19":"PL", "25":"SI", "20":"EE", "27":"DK" };
 
-// Living alone costs about 70% of what two people spend on rent, bills, groceries
-// and leisure: the standard equivalence scales give 1/1.5 = 0.67 (OECD-modified)
-// and 1/sqrt(2) = 0.71 (square-root scale). Used when "your housing & living
-// costs if alone" is left empty (v8.0.5).
-export const SOLO_SHARE = 0.7;
+// Living alone costs about 70% of what two people spend: SOLO_SHARE lives in the
+// engine since v8.11 (one constant); re-exported for older importers.
+import { SOLO_SHARE } from "./engine.js?v=8.11";
+import { buildResidence, normaliseRentMoves } from "./countries.js?v=8.11";
+export { SOLO_SHARE };
 // v8.7: yearly items (€/yr, shared) count in the default too, as a monthly amount.
 export function soloSharedFrom(entered, sharedNow, yearlyItems) {
   return entered != null ? entered : Math.round(((sharedNow || 0) + (yearlyItems || 0)/12) * SOLO_SHARE);
@@ -49,7 +47,10 @@ export function getGlobals() {
   const bondNow = numVal("bondAllocNow",0)/100;
   const sel = el("retCountry");
   const code = sel ? sel.value : "FR";
-  const taxRate = (COUNTRY_TAX[code] !== undefined ? COUNTRY_TAX[code] : 30)/100;
+  // v8.11: where you live, today and after each planned move (tax on gains, cost of living)
+  const taxNow = optNum("taxNow");
+  const residence = buildResidence(code, taxNow, state.residence);
+  const taxRate = residence[0].tax;
   const currentAge = currentAgeFromDOB();
   const baseYear   = numVal("baseYear",2026);
   // Partner age offset: partnerAge = yourAge + offset (0 when no birth year given).
@@ -58,6 +59,7 @@ export function getGlobals() {
   const own = numVal("samPersonalNow",0);
   const joint = numVal("samPaysIn",0) + numVal("partnerPaysIn",0);
   const retMult = 1 + Math.max(-0.9, Math.min(1, numVal("retSpendChange",0)/100));
+  const rentNow = numVal("propRentSaved",0);
   return {
     currentAge,
     invested:     state.ibkrTotal,
@@ -97,7 +99,13 @@ export function getGlobals() {
     samPaysIn:         numVal("samPaysIn",0),
     partnerPaysIn:     numVal("partnerPaysIn",0),
     sharedNow:         joint,
-    sharedRet:         joint*retMult,
+    // v8.11: rent is inside the joint account; the retirement change applies to
+    // everything but rent (rent follows Housing: today's rent and planned moves)
+    sharedRet:         (joint - rentNow)*retMult + rentNow,
+    rentInJoint:       true,
+    rentMoves:         normaliseRentMoves(state.rentMoves).filter(m => m.rent != null),
+    residence,
+    retMult,
     yearlyItems:       numVal("yearlyItems",0),
     yearlyItemsRet:    numVal("yearlyItems",0)*retMult,
     retSpendChange:    retMult - 1,

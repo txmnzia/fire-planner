@@ -5,6 +5,23 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.11 Housing and where you live
+
+- **Rent lives in one place** (rent today) and is part of the joint account; planned
+  rent changes swap only the rent. Editing rent today moves both joint transfers by the
+  same amount, split like today's.
+- **Where you live, year by year:** tax on gains at the rate of the country you live in
+  when you sell; cost of living (% of today, default 100%) scales everything except
+  housing and child costs. No invented cost-of-living presets: 100% until you type one.
+- **Germany's preset is 18.5%** (equity-fund partial exemption), not 26%.
+- **Bug fixed: buying while living alone saved 100% of the rent** although only 70% of
+  it was in the "if alone" costs; it now saves the 70%. On the owner's values this moves
+  the Solo scenario's stop age from 40 to 43 (fixed mode 39 to 41); partner scenarios
+  are unchanged.
+- **The retirement % change no longer applies to rent** (rent is explicit now).
+- Today's country stays what was saved (no number moves); the review banner asks
+  where you live today and when you move.
+
 ## 2026-11-24 · v8.10 Portfolio check-in
 
 - An import keeps its **as-of date** and the period's **deposits**; every check-in is

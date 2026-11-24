@@ -29,6 +29,8 @@ js/
   recalc.js             Orchestrator: inputs → engine → all renderers, then persistence.
   sync.js               localStorage persistence + Supabase cross-device sync
                         (collectState/applyState, magic-link sign-in, polling).
+  taxTable.js           Country tax presets (one table, shared by inputs and countries).
+  countries.js          Pure (v8.11): country notes, residence periods, rent moves.
   ibkr.js               Pure (v8.10): IBKR statement parser (total, positions, gain %,
                         as-of date, deposits) and the check-in read-outs.
   pensions.js           Pure (v8.9): pension countries, legal ages and the net estimate.
@@ -75,6 +77,7 @@ js/
                         inputs, and the dynamic windfall datapoint list. Progressive
                         enhancement — the id-bearing inputs stay the source of truth.
                         Also paints the Pay changes card (renderPayList).
+    housing.js          Planned rents, planned moves abroad, rent-today edit (v8.11).
     spending.js         Spending read-outs (v8.7, v8.8): rent in the joint account,
                         her share today, "You really invest" (engine
                         investNowMonthly), and the last-refresh date stamp.

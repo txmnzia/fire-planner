@@ -38,6 +38,36 @@ export function pensionMonthlyAt(gl, age) {
   if (gl.pension2Amt > 0 && age >= gl.pension2Age) p += gl.pension2Amt;
   return p;
 }
+// ── Housing and where you live (v8.11) ──────────────────────────────────────
+// Living alone costs about 70% of what two people spend (OECD-modified 0.67,
+// square-root scale 0.71). One constant, used for the default "costs if alone".
+export const SOLO_SHARE = 0.7;
+// Rent in year yr (today's €/month): rent today (propRentSaved), replaced by each
+// planned move from its year. gl.rentMoves = [{from, rent}] sorted by year.
+export function rentAt(gl, yr) {
+  let r = gl.propRentSaved || 0;
+  for (const m of gl.rentMoves || []) if (yr >= m.from) r = m.rent;
+  return r;
+}
+// Where you live in year yr: gl.residence = [{from (null = today), tax, col}]
+// sorted; tax = rate on the gain part of a sale (decimal), col = cost of living
+// relative to today (1 = same). Without a residence list: today's rate, col 1.
+export function residenceAt(gl, yr) {
+  let cur = null;
+  for (const p of gl.residence || []) if (p.from == null || yr >= p.from) cur = p;
+  return cur;
+}
+export function taxRateAt(gl, yr) { const p = residenceAt(gl, yr); return p && p.tax != null ? p.tax : gl.taxRate; }
+export function colAt(gl, yr) { const p = residenceAt(gl, yr); return p && p.col > 0 ? p.col : 1; }
+// Rent saved by buying (today's €/month) in year yr: whatever rent applies that
+// year, from the purchase year on. Living alone you pay 70% of the couple's rent
+// (it is inside the 70% "if alone" costs), so buying saves that part only.
+export function rentSavedMonthly(gl, sc, yr) {
+  if (!sc.hasProp || yr < gl.propBuyYear) return 0;
+  const r = rentAt(gl, yr);
+  return (gl.rentInJoint && isTwoPerson(gl) && !sc.hasPartner) ? r*SOLO_SHARE : r;
+}
+
 // The pensions as a list, for credits and texts: [{amt, age}] with amt > 0.
 export function pensionList(gl) {
   const out = [];
@@ -86,10 +116,15 @@ export function partnerIncomeAt(yr, gl, herDrawAnn) {
 // split your cost into a lifelong part and a temporary part (v8.2, see tempCostPV).
 export function householdCosts(yr, sc, gl, samRetired, noTemp) {
   const t = yr - gl.baseYear, infl = Math.pow(1+gl.inflation, t);
-  const samPersonal = (samRetired ? gl.samPersonalRet : gl.samPersonalNow)*12*infl;
+  // v8.11: cost of living where you live that year scales everything but housing;
+  // rent today is inside the joint account and is replaced by the rent that year.
+  const col = colAt(gl, yr);
+  const samPersonal = (samRetired ? gl.samPersonalRet : gl.samPersonalNow)*12*infl*col;
   // yearly items (trips, courses, gifts; v8.7) are shared costs, now and retired
   const yearly      = samRetired && gl.yearlyItemsRet != null ? gl.yearlyItemsRet : (gl.yearlyItems || 0);
-  const sharedBase  = ((samRetired ? gl.sharedRet : gl.sharedNow)*12 + yearly)*infl;
+  const rentNow     = gl.rentInJoint ? (gl.propRentSaved || 0) : 0;
+  const nonHousing  = ((samRetired ? gl.sharedRet : gl.sharedNow) - rentNow)*12 + yearly;
+  const sharedBase  = (nonHousing*col + (gl.rentInJoint ? rentAt(gl, yr)*12 : 0))*infl;
   const partnerPersonal = (gl.partnerPersonal || 0)*12*infl;
   let child = 0, mortgage = 0, rentSaved = 0;
   if (sc.hasChild && !noTemp) {
@@ -98,7 +133,7 @@ export function householdCosts(yr, sc, gl, samRetired, noTemp) {
   }
   if (sc.hasProp) {
     if (!noTemp && yr >= gl.propBuyYear && yr < gl.propBuyYear + gl.propMortgageTerm) mortgage = mortgageAnnual(gl);
-    if (yr >= gl.propBuyYear) rentSaved = gl.propRentSaved*12*infl;
+    rentSaved = rentSavedMonthly(gl, sc, yr)*12*infl;
   }
   const shared = Math.max(0, sharedBase + child + mortgage - rentSaved);
   return { samPersonal, sharedBase, partnerPersonal, child, mortgage, rentSaved, shared };
@@ -177,7 +212,16 @@ export function partnerContributionNote(sc, gl, proj) {
 // Sam's decision; the v8.0.3 fallback is gone). Empty fields are flagged by
 // js/checks.js and the scenario shows "missing" instead of a €0 target.
 // The single source for every solo path: yearOneBudget, computeFireTarget, project().
-export function soloSpend(gl, retired) {
+export function soloSpend(gl, retired, yr) {
+  if (gl.rentInJoint && yr != null) {
+    // v8.11: own spending + 70% of (joint without rent + yearly items), both scaled by
+    // the cost of living that year, + 70% of the rent that year. retMult (the
+    // retirement change) applies to everything but rent.
+    const col = colAt(gl, yr), m = retired ? (gl.retMult != null ? gl.retMult : 1) : 1;
+    const own = (retired ? gl.samPersonalRet : gl.samPersonalNow)*col;
+    const nonHousing = SOLO_SHARE*((gl.sharedNow - (gl.propRentSaved || 0)) + (gl.yearlyItems || 0)/12)*m*col;
+    return own + nonHousing + SOLO_SHARE*rentAt(gl, yr);
+  }
   return retired ? gl.samPersonalRet + (gl.soloSharedRet != null ? gl.soloSharedRet : gl.soloShared)
                  : gl.samPersonalNow + gl.soloShared;
 }
@@ -202,7 +246,7 @@ export function yearOneBudget(fromAge, sc, gl, herDrawAnn) {
     return Math.max(0, selfFundedCost(fromYear, sc, gl, pen, herDrawAnn).samCost);
   }
   let budget = isTwoPerson(gl)
-    ? soloSpend(gl, true)*12*inflF
+    ? soloSpend(gl, true, fromYear)*12*inflF
     : gl.spendRet*(sc.hasPartner ? gl.partnerSpendMult : 1)*12*inflF;
   if (sc.hasChild) {
     const childAge = fromYear - gl.childBirthYear;
@@ -210,7 +254,7 @@ export function yearOneBudget(fromAge, sc, gl, herDrawAnn) {
   }
   if (sc.hasProp) {
     if (fromYear >= gl.propBuyYear && fromYear < gl.propBuyYear + gl.propMortgageTerm) budget += mortgageAnnual(gl);
-    if (fromYear >= gl.propBuyYear) budget -= gl.propRentSaved*12*inflF;
+    budget -= rentSavedMonthly(gl, sc, fromYear)*12*inflF;
   }
   return Math.max(0, budget);
 }
@@ -292,6 +336,19 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
   const spendNom  = baseSpend*12*Math.pow(1+gl.inflation,tFrom);
   const pensionNom= gl.pensionAmt*12*Math.pow(1+gl.inflation,tFrom);
   const rFrom     = portReturnAt(gl,fromAge,sc.retAge);
+  // Tax gross-up for a sale `years` years after fromAge (v8.5: the gain fraction
+  // keeps rising; v8.11: at the rate of the country you live in that year).
+  // Without a residence list this is exactly taxMultAfter at today's rate.
+  const fromYearT = gl.baseYear + tFrom;
+  const rate0 = taxRateAt(gl, fromYearT);
+  const g0 = opts.gainFrac != null ? opts.gainFrac : (rate0 > 0 ? clamp01((1 - 1/taxMult)/rate0) : 0);
+  function tmAt(years) {
+    if (!gl.residence) return taxMultAfter(taxMult, gl.taxRate, rFrom, years);
+    const rate = taxRateAt(gl, fromYearT + Math.max(0, years - 1));
+    if (!(rate > 0)) return 1;
+    const g = 1 - (1 - g0)/Math.pow(1 + rFrom, years);
+    return 1/Math.max(0.001, 1 - g*rate);
+  }
 
   // PV at fromAge of an inflation-growing net income stream (in today's €/month)
   // running from startAge to endAge (your-age terms). Income that arrives outside
@@ -346,10 +403,10 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
     // v8.5: tax gross-up rises with the gain fraction year by year (taxMultAfter)
     for (let k = 0; k < n; k++) {
       const ak = at(fromYear + k);
-      pv += Math.max(0, ak.c.samCost - ak.pen)*taxMultAfter(taxMult, gl.taxRate, rFrom, k+1)/Math.pow(1+rFrom, k+1);
+      pv += Math.max(0, ak.c.samCost - ak.pen)*tmAt(k+1)/Math.pow(1+rFrom, k+1);
     }
     if (sc.hasProp && gl.propBuyYear >= fromYear)
-      pv += gl.propPrice*(gl.propDownPct + gl.propTxCostPct)*taxMultAfter(taxMult, gl.taxRate, rFrom, Math.max(0, gl.propBuyYear - fromYear))/Math.pow(1+rFrom, gl.propBuyYear - fromYear);
+      pv += gl.propPrice*(gl.propDownPct + gl.propTxCostPct)*tmAt(Math.max(0, gl.propBuyYear - fromYear))/Math.pow(1+rFrom, gl.propBuyYear - fromYear);
     return Math.round(Math.max(0, pv));
   }
 
@@ -439,7 +496,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
   // Fixed-mode target (v8.5): year by year, with the gain fraction rising as the
   // portfolio keeps growing. opts.closedForm / opts.dcfLoop === 'flat' keep the
   // pre-v8.5 constant-tax pricing, for the equivalence test only.
-  if (!opts.closedForm) return dcfLoop(opts.dcfLoop === 'flat' ? () => taxMult : k => taxMultAfter(taxMult, gl.taxRate, rFrom, k + 1));
+  if (!opts.closedForm) return dcfLoop(opts.dcfLoop === 'flat' ? () => taxMult : k => tmAt(k + 1));
 
   // Year-by-year form of the closed-form DCF below (v8.5). tm(k) is the tax
   // gross-up for a sale k years after fromAge. With a constant tm it equals the
@@ -447,15 +504,16 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
   // fraction that rises as the remaining portfolio keeps growing.
   function dcfLoop(tm) {
     const fromYear = gl.baseYear + tFrom, n = Math.max(0, gl.lifeExp - fromAge);
+    const soloYr = isTwoPerson(gl) && !sc.hasPartner;   // v8.11: solo spending varies by year (moves, cost of living)
     let pv = 0;
     for (let k = 0; k < n; k++) {
       const age = fromAge + k, yr = fromYear + k, infl = Math.pow(1+gl.inflation, yr - gl.baseYear);
-      const spend = baseSpend*12*infl, pen = pensionMonthlyAt(gl, age)*12*infl;
+      const spend = (soloYr ? soloSpend(gl, true, yr) : baseSpend)*12*infl, pen = pensionMonthlyAt(gl, age)*12*infl;
       let flow = Math.max(0, spend - pen);
       if (sc.hasChild && yr >= gl.childBirthYear && yr < gl.childBirthYear + gl.childCostUntilAge) flow += gl.childCostYearly*infl;
       if (sc.hasProp) {
         if (yr >= gl.propBuyYear && yr < gl.propBuyYear + gl.propMortgageTerm) flow += mortgageAnnual(gl);
-        if (yr >= gl.propBuyYear) flow -= gl.propRentSaved*12*infl;
+        flow -= rentSavedMonthly(gl, sc, yr)*12*infl;
       }
       if (sc.hasPartner) {
         if (gl.partnerPension > 0 && age + off >= gl.partnerPensionAge) flow -= gl.partnerPension*12*infl;
@@ -552,7 +610,7 @@ export function project(sc, gl, opts) {
     const t    = yr-startYear;
     const infl = Math.pow(1+gl.inflation,t);
     const baseSpend = two && !sc.hasPartner
-      ? soloSpend(gl, true)
+      ? soloSpend(gl, true, yr)
       : gl.spendRet*(sc.hasPartner ? gl.partnerSpendMult : 1);
     let annRetSpend = baseSpend*12*infl;
 
@@ -579,17 +637,17 @@ export function project(sc, gl, opts) {
     let samDrawStart = 0;
     if (twoP) {
       const gfS = portfolio>0 ? clamp01((portfolio-costBasis)/portfolio) : 0;
-      samDrawStart = Math.max(0, portfolio)*gl.swr*Math.max(0.001, 1-gfS*gl.taxRate);
+      samDrawStart = Math.max(0, portfolio)*gl.swr*Math.max(0.001, 1-gfS*taxRateAt(gl, yr));
     }
     let tp = null;                             // this year's two-person ledger
 
     let fireNum = null;   // pre-retirement & %-of-portfolio years backfilled after the loop
     if (yr>=retYear && gl.wdMode!=="swr") {
       const gainFracNow = portfolio>0 ? Math.max(0,Math.min(1,(portfolio-costBasis)/portfolio)) : 0;
-      const postTaxMult = 1/Math.max(0.001,1-gainFracNow*gl.taxRate);
-      // two-person targets need the partner's future draws: priced after the loop
-      if (twoP) fireNumMult[fireNums.length] = { age, mult: postTaxMult };
-      else fireNum = computeFireTarget(age,sc,gl,postTaxMult);
+      const postTaxMult = 1/Math.max(0.001,1-gainFracNow*taxRateAt(gl, yr));
+      // two-person targets are priced after the loop
+      if (twoP) fireNumMult[fireNums.length] = { age, mult: postTaxMult, gf: gainFracNow };
+      else fireNum = computeFireTarget(age,sc,gl,postTaxMult,{ gainFrac: gainFracNow });
     }
     fireNums.push(fireNum);
 
@@ -623,7 +681,7 @@ export function project(sc, gl, opts) {
         annSpendNow = tp.samPersonal + tp.shared - tp.child - tp.mortgage + tp.rentSaved;
         childCost   = tp.child;
       } else if (two) {
-        annSpendNow = soloSpend(gl, false)*12*infl;
+        annSpendNow = soloSpend(gl, false, yr)*12*infl;
         childCost   = childCostInYear(yr);
       } else {
         annSpendNow = gl.spendNow*12*infl*(sc.hasPartner ? gl.partnerSpendMult : 1);
@@ -634,7 +692,7 @@ export function project(sc, gl, opts) {
       if (sc.hasProp) {
         if (yr===gl.propBuyYear) { extraCost=gl.propPrice*(gl.propDownPct+gl.propTxCostPct); row.extraCost=extraCost; }
         if (yr>=gl.propBuyYear && yr<gl.propBuyYear+gl.propMortgageTerm) { mortgageAnn=monthlyMortgage*12; row.mortgagePayment=Math.round(mortgageAnn); }
-        if (yr>=gl.propBuyYear) { rentSavingsAnn=gl.propRentSaved*12*infl; row.rentSavings=Math.round(rentSavingsAnn); }
+        if (yr>=gl.propBuyYear) { rentSavingsAnn=rentSavedMonthly(gl, sc, yr)*12*infl; row.rentSavings=Math.round(rentSavingsAnn); }
       }
       const netFlow = tp
         ? annInc - tp.samCost - extraCost          // your net cost = personal + shared − her contribution
@@ -662,7 +720,7 @@ export function project(sc, gl, opts) {
       const portAfterGrowth=portfolio*(1+r)+windfall;
       if (windfall>0) costBasis+=windfall;
       const gainFracNow=portAfterGrowth>0?Math.max(0,Math.min(1,(portAfterGrowth-costBasis)/portAfterGrowth)):0;
-      const netFrac=Math.max(0.001,1-gainFracNow*gl.taxRate);   // € received per € withdrawn
+      const netFrac=Math.max(0.001,1-gainFracNow*taxRateAt(gl, yr));   // € received per € withdrawn (v8.11: rate where you live that year)
       // Non-portfolio income: state pension, partner pension, and partner salary —
       // the partner keeps earning after YOUR retirement until their own retirement age.
       const pAnn = pensionMonthlyAt(gl, age)*12*infl;
@@ -675,7 +733,7 @@ export function project(sc, gl, opts) {
       if (sc.hasProp) {
         if (yr===gl.propBuyYear) { purchaseCost=gl.propPrice*(gl.propDownPct+gl.propTxCostPct); row.extraCost=purchaseCost; }
         if (yr>=gl.propBuyYear && yr<gl.propBuyYear+gl.propMortgageTerm) { mortgageAnnRet=monthlyMortgage*12; row.mortgagePayment=Math.round(mortgageAnnRet); }
-        if (yr>=gl.propBuyYear) { rentSavingsAnnRet=gl.propRentSaved*12*infl; row.rentSavings=Math.round(rentSavingsAnnRet); }
+        if (yr>=gl.propBuyYear) { rentSavingsAnnRet=rentSavedMonthly(gl, sc, yr)*12*infl; row.rentSavings=Math.round(rentSavingsAnnRet); }
       }
 
       let childCost=childCostInYear(yr);
@@ -731,7 +789,7 @@ export function project(sc, gl, opts) {
       row.income=Math.round(partnerSalAnn);
       row.spending=Math.round(annRetSpend); row.childCost=Math.round(childCost);
       row.pension=Math.round(pAnn); row.partnerPension=Math.round(partnerPensionAnn);
-      row.withdrawal=Math.round(gross); row.taxPaid=Math.round(gross*gainFracNow*gl.taxRate);
+      row.withdrawal=Math.round(gross); row.taxPaid=Math.round(gross*gainFracNow*taxRateAt(gl, yr));
     }
 
     // Two-person ledger rows (her income and contribution; v8.8: no savings ledger)
@@ -749,13 +807,13 @@ export function project(sc, gl, opts) {
   // FIRE target priced with the tracked gain fraction at retirement: the tax
   // gross-up reflects what the portfolio will actually owe in CGT then, not today.
   if (gainFracAtRet===null) gainFracAtRet = gl.gainFrac;
-  const taxMultRet = 1/Math.max(0.001,1-gainFracAtRet*gl.taxRate);
-  const tOpts = undefined;
+  const taxMultRet = 1/Math.max(0.001,1-gainFracAtRet*taxRateAt(gl, retYear));
+  const tOpts = { gainFrac: gainFracAtRet };
   const fireAtRetirement = computeFireTarget(sc.retAge,sc,gl,taxMultRet,tOpts);
   const fireTargetAdj = gl.wdMode==="swr"
     ? computeFireTarget(sc.retAge,sc,gl,taxMultRet,{otherIncomeCredit:true, ...(tOpts||{})})
     : fireAtRetirement;
-  fireNumMult.forEach((fm, i) => { if (fm) fireNums[i] = computeFireTarget(fm.age, sc, gl, fm.mult, tOpts); });
+  fireNumMult.forEach((fm, i) => { if (fm) fireNums[i] = computeFireTarget(fm.age, sc, gl, fm.mult, { gainFrac: fm.gf }); });
   for (let i=0;i<fireNums.length;i++) if (fireNums[i]===null) fireNums[i]=fireAtRetirement;
 
   const out = {years,values,fireNums,retYear,allocations,rows,

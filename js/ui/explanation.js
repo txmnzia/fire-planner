@@ -1,9 +1,9 @@
-import { el, eur } from "../util.js?v=8.10";
-import { state } from "../state.js?v=8.10";
-import { getScenarioName } from "../inputs.js?v=8.10";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, project, pensionMonthlyAt, pensionList } from "../engine.js?v=8.10";
-import { computeCardMetrics } from "./cards.js?v=8.10";
-import { FLOW_COLORS } from "./charts.js?v=8.10";
+import { el, eur } from "../util.js?v=8.11";
+import { state } from "../state.js?v=8.11";
+import { getScenarioName } from "../inputs.js?v=8.11";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, project, pensionMonthlyAt, pensionList, taxRateAt } from "../engine.js?v=8.11";
+import { computeCardMetrics } from "./cards.js?v=8.11";
+import { FLOW_COLORS } from "./charts.js?v=8.11";
 
 // ── EXPLANATION TAB ──────────────────────────────────────────────────────────
 // "Your plan, explained": turns the selected scenario's projection into a
@@ -95,7 +95,8 @@ export function renderExplanation(projs, gl, scenarios) {
   const nwToday = (gl.invested || 0) + gl.cash;
   const nowMo = budAnn(0) / 12;          // what the household actually lives on today (€/mo)
   const gfr = proj.gainFracAtRet != null ? proj.gainFracAtRet : gl.gainFrac;
-  const netFracRet = Math.max(0.001, 1 - gfr * gl.taxRate); // € kept per € withdrawn at retirement
+  const taxRet = taxRateAt(gl, proj.retYear);           // rate where you live when you stop (v8.11)
+  const netFracRet = Math.max(0.001, 1 - gfr * taxRet); // € kept per € withdrawn at retirement
   const vsNow = v => nowMo > 0 ? Math.round(v / nowMo * 100) + "%" : null;
 
   // ── phases ────────────────────────────────────────────────────────────────
@@ -511,13 +512,13 @@ export function renderExplanation(projs, gl, scenarios) {
     "<p>Same life, bigger numbers — that's your " + pct(gl.inflation) + "/yr inflation assumption compounding. Charts and tables show the bigger (&ldquo;nominal&rdquo;) euros because that's what will actually leave your account; this page adds today's-€ tags so every future budget can be compared honestly against your life now.</p>"));
 
   // taxes on withdrawal
-  concepts.push(concept("Tax when you sell", pct(gfr * gl.taxRate) + " effective", "why you must sell more than you spend",
+  concepts.push(concept("Tax when you sell", pct(gfr * taxRet) + " effective", "why you must sell more than you spend",
     '<div class="expl-rows">' +
     row("To spend", eur(1000) + "/mo") +
     row("You must sell", eur(Math.round(1000 / netFracRet)) + "/mo") +
     row("Tax paid", eur(Math.round(1000 / netFracRet - 1000)) + "/mo", "err") +
     "</div>" +
-    "<p>By your retirement about <strong>" + pct(gfr) + " of every euro you sell is capital gain</strong> (tracked by the engine year by year, not today's fraction), taxed at your country's flat " + pct(gl.taxRate) + " — so you keep €" + netFracRet.toFixed(2) + " per €1 sold. Every budget-to-portfolio conversion in this app, including your FIRE number, carries this gross-up. Flat-rate approximation, not tax advice.</p>"));
+    "<p>By your retirement about <strong>" + pct(gfr) + " of every euro you sell is capital gain</strong> (tracked by the engine year by year, not today's fraction), taxed at " + pct(taxRet) + " where you live then — so you keep €" + netFracRet.toFixed(2) + " per €1 sold. Every budget-to-portfolio conversion in this app, including your FIRE number, carries this gross-up. Flat-rate approximation, not tax advice.</p>"));
 
   // average path vs Monte Carlo
   concepts.push(concept("One smooth path vs real markets", "", "what this page hides, and where to see it",

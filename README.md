@@ -104,11 +104,29 @@ Under Spending, deposits per month over the last 6 months of statements are comp
 
 The Markets card lists the assumptions you changed from these defaults, and **Reset to defaults** puts them all back (`js/assumptions.js`, v8.9).
 
-### Tax
+### Where you live (v8.11)
 
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
-| Country of Residence | `retCountry` | France | — | Sets capital-gains tax rate (stored as country code) |
+| Country today | `retCountry` | France | — | Where you live now (country code). Its preset rate applies until a planned move |
+| Tax on gains today | `taxNow` | preset | % | Optional override of today's preset |
+| Planned moves | `state.residence` `[{from, country, tax, col}]` | none | year, code, %, % | From a year: the country's preset tax rate (or your override) and a cost of living in % of today (100 = same) |
+| Planned rent changes | `state.rentMoves` `[{from, rent}]` | none | year, EUR/month | Replaces the rent today from that year (Income & spending) |
+
+**Per year.** `taxRateAt(gl, yr)` is the rate where you live in year `yr`: every sale in
+the projection, the tax gross-up at retirement, and the fixed-mode target's year-by-year
+gross-up (`tmAt`) use it. `colAt(gl, yr)` scales all spending **except housing** (rent,
+mortgage) and child costs. Presets (`js/taxTable.js`) are flat rates on the gain part of a
+sale; Germany is **18.5%** since v8.11 (26.375% on 70% of the gain: equity funds are 30%
+tax-free), France 30% (PFU). Each country's note (`js/countries.js`) says what is not
+modelled.
+
+**Rent.** Rent today (`propRentSaved`) is part of the joint account (`rentInJoint`): the
+joint costs in year `yr` are `(joint − rent today) × col + rentAt(yr)`, and buying saves
+whatever rent applies that year (living alone: 70% of it, the share inside the "if alone"
+costs). The retirement % change applies to everything but rent. Editing rent today moves
+the two joint transfers by the same amount, split like today's (only for a change, not a
+first entry).
 | Unrealized Gain Fraction | `gainFrac` | 25% | % | % of your portfolio that is capital gain today; auto-filled from IBKR CSV import, editable & synced |
 
 ### Future Income

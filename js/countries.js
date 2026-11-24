@@ -1,0 +1,38 @@
+// Where you live (v8.11, pure): country presets for tax on gains and the
+// residence periods the engine reads (gl.residence). Rates are flat-rate
+// approximations on the GAIN part of a sale (README "Tax"); not tax advice.
+import { COUNTRY_TAX } from "./taxTable.js?v=8.11";
+
+// One line per country on where its rate comes from and what is left out.
+export const COUNTRY_NOTES = {
+  DE: "26.4% (25% + 5.5% solidarity surcharge) on 70% of the gain: equity ETFs are 30% tax-free (Teilfreistellung) = 18.5%. Not modelled: the yearly advance tax on accumulating funds (Vorabpauschale), the €1,000 allowance, church tax.",
+  FR: "30% flat tax (12.8% income tax + 17.2% social charges). Not modelled: a PEA after 5 years (17.2% only), the extra health levy for people with little earned income (CSM).",
+};
+export const countryNote = code => COUNTRY_NOTES[code] || ((COUNTRY_TAX[code] ?? 30) + "% flat rate on gains (approximation).");
+
+// Moves saved on the payload: [{from, country, tax (% or null), col (% or null)}].
+export function normaliseResidence(list) {
+  return (Array.isArray(list) ? list : [])
+    .map(p => ({ from: p.from == null || p.from === '' ? null : parseInt(p.from),
+                 country: typeof p.country === 'string' && p.country in COUNTRY_TAX ? p.country : 'FR',
+                 tax: p.tax == null || p.tax === '' || isNaN(+p.tax) ? null : +p.tax,
+                 col: p.col == null || p.col === '' || isNaN(+p.col) ? null : +p.col }))
+    .filter(p => p.from != null && !isNaN(p.from))
+    .sort((a, b) => a.from - b.from);
+}
+
+// gl.residence: today's country (from = null) then each move from its year.
+// tax: your override else the preset (decimal); col: your % else 100% (= today).
+export function buildResidence(todayCode, todayTaxPct, moves) {
+  const rate = (code, pct) => (pct != null ? pct : (COUNTRY_TAX[code] ?? 30)) / 100;
+  return [{ from: null, country: todayCode, tax: rate(todayCode, todayTaxPct), col: 1 },
+    ...normaliseResidence(moves).map(m => ({ from: m.from, country: m.country, tax: rate(m.country, m.tax), col: m.col != null ? m.col / 100 : 1 }))];
+}
+
+// Planned rents: [{from, rent}] with a year and an amount, sorted.
+export function normaliseRentMoves(list) {
+  return (Array.isArray(list) ? list : [])
+    .map(m => ({ from: m.from == null || m.from === '' ? null : parseInt(m.from), rent: m.rent == null || m.rent === '' ? null : +m.rent }))
+    .filter(m => m.from != null && !isNaN(m.from))
+    .sort((a, b) => a.from - b.from);
+}

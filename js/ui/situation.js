@@ -3,12 +3,13 @@
 // The source of truth for every value stays the id-bearing form control that
 // inputs.js / sync.js already read — this module only adds friendlier controls
 // (year-picker popover, sliders, the subject rail) and the dynamic windfall list.
-import { el } from "../util.js?v=8.10";
-import { toggleWindfall, LETTERS, togglePay, setPayListPainter } from "./plans.js?v=8.10";
-import { normalisePayChanges } from "../payChanges.js?v=8.10";
-import { state } from "../state.js?v=8.10";
-import { recalc } from "../recalc.js?v=8.10";
-import { ASSUMPTION_DEFAULTS, assumptionChanges } from "../assumptions.js?v=8.10";
+import { el } from "../util.js?v=8.11";
+import { toggleWindfall, LETTERS, togglePay, setPayListPainter } from "./plans.js?v=8.11";
+import { normalisePayChanges } from "../payChanges.js?v=8.11";
+import { state } from "../state.js?v=8.11";
+import { recalc } from "../recalc.js?v=8.11";
+import { ASSUMPTION_DEFAULTS, assumptionChanges } from "../assumptions.js?v=8.11";
+import { renderRentMoves, renderResidence, initRentToday, renderResNotes } from "./housing.js?v=8.11";
 
 const YNOW = 2026;
 
@@ -283,6 +284,7 @@ export function refreshSituationControls() {
   document.querySelectorAll('.cur-in[data-target]').forEach(d => { if (d._paintCur) d._paintCur(); });
   renderWindfalls();
   renderPayList();   // pay changes (v8.6) after a load or a sync pull
+  renderRentMoves(); renderResidence();   // v8.11
 }
 
 export function initSituation() {
@@ -292,5 +294,6 @@ export function initSituation() {
   initCurrency();
   renderWindfalls();
   renderPayList();
+  renderRentMoves(); renderResidence(); initRentToday();
   initRail();
 }
