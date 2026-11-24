@@ -73,7 +73,7 @@ test('wiring: saved with the state, migrated on load, read per scenario; old fie
   assert.match(inputs, /chgYear:  null,/);
   for (let n = 1; n <= 5; n++) for (const k of ['inc', 'chgYear', 'chgInc'])
     assert.match(html, new RegExp('<input type="hidden" id="s' + n + '_' + k + '"'));
-  const plans = html.slice(html.indexOf('id="tab-panel-plans"'), html.indexOf('<!-- /tab-panel-plans -->'));
+  const plans = html.slice(html.indexOf('id="lanePlans"'), html.indexOf('<aside class="chg-impact"'));   // v8.17: the plans lane
   assert.ok(plans.includes('id="payList"'));
   assert.match(html, /id="scgPayRows"/);
 });

@@ -49,10 +49,10 @@ test('saved state: off survives a load (sync keeps it, drops anything that is no
   assert.match(readFileSync(new URL('../js/inputs.js', import.meta.url), 'utf8'), /off: Array\.isArray\(w\.off\) \? w\.off\.slice\(\) : \[\]/);
 });
 
-test('markup: windfalls live on the Plans tab, with a slot for their rows in the grid', () => {
+test('markup: windfalls live in the plans lane, with a slot for their rows in the grid', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-  const plans = html.slice(html.indexOf('id="tab-panel-plans"'), html.indexOf('<!-- /tab-panel-plans -->'));
-  assert.ok(plans.includes('id="wfList"') && plans.includes('id="subj-windfalls"'));
+  const plans = html.slice(html.indexOf('id="lanePlans"'), html.indexOf('<aside class="chg-impact"'));
+  assert.ok(plans.includes('id="wfList"') && plans.includes('id="tile-wf"'));
   assert.match(html, /id="scgWindfallRows"/);
 });
 

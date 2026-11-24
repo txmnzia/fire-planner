@@ -1,9 +1,9 @@
-import { el, eur } from "../util.js?v=8.16";
-import { state } from "../state.js?v=8.16";
-import { getScenarioName } from "../inputs.js?v=8.16";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, project, pensionMonthlyAt, pensionList, taxRateAt } from "../engine.js?v=8.16";
-import { computeCardMetrics } from "./cards.js?v=8.16";
-import { FLOW_COLORS } from "./charts.js?v=8.16";
+import { el, eur } from "../util.js?v=8.17";
+import { state } from "../state.js?v=8.17";
+import { getScenarioName } from "../inputs.js?v=8.17";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, project, pensionMonthlyAt, pensionList, taxRateAt, scGl } from "../engine.js?v=8.17";
+import { computeCardMetrics } from "./cards.js?v=8.17";
+import { FLOW_COLORS } from "./charts.js?v=8.17";
 
 // ── EXPLANATION TAB ──────────────────────────────────────────────────────────
 // "Your plan, explained": turns the selected scenario's projection into a
@@ -95,7 +95,7 @@ export function renderExplanation(projs, gl, scenarios) {
   const nwToday = (gl.invested || 0) + gl.cash;
   const nowMo = budAnn(0) / 12;          // what the household actually lives on today (€/mo)
   const gfr = proj.gainFracAtRet != null ? proj.gainFracAtRet : gl.gainFrac;
-  const taxRet = taxRateAt(gl, proj.retYear);           // rate where you live when you stop (v8.11)
+  const taxRet = taxRateAt(scGl(gl, sc), proj.retYear);           // rate where you live when you stop (v8.11)
   const netFracRet = Math.max(0.001, 1 - gfr * taxRet); // € kept per € withdrawn at retirement
   const vsNow = v => nowMo > 0 ? Math.round(v / nowMo * 100) + "%" : null;
 

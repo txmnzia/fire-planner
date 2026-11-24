@@ -1,8 +1,8 @@
-import { el, eur, fmtK } from "../util.js?v=8.16";
-import { scenarioIssues } from "../checks.js?v=8.16";
-import { state } from "../state.js?v=8.16";
-import { getScenarioName } from "../inputs.js?v=8.16";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt } from "../engine.js?v=8.16";
+import { el, eur, fmtK } from "../util.js?v=8.17";
+import { scenarioIssues } from "../checks.js?v=8.17";
+import { state } from "../state.js?v=8.17";
+import { getScenarioName } from "../inputs.js?v=8.17";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.17";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -51,7 +51,7 @@ export function computeCardMetrics(sc, gl, proj) {
     const investAtRet = Math.max(0, portRet - cashAtRet - (proj.tempPV || 0));
     // net of CGT at the *tracked* gain fraction at retirement, not today's
     const gfr = proj.gainFracAtRet != null ? proj.gainFracAtRet : gl.gainFrac;
-    const swrPortfolio = Math.round(investAtRet * gl.swr * (1 - gfr * taxRateAt(gl, proj.retYear)) / 12);
+    const swrPortfolio = Math.round(investAtRet * gl.swr * (1 - gfr * taxRateAt(scGl(gl, sc), proj.retYear)) / 12);
     const inflAtRet = Math.pow(1 + gl.inflation, nAccum);
     const pensionMonthly = Math.round(pensionMonthlyAt(gl, sc.retAge) * inflAtRet);
     // in the two-person model her salary and pension are hers, not your income

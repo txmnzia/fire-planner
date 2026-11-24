@@ -1,7 +1,7 @@
 // Where you live (v8.11, pure): country presets for tax on gains and the
 // residence periods the engine reads (gl.residence). Rates are flat-rate
 // approximations on the GAIN part of a sale (README "Tax"); not tax advice.
-import { COUNTRY_TAX } from "./taxTable.js?v=8.16";
+import { COUNTRY_TAX } from "./taxTable.js?v=8.17";
 
 // One line per country on where its rate comes from and what is left out.
 export const COUNTRY_NOTES = {
@@ -16,13 +16,22 @@ export const countryNote = code => COUNTRY_NOTES[code] || ((COUNTRY_TAX[code] ??
 export const BUY_COSTS = { DE: 10, FR: 8 };
 export const buyCostPreset = code => BUY_COSTS[code] ?? 8;
 
+// v8.17: scenarios (1-5) a planned move is switched off for; absent = on everywhere
+const offList = off => Array.isArray(off) ? off.map(Number).filter(n => n >= 1 && n <= 5) : [];
+// The plan lists one scenario uses (only the moves switched on for it).
+export function plansForScenario(gl, s) {
+  const on = m => !(m.off || []).includes(s);
+  return { rentMoves: (gl.rentMoves || []).filter(on), residence: (gl.residence || []).filter((p, i) => i === 0 || on(p)) };
+}
+
 // Moves saved on the payload: [{from, country, tax (% or null), col (% or null)}].
 export function normaliseResidence(list) {
   return (Array.isArray(list) ? list : [])
     .map(p => ({ from: p.from == null || p.from === '' ? null : parseInt(p.from),
                  country: typeof p.country === 'string' && p.country in COUNTRY_TAX ? p.country : 'FR',
                  tax: p.tax == null || p.tax === '' || isNaN(+p.tax) ? null : +p.tax,
-                 col: p.col == null || p.col === '' || isNaN(+p.col) ? null : +p.col }))
+                 col: p.col == null || p.col === '' || isNaN(+p.col) ? null : +p.col,
+                 off: offList(p.off) }))
     .filter(p => p.from != null && !isNaN(p.from))
     .sort((a, b) => a.from - b.from);
 }
@@ -32,13 +41,13 @@ export function normaliseResidence(list) {
 export function buildResidence(todayCode, todayTaxPct, moves) {
   const rate = (code, pct) => (pct != null ? pct : (COUNTRY_TAX[code] ?? 30)) / 100;
   return [{ from: null, country: todayCode, tax: rate(todayCode, todayTaxPct), col: 1 },
-    ...normaliseResidence(moves).map(m => ({ from: m.from, country: m.country, tax: rate(m.country, m.tax), col: m.col != null ? m.col / 100 : 1 }))];
+    ...normaliseResidence(moves).map(m => ({ from: m.from, country: m.country, tax: rate(m.country, m.tax), col: m.col != null ? m.col / 100 : 1, off: m.off }))];
 }
 
 // Planned rents: [{from, rent}] with a year and an amount, sorted.
 export function normaliseRentMoves(list) {
   return (Array.isArray(list) ? list : [])
-    .map(m => ({ from: m.from == null || m.from === '' ? null : parseInt(m.from), rent: m.rent == null || m.rent === '' ? null : +m.rent }))
+    .map(m => ({ from: m.from == null || m.from === '' ? null : parseInt(m.from), rent: m.rent == null || m.rent === '' ? null : +m.rent, off: offList(m.off) }))
     .filter(m => m.from != null && !isNaN(m.from))
     .sort((a, b) => a.from - b.from);
 }

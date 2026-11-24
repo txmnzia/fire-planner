@@ -170,7 +170,7 @@ once by `js/spendMigration.js` (see [Partner Model](#partner-model)).
 | Ownership charges + upkeep | `propCharges` | — (0) | EUR/month | v8.13. From the purchase year, for good, inflation-indexed; shared like the joint costs. Empty while a scenario buys → banner warning |
 | Her share of down payment + costs | `propHerShare` | 0% | % | v8.13. Paid from her savings in scenarios with her |
 | Mortgage Term | `propMortgageTerm` | 25 | years | Amortization period |
-| Rent today (My Situation) | `propRentSaved` | — (0) | EUR/month | The rent you pay now (inside the joint account). Entered once; a scenario that buys stops paying whatever rent applies from the purchase year. Empty while a scenario buys → banner warning |
+| Rent today (Housing tile) | `propRentSaved` | — (0) | EUR/month | The rent you pay now (inside the joint account). Entered once; a scenario that buys stops paying whatever rent applies from the purchase year. Empty while a scenario buys → banner warning |
 
 **How buying counts (v8.13).** `mortgageSchedule` gives the payment while the rate is
 fixed and, with a rate after, the payment on the balance left over the remaining years
@@ -531,25 +531,25 @@ CoastNumber  = FIRE Number / growthFactor
 
 ## Scenarios Tab and Result Tiles
 
-### Plans tab (v8.3)
+### Plans (v8.3; in the Changes tab since v8.17)
 
 Buying a home and having a child are **plans**: things that might happen, each
-described once on the **Plans** tab (they moved there from My Situation; your
-partner stays on My Situation). Each card keeps its "Used in A–E" switches. A plan
+described once as plans (the "Might happen" lane of the Changes tab; your
+partner is a fact in the "Now" lane). Each card keeps its "Used in A–E" switches. A plan
 is **set up** once something that changes the numbers is entered: a purchase price
 for the home, a yearly cost or months of parental leave for the child
 (`plansSetUp()` in `js/checks.js`). A plan that is not set up has no row in the
 scenario grid, its card says so, and its switches are ignored by the calculation
 (`effectiveFeatures()` in `getScenario`), so a forgotten switch can never apply
 half a plan, such as rent saved without a purchase. The home card does not ask for
-the rent that stops: it shows your **rent today**, entered once on My Situation.
+the rent that stops: it shows your **rent today**, entered once in the Housing tile.
 
 ### The scenario grid (v8)
 
 The Scenarios tab is one grid: labels once on the left, one column per scenario.
 Rows: the scenario **name**, the three **life events** (with partner, buy property,
 have a child, each an on/off switch per scenario), one switch row per **windfall**
-and per **pay change** set up on the Plans tab, and the **result** rows below.
+and per **pay change** set up as plans, per planned rent and move abroad (v8.17), and the **result** rows below.
 
 **Stop ages are automatic (v8.1).** There is no stop-age input: each scenario stops
 at its **earliest funded age**. `earliestStopAge()` in `js/ui/cards.js` projects
@@ -872,11 +872,11 @@ it earlier when a windfall lands.
 
 ## Pay Changes (v8.6)
 
-Pay changes are **plans** on the Plans tab: a name, a start year, an optional end
+Pay changes are **plans** (the Pay changes tile): a name, a start year, an optional end
 year (inclusive; empty = for good) and the take-home per month during it (today's
 money; 0 = no pay, e.g. a year off), with an A–E switch per scenario. The scenario
 grid shows one row per pay change. Outside every change you earn your take-home
-from My Situation; when several apply in a year, the one that **started latest**
+from the Pay tile; when several apply in a year, the one that **started latest**
 wins (`payIncomeAt()` in `js/engine.js`).
 
 ```javascript
@@ -899,10 +899,38 @@ year off: one row each, switched on in the scenarios that should include it.
 
 ---
 
+## The Changes tab (v8.17)
+
+My Situation and Plans became one tab, **Changes**, with two lanes of tiles and the
+impact panel beside them (`js/ui/tiles.js`):
+
+- **Now** (facts, the same in every scenario): Portfolio & snapshots, Spending, Pay,
+  Pensions, Housing (rent today), Where you live (country today), You & partner,
+  Assumptions (markets and withdrawal strategy).
+- **Might happen** (plans, switched on per scenario): Buying a home, Child, Pay changes,
+  Flat move (planned rents), Moving country (moves abroad), Windfalls.
+
+A tile shows a one-line summary and its date badge (red when a check-in is due) and
+opens in place; one open tile per lane, remembered per browser. A field reached from the
+banner or the review opens its tile. On a phone the lanes stack and the impact panel is a
+bar at the bottom ("N changes · biggest effect"), tap to open. The inputs and their ids are
+unchanged, so saving, sync and the engine are untouched.
+
+**Imports are snapshots.** An IBKR import writes the year's net-worth snapshot (IBKR
+total + cash, its date, what was added and what the markets did since the previous
+import; `snapshotFromImport`). One row per year: a later import that year replaces it,
+keeping any actuals. Snapshots can also be added by hand. The separate check-in block and
+the typed-total fallback are gone.
+
+**Planned rents and moves abroad are switched per scenario** (`off` lists the scenarios
+without them, like windfalls; rows in the scenario grid and A–E chips on each move). A
+scenario carries its own lists (`plansForScenario` in `js/countries.js`) and every engine
+entry point reads the settings through `scGl(gl, sc)`, so the formulas are unchanged.
+
 ## Versions, update log and prompts (v8.14)
 
 Edits still autosave (localStorage, then the Supabase row). On top of that, the panel at
-the top of My Situation compares today's settings with the **last saved version**: the
+the side of the Changes tab compares today's settings with the **last saved version**: the
 changed fields (old → new), changed lists, and for each scenario the stop age, FIRE number
 and net worth at the end, saved → now. **Save update** (optional note) keeps a dated
 version; **Undo all** brings the last version back. The **update log** lists versions

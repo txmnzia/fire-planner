@@ -1,15 +1,15 @@
-import { el } from "./util.js?v=8.16";
-import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.16";
-import { state, features } from "./state.js?v=8.16";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.16";
-import { recalc } from "./recalc.js?v=8.16";
-import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.16";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.16";
-import { refreshSituationControls } from "./ui/situation.js?v=8.16";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.16";
-import { db } from "./db.js?v=8.16";
-import { migrateSpending } from "./spendMigration.js?v=8.16";
-import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.16";
+import { el } from "./util.js?v=8.17";
+import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.17";
+import { state, features } from "./state.js?v=8.17";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.17";
+import { recalc } from "./recalc.js?v=8.17";
+import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.17";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.17";
+import { refreshSituationControls } from "./ui/situation.js?v=8.17";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.17";
+import { db } from "./db.js?v=8.17";
+import { migrateSpending } from "./spendMigration.js?v=8.17";
+import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.17";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
@@ -114,7 +114,9 @@ function applyStateInner(data) {
   state.nwHistory = Array.isArray(data.nwHistory) ? data.nwHistory.map(r=>({
     year:+r.year||0, val:+r.val||0,
     income:(r.income==null||r.income==='')?null:+r.income,
-    spend:(r.spend==null||r.spend==='')?null:+r.spend
+    spend:(r.spend==null||r.spend==='')?null:+r.spend,
+    // v8.17: snapshots from an IBKR import keep their date and what changed
+    ...(r.source ? { source: r.source, date: r.date || null, change: r.change ?? null, added: r.added ?? null } : {})
   })) : [];
   // Windfalls: dynamic array on newer payloads; migrate legacy wf{i}_yr/wf{i}_amt fields otherwise.
   if (Array.isArray(data.windfalls)) {

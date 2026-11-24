@@ -2,18 +2,19 @@
 // version and what it does to the five scenarios, Save update / Undo all, the
 // update log (compare, restore), the first-run review and "Did this happen?".
 // Edits still autosave as before; a version is a dated copy you can go back to.
-import { el, eur } from "../util.js?v=8.16";
-import { state, features } from "../state.js?v=8.16";
-import { recalc } from "../recalc.js?v=8.16";
-import { collectState, applyState } from "../sync.js?v=8.16";
-import { getScenarioName } from "../inputs.js?v=8.16";
+import { el, eur } from "../util.js?v=8.17";
+import { state, features } from "../state.js?v=8.17";
+import { recalc } from "../recalc.js?v=8.17";
+import { collectState, applyState } from "../sync.js?v=8.17";
+import { getScenarioName } from "../inputs.js?v=8.17";
 import { snapshotOf, resultsOf, diffFields, diffLists, changeCount, impactLines, addVersion,
-         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.16";
-import { rentShift } from "./housing.js?v=8.16";
-import { updateToggleUI } from "./controls.js?v=8.16";
-import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.16";
-import { renderNwHistory } from "./nwHistory.js?v=8.16";
-import { refreshedText } from "./spending.js?v=8.16";
+         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.17";
+import { rentShift } from "./housing.js?v=8.17";
+import { updateToggleUI } from "./controls.js?v=8.17";
+import { revealField } from "./tiles.js?v=8.17";
+import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.17";
+import { renderNwHistory } from "./nwHistory.js?v=8.17";
+import { refreshedText } from "./spending.js?v=8.17";
 
 const fmtDay = ts => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -151,7 +152,7 @@ function markChanged(fields) {
     const card = d.closest(".subj"); if (card) perCard.set(card, (perCard.get(card) || 0) + 1);
   }
   perCard.forEach((c, card) => {
-    const hd = card.querySelector(".subj-tt h3"); if (!hd) return;
+    const hd = card.querySelector(".tile-tt b, .subj-tt h3"); if (!hd) return;
     const b = document.createElement("span"); b.className = "subj-badge"; b.textContent = c + (c > 1 ? " changes" : " change");
     hd.appendChild(b);
   });
@@ -197,23 +198,23 @@ export function renderUpdatePanel(gl) {
       items.map(it => '<div class="up-item"><span>' + esc(it.text) + '</span><span class="up-btns"><button type="button" class="dp-add" data-go="' + it.field + '">Go</button><button type="button" class="dp-add" data-done="' + it.key + '">Done</button></span></div>').join("") + "</div>";
   }
 
-  // Changes since the last version + impact on the five scenarios
-  if (!v) h += '<div class="up-main"><span>No saved version yet.</span> <button type="button" class="dp-add" data-save="1">Save a first version</button></div>';
+  // Impact on your scenarios: always shown; saved → now when something changed
+  const impact = () => '<div class="up-impact">' + now.map((r, i) => {
+    const p = (v && v.results || [])[i] || r;
+    const age = p.age === r.age ? (r.age ?? "\u2014") : (p.age ?? "\u2014") + " \u2192 <b>" + (r.age ?? "\u2014") + "</b>";
+    const fire = p.fire === r.fire ? eur(r.fire) : eur(p.fire || 0) + " \u2192 <b>" + eur(r.fire) + "</b>";
+    return '<div class="up-sc c' + (i + 1) + '"><span class="nm">' + esc(r.name) + "</span><span>stop " + age + "</span><span>FIRE " + fire + "</span><span>at end " + eur(r.nwEnd) + "</span></div>";
+  }).join("") + "</div>";
+  h += '<div class="up-main"><div class="up-hd">Impact on your scenarios</div>';
+  if (!v) h += '<div class="tgt">No saved version yet: save one to see what each change does.</div>' + impact() + '<div class="up-actions"><button type="button" class="dp-add up-save" data-save="1">Save a first version</button></div>';
   else {
-    h += '<div class="up-main"><div class="up-hd">' + (n ? n + (n > 1 ? " changes" : " change") + " since " + fmtDay(v.ts) : "No changes since " + fmtDay(v.ts)) + (v.note ? ' <span class="tgt">(' + esc(v.note) + ")</span>" : "") + "</div>";
-    if (n) {
-      h += '<div class="up-changes">' + fields.slice(0, 12).map(f => "<div>" + esc(labelOf(f.id)) + ': <s>' + esc(f.from || "empty") + "</s> → <b>" + esc(f.to || "empty") + "</b></div>").join("") +
+    h += '<div class="tgt">' + (n ? n + (n > 1 ? " changes" : " change") + " since " + fmtDay(v.ts) : "No changes since " + fmtDay(v.ts)) + (v.note ? " (" + esc(v.note) + ")" : "") + "</div>";
+    if (n) h += '<div class="up-changes">' + fields.slice(0, 12).map(f => "<div>" + esc(labelOf(f.id)) + ': <s>' + esc(f.from || "empty") + "</s> \u2192 <b>" + esc(f.to || "empty") + "</b></div>").join("") +
         lists.map(l => "<div>" + esc(l) + " changed</div>").join("") + (fields.length > 12 ? '<div class="tgt">and ' + (fields.length - 12) + " more</div>" : "") + "</div>";
-      h += '<div class="up-impact">' + now.map((r, i) => {
-        const p = (v.results || [])[i] || {};
-        const age = p.age === r.age ? (r.age ?? "—") : (p.age ?? "—") + " → <b>" + (r.age ?? "—") + "</b>";
-        const fire = p.fire === r.fire ? eur(r.fire) : eur(p.fire || 0) + " → <b>" + eur(r.fire) + "</b>";
-        return '<div class="up-sc c' + (i + 1) + '"><span class="nm">' + esc(r.name) + "</span><span>stop " + age + "</span><span>FIRE " + fire + "</span><span>at end " + eur(r.nwEnd) + "</span></div>";
-      }).join("") + "</div>";
-      h += '<div class="up-actions"><input type="text" id="upNote" placeholder="Note (optional), e.g. new pension statement" maxlength="80"><button type="button" class="dp-add up-save" data-save="1">Save update</button><button type="button" class="dp-add" data-undo="1">Undo all</button></div>';
-    }
-    h += "</div>";
+    h += impact();
+    if (n) h += '<div class="up-actions"><input type="text" id="upNote" placeholder="Note (optional), e.g. new pension statement" maxlength="80"><button type="button" class="dp-add up-save" data-save="1">Save update</button><button type="button" class="dp-add" data-undo="1">Undo all</button></div>';
   }
+  h += "</div>";
 
   // Log
   if (state.versions.length) {
@@ -229,6 +230,9 @@ export function renderUpdatePanel(gl) {
     }).join("") + "</details>";
   }
   host.innerHTML = h;
+  // phone: the collapsed bar says how many changes and the biggest effect
+  const tt = el("impactToggleTxt");
+  if (tt) { const big = v ? impactLines(v.results, now)[0] : null; tt.textContent = (n ? n + (n > 1 ? " changes" : " change") : "No unsaved changes") + (big ? " \u00b7 " + big : "") + (prompts.length ? " \u00b7 " + prompts.length + " to confirm" : ""); }
 }
 
 export function initUpdatePanel() {
@@ -247,6 +251,7 @@ export function initUpdatePanel() {
     else if (b.dataset.done) { state.review.done = { ...(state.review.done || {}), [b.dataset.done]: true }; recalc(); }
     else if (b.dataset.go) {
       const f = el(b.dataset.go); if (!f) return;
+      revealField(f);
       const tab = f.closest(".tab-panel"); if (tab && !tab.classList.contains("active") && window.switchTab) window.switchTab(tab.id.replace("tab-panel-", ""));
       f.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => f.focus(), 300);
     }

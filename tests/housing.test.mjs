@@ -87,10 +87,10 @@ test('projection: the withdrawal year uses the tax rate where you live that year
 test('residence: presets, overrides and moves', () => {
   assert.equal(COUNTRY_TAX.DE, 18.5);
   const r = buildResidence('DE', null, [{ from: '2035', country: 'FR', tax: '', col: '90' }, { from: '', country: 'ES' }]);
-  assert.deepEqual(r, [{ from: null, country: 'DE', tax: 0.185, col: 1 }, { from: 2035, country: 'FR', tax: 0.3, col: 0.9 }]);
+  assert.deepEqual(r, [{ from: null, country: 'DE', tax: 0.185, col: 1 }, { from: 2035, country: 'FR', tax: 0.3, col: 0.9, off: [] }]);
   assert.equal(buildResidence('FR', 25, [])[0].tax, 0.25);
   assert.deepEqual(normaliseResidence([{ from: 2040, country: 'XX' }])[0].country, 'FR');
-  assert.deepEqual(normaliseRentMoves([{ from: '2031', rent: '1500' }, { from: '', rent: 1 }]), [{ from: 2031, rent: 1500 }]);
+  assert.deepEqual(normaliseRentMoves([{ from: '2031', rent: '1500' }, { from: '', rent: 1 }]), [{ from: 2031, rent: 1500, off: [] }]);
   assert.match(countryNote('DE'), /70% of the gain/);
   assert.match(countryNote('PT'), /28% flat rate/);
 });

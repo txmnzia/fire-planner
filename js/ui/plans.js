@@ -1,11 +1,11 @@
 // Plans tab (v8.3): which plans are set up, shown on the plan cards and in the
 // scenario grid (a plan that is not set up has no switch there). The rule itself
 // lives in js/checks.js (plansSetUp), which also gates the calculation.
-import { el, eur, fmtK } from "../util.js?v=8.16";
-import { state } from "../state.js?v=8.16";
-import { recalc } from "../recalc.js?v=8.16";
-import { isComplete } from "../payChanges.js?v=8.16";
-import { plansSetUp } from "../checks.js?v=8.16";
+import { el, eur, fmtK } from "../util.js?v=8.17";
+import { state } from "../state.js?v=8.17";
+import { recalc } from "../recalc.js?v=8.17";
+import { isComplete } from "../payChanges.js?v=8.17";
+import { plansSetUp } from "../checks.js?v=8.17";
 
 const NAMES = { prop: "Buying a home", child: "Child" };
 
@@ -97,6 +97,29 @@ function renderPayRows() {
   });
 }
 
+// v8.17: planned rents and moves abroad are plans too, switched per scenario
+// (m.off lists the scenarios a move is switched off for; absent = everywhere).
+export function flipOff(list, index, s) {
+  const m = list[index]; if (!m) return;
+  const off = Array.isArray(m.off) ? m.off.slice() : [];
+  m.off = (off.includes(s) ? off.filter(x => x !== s) : [...off, s]).sort();
+}
+function renderMoveRows() {
+  const host = el("scgMoveRows"); if (!host) return;
+  host.replaceChildren();
+  const on = m => [1, 2, 3, 4, 5].map(s => !(Array.isArray(m.off) && m.off.includes(s)));
+  state.rentMoves.forEach((m, i) => {
+    if (m.from == null || m.rent == null) return;
+    const parts = { title: "Flat move", sub: fmtK(m.rent) + "/mo \u00b7 from " + m.from };
+    host.append(switchRow("\u{1F3E0}", parts, on(m), "flat move from " + m.from, s => { flipOff(state.rentMoves, i, s); recalc(); }));
+  });
+  state.residence.forEach((p, i) => {
+    if (p.from == null) return;
+    const parts = { title: "Move to " + p.country, sub: "from " + p.from };
+    host.append(switchRow("\u2708\uFE0F", parts, on(p), "move to " + p.country, s => { flipOff(state.residence, i, s); recalc(); }));
+  });
+}
+
 // set by situation.js so a grid switch also repaints the Plans card chips
 let paintPayList = null;
 export function setPayListPainter(fn) { paintPayList = fn; }
@@ -104,6 +127,7 @@ export function setPayListPainter(fn) { paintPayList = fn; }
 export function renderPlans(gl) {
   renderWindfallRows();
   renderPayRows();
+  renderMoveRows();
   const pb = el("planState_pay");
   if (pb) { const n = state.payChanges.filter(isComplete).length; pb.textContent = n ? "\u00b7 " + n + " set up" : "\u00b7 none yet"; pb.classList.toggle("off", !n); }
   const wfb = el("planState_wf");
@@ -122,7 +146,7 @@ export function renderPlans(gl) {
   const note = el("scgHiddenPlans");
   if (note) note.textContent = hidden.length ? "· not set up in Plans, so hidden: " + hidden.join(", ") : "";
   const rs = el("planRentStops");
-  if (rs) rs.textContent = gl.propRentSaved > 0 ? eur(gl.propRentSaved) + "/mo \u00b7 your rent today" : "\u2014 enter your rent today on My Situation";
+  if (rs) rs.textContent = gl.propRentSaved > 0 ? eur(gl.propRentSaved) + "/mo \u00b7 your rent today" : "\u2014 enter your rent today under Housing";
   const st = el("plansStatus");
-  if (st) st.textContent = Object.values(up).filter(Boolean).length + " of " + Object.keys(NAMES).length + " set up";
+  if (st) st.textContent = "plans, switched on per scenario \u00b7 " + Object.values(up).filter(Boolean).length + " of " + Object.keys(NAMES).length + " set up";
 }

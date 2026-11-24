@@ -1,7 +1,7 @@
-import { el } from "../util.js?v=8.16";
-import { state } from "../state.js?v=8.16";
-import { recalc } from "../recalc.js?v=8.16";
-import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.16";
+import { el } from "../util.js?v=8.17";
+import { state } from "../state.js?v=8.17";
+import { recalc } from "../recalc.js?v=8.17";
+import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.17";
 
 // ── NET WORTH HISTORY (plan vs actual) ───────────────────────────────────────
 // Compact datapoint rows shared with the windfalls list: one discreet line per
@@ -24,6 +24,14 @@ export function renderNwHistory() {
         '<div class="inp cur mini"><span class="pre">€</span><input type="text" inputmode="decimal" autocomplete="off" placeholder="Income /mo" value="' + fv(r.income) + '"></div>' +
         '<div class="inp cur mini"><span class="pre">€</span><input type="text" inputmode="decimal" autocomplete="off" placeholder="Spending /mo" value="' + fv(r.spend) + '"></div>' +
       '</div>';
+    if (r.source === 'ibkr') {
+      // v8.17: a snapshot from an IBKR import: its date and what changed since the previous one
+      const tag = document.createElement('div'); tag.className = 'dp-src';
+      const d = r.date ? new Date(r.date + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '';
+      const sign = v => (v >= 0 ? '+' : '\u2212') + '\u20ac' + fmtMoney(Math.abs(v));
+      tag.textContent = 'IBKR import \u00b7 ' + d + (r.change != null ? ' \u00b7 ' + sign(r.change) + ' since the previous import' + (r.added != null ? ' (' + '\u20ac' + fmtMoney(r.added) + ' added, ' + sign(r.change - r.added) + ' markets)' : '') : '');
+      row.appendChild(tag);
+    }
     host.appendChild(row);
     buildYpick(row.querySelector('.ypick'), {
       min: 2000, max: 2060,
@@ -38,7 +46,7 @@ export function renderNwHistory() {
     row.querySelector('.dp-del').addEventListener('click', () => { state.nwHistory.splice(i, 1); renderNwHistory(); recalc(); });
   });
   const add = document.createElement('button'); add.type = 'button'; add.className = 'dp-add';
-  add.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add snapshot';
+  add.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add a snapshot by hand';
   add.addEventListener('click', addNwRow);
   host.appendChild(add);
 }

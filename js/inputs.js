@@ -1,7 +1,7 @@
-import { el, numVal, optVal } from "./util.js?v=8.16";
-import { state, features } from "./state.js?v=8.16";
-import { effectiveFeatures } from "./checks.js?v=8.16";
-import { payChangesFor } from "./payChanges.js?v=8.16";
+import { el, numVal, optVal } from "./util.js?v=8.17";
+import { state, features } from "./state.js?v=8.17";
+import { effectiveFeatures } from "./checks.js?v=8.17";
+import { payChangesFor } from "./payChanges.js?v=8.17";
 
 
 // Optional money field: null when empty (unlike optVal, 0 is a valid value).
@@ -27,16 +27,16 @@ export function getWindfalls() {
     .filter(w => !isNaN(w.yr) && !isNaN(w.amt) && w.amt > 0);
 }
 
-export { COUNTRY_TAX } from "./taxTable.js?v=8.16";
-import { COUNTRY_TAX } from "./taxTable.js?v=8.16";
+export { COUNTRY_TAX } from "./taxTable.js?v=8.17";
+import { COUNTRY_TAX } from "./taxTable.js?v=8.17";
 // Legacy saved states stored the numeric rate as the select value; map to a country code.
 export const LEGACY_RATE_TO_CODE = { "30":"FR", "28":"PT", "26":"ES", "32":"NL", "0":"BE", "33":"IE",
                               "15":"GR", "10":"HR", "19":"PL", "25":"SI", "20":"EE", "27":"DK" };
 
 // Living alone costs about 70% of what two people spend: SOLO_SHARE lives in the
 // engine since v8.11 (one constant); re-exported for older importers.
-import { SOLO_SHARE, residenceAt } from "./engine.js?v=8.16";
-import { buildResidence, normaliseRentMoves, buyCostPreset } from "./countries.js?v=8.16";
+import { SOLO_SHARE, residenceAt } from "./engine.js?v=8.17";
+import { buildResidence, normaliseRentMoves, buyCostPreset, plansForScenario } from "./countries.js?v=8.17";
 export { SOLO_SHARE };
 // v8.7: yearly items (€/yr, shared) count in the default too, as a monthly amount.
 export function soloSharedFrom(entered, sharedNow, yearlyItems) {
@@ -148,6 +148,8 @@ export function getScenario(s, gl) {
     chgYear:  null,
     chgInc:   null,
     payChanges: payChangesFor(state.payChanges, s),
+    // v8.17: planned rents and moves abroad switched on for this scenario
+    ...plansForScenario(gl, s),
     // feature flags
     hasPartner: feat.partner,
     hasProp:    feat.prop,

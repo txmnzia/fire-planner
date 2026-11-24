@@ -65,7 +65,9 @@ js/
                         with a feature off quantify life-event impacts).
     infoTips.js         Tap/click/hover bubbles for every (i) button (text from its
                         title); placeTip() is the pure, tested placement.
-    plans.js            Plans tab: set-up badges on the plan cards, hides grid rows
+    tiles.js            Changes tab (v8.17): tiles open in place, one-line summaries,
+                        date badges, the phone impact bar.
+    plans.js            Plans: set-up badges on the plan tiles, hides grid rows
                         of plans that are not set up (rule in checks.js), and one
                         grid row per windfall with a switch per scenario
                         (windfallSwitches / flipWindfall, pure and tested).
@@ -74,7 +76,7 @@ js/
     ibkr.js             IBKR CSV import and holdings list.
     nwHistory.js        Net-worth snapshot editor (plan-vs-actual inputs) —
                         compact datapoint rows shared with the windfall list.
-    situation.js        My Situation tab enhancements: subject-card rail scroll-spy,
+    situation.js        Changes tab field enhancements (the old subject rail is gone),
                         year-picker popover (buildYpick), sliders over the numeric
                         inputs, and the dynamic windfall datapoint list. Progressive
                         enhancement — the id-bearing inputs stay the source of truth.

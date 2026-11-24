@@ -120,3 +120,16 @@ export function depositCheck(imports, investMonthly, todayIso) {
   const gap = 1 - perMonth / investMonthly;
   return { perMonth, months, gap, flagged: Math.abs(gap) > 0.2 };
 }
+
+// An import is a net-worth snapshot (v8.17): one row per year in the history,
+// replaced by a later import in the same year (actual income/spending kept).
+// val = IBKR total + bank cash; the row keeps the as-of date, and what changed
+// since the previous import (added / markets) when the periods line up.
+export function snapshotFromImport(history, imp, cash, since) {
+  const year = +String(imp.asOf).slice(0, 4);
+  const old = (history || []).find(r => +r.year === year) || {};
+  const row = { year, val: Math.round((imp.total || 0) + (cash || 0)), income: old.income ?? null, spend: old.spend ?? null,
+                date: imp.asOf, source: 'ibkr',
+                change: since ? Math.round(since.change) : null, added: since && since.added != null ? Math.round(since.added) : null };
+  return [...(history || []).filter(r => +r.year !== year), row].sort((a, b) => a.year - b.year);
+}

@@ -22,7 +22,7 @@ not load over `file://`.
 
 Manual smoke flows to click through (inline-handler bugs — a function missing from the
 `Object.assign(window, …)` block in `js/main.js` — only surface at click time):
-- **All 4 tabs** (My Situation, Scenarios, Results, Monte Carlo): each renders, no
+- **All 5 tabs** (Changes, Scenarios, Results, Monte Carlo, Explanation): each renders, no
   console errors, charts appear on Results and after Run on Monte Carlo.
 - **Both withdrawal modes**: toggle Fixed Amount ↔ % of Portfolio; cards switch between
   On Track/Gap and Funded/Short chips; the Monthly Spending (retirement) field stays

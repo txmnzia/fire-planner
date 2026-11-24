@@ -100,6 +100,15 @@ export function pensionMonthlyAt(gl, age) {
 // Living alone costs about 70% of what two people spend (OECD-modified 0.67,
 // square-root scale 0.71). One constant, used for the default "costs if alone".
 export const SOLO_SHARE = 0.7;
+// Plans that apply per scenario (v8.17): a scenario can carry its own planned
+// rents and moves abroad (sc.rentMoves, sc.residence, those switched on for it);
+// every entry point reads the settings through this, so the formulas are unchanged.
+export function scGl(gl, sc) {
+  if (!sc || (sc.rentMoves === undefined && sc.residence === undefined)) return gl;
+  if (gl._sc === sc) return gl;
+  return { ...gl, rentMoves: sc.rentMoves ?? gl.rentMoves, residence: sc.residence ?? gl.residence, _sc: sc };
+}
+
 // Rent in year yr (today's €/month): rent today (propRentSaved), replaced by each
 // planned move from its year. gl.rentMoves = [{from, rent}] sorted by year.
 export function rentAt(gl, yr) {
@@ -121,6 +130,7 @@ export function colAt(gl, yr) { const p = residenceAt(gl, yr); return p && p.col
 // year, from the purchase year on. Living alone you pay 70% of the couple's rent
 // (it is inside the 70% "if alone" costs), so buying saves that part only.
 export function rentSavedMonthly(gl, sc, yr) {
+  gl = scGl(gl, sc);
   if (!sc.hasProp || yr < gl.propBuyYear) return 0;
   const r = rentAt(gl, yr);
   return (gl.rentInJoint && isTwoPerson(gl) && !sc.hasPartner) ? r*SOLO_SHARE : r;
@@ -176,6 +186,7 @@ export function partnerIncomeAt(yr, gl, herDrawAnn, sc) {
 // noTemp: leave out the costs that end (child costs, mortgage payments) — used to
 // split your cost into a lifelong part and a temporary part (v8.2, see tempCostPV).
 export function householdCosts(yr, sc, gl, samRetired, noTemp) {
+  gl = scGl(gl, sc);
   const t = yr - gl.baseYear, infl = Math.pow(1+gl.inflation, t);
   // v8.11: cost of living where you live that year scales everything but housing;
   // rent today is inside the joint account and is replaced by the rent that year.
@@ -206,6 +217,7 @@ export function householdCosts(yr, sc, gl, samRetired, noTemp) {
 // real share is today's arrangement, so it only holds while both incomes are as
 // today; otherwise the pro-rata rule applies (v8.8).
 export function twoPersonCost(yr, sc, gl, samInc, herDrawAnn, samRetired, noTemp, payChanged) {
+  gl = scGl(gl, sc);
   const hc = householdCosts(yr, sc, gl, samRetired, noTemp);
   const her = partnerIncomeAt(yr, gl, herDrawAnn, sc);
   // her real share is today's arrangement: not while her pay differs (her leave)
@@ -230,6 +242,7 @@ export function investNowMonthly(gl, takeHome) {
 // c = P + S·(1 − share(h, c)) in closed form: c² + c(h−P−S) − P·h = 0 (positive
 // root); the clamp on the share keeps the fixed point (share(c) is monotone).
 export function selfFundedCost(yr, sc, gl, samPensionAnn, herDrawAnn, noTemp) {
+  gl = scGl(gl, sc);
   const hc = householdCosts(yr, sc, gl, true, noTemp);
   const her = partnerIncomeAt(yr, gl, herDrawAnn, sc);
   const P = hc.samPersonal, S = hc.shared, h = her.total, pen = samPensionAnn || 0;
@@ -301,6 +314,7 @@ export function soloSpend(gl, retired, yr) {
 // sustainable draw that year (nominal €/yr, from project()); 0 while she works.
 // For a scenario without the partner, base spending is soloSpend(gl, true).
 export function yearOneBudget(fromAge, sc, gl, herDrawAnn) {
+  gl = scGl(gl, sc);
   const tFrom = fromAge - gl.currentAge;
   const fromYear = gl.baseYear + tFrom;
   const inflF = Math.pow(1+gl.inflation, tFrom);
@@ -333,6 +347,7 @@ export function yearOneBudget(fromAge, sc, gl, herDrawAnn) {
 // in the two-person model with the partner on, your part of them (the difference
 // your net cost makes with and without them, at the same share).
 export function tempCostAt(yr, sc, gl, herDrawAnn) {
+  gl = scGl(gl, sc);
   if (isTwoPerson(gl) && sc.hasPartner) {
     const t = yr - gl.baseYear, age = gl.currentAge + t;
     const pen = pensionMonthlyAt(gl, age)*12*Math.pow(1+gl.inflation, t);
@@ -346,6 +361,7 @@ export function tempCostAt(yr, sc, gl, herDrawAnn) {
 // grossed up for tax (taxMult), discounted at the portfolio return at fromAge,
 // paid at year end like the DCF annuities (k+1). herDraw: { t: her draw } map.
 export function tempCostPV(fromAge, sc, gl, taxMult, herDraw) {
+  gl = scGl(gl, sc);
   if (fromAge >= gl.lifeExp) return 0;
   const fromYear = gl.baseYear + fromAge - gl.currentAge, r = portReturnAt(gl, fromAge, sc.retAge);
   let pv = 0;
@@ -358,6 +374,7 @@ export function tempCostPV(fromAge, sc, gl, taxMult, herDraw) {
 // The lifelong part of the year-one budget: yearOneBudget minus that year's
 // temporary costs. The full yearOneBudget stays the definition of the budget (I2).
 export function yearOnePermBudget(fromAge, sc, gl, herDrawAnn) {
+  gl = scGl(gl, sc);
   const fromYear = gl.baseYear + fromAge - gl.currentAge;
   return Math.max(0, yearOneBudget(fromAge, sc, gl, herDrawAnn) - tempCostAt(fromYear, sc, gl, herDrawAnn));
 }
@@ -388,6 +405,7 @@ export function payIncomeAt(sc, yr) {
 }
 
 export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
+  gl = scGl(gl, sc);
   opts = opts || {};
   if (fromAge>=gl.lifeExp) return 0;
   const tFrom    = fromAge-gl.currentAge;
@@ -609,6 +627,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
 }
 
 export function project(sc, gl, opts) {
+  gl = scGl(gl, sc);
   opts = opts || {};
   // When anchored (startPort given) the projection is re-based at a past point
   // for plan-vs-actual comparison: treat the snapshot as all-portfolio (no cash),

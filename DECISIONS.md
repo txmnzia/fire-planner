@@ -5,6 +5,23 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.17 One Changes tab with two lanes
+
+- **My Situation and Plans merged into "Changes"** (the owner's idea): a "Now" lane of
+  facts and a "Might happen" lane of plans, tiles that open in place, the impact panel
+  beside them. Scenarios stays its own tab. Closer to the chosen mockup ("pick a tile").
+- **Why the earlier versions didn't look like the mockup:** the stories were built into
+  the existing long cards to keep each increment small; the tile layout was never an
+  increment of its own. Corrected here.
+- **Planned rents and moves abroad are plans**, switched per scenario like the others
+  (a small engine change: each scenario carries its own move lists, read through
+  `scGl`; formulas unchanged). Rent today and the country today stay facts.
+- **An IBKR import is a net-worth snapshot**, one per year (a later import that year
+  replaces it); snapshots can also be typed. The check-in block and the typed-total
+  fallback are gone. Known simplification: a mid-year import is stored as that year's
+  snapshot (history rows are start-of-year).
+- **No variants:** alternatives are handled by switching plans per scenario in the grid.
+
 ## 2026-11-24 · v8.16 Edited fields are visible
 
 - A field edited since the last saved version turns amber ("was X" on hover) and its

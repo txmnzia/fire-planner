@@ -1,7 +1,8 @@
-import { el, eur } from "../util.js?v=8.16";
-import { state } from "../state.js?v=8.16";
-import { recalc } from "../recalc.js?v=8.16";
-import { parseIbkrStatement, importWarnings, sinceLast } from "../ibkr.js?v=8.16";
+import { el, eur } from "../util.js?v=8.17";
+import { state } from "../state.js?v=8.17";
+import { recalc } from "../recalc.js?v=8.17";
+import { parseIbkrStatement, importWarnings, sinceLast, snapshotFromImport } from "../ibkr.js?v=8.17";
+import { renderNwHistory } from "./nwHistory.js?v=8.17";
 
 // ── Portfolio check-in (v8.10) ──────────────────────────────────────────────
 // An import sets "today's" investments, the unrealised gain %, the as-of date
@@ -74,19 +75,10 @@ export function handleCSV(input) {
     state.ibkrTotal = r.total; state.ibkrHoldings = r.holdings;
     if (r.gainFrac != null) { const gf = el('gainFrac'); if (gf) { gf.value = r.gainFrac; gf.dispatchEvent(new Event('input')); } }
     recordImport({ ...r, asOf: r.asOf || todayIso(), source: "statement" });
-    renderHoldings(); renderCheckin();
+    // v8.17: the import is also a dated net-worth snapshot in the history
+    state.nwHistory = snapshotFromImport(state.nwHistory, { total: r.total, asOf: state.ibkrAsOf }, parseFloat(el("cash")?.value) || 0, sinceLast(state.ibkrImports));
+    renderHoldings(); renderCheckin(); renderNwHistory();
     recalc();
   };
   reader.readAsText(input.files[0]);
-}
-
-// Fallback without a file: the IBKR total and its date, typed.
-export function saveManualTotal() {
-  const v = parseFloat(String(el("ibkrManualTotal")?.value || "").replace(/[^\d.,-]/g, "").replace(/,/g, ""));
-  const d = el("ibkrManualDate")?.value || todayIso();
-  if (!(v > 0)) return;
-  state.ibkrTotal = v; state.ibkrHoldings = [];
-  recordImport({ total: v, asOf: d, source: "manual" });
-  renderHoldings(); renderCheckin();
-  recalc();
 }

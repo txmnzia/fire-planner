@@ -9,15 +9,15 @@
 
 const ISSUES = {
   ownCharges: { key: 'ownCharges', field: 'propCharges_disp', blocking: false,
-    text: 'A scenario buys a home but the monthly ownership charges + upkeep are empty, so owning looks cheaper than it is (often \u20ac300\u2013400 a month). Fill them on the Plans tab.' },
+    text: 'A scenario buys a home but the monthly ownership charges + upkeep are empty, so owning looks cheaper than it is (often \u20ac300\u2013400 a month). Fill them in the Buying a home plan.' },
   rentNow: { key: 'rentNow', field: 'propRentSaved_disp', blocking: false,
-    text: 'A scenario buys a home but your rent today is empty, so the mortgage is added on top of a rent that never stops. Fill "Rent today" in Income & spending.' },
+    text: 'A scenario buys a home but your rent today is empty, so the mortgage is added on top of a rent that never stops. Fill "Rent today" in the Housing tile.' },
   twoSpend: { key: 'twoSpend', field: 'samPersonalNow_disp', blocking: true,
-    text: 'Your spending is empty (your own spending and the joint account), so scenarios with your partner count no spending. Fill the four numbers under Income & spending.' },
+    text: 'Your spending is empty (your own spending and the joint account), so scenarios with your partner count no spending. Fill the four numbers in the Spending tile.' },
   soloPersonal: { key: 'soloPersonal', field: 'samPersonalNow_disp', blocking: true,
-    text: 'Scenarios without your partner use your own spending + your costs if alone, and your own spending is empty. Fill it under Income & spending.' },
+    text: 'Scenarios without your partner use your own spending + your costs if alone, and your own spending is empty. Fill it in the Spending tile.' },
   soloHousing: { key: 'soloHousing', field: 'samPaysIn_disp', blocking: true,
-    text: 'Scenarios without your partner use your own spending + your costs if alone (70% of the joint account plus yearly items), and the joint account is empty. Fill what you and she pay in under Income & spending.' },
+    text: 'Scenarios without your partner use your own spending + your costs if alone (70% of the joint account plus yearly items), and the joint account is empty. Fill what you and she pay in in the Spending tile.' },
 };
 
 // Issues for one scenario (v8.8, one partner model).

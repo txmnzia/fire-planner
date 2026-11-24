@@ -3,13 +3,13 @@
 // The source of truth for every value stays the id-bearing form control that
 // inputs.js / sync.js already read — this module only adds friendlier controls
 // (year-picker popover, sliders, the subject rail) and the dynamic windfall list.
-import { el } from "../util.js?v=8.16";
-import { toggleWindfall, LETTERS, togglePay, setPayListPainter } from "./plans.js?v=8.16";
-import { normalisePayChanges } from "../payChanges.js?v=8.16";
-import { state } from "../state.js?v=8.16";
-import { recalc } from "../recalc.js?v=8.16";
-import { ASSUMPTION_DEFAULTS, assumptionChanges } from "../assumptions.js?v=8.16";
-import { renderRentMoves, renderResidence, initRentToday, renderResNotes } from "./housing.js?v=8.16";
+import { el } from "../util.js?v=8.17";
+import { toggleWindfall, LETTERS, togglePay, setPayListPainter } from "./plans.js?v=8.17";
+import { normalisePayChanges } from "../payChanges.js?v=8.17";
+import { state } from "../state.js?v=8.17";
+import { recalc } from "../recalc.js?v=8.17";
+import { ASSUMPTION_DEFAULTS, assumptionChanges } from "../assumptions.js?v=8.17";
+import { renderRentMoves, renderResidence, initRentToday, renderResNotes } from "./housing.js?v=8.17";
 
 const YNOW = 2026;
 

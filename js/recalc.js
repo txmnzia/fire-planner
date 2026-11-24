@@ -1,20 +1,21 @@
-import { el, eur, numVal } from "./util.js?v=8.16";
-import { state } from "./state.js?v=8.16";
-import { getGlobals, getScenario } from "./inputs.js?v=8.16";
-import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.16";
-import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.16";
-import { renderTable } from "./ui/table.js?v=8.16";
-import { renderExplanation } from "./ui/explanation.js?v=8.16";
-import { updateLabels } from "./ui/controls.js?v=8.16";
-import { markMcStale } from "./ui/mcTab.js?v=8.16";
-import { scheduleSave } from "./sync.js?v=8.16";
-import { renderIssues } from "./ui/issues.js?v=8.16";
-import { renderPlans } from "./ui/plans.js?v=8.16";
-import { renderSpendReadout } from "./ui/spending.js?v=8.16";
-import { renderAssumptions } from "./ui/situation.js?v=8.16";
-import { renderCheckin } from "./ui/ibkr.js?v=8.16";
-import { renderResNotes, renderPropReadout } from "./ui/housing.js?v=8.16";
-import { renderUpdatePanel } from "./ui/versions.js?v=8.16";
+import { el, eur, numVal } from "./util.js?v=8.17";
+import { state } from "./state.js?v=8.17";
+import { getGlobals, getScenario } from "./inputs.js?v=8.17";
+import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.17";
+import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.17";
+import { renderTable } from "./ui/table.js?v=8.17";
+import { renderExplanation } from "./ui/explanation.js?v=8.17";
+import { updateLabels } from "./ui/controls.js?v=8.17";
+import { markMcStale } from "./ui/mcTab.js?v=8.17";
+import { scheduleSave } from "./sync.js?v=8.17";
+import { renderIssues } from "./ui/issues.js?v=8.17";
+import { renderPlans } from "./ui/plans.js?v=8.17";
+import { renderSpendReadout } from "./ui/spending.js?v=8.17";
+import { renderAssumptions } from "./ui/situation.js?v=8.17";
+import { renderCheckin } from "./ui/ibkr.js?v=8.17";
+import { renderResNotes, renderPropReadout } from "./ui/housing.js?v=8.17";
+import { renderUpdatePanel } from "./ui/versions.js?v=8.17";
+import { renderTiles } from "./ui/tiles.js?v=8.17";
 
 // ── RECALC ──────────────────────────────────────────────────────────────────
 export function recalc() {
@@ -37,6 +38,7 @@ export function recalc() {
   renderPlans(gl);
   state.lastProjs=projs; state.lastGl=gl; state.lastScenarios=scenarios; state.lastStops=stops;
   renderUpdatePanel(gl);
+  renderTiles(gl);
   buildChart(projs,gl); buildFlowChart(projs,gl); renderTable(projs,gl);
   updateLabels();
   renderSummaryTiles(projs,gl,scenarios);

@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.16">
+<link rel="stylesheet" href="css/styles.css?v=8.17">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.16</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.17</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -31,22 +31,19 @@
 
 <nav class="tab-nav" role="tablist" aria-label="App sections">
   <button class="tab-btn active" role="tab" data-tab="situation" aria-selected="true" onclick="switchTab('situation')">
-    <span class="tab-num">1</span> My Situation
-  </button>
-  <button class="tab-btn" role="tab" data-tab="plans" aria-selected="false" onclick="switchTab('plans')">
-    <span class="tab-num">2</span> Plans
+    <span class="tab-num">1</span> Changes
   </button>
   <button class="tab-btn" role="tab" data-tab="scenarios" aria-selected="false" onclick="switchTab('scenarios')">
-    <span class="tab-num">3</span> Scenarios
+    <span class="tab-num">2</span> Scenarios
   </button>
   <button class="tab-btn" role="tab" data-tab="results" aria-selected="false" onclick="switchTab('results')">
-    <span class="tab-num">4</span> Results
+    <span class="tab-num">3</span> Results
   </button>
   <button class="tab-btn" role="tab" data-tab="montecarlo" aria-selected="false" onclick="switchTab('montecarlo')">
-    <span class="tab-num">5</span> Monte Carlo
+    <span class="tab-num">4</span> Monte Carlo
   </button>
   <button class="tab-btn" role="tab" data-tab="explanation" aria-selected="false" onclick="switchTab('explanation')">
-    <span class="tab-num">6</span> Explanation
+    <span class="tab-num">5</span> Explanation
   </button>
 </nav>
 <div class="issues" id="inputIssues" role="alert" hidden></div>
@@ -57,85 +54,49 @@
      TAB 1 — MY SITUATION
 ═══════════════════════════════════════════ -->
 <div class="tab-panel active" id="tab-panel-situation" role="tabpanel">
-<div class="sit2">
+<div class="chg">
+  <div class="chg-lanes">
+    <div class="chg-lane" id="laneNow">
+      <div class="lane-hd"><h2>Now</h2><span class="note">facts, the same in every scenario</span></div>
 
-  <!-- SUBJECT INDEX RAIL -->
-  <aside class="sit-rail" id="sitRail">
-    <div class="rail-grp">You &amp; your money</div>
-    <a class="rail-a" data-t="subj-you"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>You</span></a>
-    <a class="rail-a" data-t="subj-port"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg><span>Portfolio</span></a>
-    <a class="rail-a" data-t="subj-income"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20"/><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Income &amp; spending</span></a>
-    <a class="rail-a" data-t="subj-markets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 7-7"/><path d="M17 8h4v4"/></svg><span>Markets</span></a>
-    <a class="rail-a" data-t="subj-tax"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V10l7-5 7 5v11"/><path d="M9 21v-6h6v6"/></svg><span>Where you live</span></a>
-    <a class="rail-a" data-t="subj-future"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9"/><path d="M12 8V21"/><path d="M12 8S9 3 6.5 4.5 8 8 12 8zM12 8s3-5 5.5-3.5S16 8 12 8z"/></svg><span>Future income</span></a>
-    <a class="rail-a" data-t="subj-history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg><span>Net-worth history</span></a>
-    <div class="rail-grp">Partner <small>· per scenario</small></div>
-    <a class="rail-a" data-t="subj-partner" style="--acc:var(--s4c)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20c0-3 3-5 6-5s6 2 6 5"/><path d="M15 20c0-2 1.5-3.5 4-3.5"/></svg><span>Partner</span></a>
-  </aside>
-
-  <!-- CONTENT -->
-  <main class="sit-content" id="sitContent">
-    <div class="sit-callout">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-      <span>These are the facts of your life today — one shared set of numbers. On the <b>Scenarios</b> tab you compare futures; your partner is switched on per scenario from her card, and the things that might happen (buying a home, a child) live on the <b>Plans</b> tab. The rail on the left maps every subject, and each card's accent colour tells you whose data you're editing.</span>
-    </div>
-
-    <section class="update-panel" id="updatePanel" aria-live="polite"></section>
-
-    <div class="flow-hd"><h2>You &amp; your money</h2><span class="rule"></span><span class="note">Always applies</span></div>
-
-    <!-- YOU -->
-    <section class="subj" id="subj-you" style="--acc:var(--s1c)">
-      <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
-        <div class="subj-tt"><h3>You</h3><p>Who the plan is for and how long it runs</p></div></div>
-      <div class="subj-body"><div class="subj-grid">
-        <div class="field"><label for="dob">Date of birth</label><div class="inp"><input type="date" id="dob" value="" oninput="recalc()" onchange="recalc()"></div></div>
-        <div class="field slider-field"><label for="lifeExp">Life expectancy <span class="sv"><input type="number" id="lifeExp" value="100" min="60" max="120" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
-          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="lifeExp" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field"><label>Plan start year</label><div class="ypick" data-target="baseYear" data-min="2020" data-max="2040"></div><input type="hidden" id="baseYear" value="2026"></div>
-      </div></div>
-    </section>
-
-    <!-- PORTFOLIO -->
-    <section class="subj" id="subj-port" style="--acc:var(--s1c)">
-      <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg></div>
-        <div class="subj-tt"><h3>Portfolio</h3><p>Your investments and cash today</p></div>
-        <div class="subj-meta"><div class="subj-total"><span id="totalPortfolio">&#x20AC; &#x2014;</span><small>Total</small></div></div></div>
-      <div class="subj-body">
-        <div class="subj-subhd">Investments <span class="spend-upd" id="portUpdatedTxt"></span></div>
+    <section class="subj tile" id="tile-port" style="--acc:var(--s1c)">
+      <button type="button" class="tile-hd" aria-expanded="false" aria-controls="tile-port-body">
+        <span class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg></span>
+        <span class="tile-tt"><b>Portfolio &amp; snapshots <span class="subj-total"><span id="totalPortfolio">&#x20AC; &#x2014;</span></span></b><span class="tile-sum" id="tile-port-sum"></span></span>
+        <span class="tile-badge" id="tile-port-badge"></span>
+        <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+      <div class="tile-body subj-body" id="tile-port-body" hidden>
+<div class="subj-subhd">Investments <span class="spend-upd" id="portUpdatedTxt"></span></div>
         <button class="upload-btn2" id="uploadBtn" onclick="document.getElementById('csvInput').click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Import IBKR activity statement</button>
         <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="handleCSV(this)">
         <div class="pb" id="holdingsList" style="display:none;margin-top:10px"></div>
-        <div class="spend-readout" id="portCheckin" aria-live="polite"></div>
-        <details class="port-manual"><summary>No file? Type the IBKR total</summary>
-          <div class="subj-grid">
-            <div class="field"><label for="ibkrManualTotal">IBKR total value <button type="button" class="info-btn" title="The account&#x2019;s total value (positions + cash at IBKR) as shown in the app. The unrealised gain % keeps its last value until you import a statement.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" id="ibkrManualTotal"></div></div>
-            <div class="field"><label for="ibkrManualDate">As of</label><div class="inp"><input type="date" id="ibkrManualDate"></div></div>
-          </div>
-          <button type="button" class="dp-add" onclick="saveManualTotal()">Use this total</button>
-        </details>
         <div class="subj-subhd">Cash</div>
-        <div class="subj-grid">
+<div class="subj-grid">
           <div class="field"><label for="cash_disp">Cash &amp; savings</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="cash" id="cash_disp"><input type="hidden" id="cash" value=""></div></div>
           <div class="field slider-field"><label for="cashReturn">Cash interest rate <span class="sv"><input type="number" id="cashReturn" value="1" min="0" max="10" step="0.25" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
             <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="cashReturn" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         </div>
+<div class="subj-grid">
+<div class="field slider-field"><label for="gainFrac">Unrealized gain fraction <button type="button" class="info-btn" title="Share of your portfolio that is unrealized capital gain today. Auto-filled when you import an IBKR CSV. Withdrawals are taxed on the gain portion only; the projection tracks how this fraction evolves over time.">&#x24D8;</button> <span class="sv"><input type="number" id="gainFrac" value="25" min="0" max="99" step="1" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
+          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="gainFrac" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+</div>
+<div class="subj-subhd">Net-worth snapshots</div>
+
+        <p class="sit-note">Your net worth at past points in time, the start of each year. Each IBKR import adds or updates this year&#x2019;s snapshot (IBKR total + cash, with its date); you can also add one by hand. Real monthly income and spending for a year (<b>actuals</b>) are optional: only add them if the plan curve on Results should use them.</p>
+        <div class="dp-list" id="nwHistList"></div>
+      
       </div>
     </section>
-
-    <!-- INCOME & SPENDING -->
-    <section class="subj" id="subj-income" style="--acc:var(--s1c)">
-      <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20"/><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-        <div class="subj-tt"><h3>Income &amp; spending</h3><p>What you earn now and plan to spend in retirement</p></div></div>
-      <div class="subj-body">
-        <div class="subj-grid">
-          <div class="field"><label for="baseIncome_disp">Monthly income (net)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="baseIncome" id="baseIncome_disp"><input type="hidden" id="baseIncome" value=""></div></div>
-          <div class="field"><label for="propRentSaved_disp">Rent today / month <button type="button" class="info-btn" title="The rent you pay now, part of what goes into the joint account. Entered once here: a scenario that buys a home on the Plans tab stops paying it from the purchase year.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="propRentSaved" id="propRentSaved_disp"><input type="hidden" id="propRentSaved" value=""></div></div>
-        </div>
-        <div class="sit-note rent-note" id="rentNote" aria-live="polite"></div>
-        <div class="subj-subhd">Planned rent changes <button type="button" class="info-btn" title="A new flat or a known rent step: from a year, the new rent including charges. The rest of the joint costs stay as entered; only the rent is swapped. A scenario that buys stops whatever rent applies in its purchase year.">&#x24D8;</button></div>
-        <div class="dp-list" id="rentMovesList"></div>
-        <div class="subj-subhd">Spending <span class="spend-upd" id="spendUpdatedTxt"></span><input type="hidden" id="spendUpdated" value=""></div>
+    <section class="subj tile" id="tile-spend" style="--acc:var(--s1c)">
+      <button type="button" class="tile-hd" aria-expanded="false" aria-controls="tile-spend-body">
+        <span class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20"/><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+        <span class="tile-tt"><b>Spending</b><span class="tile-sum" id="tile-spend-sum"></span></span>
+        <span class="tile-badge" id="tile-spend-badge"></span>
+        <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+      <div class="tile-body subj-body" id="tile-spend-body" hidden>
+<div class="subj-subhd">Last refresh <span class="spend-upd" id="spendUpdatedTxt"></span><input type="hidden" id="spendUpdated" value=""></div>
         <p class="sit-note">Four numbers read off your accounts, as monthly averages. Update them about twice a year.</p>
         <div class="subj-grid spend-refresh">
           <div class="field"><label for="samPersonalNow_disp">Your own spending / month <button type="button" class="info-btn" title="Your personal spending only, from your own account, without what you transfer to the joint account.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="samPersonalNow" id="samPersonalNow_disp"><input type="hidden" id="samPersonalNow" value=""></div></div>
@@ -148,46 +109,71 @@
           <div class="field"><label for="retSpendChange">Spending in retirement <button type="button" class="info-btn" title="How your spending changes once you stop working, as a % of today: 0 = same life, &#x2212;10 = 10% less, +10 = 10% more. Applies to your own spending, the joint account and yearly items.">&#x24D8;</button></label>
             <div class="unit-wrap"><input type="number" id="retSpendChange" value="0" min="-50" max="50" step="5" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div></div>
         </div>
-        <div class="subj-subhd">Withdrawal strategy</div>
+        
+      </div>
+    </section>
+    <section class="subj tile" id="tile-pay" style="--acc:var(--s1c)">
+      <button type="button" class="tile-hd" aria-expanded="false" aria-controls="tile-pay-body">
+        <span class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20"/><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+        <span class="tile-tt"><b>Pay</b><span class="tile-sum" id="tile-pay-sum"></span></span>
+        <span class="tile-badge" id="tile-pay-badge"></span>
+        <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+      <div class="tile-body subj-body" id="tile-pay-body" hidden>
+<div class="subj-grid">
+<div class="field"><label for="baseIncome_disp">Monthly income (net)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="baseIncome" id="baseIncome_disp"><input type="hidden" id="baseIncome" value=""></div></div>
+</div>
+<p class="sit-note">Only today&#x2019;s take-home. Changes you might make (a 4-day week, a break, a new job) are plans.</p>
+      </div>
+    </section>
+    <section class="subj tile" id="tile-pension" style="--acc:var(--s1c)">
+      <button type="button" class="tile-hd" aria-expanded="false" aria-controls="tile-pension-body">
+        <span class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9"/><path d="M12 8V21"/><path d="M12 8S9 3 6.5 4.5 8 8 12 8zM12 8s3-5 5.5-3.5S16 8 12 8z"/></svg></span>
+        <span class="tile-tt"><b>Pensions</b><span class="tile-sum" id="tile-pension-sum"></span></span>
+        <span class="tile-badge" id="tile-pension-badge"></span>
+        <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+      <div class="tile-body subj-body" id="tile-pension-body" hidden>
+
+        <div class="subj-subhd" id="pensionGroupHd">Statements <span class="spend-upd" id="pensionUpdatedTxt"></span><input type="hidden" id="pensionUpdated" value=""></div>
+        <p class="sit-note">Type each monthly amount exactly as printed (gross), from the line that assumes you stop paying in now, not the projection to retirement age. Leave a country empty if you have no rights there.</p>
         <div class="subj-grid">
-          <div class="field"><label>Strategy</label>
-            <div class="wd-toggle">
-              <label class="wd-pill"><input type="radio" name="wdMode" value="fixed" checked onchange="onWdMode()">Fixed amount</label>
-              <label class="wd-pill"><input type="radio" name="wdMode" value="swr" onchange="onWdMode()">% of portfolio</label>
-            </div>
-          </div>
-          <div class="field slider-field" id="swr_wrap" style="display:none"><label for="swr">Withdrawal rate <button type="button" class="info-btn" title="Annual % of the current portfolio available to withdraw each year. This is a %-of-portfolio strategy: income varies with markets and the portfolio cannot fully deplete. It is NOT the classic Bengen fixed-real-amount rule (use Fixed Amount mode for that behaviour).">&#x24D8;</button> <span class="sv"><input type="number" id="swr" value="4" min="0.5" max="20" step="0.25" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
-            <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="swr" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+          <div class="field"><label for="pensionAmt_disp">German pension / month <button type="button" class="info-btn" title="Gross, as printed on the Renteninformation: the amount under &#x201C;H&#xF6;he der k&#xFC;nftigen Regelaltersrente&#x201D; that assumes no further contributions. Used as entered (not taxed in the model).">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="pensionAmt" id="pensionAmt_disp"><input type="hidden" id="pensionAmt" value=""></div></div>
+          <div class="field slider-field"><label for="pensionAge">German pension age <button type="button" class="info-btn" title="Legal age 67 for anyone born after 1963. Change it only to defer.">&#x24D8;</button> <span class="sv"><input type="number" id="pensionAge" value="67" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
+            <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="pensionAge" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+          <div class="field"><label for="pension2Amt_disp">French pension / month <button type="button" class="info-btn" title="Gross, as printed on your relev&#xE9; (info-retraite.fr): basic + complementary (Agirc-Arrco) pension for the quarters you have now. Used as entered (not taxed in the model).">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="pension2Amt" id="pension2Amt_disp"><input type="hidden" id="pension2Amt" value=""></div></div>
+          <div class="field slider-field"><label for="pension2Age">French pension age <button type="button" class="info-btn" title="Legal age 64 for anyone born from 1968. Change it only to defer.">&#x24D8;</button> <span class="sv"><input type="number" id="pension2Age" value="64" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
+            <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="pension2Age" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         </div>
+        <div class="spend-readout" id="pensionReadout" aria-live="polite"></div>
+      
       </div>
     </section>
-
-    <!-- MARKETS -->
-    <section class="subj" id="subj-markets" style="--acc:var(--s1c)">
-      <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 7-7"/><path d="M17 8h4v4"/></svg></div>
-        <div class="subj-tt"><h3>Markets</h3><p>Return, inflation and glide-path assumptions</p></div></div>
-      <div class="subj-body"><div class="subj-grid">
-        <div class="field slider-field"><label for="stockRet">Stock return (annual) <span class="sv"><input type="number" id="stockRet" value="7" min="0" max="20" step="0.5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
-          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="stockRet" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field slider-field"><label for="bondRet">Bond return (annual) <span class="sv"><input type="number" id="bondRet" value="3" min="0" max="15" step="0.5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
-          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="bondRet" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field slider-field"><label for="inflation">Inflation <span class="sv"><input type="number" id="inflation" value="2" min="0" max="10" step="0.5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
-          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="inflation" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field slider-field"><label for="bondAllocNow">Bond allocation (today) <span class="sv"><input type="number" id="bondAllocNow" value="0" min="0" max="100" step="5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
-          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="bondAllocNow" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field slider-field"><label for="bondAllocRet">Bond allocation (retirement) <span class="sv"><input type="number" id="bondAllocRet" value="40" min="0" max="100" step="5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
-          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="bondAllocRet" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-      </div>
-      <div class="assump-foot"><span class="spend-readout" id="assumpReadout" aria-live="polite"></span><button type="button" class="dp-add" onclick="resetAssumptions()">Reset to defaults</button></div>
+    <section class="subj tile" id="tile-housing" style="--acc:var(--s1c)">
+      <button type="button" class="tile-hd" aria-expanded="false" aria-controls="tile-housing-body">
+        <span class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></span>
+        <span class="tile-tt"><b>Housing</b><span class="tile-sum" id="tile-housing-sum"></span></span>
+        <span class="tile-badge" id="tile-housing-badge"></span>
+        <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+      <div class="tile-body subj-body" id="tile-housing-body" hidden>
+<div class="subj-grid">
+<div class="field"><label for="propRentSaved_disp">Rent today / month <button type="button" class="info-btn" title="The rent you pay now, part of what goes into the joint account. Entered once here: a scenario that buys a home (Buying a home plan) stops paying it from the purchase year.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="propRentSaved" id="propRentSaved_disp"><input type="hidden" id="propRentSaved" value=""></div></div>
+</div>
+<div class="sit-note rent-note" id="rentNote" aria-live="polite"></div>
+<p class="sit-note">The rent you pay today, inside the joint account. A planned move is a plan; once you confirm it happened, the new rent lands here.</p>
       </div>
     </section>
-
-    <!-- TAX -->
-    <section class="subj" id="subj-tax" style="--acc:var(--s1c)">
-      <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V10l7-5 7 5v11"/><path d="M9 21v-6h6v6"/></svg></div>
-        <div class="subj-tt"><h3>Where you live</h3><p>Tax on gains and cost of living follow you, year by year</p></div></div>
-      <div class="subj-body"><div class="subj-grid">
-        <div class="field"><label for="retCountry">Country today <button type="button" class="info-btn" title="Where you live now. Gains you sell are taxed at this country&#x2019;s rate until a planned move below. Rates are flat approximations on the gain part of a sale.">&#x24D8;</button></label><div class="inp"><select id="retCountry" oninput="recalc()" onchange="recalc()">
+    <section class="subj tile" id="tile-where" style="--acc:var(--s1c)">
+      <button type="button" class="tile-hd" aria-expanded="false" aria-controls="tile-where-body">
+        <span class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V10l7-5 7 5v11"/><path d="M9 21v-6h6v6"/></svg></span>
+        <span class="tile-tt"><b>Where you live</b><span class="tile-sum" id="tile-where-sum"></span></span>
+        <span class="tile-badge" id="tile-where-badge"></span>
+        <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+      <div class="tile-body subj-body" id="tile-where-body" hidden>
+<div class="subj-grid">
+<div class="field"><label for="retCountry">Country today <button type="button" class="info-btn" title="Where you live now. Gains you sell are taxed at this country&#x2019;s rate until a planned move below. Rates are flat approximations on the gain part of a sale.">&#x24D8;</button></label><div class="inp"><select id="retCountry" oninput="recalc()" onchange="recalc()">
           <option value="FR" selected>&#x1F1EB;&#x1F1F7; France 30%</option>
           <option value="PT">&#x1F1F5;&#x1F1F9; Portugal 28%</option>
           <option value="ES">&#x1F1EA;&#x1F1F8; Spain 26%</option>
@@ -216,58 +202,26 @@
           <option value="FI">&#x1F1EB;&#x1F1EE; Finland 30%</option>
         </select></div></div>
         <div class="field"><label for="taxNow">Tax on gains today <button type="button" class="info-btn" title="Empty = the country&#x2019;s preset. Type a rate to override it; the note below then marks it as yours.">&#x24D8;</button></label><div class="unit-wrap"><input type="number" id="taxNow" step="0.5" min="0" max="60" placeholder="preset" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div></div>
-        <div class="field slider-field"><label for="gainFrac">Unrealized gain fraction <button type="button" class="info-btn" title="Share of your portfolio that is unrealized capital gain today. Auto-filled when you import an IBKR CSV. Withdrawals are taxed on the gain portion only; the projection tracks how this fraction evolves over time.">&#x24D8;</button> <span class="sv"><input type="number" id="gainFrac" value="25" min="0" max="99" step="1" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
-          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="gainFrac" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-      </div>
-      <div class="subj-subhd">Planned moves</div>
-      <div class="res-list" id="resList"></div>
-      <div class="res-notes" id="resNotes"></div>
+</div>
+<p class="sit-note">Where you are tax resident today. A move abroad you are considering is a plan.</p>
       </div>
     </section>
-
-    <!-- FUTURE INCOME -->
-    <section class="subj" id="subj-future" style="--acc:var(--s1c)">
-      <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9"/><path d="M12 8V21"/><path d="M12 8S9 3 6.5 4.5 8 8 12 8zM12 8s3-5 5.5-3.5S16 8 12 8z"/></svg></div>
-        <div class="subj-tt"><h3>Pensions</h3><p>Your state pensions, one per country, copied from the statement</p></div></div>
-      <div class="subj-body">
-        <div class="subj-subhd" id="pensionGroupHd">Statements <span class="spend-upd" id="pensionUpdatedTxt"></span><input type="hidden" id="pensionUpdated" value=""></div>
-        <p class="sit-note">Type each monthly amount exactly as printed (gross), from the line that assumes you stop paying in now, not the projection to retirement age. Leave a country empty if you have no rights there.</p>
-        <div class="subj-grid">
-          <div class="field"><label for="pensionAmt_disp">German pension / month <button type="button" class="info-btn" title="Gross, as printed on the Renteninformation: the amount under &#x201C;H&#xF6;he der k&#xFC;nftigen Regelaltersrente&#x201D; that assumes no further contributions. Used as entered (not taxed in the model).">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="pensionAmt" id="pensionAmt_disp"><input type="hidden" id="pensionAmt" value=""></div></div>
-          <div class="field slider-field"><label for="pensionAge">German pension age <button type="button" class="info-btn" title="Legal age 67 for anyone born after 1963. Change it only to defer.">&#x24D8;</button> <span class="sv"><input type="number" id="pensionAge" value="67" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
-            <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="pensionAge" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-          <div class="field"><label for="pension2Amt_disp">French pension / month <button type="button" class="info-btn" title="Gross, as printed on your relev&#xE9; (info-retraite.fr): basic + complementary (Agirc-Arrco) pension for the quarters you have now. Used as entered (not taxed in the model).">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="pension2Amt" id="pension2Amt_disp"><input type="hidden" id="pension2Amt" value=""></div></div>
-          <div class="field slider-field"><label for="pension2Age">French pension age <button type="button" class="info-btn" title="Legal age 64 for anyone born from 1968. Change it only to defer.">&#x24D8;</button> <span class="sv"><input type="number" id="pension2Age" value="64" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
-            <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="pension2Age" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        </div>
-        <div class="spend-readout" id="pensionReadout" aria-live="polite"></div>
-      </div>
-    </section>
-
-    <!-- NET WORTH HISTORY -->
-    <section class="subj" id="subj-history" style="--acc:var(--s1c)">
-      <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div>
-        <div class="subj-tt"><h3>Net-worth history</h3><p>Past snapshots — plan vs. actuals</p></div></div>
-      <div class="subj-body">
-        <p class="sit-note">Enter your total net worth at past points in time (e.g. the start of each year since you began). Add real monthly income &amp; spending for a year — via the <b>actuals</b> toggle — only if you want the plan curve to use those figures; otherwise a snapshot stays a single line. The Results chart shows actuals flowing into the projection against the plan.</p>
-        <div class="dp-list" id="nwHistList"></div>
-      </div>
-    </section>
-
-    <div class="flow-hd gap"><h2>Partner</h2><span class="rule"></span><span class="note">Toggle per scenario on the card &#x2192;</span></div>
-
-    <!-- PARTNER -->
-    <section class="subj life" id="subj-partner" style="--acc:var(--s4c)">
-      <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20c0-3 3-5 6-5s6 2 6 5"/><path d="M15 20c0-2 1.5-3.5 4-3.5"/></svg></div>
-        <div class="subj-tt"><h3>Partner</h3><p>Her income sets her share of shared costs once one of you stops working</p></div>
-        <div class="subj-meta sc-chips" role="group" aria-label="Scenarios using Partner"><span class="sc-chips-lbl">Used in</span>
+    <section class="subj tile" id="tile-partner" style="--acc:var(--s4c)">
+      <button type="button" class="tile-hd" aria-expanded="false" aria-controls="tile-partner-body">
+        <span class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20c0-3 3-5 6-5s6 2 6 5"/><path d="M15 20c0-2 1.5-3.5 4-3.5"/></svg></span>
+        <span class="tile-tt"><b>You &amp; partner</b><span class="tile-sum" id="tile-partner-sum"></span></span>
+        <span class="tile-badge" id="tile-partner-badge"></span>
+        <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+      <div class="tile-body subj-body" id="tile-partner-body" hidden>
+<div class="sc-chips tile-chips" role="group" aria-label="Scenarios using Partner"><span class="sc-chips-lbl">Used in</span>
           <button type="button" class="sc-chip" data-scenario="1" data-feat="partner" onclick="toggleFeature(1,'partner')" aria-pressed="false">A</button>
           <button type="button" class="sc-chip" data-scenario="2" data-feat="partner" onclick="toggleFeature(2,'partner')" aria-pressed="false">B</button>
           <button type="button" class="sc-chip" data-scenario="3" data-feat="partner" onclick="toggleFeature(3,'partner')" aria-pressed="false">C</button>
           <button type="button" class="sc-chip" data-scenario="4" data-feat="partner" onclick="toggleFeature(4,'partner')" aria-pressed="false">D</button>
           <button type="button" class="sc-chip" data-scenario="5" data-feat="partner" onclick="toggleFeature(5,'partner')" aria-pressed="false">E</button>
-        </div></div>
-      <div class="subj-body">
+        </div>
+
         <div class="subj-grid">
         <div class="field"><label for="partnerInc_disp">Her take-home / month</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerInc" id="partnerInc_disp"><input type="hidden" id="partnerInc" value=""></div></div>
         <div class="field slider-field"><label for="partnerRetAge">Age she stops working <span class="sv"><input type="number" id="partnerRetAge" value="45" min="25" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
@@ -277,37 +231,70 @@
         <div class="field slider-field"><label for="partnerPensionAge">Her pension age <span class="sv"><input type="number" id="partnerPensionAge" value="67" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="partnerPensionAge" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         </div>
+      
+<div class="subj-grid">
+        <div class="field"><label for="dob">Date of birth</label><div class="inp"><input type="date" id="dob" value="" oninput="recalc()" onchange="recalc()"></div></div>
+        <div class="field slider-field"><label for="lifeExp">Life expectancy <span class="sv"><input type="number" id="lifeExp" value="100" min="60" max="120" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
+          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="lifeExp" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+        <div class="field"><label>Plan start year</label><div class="ypick" data-target="baseYear" data-min="2020" data-max="2040"></div><input type="hidden" id="baseYear" value="2026"></div>
+      </div>
       </div>
     </section>
-
-  </main>
-</div>
-</div><!-- /tab-panel-situation -->
-
-<!-- ═══════════════════════════════════════════
-     TAB 2 — PLANS (might happen; each described once, switched on per scenario)
-═══════════════════════════════════════════ -->
-<div class="tab-panel" id="tab-panel-plans" role="tabpanel">
-<div class="plans-shell">
-  <main class="sit-content plans-content" id="plansContent">
-    <div class="sit-callout">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-      <span>Things that <b>might</b> happen, each described once. Switch them on per scenario here or on the <b>Scenarios</b> tab. A plan with nothing entered is <b>not set up</b>: it gets no switch in the scenario grid until you fill it in.</span>
+    <section class="subj tile" id="tile-assump" style="--acc:var(--s1c)">
+      <button type="button" class="tile-hd" aria-expanded="false" aria-controls="tile-assump-body">
+        <span class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 7-7"/><path d="M17 8h4v4"/></svg></span>
+        <span class="tile-tt"><b>Assumptions</b><span class="tile-sum" id="tile-assump-sum"></span></span>
+        <span class="tile-badge" id="tile-assump-badge"></span>
+        <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+      <div class="tile-body subj-body" id="tile-assump-body" hidden>
+<div class="subj-grid">
+        <div class="field slider-field"><label for="stockRet">Stock return (annual) <span class="sv"><input type="number" id="stockRet" value="7" min="0" max="20" step="0.5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
+          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="stockRet" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+        <div class="field slider-field"><label for="bondRet">Bond return (annual) <span class="sv"><input type="number" id="bondRet" value="3" min="0" max="15" step="0.5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
+          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="bondRet" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+        <div class="field slider-field"><label for="inflation">Inflation <span class="sv"><input type="number" id="inflation" value="2" min="0" max="10" step="0.5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
+          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="inflation" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+        <div class="field slider-field"><label for="bondAllocNow">Bond allocation (today) <span class="sv"><input type="number" id="bondAllocNow" value="0" min="0" max="100" step="5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
+          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="bondAllocNow" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+        <div class="field slider-field"><label for="bondAllocRet">Bond allocation (retirement) <span class="sv"><input type="number" id="bondAllocRet" value="40" min="0" max="100" step="5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
+          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="bondAllocRet" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+      </div>
+      <div class="assump-foot"><span class="spend-readout" id="assumpReadout" aria-live="polite"></span><button type="button" class="dp-add" onclick="resetAssumptions()">Reset to defaults</button></div>
+      
+<div class="subj-subhd">Withdrawal strategy</div>
+<div class="subj-grid">
+          <div class="field"><label>Strategy</label>
+            <div class="wd-toggle">
+              <label class="wd-pill"><input type="radio" name="wdMode" value="fixed" checked onchange="onWdMode()">Fixed amount</label>
+              <label class="wd-pill"><input type="radio" name="wdMode" value="swr" onchange="onWdMode()">% of portfolio</label>
+            </div>
+          </div>
+          <div class="field slider-field" id="swr_wrap" style="display:none"><label for="swr">Withdrawal rate <button type="button" class="info-btn" title="Annual % of the current portfolio available to withdraw each year. This is a %-of-portfolio strategy: income varies with markets and the portfolio cannot fully deplete. It is NOT the classic Bengen fixed-real-amount rule (use Fixed Amount mode for that behaviour).">&#x24D8;</button> <span class="sv"><input type="number" id="swr" value="4" min="0.5" max="20" step="0.25" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
+            <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="swr" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+        </div>
+      </div>
+    </section>
     </div>
-    <div class="flow-hd"><h2>Plans</h2><span class="rule"></span><span class="note" id="plansStatus"></span></div>
+    <div class="chg-lane" id="lanePlans">
+      <div class="lane-hd"><h2>Might happen</h2><span class="note" id="plansStatus">plans, switched on per scenario</span></div>
 
-    <!-- PROPERTY -->
-    <section class="subj life" id="subj-property" style="--acc:var(--s5c)">
-      <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></div>
-        <div class="subj-tt"><h3>Property purchase</h3><p>Buying a home, mortgage and rent saved <span class="plan-state" id="planState_prop"></span></p></div>
-        <div class="subj-meta sc-chips" role="group" aria-label="Scenarios using Property"><span class="sc-chips-lbl">Used in</span>
+    <section class="subj tile" id="tile-buy" style="--acc:var(--s5c)">
+      <button type="button" class="tile-hd" aria-expanded="false" aria-controls="tile-buy-body">
+        <span class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></span>
+        <span class="tile-tt"><b>Buying a home <span class="plan-state" id="planState_prop"></span></b><span class="tile-sum" id="tile-buy-sum"></span></span>
+        <span class="tile-badge" id="tile-buy-badge"></span>
+        <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+      <div class="tile-body subj-body" id="tile-buy-body" hidden>
+<div class="sc-chips tile-chips" role="group" aria-label="Scenarios using Property"><span class="sc-chips-lbl">Used in</span>
           <button type="button" class="sc-chip" data-scenario="1" data-feat="prop" onclick="toggleFeature(1,'prop')" aria-pressed="false">A</button>
           <button type="button" class="sc-chip" data-scenario="2" data-feat="prop" onclick="toggleFeature(2,'prop')" aria-pressed="false">B</button>
           <button type="button" class="sc-chip" data-scenario="3" data-feat="prop" onclick="toggleFeature(3,'prop')" aria-pressed="false">C</button>
           <button type="button" class="sc-chip" data-scenario="4" data-feat="prop" onclick="toggleFeature(4,'prop')" aria-pressed="false">D</button>
           <button type="button" class="sc-chip" data-scenario="5" data-feat="prop" onclick="toggleFeature(5,'prop')" aria-pressed="false">E</button>
-        </div></div>
-      <div class="subj-body"><div class="subj-grid">
+        </div>
+<div class="subj-grid">
         <div class="field"><label>Purchase year</label><div class="ypick" data-target="propBuyYear" data-min="2024" data-max="2080"></div><input type="hidden" id="propBuyYear" value="2029"></div>
         <div class="field"><label for="propPrice_disp">Purchase price</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="propPrice" id="propPrice_disp"><input type="hidden" id="propPrice" value=""></div></div>
         <div class="field slider-field"><label for="propDownPct">Down payment <span class="sv"><input type="number" id="propDownPct" value="20" min="0" max="100" step="1" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
@@ -322,24 +309,28 @@
         <div class="field"><label for="propRateAfter">Rate after <button type="button" class="info-btn" title="The rate you expect when the fixed period ends: try a higher one to see the refinancing risk. Empty = same rate.">&#x24D8;</button></label><div class="unit-wrap"><input type="number" id="propRateAfter" value="" placeholder="same" min="0" max="15" step="0.1" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div></div>
         <div class="field"><label for="propCharges_disp">Ownership charges + upkeep / month <button type="button" class="info-btn" title="Co-ownership charges (Hausgeld / charges de copropri&#xE9;t&#xE9;), property tax and an upkeep reserve, per month in today&#x2019;s money. They replace part of what rent covered and last for good. Typical flat: &#x20AC;300&#x2013;400.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="propCharges" id="propCharges_disp" placeholder="e.g. 350"><input type="hidden" id="propCharges" value=""></div></div>
         <div class="field"><label for="propHerShare">Her share of down payment + costs <button type="button" class="info-btn" title="The part of the down payment and buying costs she pays from her savings, in scenarios with her. The loan payments are shared like the other joint costs.">&#x24D8;</button></label><div class="unit-wrap"><input type="number" id="propHerShare" value="" placeholder="0" min="0" max="100" step="5" oninput="recalc()" onchange="recalc()"><span class="u">%</span></div></div>
-        <div class="field"><label>Rent that stops <button type="button" class="info-btn" title="Your rent today, entered once on My Situation (Income &amp; spending). A scenario that buys stops paying it from the purchase year, growing with inflation until then.">&#x24D8;</button></label><div class="plan-derived" id="planRentStops">&#x2014;</div></div>
+        <div class="field"><label>Rent that stops <button type="button" class="info-btn" title="Your rent today, entered once in the Housing tile. A scenario that buys stops paying it from the purchase year, growing with inflation until then.">&#x24D8;</button></label><div class="plan-derived" id="planRentStops">&#x2014;</div></div>
       </div>
       <div class="spend-readout" id="propReadout" aria-live="polite"></div>
+      
       </div>
     </section>
-
-    <!-- CHILD -->
-    <section class="subj life" id="subj-child" style="--acc:var(--s3c)">
-      <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="3"/><path d="M12 10v6"/><path d="M8 13l4 2 4-2"/><path d="M9 21l3-5 3 5"/></svg></div>
-        <div class="subj-tt"><h3>Child</h3><p>Raising a kid — costs and parental leave <span class="plan-state" id="planState_child"></span></p></div>
-        <div class="subj-meta sc-chips" role="group" aria-label="Scenarios using Child"><span class="sc-chips-lbl">Used in</span>
+    <section class="subj tile" id="tile-child" style="--acc:var(--s3c)">
+      <button type="button" class="tile-hd" aria-expanded="false" aria-controls="tile-child-body">
+        <span class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="3"/><path d="M12 10v6"/><path d="M8 13l4 2 4-2"/><path d="M9 21l3-5 3 5"/></svg></span>
+        <span class="tile-tt"><b>Child <span class="plan-state" id="planState_child"></span></b><span class="tile-sum" id="tile-child-sum"></span></span>
+        <span class="tile-badge" id="tile-child-badge"></span>
+        <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+      <div class="tile-body subj-body" id="tile-child-body" hidden>
+<div class="sc-chips tile-chips" role="group" aria-label="Scenarios using Child"><span class="sc-chips-lbl">Used in</span>
           <button type="button" class="sc-chip" data-scenario="1" data-feat="child" onclick="toggleFeature(1,'child')" aria-pressed="false">A</button>
           <button type="button" class="sc-chip" data-scenario="2" data-feat="child" onclick="toggleFeature(2,'child')" aria-pressed="false">B</button>
           <button type="button" class="sc-chip" data-scenario="3" data-feat="child" onclick="toggleFeature(3,'child')" aria-pressed="false">C</button>
           <button type="button" class="sc-chip" data-scenario="4" data-feat="child" onclick="toggleFeature(4,'child')" aria-pressed="false">D</button>
           <button type="button" class="sc-chip" data-scenario="5" data-feat="child" onclick="toggleFeature(5,'child')" aria-pressed="false">E</button>
-        </div></div>
-      <div class="subj-body"><div class="subj-grid">
+        </div>
+<div class="subj-grid">
         <div class="field"><label>Child's birth year</label><div class="ypick" data-target="childBirthYear" data-min="2024" data-max="2060"></div><input type="hidden" id="childBirthYear" value="2027"></div>
         <div class="field"><label for="childCostYearly_disp">Annual child cost <button type="button" class="info-btn" title="Total out-of-pocket cost per year: childcare, food, activities, clothing, etc.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="childCostYearly" id="childCostYearly_disp"><input type="hidden" id="childCostYearly" value=""></div></div>
         <div class="field slider-field"><label for="childCostUntilAge">Dependent until age <span class="sv"><input type="number" id="childCostUntilAge" value="25" min="10" max="30" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
@@ -350,37 +341,81 @@
         <div class="field slider-field"><label for="partnerLeaveMonths">Her parental leave <button type="button" class="info-btn" title="Months she is on leave in the birth year (Germany: up to 14 months shared between you, at about 65% of net pay). Her lower income that year lowers her part of the shared costs: the split follows both incomes that year.">&#x24D8;</button> <span class="sv"><input type="number" id="partnerLeaveMonths" value="" placeholder="0" min="0" max="12" step="1" oninput="recalc()" onchange="recalc()"><i>mo</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="partnerLeaveMonths" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         <div class="field"><label for="partnerLeaveIncome_disp">Her income during leave (net) <button type="button" class="info-btn" title="Her net leave pay per month (Elterngeld is about 65% of net pay, between &#x20AC;300 and &#x20AC;1,800). Used only in the birth year, in scenarios with the child.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerLeaveIncome" id="partnerLeaveIncome_disp"><input type="hidden" id="partnerLeaveIncome" value=""></div></div>
-      </div></div>
+      </div>
+      </div>
     </section>
+    <section class="subj tile" id="tile-paychg" style="--acc:var(--s4c)">
+      <button type="button" class="tile-hd" aria-expanded="false" aria-controls="tile-paychg-body">
+        <span class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20"/><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+        <span class="tile-tt"><b>Pay changes <span class="plan-state" id="planState_pay"></span></b><span class="tile-sum" id="tile-paychg-sum"></span></span>
+        <span class="tile-badge" id="tile-paychg-badge"></span>
+        <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+      <div class="tile-body subj-body" id="tile-paychg-body" hidden>
 
 
-    <!-- PAY CHANGES -->
-    <section class="subj life" id="subj-pay" style="--acc:var(--s4c)">
-      <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20"/><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-        <div class="subj-tt"><h3>Pay changes</h3><p>A 4-day week, a career break, a new job: take-home from a year, until a year or for good. Switched on per scenario <span class="plan-state" id="planState_pay"></span></p></div></div>
-      <div class="subj-body">
         <div class="pay-list" id="payList"></div>
+      
       </div>
     </section>
+    <section class="subj tile" id="tile-flat" style="--acc:var(--s2c)">
+      <button type="button" class="tile-hd" aria-expanded="false" aria-controls="tile-flat-body">
+        <span class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></span>
+        <span class="tile-tt"><b>Flat move</b><span class="tile-sum" id="tile-flat-sum"></span></span>
+        <span class="tile-badge" id="tile-flat-badge"></span>
+        <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+      <div class="tile-body subj-body" id="tile-flat-body" hidden>
+<p class="sit-note">A new flat or a known rent step: from a year, the new rent including charges. It applies to every scenario; a scenario that buys stops whatever rent applies in its purchase year. When the year comes, the app asks whether it happened.</p>
+<div class="subj-subhd">Planned rents <button type="button" class="info-btn" title="A new flat or a known rent step: from a year, the new rent including charges. The rest of the joint costs stay as entered; only the rent is swapped. A scenario that buys stops whatever rent applies in its purchase year.">&#x24D8;</button></div>
+        <div class="dp-list" id="rentMovesList"></div>
+        
+      </div>
+    </section>
+    <section class="subj tile" id="tile-move" style="--acc:var(--s2c)">
+      <button type="button" class="tile-hd" aria-expanded="false" aria-controls="tile-move-body">
+        <span class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/></svg></span>
+        <span class="tile-tt"><b>Moving country</b><span class="tile-sum" id="tile-move-sum"></span></span>
+        <span class="tile-badge" id="tile-move-badge"></span>
+        <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+      <div class="tile-body subj-body" id="tile-move-body" hidden>
+<p class="sit-note">Where you would live from a year: tax on gains and cost of living follow you. Picking a country prefills its rate; you can override it.</p>
 
-    <!-- WINDFALLS -->
-    <section class="subj life" id="subj-windfalls" style="--acc:var(--s2c)">
-      <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9"/><path d="M12 8V21"/><path d="M12 8S9 3 6.5 4.5 8 8 12 8zM12 8s3-5 5.5-3.5S16 8 12 8z"/></svg></div>
-        <div class="subj-tt"><h3>Windfalls</h3><p>One-off money that may arrive: shares, inheritance, a bonus. Each one is switched on per scenario <span class="plan-state" id="planState_wf"></span></p></div></div>
-      <div class="subj-body">
-        <div class="dp-list" id="wfList"></div>
+      <div class="res-list" id="resList"></div>
+      <div class="res-notes" id="resNotes"></div>
+      
       </div>
     </section>
-  </main>
+    <section class="subj tile" id="tile-wf" style="--acc:var(--s2c)">
+      <button type="button" class="tile-hd" aria-expanded="false" aria-controls="tile-wf-body">
+        <span class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9"/><path d="M12 8V21"/><path d="M12 8S9 3 6.5 4.5 8 8 12 8zM12 8s3-5 5.5-3.5S16 8 12 8z"/></svg></span>
+        <span class="tile-tt"><b>Windfalls <span class="plan-state" id="planState_wf"></span></b><span class="tile-sum" id="tile-wf-sum"></span></span>
+        <span class="tile-badge" id="tile-wf-badge"></span>
+        <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+      <div class="tile-body subj-body" id="tile-wf-body" hidden>
+
+
+        <div class="dp-list" id="wfList"></div>
+      
+      </div>
+    </section>
+    </div>
+  </div>
+  <aside class="chg-impact" id="chgImpact">
+    <button type="button" class="impact-toggle" id="impactToggle" aria-expanded="false" aria-controls="updatePanel"><span id="impactToggleTxt">Impact on your scenarios</span><span aria-hidden="true">&#x25B4;</span></button>
+    <section class="update-panel" id="updatePanel" aria-live="polite"></section>
+  </aside>
 </div>
-</div><!-- /tab-panel-plans -->
+</div><!-- /tab-panel-situation -->
 
 <!-- ═══════════════════════════════════════════
      TAB 3 — SCENARIOS
 ═══════════════════════════════════════════ -->
 <div class="tab-panel" id="tab-panel-scenarios" role="tabpanel">
 <div class="scg-shell">
-  <p class="scg-intro">One column per scenario. Numbers live on the Situation tab; here you choose which life events each scenario includes, and the app works out the earliest age it lets you stop.</p>
+  <p class="scg-intro">One column per scenario. Numbers live on the Changes tab; here you choose which life events each scenario includes, and the app works out the earliest age it lets you stop.</p>
   <div class="scg-saved" hidden><input type="hidden" id="s1_inc" value=""><input type="hidden" id="s1_chgYear" value=""><input type="hidden" id="s1_chgInc" value=""><input type="hidden" id="s2_inc" value=""><input type="hidden" id="s2_chgYear" value=""><input type="hidden" id="s2_chgInc" value=""><input type="hidden" id="s3_inc" value=""><input type="hidden" id="s3_chgYear" value=""><input type="hidden" id="s3_chgInc" value=""><input type="hidden" id="s4_inc" value=""><input type="hidden" id="s4_chgYear" value=""><input type="hidden" id="s4_chgInc" value=""><input type="hidden" id="s5_inc" value=""><input type="hidden" id="s5_chgYear" value=""><input type="hidden" id="s5_chgInc" value=""><input type="hidden" id="s1_ret" value="40"><input type="hidden" id="s2_ret" value="45"><input type="hidden" id="s3_ret" value="50"><input type="hidden" id="s4_ret" value="42"><input type="hidden" id="s5_ret" value="48"></div>
   <div class="scg-scroll">
   <div class="scg" role="table" aria-label="Scenarios side by side">
@@ -402,7 +437,7 @@
       <div class="scg-cell c5" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(5,'partner')" aria-label="Scenario E: living alone"><span class="tog-sw" id="tog5_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
     </div>
     <div class="scg-row scg-r-plan" role="row" id="scgRow_prop">
-      <div class="scg-lbl" role="rowheader">&#x1F3E0; Buy property <button type="button" class="info-btn" title="The purchase described on the Situation tab." aria-label="About: &#x1F3E0; Buy property">&#x24D8;</button></div>
+      <div class="scg-lbl" role="rowheader">&#x1F3E0; Buy property <button type="button" class="info-btn" title="The purchase described in the Buying a home plan (Changes tab)." aria-label="About: &#x1F3E0; Buy property">&#x24D8;</button></div>
       <div class="scg-cell c1" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(1,'prop')" aria-label="Scenario A: buy property"><span class="tog-sw" id="tog1_prop"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
       <div class="scg-cell c2" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(2,'prop')" aria-label="Scenario B: buy property"><span class="tog-sw" id="tog2_prop"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
       <div class="scg-cell c3" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(3,'prop')" aria-label="Scenario C: buy property"><span class="tog-sw" id="tog3_prop"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
@@ -410,7 +445,7 @@
       <div class="scg-cell c5" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(5,'prop')" aria-label="Scenario E: buy property"><span class="tog-sw" id="tog5_prop"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
     </div>
     <div class="scg-row scg-r-plan" role="row" id="scgRow_child">
-      <div class="scg-lbl" role="rowheader">&#x1F476; Have a child <button type="button" class="info-btn" title="The child costs and leave described on the Situation tab." aria-label="About: &#x1F476; Have a child">&#x24D8;</button></div>
+      <div class="scg-lbl" role="rowheader">&#x1F476; Have a child <button type="button" class="info-btn" title="The child costs and leave described in the Child plan (Changes tab)." aria-label="About: &#x1F476; Have a child">&#x24D8;</button></div>
       <div class="scg-cell c1" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(1,'child')" aria-label="Scenario A: have a child"><span class="tog-sw" id="tog1_child"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
       <div class="scg-cell c2" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(2,'child')" aria-label="Scenario B: have a child"><span class="tog-sw" id="tog2_child"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
       <div class="scg-cell c3" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(3,'child')" aria-label="Scenario C: have a child"><span class="tog-sw" id="tog3_child"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
@@ -419,6 +454,7 @@
     </div>
     <div id="scgWindfallRows" class="scg-dyn"></div>
     <div id="scgPayRows" class="scg-dyn"></div>
+    <div id="scgMoveRows" class="scg-dyn"></div>
   </div>
   <div class="scg" role="table" aria-label="Results per scenario">
     <div class="scg-sec" role="presentation">Result <span class="scg-sec-note">at the earliest funded age</span></div>
@@ -615,6 +651,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.16"></script>
+<script type="module" src="js/main.js?v=8.17"></script>
 </body>
 </html>

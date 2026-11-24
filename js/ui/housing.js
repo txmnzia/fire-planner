@@ -1,16 +1,31 @@
 // Housing moves and where you live (v8.11). Two dynamic lists on My Situation:
 // planned rents (state.rentMoves) and planned moves abroad (state.residence),
 // plus the rent-today edit that keeps the joint transfers consistent.
-import { el, eur } from "../util.js?v=8.16";
-import { state } from "../state.js?v=8.16";
-import { recalc } from "../recalc.js?v=8.16";
-import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.16";
-import { COUNTRY_TAX } from "../taxTable.js?v=8.16";
-import { countryNote } from "../countries.js?v=8.16";
-import { mortgageSchedule } from "../engine.js?v=8.16";
+import { el, eur } from "../util.js?v=8.17";
+import { state } from "../state.js?v=8.17";
+import { recalc } from "../recalc.js?v=8.17";
+import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.17";
+import { COUNTRY_TAX } from "../taxTable.js?v=8.17";
+import { countryNote } from "../countries.js?v=8.17";
+import { mortgageSchedule } from "../engine.js?v=8.17";
+import { LETTERS, flipOff } from "./plans.js?v=8.17";
 
 const YNOW = new Date().getFullYear();
 const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+// A–E chips: which scenarios use this move (v8.17); m.off holds the ones it is off for.
+function usedInChips(list, i, repaint) {
+  const m = list[i], wrap = document.createElement('div');
+  wrap.className = 'sc-chips tile-chips'; wrap.setAttribute('role', 'group'); wrap.setAttribute('aria-label', 'Scenarios using this move');
+  const lab = document.createElement('span'); lab.className = 'sc-chips-lbl'; lab.textContent = 'Used in'; wrap.append(lab);
+  LETTERS.forEach((L, k) => {
+    const on = !(Array.isArray(m.off) && m.off.includes(k + 1));
+    const c = document.createElement('button'); c.type = 'button'; c.className = 'sc-chip' + (on ? ' on' : '');
+    c.textContent = L; c.setAttribute('aria-pressed', String(on));
+    c.addEventListener('click', () => { flipOff(list, i, k + 1); repaint(); recalc(); });
+    wrap.append(c);
+  });
+  return wrap;
+}
 function addButton(text, onClick) {
   const b = document.createElement('button'); b.type = 'button'; b.className = 'dp-add';
   b.innerHTML = PLUS + text; b.addEventListener('click', onClick); return b;
@@ -26,6 +41,7 @@ export function renderRentMoves() {
       '<div class="inp cur mini"><span class="pre">€</span><input type="text" inputmode="decimal" autocomplete="off" placeholder="New rent / month" aria-label="New rent per month"></div>' +
       '<button type="button" class="dp-del" aria-label="Remove move">×</button></div>';
     const inp = row.querySelector('.cur input'); inp.value = m.rent == null ? '' : fmtMoney(m.rent);
+    row.appendChild(usedInChips(state.rentMoves, i, renderRentMoves));
     host.appendChild(row);
     buildYpick(row.querySelector('.ypick'), { min: 2024, max: 2080, getVal: () => m.from, setVal: y => { m.from = y; recalc(); } });
     inp.addEventListener('input', () => { const raw = cleanMoney(inp.value); inp.value = fmtMoney(raw); const v = parseFloat(raw); m.rent = isNaN(v) ? null : v; recalc(); });
@@ -87,6 +103,7 @@ export function renderResidence() {
     const tax = row.querySelector('.res-tax'), col = row.querySelector('.res-col');
     tax.placeholder = String(COUNTRY_TAX[p.country] ?? 30); tax.value = p.tax == null ? '' : p.tax;
     col.value = p.col == null ? '' : p.col;
+    row.appendChild(usedInChips(state.residence, i, renderResidence));
     host.appendChild(row);
     buildYpick(row.querySelector('.ypick'), { min: 2024, max: 2080, getVal: () => p.from, setVal: y => { p.from = y; recalc(); renderResNotes(); } });
     sel.addEventListener('change', () => { p.country = sel.value; tax.placeholder = String(COUNTRY_TAX[p.country] ?? 30); recalc(); renderResNotes(); });

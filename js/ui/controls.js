@@ -1,14 +1,15 @@
-import { el, numVal } from "../util.js?v=8.16";
-import { state, features } from "../state.js?v=8.16";
-import { getScenarioName } from "../inputs.js?v=8.16";
-import { recalc } from "../recalc.js?v=8.16";
-import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js?v=8.16";
-import { renderTable } from "./table.js?v=8.16";
-import { renderSummaryTiles } from "./cards.js?v=8.16";
-import { resizeMcCharts } from "./mcTab.js?v=8.16";
+import { el, numVal } from "../util.js?v=8.17";
+import { state, features } from "../state.js?v=8.17";
+import { getScenarioName } from "../inputs.js?v=8.17";
+import { recalc } from "../recalc.js?v=8.17";
+import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js?v=8.17";
+import { renderTable } from "./table.js?v=8.17";
+import { renderSummaryTiles } from "./cards.js?v=8.17";
+import { resizeMcCharts } from "./mcTab.js?v=8.17";
 
 // ── TAB SWITCHING ──────────────────────────────────────────────────────────
 export function switchTab(name) {
+  if (name === "plans") name = "situation";   // v8.17: plans live in the Changes tab
   document.querySelectorAll(".tab-btn").forEach(b => {
     const a = b.dataset.tab === name;
     b.classList.toggle("active", a);

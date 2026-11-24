@@ -26,19 +26,19 @@ test('a switch only counts once its plan is set up (no rent saved without a purc
   assert.deepEqual(effectiveFeatures({ partner: false, prop: false, child: false }, baseGl()), { partner: false, prop: false, child: false });
 });
 
-test('markup: the Plans tab holds the home and child cards; My Situation no longer does', () => {
-  const plans = html.slice(html.indexOf('id="tab-panel-plans"'), html.indexOf('<!-- /tab-panel-plans -->'));
-  const sit = html.slice(html.indexOf('id="tab-panel-situation"'), html.indexOf('<!-- /tab-panel-situation -->'));
+test('markup (v8.17): one Changes tab; home and child are in the plans lane, facts in the now lane', () => {
+  const now = html.slice(html.indexOf('id="laneNow"'), html.indexOf('id="lanePlans"'));
+  const plans = html.slice(html.indexOf('id="lanePlans"'), html.indexOf('<aside class="chg-impact"'));
   for (const id of ['propPrice', 'propBuyYear', 'childCostYearly', 'childBirthYear', 'childMaternityMonths']) {
-    assert.ok(plans.includes('id="' + id + '"'), id + ' on Plans');
-    assert.ok(!sit.includes('id="' + id + '"'), id + ' not on My Situation');
+    assert.ok(plans.includes('id="' + id + '"'), id + ' in plans');
+    assert.ok(!now.includes('id="' + id + '"'), id + ' not in now');
   }
-  assert.ok(sit.includes('id="subj-partner"'), 'the partner stays on My Situation');
-  // rent today is a fact: entered once on My Situation, shown (not asked) on the home card
-  assert.ok(sit.includes('id="propRentSaved"') && !plans.includes('id="propRentSaved"'));
+  assert.ok(now.includes('id="tile-partner"'), 'the partner is a fact');
+  // rent today is a fact, entered once; the home plan shows it (not asked)
+  assert.ok(now.includes('id="propRentSaved"') && !plans.includes('id="propRentSaved"'));
   assert.ok(plans.includes('id="planRentStops"'));
-  assert.ok(!/data-t="subj-(property|child)"/.test(sit), 'rail has no links to moved cards');
-  assert.match(html, /data-tab="plans"[^>]*onclick="switchTab\('plans'\)"/);
+  assert.ok(!/data-tab="plans"/.test(html), 'no separate Plans tab');
+  assert.match(html, /data-tab="situation"[^>]*>\s*<span class="tab-num">1<\/span> Changes/);
 });
 
 test('markup: plan rows in the grid can be hidden, and the renderer runs on every recalc', () => {
