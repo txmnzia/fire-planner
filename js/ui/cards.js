@@ -1,8 +1,8 @@
-import { el, eur, fmtK } from "../util.js?v=8.19";
-import { scenarioIssues } from "../checks.js?v=8.19";
-import { state } from "../state.js?v=8.19";
-import { getScenarioName } from "../inputs.js?v=8.19";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.19";
+import { el, eur, fmtK } from "../util.js?v=8.19.1";
+import { scenarioIssues } from "../checks.js?v=8.19.1";
+import { state } from "../state.js?v=8.19.1";
+import { getScenarioName } from "../inputs.js?v=8.19.1";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.19.1";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -32,7 +32,7 @@ export function computeCardMetrics(sc, gl, proj) {
   const vsPlan = pos ? pos.years : null;   // +ve = ahead of plan
   const m = { retIdx, portRet, retYear, depletionYear, coastNow, coasting,
               vsPlan, vsPlanOpen: pos ? pos.open : false,
-              fireTarget: proj.fireTarget, fireTargetAdj: proj.fireTargetAdj,
+              fireTarget: proj.fireTarget, fireTargetAdj: proj.fireTargetAdj, laterRise: !!proj.laterRise,
               infeasibleYear: proj.infeasibleYear };
   // With the partner: the target is YOUR FIRE (your portfolio covers your cost:
   // own spending + your part of shared costs). Household FIRE was removed in v8.8.
@@ -69,6 +69,10 @@ export function computeCardMetrics(sc, gl, proj) {
     m.budgetMonthly = Math.round(yearOneBudget(sc.retAge, sc, gl, herDrawRet) / 12);   // incl. costs that end
     m.tempPV = proj.tempPV || 0;
     m.incomeOk = m.netMonthly >= m.targetMonthly;
+    // v8.19 stricter rule: when the cost rises later (her share falls), funded also
+    // needs the portfolio at the stop age to reach that higher FIRE number.
+    m.laterRise = !!proj.laterRise;
+    if (m.laterRise) m.incomeOk = m.incomeOk && portRet >= proj.fireTarget;
   } else {
     m.surplus = portRet - proj.fireTarget;
     m.ok = m.surplus >= 0;
@@ -212,10 +216,9 @@ export function fireNumRowHTML(m, gl, cc) {
   let adj = '';
   if (gl.wdMode === 'swr' && m.fireTargetAdj < m.fireTarget * 0.99) {
     adj = ' <span class="tgt">/ '+eur(m.fireTargetAdj)+' w/ pensions</span>';
-  } else if (gl.wdMode === 'swr' && m.two && m.fireTargetAdj > m.fireTarget * 1.01) {
-    // two-person: her share can fall later (she retires before her pension), so
-    // the adjusted number can sit ABOVE the year-one headline — show it.
-    adj = ' <span class="tgt">/ '+eur(m.fireTargetAdj)+' w/ later changes</span>';
+  } else if (gl.wdMode === 'swr' && m.laterRise) {
+    // v8.19: the headline already includes a cost that rises later (stricter rule)
+    adj = ' <span class="tgt">incl. later cost rise</span>';
   }
   return '<div class="sc-result-row"><span class="k">'+(m.two ? 'FIRE Number (you)' : 'FIRE Number')+'</span><span class="v '+cc+'">'+eur(m.fireTarget)+adj+'</span></div>';
 }

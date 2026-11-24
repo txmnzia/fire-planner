@@ -900,11 +900,18 @@ export function project(sc, gl, opts) {
   const fireTargetAdj = gl.wdMode==="swr"
     ? computeFireTarget(sc.retAge,sc,gl,taxMultRet,{otherIncomeCredit:true, ...(tOpts||{})})
     : fireAtRetirement;
+  // v8.19, the stricter rule (owner's decision): in % mode the headline is the
+  // year-one number, UNLESS the year-by-year number is higher (with the partner:
+  // her share falls later, e.g. she stops before her pension, and your cost rises
+  // by more than your later pensions credit). Then that higher number is the
+  // headline, so the FIRE number already includes the later cost rise.
+  const laterRise = gl.wdMode==="swr" && fireTargetAdj > fireAtRetirement;
+  const fireTarget = laterRise ? fireTargetAdj : fireAtRetirement;
   fireNumMult.forEach((fm, i) => { if (fm) fireNums[i] = computeFireTarget(fm.age, sc, gl, fm.mult, { gainFrac: fm.gf }); });
-  for (let i=0;i<fireNums.length;i++) if (fireNums[i]===null) fireNums[i]=fireAtRetirement;
+  for (let i=0;i<fireNums.length;i++) if (fireNums[i]===null) fireNums[i]=fireTarget;
 
   const out = {years,values,fireNums,retYear,allocations,rows,
-          fireTarget:fireAtRetirement, fireTargetAdj, gainFracAtRet,
+          fireTarget, fireTargetAdj, fireTargetYearOne: fireAtRetirement, laterRise, gainFracAtRet,
           // v8.2: % mode only — the part of the FIRE number set aside for costs that end
           tempPV: gl.wdMode==="swr" ? tempCostPV(sc.retAge, sc, gl, taxMultRet) : 0,
           infeasibleYear, finalNetWorth: portfolio+cashVal};

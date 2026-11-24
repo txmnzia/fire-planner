@@ -265,6 +265,8 @@ FIRE Number (headline) = max(0, Lifelong Budget − pensions already flowing at 
 FIRE Number (adjusted) = headline − PV(state pension starting later)
                                   − PV(partner pension starting later)
                                   − PV(partner salary until partner retires)
+With the partner (v8.19): if the adjusted number is HIGHER (her share falls later),
+it becomes the headline (stricter rule, see "Your FIRE number with a partner").
 ```
 
 **Costs that end (v8.2).** Child costs and mortgage payments stop at a known
@@ -707,8 +709,21 @@ so the share solves `c = P + S × (1 − share(herInc, c))` (closed form, `selfF
   for the lifelong part, plus costs that end at present value (v8.2). The **adjusted**
   number credits your later pension and later changes in her share
   (`Σ shared(y) × (share₀ − share(y)) × taxMult / (1+r)^(k+1)`); because her share can
-  *fall* later (she stops before her pension), it can sit **above** the headline and the
-  card then shows it as "w/ later changes".
+  *fall* later (she stops before her pension), it can sit **above** the year-one number.
+  **Stricter rule (v8.19, owner's decision):** the headline is then the higher,
+  year-by-year number (`fireTarget = max(year-one, adjusted)`; `proj.fireTargetYearOne`
+  keeps the year-one figure, `proj.laterRise` says which won), the card reads "incl.
+  later cost rise", and a stop age counts as funded only when the portfolio at the stop
+  age also reaches that number (`computeCardMetrics`: `incomeOk` and `portRet ≥ fireTarget`).
+
+  ```
+  e.g. no returns, no inflation, no tax, SWR 4%: you 1,000 own + 2,000 shared; she earns
+  2,000 until 60, nothing until her pension of 1,000 at 70.
+  year one: c = 1,000 + 2,000 × c/(2,000 + c) → c = 2,000 → 2,000 × 12 / 4% = 600,000
+  60–69:    her share 0 → +1,000/mo × 12 × 10                              = 120,000
+  70–89:    c = 1,000 + √2,000,000, share = 1,000/(1,000 + c) → +2,000 × (0.5 − share) × 12 × 20 ≈ 99,411
+  FIRE number (headline) ≈ 819,411; saving 36,000 a year from 300,000 → stop at 50 (year-one alone: 44)
+  ```
 - Fixed: `Σₖ max(0, yourCost(y) − your pension(y)) × taxMult_k / (1+r)^(k+1)` year by
   year to `lifeExp`, plus a retirement-era purchase cost.
 - Card note: "Assumes partner contributes X €/mo (today's €) until her age N; after

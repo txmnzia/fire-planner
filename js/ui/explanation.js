@@ -1,9 +1,9 @@
-import { el, eur } from "../util.js?v=8.19";
-import { state } from "../state.js?v=8.19";
-import { getScenarioName } from "../inputs.js?v=8.19";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, project, pensionMonthlyAt, pensionList, taxRateAt, scGl } from "../engine.js?v=8.19";
-import { computeCardMetrics } from "./cards.js?v=8.19";
-import { FLOW_COLORS } from "./charts.js?v=8.19";
+import { el, eur } from "../util.js?v=8.19.1";
+import { state } from "../state.js?v=8.19.1";
+import { getScenarioName } from "../inputs.js?v=8.19.1";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, project, pensionMonthlyAt, pensionList, taxRateAt, scGl } from "../engine.js?v=8.19.1";
+import { computeCardMetrics } from "./cards.js?v=8.19.1";
+import { FLOW_COLORS } from "./charts.js?v=8.19.1";
 
 // ── EXPLANATION TAB ──────────────────────────────────────────────────────────
 // "Your plan, explained": turns the selected scenario's projection into a
@@ -425,7 +425,10 @@ export function renderExplanation(projs, gl, scenarios) {
     const ppenOff = (sc.hasPartner && retAge + off >= gl.partnerPensionAge) ? gl.partnerPension * 12 * inflRet : 0;
     const fromPort = Math.max(0, budgetRet - penOff - ppenOff);
     const rebuilt = gl.swr > 0 ? Math.round(fromPort / netFracRet / gl.swr + setAside) : 0;
-    const exact = Math.abs(rebuilt - proj.fireTarget) <= Math.max(2, proj.fireTarget * 0.001);
+    // v8.19: with a later rise the headline is the year-by-year number; the year-one
+    // part is rebuilt here and the rise is shown as its own line (engine values only).
+    const y1 = proj.laterRise ? proj.fireTargetYearOne : proj.fireTarget;
+    const exact = Math.abs(rebuilt - y1) <= Math.max(2, y1 * 0.001);
     concepts.push(concept("Your FIRE number", eur(proj.fireTarget), "your budget, run backwards",
       (exact
         ? '<div class="expl-rows">' +
@@ -434,6 +437,7 @@ export function renderExplanation(projs, gl, scenarios) {
           row("&times; tax gross-up on selling", "&times;" + (1 / netFracRet).toFixed(2)) +
           row("&divide; your withdrawal rate", pct(gl.swr)) +
           (setAside > 0 ? row("+ set aside for costs that end", "+" + eur(Math.round(setAside)) + ' <span class="tgt">child, mortgage: their remaining years only</span>') : "") +
+          (proj.laterRise ? row("+ your cost rising later", "+" + eur(proj.fireTarget - proj.fireTargetYearOne) + ' <span class="tgt">her share falls later (she stops before her pension), net of your later pensions</span>') : "") +
           row("= your FIRE number", eur(proj.fireTarget), CV[i]) + "</div>"
         : '<div class="expl-rows">' + row("Your FIRE number", eur(proj.fireTarget), CV[i]) + "</div>") +
       "<p>Nothing more mystical than that: the pot at which " + pct(gl.swr) + " of it pays your entire budget after tax — from there, working is a choice.</p>" +

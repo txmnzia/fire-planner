@@ -170,7 +170,7 @@ test('two-person 1 — regression: simple mode is identical to the pre-change sn
   // fields v8.2 added (tempPV, rows[].tempCost) are not in this older snapshot.
   // v8.5 then moved every fixed-mode case (tax priced on a rising gain fraction).
   const movedInV82 = new Set(['swr_prop', 'swr_child', 'swr_all', ...cases.map(c => 'fixed_' + c[0])]);
-  const strip = p => { delete p.tempPV; p.rows.forEach(r => delete r.tempCost); return p; };
+  const strip = p => { delete p.tempPV; delete p.fireTargetYearOne; delete p.laterRise; p.rows.forEach(r => delete r.tempCost); return p; };   // v8.19 fields too
   for (const wd of ['swr', 'fixed']) for (const [k, sco, glo] of cases) {
     if (movedInV82.has(wd + '_' + k)) continue;
     const glS = makeGl({ wdMode: wd, ...glo });
@@ -307,7 +307,9 @@ test('two-person: partial target (SWR) prices your year-one net cost; fixed = ye
   const p = project(sc, gl);
   const taxMult = 1 / (1 - p.gainFracAtRet * gl.taxRate);
   const y1 = yearOneBudget(45, sc, gl, 0);
-  assert.equal(p.fireTarget, Math.round(y1 * taxMult / gl.swr));          // no pension at 45
+  assert.equal(p.fireTargetYearOne, Math.round(y1 * taxMult / gl.swr));   // no pension at 45
+  // v8.19 stricter rule: the headline is the higher of year-one and year-by-year
+  assert.equal(p.fireTarget, Math.max(p.fireTargetYearOne, p.fireTargetAdj));
   // fixed mode with no partner income: share 0, so the target is the PV of
   // your full cost (personal + shared), pension netted from 67.
   const glF = twoGl({ wdMode: 'fixed', partnerInc: 0, partnerPension: 0, inflation: 0,

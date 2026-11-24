@@ -5,6 +5,17 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.19.1 The stricter FIRE number in % mode
+
+- **When your cost rises later, the FIRE number includes it** (owner's decision; the
+  open question since v7.3). In % of portfolio mode the headline was the year-one
+  number, with a higher "w/ later changes" figure beside it when her share falls later
+  (she stops before her pension). Now the higher one is the headline, and a stop age is
+  funded only when the portfolio reaches it. *Effect on the owner's scenarios:* none
+  today (she works until her pension age, so her share never falls); it matters as soon
+  as a plan has her stop earlier. Golden master: 14 two-person % mode cases, FIRE target
+  only (no projection moved), regenerated in its own commit.
+
 ## 2026-11-24 · v8.19 Pensions net, any country
 
 - **The plan uses net pensions** (the owner: "what ends up in my bank account, not
