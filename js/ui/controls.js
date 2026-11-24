@@ -1,11 +1,11 @@
-import { el, numVal } from "../util.js?v=8.8";
-import { state, features } from "../state.js?v=8.8";
-import { getScenarioName } from "../inputs.js?v=8.8";
-import { recalc } from "../recalc.js?v=8.8";
-import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js?v=8.8";
-import { renderTable } from "./table.js?v=8.8";
-import { renderSummaryTiles } from "./cards.js?v=8.8";
-import { resizeMcCharts } from "./mcTab.js?v=8.8";
+import { el, numVal } from "../util.js?v=8.9";
+import { state, features } from "../state.js?v=8.9";
+import { getScenarioName } from "../inputs.js?v=8.9";
+import { recalc } from "../recalc.js?v=8.9";
+import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js?v=8.9";
+import { renderTable } from "./table.js?v=8.9";
+import { renderSummaryTiles } from "./cards.js?v=8.9";
+import { resizeMcCharts } from "./mcTab.js?v=8.9";
 
 // ── TAB SWITCHING ──────────────────────────────────────────────────────────
 export function switchTab(name) {
@@ -31,7 +31,8 @@ export function updateToggleUI() {
     const sw_p  = el("tog"+s+"_partner");
     const sw_pr = el("tog"+s+"_prop");
     const sw_c  = el("tog"+s+"_child");
-    if (sw_p)  { sw_p.className  = "tog-sw" + (features[s].partner ? " on-p"    : ""); }
+    // v8.9: the partner is the default; the grid switch reads "Living alone" (on = no partner)
+    if (sw_p)  { sw_p.className  = "tog-sw" + (features[s].partner ? "" : " on-p"); sw_p.parentElement?.setAttribute("aria-pressed", String(!features[s].partner)); }
     if (sw_pr) { sw_pr.className = "tog-sw" + (features[s].prop    ? " on-prop" : ""); }
     if (sw_c)  { sw_c.className  = "tog-sw" + (features[s].child   ? " on-child": ""); }
   }
@@ -103,12 +104,6 @@ export function updateLabels() {
   // FIRE Target line is always shown now (including SWR mode)
   const fireLegItem=dash?dash.closest('.leg-item'):null;
   if(fireLegItem) fireLegItem.style.display='';
-  const sel=el("retCountry"), hd=el("pensionGroupHd");
-  if (sel&&hd) {
-    const txt=(sel.options[sel.selectedIndex]||{text:""}).text;
-    const match=txt.replace(/[\uD800-\uDFFF]{2}/g,"").replace(/[^\x20-\x7E]/g,"").trim().replace(/\s+\d+%$/,"").trim();
-    hd.textContent=(match||"State")+" Pension";
-  }
 }
 
 export function setActiveScenario(idx) {

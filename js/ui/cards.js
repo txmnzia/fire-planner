@@ -1,8 +1,8 @@
-import { el, eur, fmtK } from "../util.js?v=8.8";
-import { scenarioIssues } from "../checks.js?v=8.8";
-import { state } from "../state.js?v=8.8";
-import { getScenarioName } from "../inputs.js?v=8.8";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project } from "../engine.js?v=8.8";
+import { el, eur, fmtK } from "../util.js?v=8.9";
+import { scenarioIssues } from "../checks.js?v=8.9";
+import { state } from "../state.js?v=8.9";
+import { getScenarioName } from "../inputs.js?v=8.9";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project, pensionMonthlyAt } from "../engine.js?v=8.9";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -53,7 +53,7 @@ export function computeCardMetrics(sc, gl, proj) {
     const gfr = proj.gainFracAtRet != null ? proj.gainFracAtRet : gl.gainFrac;
     const swrPortfolio = Math.round(investAtRet * gl.swr * (1 - gfr * gl.taxRate) / 12);
     const inflAtRet = Math.pow(1 + gl.inflation, nAccum);
-    const pensionMonthly = sc.retAge >= gl.pensionAge ? Math.round(gl.pensionAmt * inflAtRet) : 0;
+    const pensionMonthly = Math.round(pensionMonthlyAt(gl, sc.retAge) * inflAtRet);
     // in the two-person model her salary and pension are hers, not your income
     const partnerPensionMonthly = (sc.hasPartner && !isTwoPerson(gl) && sc.retAge + off >= gl.partnerPensionAge)
       ? Math.round(gl.partnerPension * inflAtRet) : 0;

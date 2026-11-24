@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.8">
+<link rel="stylesheet" href="css/styles.css?v=8.9">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.8</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.9</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -164,7 +164,9 @@
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="bondAllocNow" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         <div class="field slider-field"><label for="bondAllocRet">Bond allocation (retirement) <span class="sv"><input type="number" id="bondAllocRet" value="40" min="0" max="100" step="5" oninput="recalc()" onchange="recalc()"><i>%</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="bondAllocRet" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-      </div></div>
+      </div>
+      <div class="assump-foot"><span class="spend-readout" id="assumpReadout" aria-live="polite"></span><button type="button" class="dp-add" onclick="resetAssumptions()">Reset to defaults</button></div>
+      </div>
     </section>
 
     <!-- TAX -->
@@ -208,14 +210,19 @@
     <!-- FUTURE INCOME -->
     <section class="subj" id="subj-future" style="--acc:var(--s1c)">
       <div class="subj-hd"><div class="subj-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9"/><path d="M12 8V21"/><path d="M12 8S9 3 6.5 4.5 8 8 12 8zM12 8s3-5 5.5-3.5S16 8 12 8z"/></svg></div>
-        <div class="subj-tt"><h3>Future income</h3><p>Your state pension</p></div></div>
+        <div class="subj-tt"><h3>Pensions</h3><p>Your state pensions, one per country, copied from the statement</p></div></div>
       <div class="subj-body">
-        <div class="subj-subhd" id="pensionGroupHd">State Pension</div>
+        <div class="subj-subhd" id="pensionGroupHd">Statements <span class="spend-upd" id="pensionUpdatedTxt"></span><input type="hidden" id="pensionUpdated" value=""></div>
+        <p class="sit-note">Type each monthly amount exactly as printed (gross), from the line that assumes you stop paying in now, not the projection to retirement age. Leave a country empty if you have no rights there.</p>
         <div class="subj-grid">
-          <div class="field"><label for="pensionAmt_disp">Pension amount (gross/mo)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="pensionAmt" id="pensionAmt_disp"><input type="hidden" id="pensionAmt" value=""></div></div>
-          <div class="field slider-field"><label for="pensionAge">Pension age <span class="sv"><input type="number" id="pensionAge" value="67" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
+          <div class="field"><label for="pensionAmt_disp">German pension / month <button type="button" class="info-btn" title="Gross, as printed on the Renteninformation: the amount under &#x201C;H&#xF6;he der k&#xFC;nftigen Regelaltersrente&#x201D; that assumes no further contributions. Used as entered (not taxed in the model).">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="pensionAmt" id="pensionAmt_disp"><input type="hidden" id="pensionAmt" value=""></div></div>
+          <div class="field slider-field"><label for="pensionAge">German pension age <button type="button" class="info-btn" title="Legal age 67 for anyone born after 1963. Change it only to defer.">&#x24D8;</button> <span class="sv"><input type="number" id="pensionAge" value="67" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
             <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="pensionAge" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+          <div class="field"><label for="pension2Amt_disp">French pension / month <button type="button" class="info-btn" title="Gross, as printed on your relev&#xE9; (info-retraite.fr): basic + complementary (Agirc-Arrco) pension for the quarters you have now. Used as entered (not taxed in the model).">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="pension2Amt" id="pension2Amt_disp"><input type="hidden" id="pension2Amt" value=""></div></div>
+          <div class="field slider-field"><label for="pension2Age">French pension age <button type="button" class="info-btn" title="Legal age 64 for anyone born from 1968. Change it only to defer.">&#x24D8;</button> <span class="sv"><input type="number" id="pension2Age" value="64" min="50" max="80" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
+            <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="pension2Age" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
         </div>
+        <div class="spend-readout" id="pensionReadout" aria-live="polite"></div>
       </div>
     </section>
 
@@ -360,12 +367,12 @@
     </div>
     <div class="scg-sec" role="presentation">Life events <span class="scg-sec-note">switch on per scenario</span> <span class="scg-sec-note" id="scgHiddenPlans"></span></div>
     <div class="scg-row scg-r-plan" role="row">
-      <div class="scg-lbl" role="rowheader">&#x1F91D; With partner <button type="button" class="info-btn" title="Includes your partner&#x2019;s income, savings and share of costs, as set on the Situation tab." aria-label="About: &#x1F91D; With partner">&#x24D8;</button></div>
-      <div class="scg-cell c1" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(1,'partner')" aria-label="Scenario A: with partner"><span class="tog-sw" id="tog1_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
-      <div class="scg-cell c2" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(2,'partner')" aria-label="Scenario B: with partner"><span class="tog-sw" id="tog2_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
-      <div class="scg-cell c3" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(3,'partner')" aria-label="Scenario C: with partner"><span class="tog-sw" id="tog3_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
-      <div class="scg-cell c4" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(4,'partner')" aria-label="Scenario D: with partner"><span class="tog-sw" id="tog4_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
-      <div class="scg-cell c5" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(5,'partner')" aria-label="Scenario E: with partner"><span class="tog-sw" id="tog5_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-lbl" role="rowheader">&#x1F3E0; Living alone <button type="button" class="info-btn" title="On: this scenario prices your life alone: your own spending plus your costs if alone (70% of the joint account and yearly items), all paid by you. Off: with your partner, who pays her share of the shared costs." aria-label="About: Living alone">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(1,'partner')" aria-label="Scenario A: living alone"><span class="tog-sw" id="tog1_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c2" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(2,'partner')" aria-label="Scenario B: living alone"><span class="tog-sw" id="tog2_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c3" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(3,'partner')" aria-label="Scenario C: living alone"><span class="tog-sw" id="tog3_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c4" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(4,'partner')" aria-label="Scenario D: living alone"><span class="tog-sw" id="tog4_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
+      <div class="scg-cell c5" role="cell"><button type="button" class="scg-tog" onclick="toggleFeature(5,'partner')" aria-label="Scenario E: living alone"><span class="tog-sw" id="tog5_partner"></span></button><span class="scg-pills" aria-hidden="true"></span></div>
     </div>
     <div class="scg-row scg-r-plan" role="row" id="scgRow_prop">
       <div class="scg-lbl" role="rowheader">&#x1F3E0; Buy property <button type="button" class="info-btn" title="The purchase described on the Situation tab." aria-label="About: &#x1F3E0; Buy property">&#x24D8;</button></div>
@@ -573,6 +580,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.8"></script>
+<script type="module" src="js/main.js?v=8.9"></script>
 </body>
 </html>

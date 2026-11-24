@@ -1,26 +1,37 @@
 // Spending refresh (v8.7): read-outs under the four spending numbers and the
 // "last refreshed" date. The numbers come from the engine (investNowMonthly), so
 // the read-out is the same calculation the projection uses in year one.
-import { el, eur, numVal } from "../util.js?v=8.8";
-import { investNowMonthly } from "../engine.js?v=8.8";
+import { el, eur, numVal } from "../util.js?v=8.9";
+import { investNowMonthly } from "../engine.js?v=8.9";
+import { PENSION_COUNTRIES, pensionNetEstimate } from "../pensions.js?v=8.9";
 
 export const REFRESH_FIELDS = ['samPersonalNow', 'samPaysIn', 'partnerPaysIn', 'yearlyItems'];
 export const STALE_DAYS = 183;
 
+// Check-ins (v8.9): each tile stamps the date its numbers were last typed and
+// turns red when overdue: portfolio 3 months, spending 6, pensions 12.
+export const CHECKINS = [
+  { key: 'spend',   stamp: 'spendUpdated',   txt: 'spendUpdatedTxt',   days: 183, fields: REFRESH_FIELDS },
+  { key: 'pension', stamp: 'pensionUpdated', txt: 'pensionUpdatedTxt', days: 365, fields: ['pensionAmt', 'pension2Amt'] },
+];
+
 // Pure: the date line. iso = 'YYYY-MM-DD' or ''; today = Date.
-export function refreshedText(iso, today) {
+export function refreshedText(iso, today, staleDays = STALE_DAYS) {
   if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return { text: '', stale: false };
   const d = new Date(iso + 'T00:00:00Z');
   const days = Math.floor((today - d) / 86400000);
   const txt = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
-  return { text: 'last: ' + txt, stale: days > STALE_DAYS };
+  return { text: 'last: ' + txt, stale: days > staleDays };
 }
 
 export function renderSpendReadout(gl) {
   const host = el('spendReadout'); if (!host) return;
-  const upd = refreshedText(el('spendUpdated')?.value || '', new Date());
-  const ut = el('spendUpdatedTxt');
-  if (ut) { ut.textContent = upd.text; ut.classList.toggle('stale', upd.stale); ut.title = upd.stale ? 'More than 6 months old: time for a refresh' : ''; }
+  for (const c of CHECKINS) {
+    const upd = refreshedText(el(c.stamp)?.value || '', new Date(), c.days);
+    const ut = el(c.txt);
+    if (ut) { ut.textContent = upd.text; ut.classList.toggle('stale', upd.stale); ut.title = upd.stale ? 'Overdue: time for a refresh' : ''; }
+  }
+  renderPensionReadout(gl);
   const takeHome = numVal('baseIncome', 0);
   const n = investNowMonthly(gl, takeHome);
   const lines = [];
@@ -33,12 +44,22 @@ export function renderSpendReadout(gl) {
   host.innerHTML = lines.map(l => '<div>' + l + '</div>').join('');
 }
 
-// Any edit to one of the four numbers stamps today's date.
+// Pension read-out: the net estimate next to each statement amount.
+function renderPensionReadout(gl) {
+  const host = el('pensionReadout'); if (!host) return;
+  const rows = [['DE', gl.pensionAmt, gl.pensionAge], ['FR', gl.pension2Amt, gl.pension2Age]]
+    .filter(([, a]) => a > 0)
+    .map(([c, a, age]) => '<div>' + PENSION_COUNTRIES[c].name + ' pension from ' + age + ': <b>\u2248 ' + eur(pensionNetEstimate(c, a)) +
+      ' net</b> of ' + eur(a) + ' gross <span class="tgt">after ' + PENSION_COUNTRIES[c].why + '; income tax not included</span></div>');
+  host.innerHTML = rows.length ? rows.join('') + '<div class="tgt">The plan uses the gross amounts, as typed.</div>' : '';
+}
+
+// Any edit to a tile's numbers stamps today's date on that tile.
 export function initSpendTracking(onChange) {
-  REFRESH_FIELDS.forEach(id => {
-    const d = el(id + '_disp'); if (!d) return;
+  for (const c of CHECKINS) c.fields.forEach(id => {
+    const d = el(id + '_disp') || el(id); if (!d) return;
     d.addEventListener('input', () => {
-      const h = el('spendUpdated'); if (!h) return;
+      const h = el(c.stamp); if (!h) return;
       h.value = new Date().toISOString().slice(0, 10);
       if (onChange) onChange();
     });

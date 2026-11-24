@@ -1,6 +1,6 @@
-import { el, fmt } from "../util.js?v=8.8";
-import { state } from "../state.js?v=8.8";
-import { buildPlanProj } from "../engine.js?v=8.8";
+import { el, fmt } from "../util.js?v=8.9";
+import { state } from "../state.js?v=8.9";
+import { buildPlanProj } from "../engine.js?v=8.9";
 
 // Chart.js instances are module-private; other modules resize via resizeResultsCharts().
 let chart = null, allocChart = null;

@@ -92,6 +92,8 @@ Your real values come from localStorage, or from Supabase once you sign in.
 | Bond Allocation (today) | `bondAllocNow` | 0% | % | Current bond share; stock = 100% − bonds |
 | Bond Allocation (at retirement) | `bondAllocRet` | 40% | % | Target bond share at retirement |
 
+The Markets card lists the assumptions you changed from these defaults, and **Reset to defaults** puts them all back (`js/assumptions.js`, v8.9).
+
 ### Tax
 
 | Parameter | Input ID | Default | Unit | Notes |
@@ -103,8 +105,11 @@ Your real values come from localStorage, or from Supabase once you sign in.
 
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
-| State Pension Amount (gross) | `pensionAmt` | — (0) | EUR/month | Monthly gross pension when eligible |
-| State Pension Age | `pensionAge` | 67 | years | Age when pension starts |
+| German pension / month | `pensionAmt` | — (0) | EUR/month | Gross, as printed on the statement (v8.9: one row per country) |
+| German pension age | `pensionAge` | 67 | years | Legal age; change only to defer |
+| French pension / month | `pension2Amt` | — (0) | EUR/month | Gross, as printed (basic + Agirc-Arrco); empty = no rights in France |
+| French pension age | `pension2Age` | 64 | years | Legal age; change only to defer |
+| (last statement) | `pensionUpdated` | — | date | Stamped when a pension amount is edited; red after 12 months |
 | Windfalls (Year, Amount, Used in) | `state.windfalls` `[{yr,amt,off}]` | none | year, EUR, scenario ids | One-time lump-sum inflows on the **Plans** tab (v8.4); each has an A–E switch per scenario, also shown as a row in the scenario grid. `off` lists the scenarios it is switched off for; absent = on everywhere, so windfalls saved before v8.4 keep applying to every scenario (legacy `wf0/1/2` fields auto-migrate) |
 
 ### Partner (global, toggled per scenario)
@@ -763,7 +768,17 @@ If net is positive (costs > savings), it increases the FIRE number. If negative 
 
 ## Pension / State Pension
 
-The state pension (`pensionAmt` per month) is treated as a **guaranteed inflation-linked annuity** starting at `pensionAge`.
+Each state pension (v8.9: German `pensionAmt` from `pensionAge`, French `pension2Amt`
+from `pension2Age`) is treated as a **guaranteed inflation-linked annuity** from its own
+age. One source for "pension at an age": `pensionMonthlyAt(gl, age)` in `js/engine.js`
+(the sum of the pensions started by then); the adjusted target credits each pension that
+starts after retirement separately (`pensionList`).
+
+Amounts are typed **gross, as printed**, and the plan uses them gross (not taxed; a known
+simplification, AUDIT.md Part 4). Next to them a read-out shows `≈ net` after the social
+charges that certainly apply (`js/pensions.js`): Germany 12.4% (health insurance for
+pensioners 7.3% + half the average add-on 1.45% + long-term care 3.6%), France 9.1%
+(CSG 8.3% + CRDS 0.5% + CASA 0.3%, full rate). Income tax is not included.
 
 ### Inflation Adjustment
 
@@ -781,9 +796,8 @@ FIRE Number (headline) = annualFromPortfolio × TaxMult / SWR
 FIRE Number (adjusted) = headline − PV(future pensions & partner salary)
 ```
 
-**Fixed mode:** Splits the FIRE calculation into two periods:
-- **Before pension age:** full spending funded from portfolio
-- **After pension age:** spending net of pension funded from portfolio
+**Fixed mode:** year by year (`dcfLoop`), each year's spending net of the pensions
+flowing that year (with two pensions: three periods).
 
 This significantly reduces the required FIRE portfolio if you retire well before pension age.
 

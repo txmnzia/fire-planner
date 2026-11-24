@@ -3,11 +3,12 @@
 // The source of truth for every value stays the id-bearing form control that
 // inputs.js / sync.js already read — this module only adds friendlier controls
 // (year-picker popover, sliders, the subject rail) and the dynamic windfall list.
-import { el } from "../util.js?v=8.8";
-import { toggleWindfall, LETTERS, togglePay, setPayListPainter } from "./plans.js?v=8.8";
-import { normalisePayChanges } from "../payChanges.js?v=8.8";
-import { state } from "../state.js?v=8.8";
-import { recalc } from "../recalc.js?v=8.8";
+import { el } from "../util.js?v=8.9";
+import { toggleWindfall, LETTERS, togglePay, setPayListPainter } from "./plans.js?v=8.9";
+import { normalisePayChanges } from "../payChanges.js?v=8.9";
+import { state } from "../state.js?v=8.9";
+import { recalc } from "../recalc.js?v=8.9";
+import { ASSUMPTION_DEFAULTS, assumptionChanges } from "../assumptions.js?v=8.9";
 
 const YNOW = 2026;
 
@@ -261,6 +262,19 @@ function bindGlobalClosers() {
 }
 
 // Re-sync enhanced controls after applyState() rewrites the underlying inputs.
+// ── ASSUMPTIONS (v8.9): defaults shown, one tap resets them ────────────────
+export function renderAssumptions() {
+  const host = el('assumpReadout'); if (!host) return;
+  const vals = {}; for (const k in ASSUMPTION_DEFAULTS) vals[k] = el(k) ? el(k).value : undefined;
+  const ch = assumptionChanges(vals);
+  host.textContent = ch.length ? 'Your own: ' + ch.join(', ') : 'All at their defaults: stocks 7%, bonds 3%, inflation 2%, bonds 0% today \u2192 40% at retirement';
+}
+export function resetAssumptions() {
+  for (const [k, v] of Object.entries(ASSUMPTION_DEFAULTS)) { const e = el(k); if (e) e.value = v; }
+  refreshSituationControls();
+  recalc();
+}
+
 export function refreshSituationControls() {
   document.querySelectorAll('input[type="range"][data-for]').forEach(range => {
     const num = el(range.dataset.for); if (num) { if (num.value !== '') range.value = num.value; paintSlider(range, num); }

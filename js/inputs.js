@@ -1,7 +1,7 @@
-import { el, numVal, optVal } from "./util.js?v=8.8";
-import { state, features } from "./state.js?v=8.8";
-import { effectiveFeatures } from "./checks.js?v=8.8";
-import { payChangesFor } from "./payChanges.js?v=8.8";
+import { el, numVal, optVal } from "./util.js?v=8.9";
+import { state, features } from "./state.js?v=8.9";
+import { effectiveFeatures } from "./checks.js?v=8.9";
+import { payChangesFor } from "./payChanges.js?v=8.9";
 
 
 // Optional money field: null when empty (unlike optVal, 0 is a valid value).
@@ -74,6 +74,8 @@ export function getGlobals() {
     taxRate,
     pensionAmt:   numVal("pensionAmt",0),
     pensionAge:   numVal("pensionAge",67),
+    pension2Amt:  numVal("pension2Amt",0),     // French pension (v8.9)
+    pension2Age:  numVal("pension2Age",64),
     cash:         numVal("cash",0),
     cashReturn:   numVal("cashReturn",1)/100,
     windfalls:    getWindfalls(),

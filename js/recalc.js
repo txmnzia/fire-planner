@@ -1,16 +1,17 @@
-import { el, eur, numVal } from "./util.js?v=8.8";
-import { state } from "./state.js?v=8.8";
-import { getGlobals, getScenario } from "./inputs.js?v=8.8";
-import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.8";
-import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.8";
-import { renderTable } from "./ui/table.js?v=8.8";
-import { renderExplanation } from "./ui/explanation.js?v=8.8";
-import { updateLabels } from "./ui/controls.js?v=8.8";
-import { markMcStale } from "./ui/mcTab.js?v=8.8";
-import { scheduleSave } from "./sync.js?v=8.8";
-import { renderIssues } from "./ui/issues.js?v=8.8";
-import { renderPlans } from "./ui/plans.js?v=8.8";
-import { renderSpendReadout } from "./ui/spending.js?v=8.8";
+import { el, eur, numVal } from "./util.js?v=8.9";
+import { state } from "./state.js?v=8.9";
+import { getGlobals, getScenario } from "./inputs.js?v=8.9";
+import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.9";
+import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.9";
+import { renderTable } from "./ui/table.js?v=8.9";
+import { renderExplanation } from "./ui/explanation.js?v=8.9";
+import { updateLabels } from "./ui/controls.js?v=8.9";
+import { markMcStale } from "./ui/mcTab.js?v=8.9";
+import { scheduleSave } from "./sync.js?v=8.9";
+import { renderIssues } from "./ui/issues.js?v=8.9";
+import { renderPlans } from "./ui/plans.js?v=8.9";
+import { renderSpendReadout } from "./ui/spending.js?v=8.9";
+import { renderAssumptions } from "./ui/situation.js?v=8.9";
 
 // ── RECALC ──────────────────────────────────────────────────────────────────
 export function recalc() {
@@ -20,6 +21,7 @@ export function recalc() {
   el("totalPill").textContent=eur(port);
   el("calcTime").textContent=new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
   renderSpendReadout(gl);
+  renderAssumptions();
   // Each scenario stops at its earliest funded age (v8.1); every tab uses these.
   const stops=withStopAges([1,2,3,4,5].map(s=>getScenario(s,gl)),gl);
   const scenarios=stops.map(x=>x.sc);

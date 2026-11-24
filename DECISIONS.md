@@ -5,6 +5,17 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.9 Pensions per country, assumption defaults, "Living alone"
+
+- **One pension per country** (Germany from 67, France from 64), each typed gross as
+  printed and used gross. A net estimate (certain social charges only, no income tax)
+  is shown next to it but does not feed the plan. *Open question for the owner:*
+  using net pensions in the plan would lower them by ~10–12% plus income tax.
+- **Assumptions show their defaults** and reset in one tap.
+- **Check-in dates** on spending (6 months) and pensions (12 months) turn red when due.
+- **The grid's partner switch reads "Living alone"** (on = without her): she is the
+  default, living alone is the what-if. Saved switches are unchanged.
+
 ## 2026-11-23 · v8.8 One partner model, fewer fields
 
 - **One model.** The Simple model (household spending × multiplier, her salary added

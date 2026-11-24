@@ -1,14 +1,14 @@
-import { el } from "./util.js?v=8.8";
-import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.8";
-import { state, features } from "./state.js?v=8.8";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.8";
-import { recalc } from "./recalc.js?v=8.8";
-import { renderHoldings } from "./ui/ibkr.js?v=8.8";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.8";
-import { refreshSituationControls } from "./ui/situation.js?v=8.8";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.8";
-import { db } from "./db.js?v=8.8";
-import { migrateSpending } from "./spendMigration.js?v=8.8";
+import { el } from "./util.js?v=8.9";
+import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.9";
+import { state, features } from "./state.js?v=8.9";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.9";
+import { recalc } from "./recalc.js?v=8.9";
+import { renderHoldings } from "./ui/ibkr.js?v=8.9";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.9";
+import { refreshSituationControls } from "./ui/situation.js?v=8.9";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.9";
+import { db } from "./db.js?v=8.9";
+import { migrateSpending } from "./spendMigration.js?v=8.9";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
@@ -17,7 +17,7 @@ const SYNC_FIELDS = [
   'baseIncome','swr',
   'stockRet','bondRet','inflation','bondAllocNow','bondAllocRet',
   'retCountry',
-  'pensionAmt','pensionAge',
+  'pensionAmt','pensionAge','pension2Amt','pension2Age','pensionUpdated',
   'partnerInc','partnerRetAge','partnerPension','partnerPensionAge',
   'propBuyYear','propPrice','propDownPct','propTxCostPct','propMortgageRate','propMortgageTerm','propRentSaved',
   'childBirthYear','childCostYearly','childCostUntilAge','childMaternityMonths','childMaternityIncome',

@@ -1,9 +1,9 @@
-import { el, eur } from "../util.js?v=8.8";
-import { state } from "../state.js?v=8.8";
-import { getScenarioName } from "../inputs.js?v=8.8";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, project } from "../engine.js?v=8.8";
-import { computeCardMetrics } from "./cards.js?v=8.8";
-import { FLOW_COLORS } from "./charts.js?v=8.8";
+import { el, eur } from "../util.js?v=8.9";
+import { state } from "../state.js?v=8.9";
+import { getScenarioName } from "../inputs.js?v=8.9";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, project, pensionMonthlyAt, pensionList } from "../engine.js?v=8.9";
+import { computeCardMetrics } from "./cards.js?v=8.9";
+import { FLOW_COLORS } from "./charts.js?v=8.9";
 
 // ── EXPLANATION TAB ──────────────────────────────────────────────────────────
 // "Your plan, explained": turns the selected scenario's projection into a
@@ -99,7 +99,10 @@ export function renderExplanation(projs, gl, scenarios) {
   const vsNow = v => nowMo > 0 ? Math.round(v / nowMo * 100) + "%" : null;
 
   // ── phases ────────────────────────────────────────────────────────────────
-  const penIdx = gl.pensionAge - currentAge;
+  // v8.9: up to two state pensions (Germany, France); phases start at the first one
+  const pens = pensionList(gl);
+  const firstPenAge = pens.length ? Math.min(...pens.map(p => p.age)) : gl.pensionAge;
+  const penIdx = firstPenAge - currentAge;
   const phases = [];
   if (!already && retIdx > 0) phases.push({ key: "build", name: "Building the pot", tag: "you work, save & invest", seg: "Building", s: 0, e: retIdx - 1, op: 22 });
   const retStart = Math.max(0, retIdx);
@@ -357,7 +360,7 @@ export function renderExplanation(projs, gl, scenarios) {
 
       if (p.key === "bridge") {
         const pensionLater = penIdx > p.e && penIdx <= lastIdx;
-        lead = "At <strong>" + ageAt(p.s) + "</strong> the paycheck stops" + (pensionLater ? ", and your state pension is still <strong>" + (gl.pensionAge - ageAt(p.s)) + " years away</strong>" : "") + ". For " + nYears + " years " + (sc.hasPartner && (rS.income || 0) > 0 ? "the portfolio and your partner's income carry" : "the portfolio alone carries") + " everything. Your budget: <strong>" + eur(Math.round(budSMoToday)) + "/mo in today's money</strong>" + (vsNow(budSMoToday) ? " — <strong>" + vsNow(budSMoToday) + "</strong> of what your household lives on now" : "") + ". " +
+        lead = "At <strong>" + ageAt(p.s) + "</strong> the paycheck stops" + (pensionLater ? ", and your state pension is still <strong>" + (firstPenAge - ageAt(p.s)) + " years away</strong>" : "") + ". For " + nYears + " years " + (sc.hasPartner && (rS.income || 0) > 0 ? "the portfolio and your partner's income carry" : "the portfolio alone carries") + " everything. Your budget: <strong>" + eur(Math.round(budSMoToday)) + "/mo in today's money</strong>" + (vsNow(budSMoToday) ? " — <strong>" + vsNow(budSMoToday) + "</strong> of what your household lives on now" : "") + ". " +
           (swr
             ? "The plan funds it by selling <strong>" + pct(gl.swr) + " of whatever the portfolio is worth</strong> each year — about " + eur(m.netMonthly) + "/mo at the start, against a " + eur(m.targetMonthly) + "/mo budget in " + yearAt(p.s) + " money. "
             : "The plan funds it by selling whatever the budget needs — " + eur(Math.round(budSMo)) + "/mo in " + yearAt(p.s) + " money, rising with inflation. ") +
@@ -367,7 +370,7 @@ export function renderExplanation(projs, gl, scenarios) {
         const covers = budSMo > 0 && penMoS > 0 ? Math.round(penMoS / budSMo * 100) : 0;
         lead = (p.fromRet
           ? "You retire at <strong>" + ageAt(p.s) + "</strong>, already past pension age, so the state pension flows from day one: <strong>" + mo(rS.pension || 0) + "/mo</strong>"
-          : "From <strong>age " + gl.pensionAge + "</strong> your state pension starts: <strong>" + mo(rS.pension || 0) + "/mo</strong> in " + yearAt(p.s) + " money (" + eur(gl.pensionAmt) + " today's €)") +
+          : "From <strong>age " + firstPenAge + "</strong> your state pension starts: <strong>" + mo(rS.pension || 0) + "/mo</strong> in " + yearAt(p.s) + " money (" + eur(pensionMonthlyAt(gl, firstPenAge)) + " today's €)") +
           (covers ? ", covering about <strong>" + covers + "%</strong> of the budget — the portfolio only tops up the rest" : "") + ". " +
           (m.depletionYear
             ? "Even so, on this path the portfolio <strong>runs out in " + m.depletionYear + "</strong> (age " + (currentAge + m.depletionYear - baseYear) + ")."
@@ -417,7 +420,7 @@ export function renderExplanation(projs, gl, scenarios) {
     const budgetRet = yearOnePermBudget(retAge, sc, gl);   // lifelong part (v8.2)
     const setAside = proj.tempPV || 0;                     // costs that end, at present value
     const inflRet = infl(nAccum);
-    const penOff = retAge >= gl.pensionAge ? gl.pensionAmt * 12 * inflRet : 0;
+    const penOff = pensionMonthlyAt(gl, retAge) * 12 * inflRet;
     const ppenOff = (sc.hasPartner && retAge + off >= gl.partnerPensionAge) ? gl.partnerPension * 12 * inflRet : 0;
     const fromPort = Math.max(0, budgetRet - penOff - ppenOff);
     const rebuilt = gl.swr > 0 ? Math.round(fromPort / netFracRet / gl.swr + setAside) : 0;
@@ -434,13 +437,13 @@ export function renderExplanation(projs, gl, scenarios) {
         : '<div class="expl-rows">' + row("Your FIRE number", eur(proj.fireTarget), CV[i]) + "</div>") +
       "<p>Nothing more mystical than that: the pot at which " + pct(gl.swr) + " of it pays your entire budget after tax — from there, working is a choice.</p>" +
       (proj.fireTargetAdj < proj.fireTarget * 0.99
-        ? "<p>This headline gives <strong>no credit</strong> for income that isn't flowing on day one (your pension at " + gl.pensionAge + (sc.hasPartner ? ", your partner's remaining salary years" : "") + "). Counted in, the target drops to <strong>" + eur(proj.fireTargetAdj) + "</strong> — the cautious number stays the headline on purpose.</p>" : "")));
+        ? "<p>This headline gives <strong>no credit</strong> for income that isn't flowing on day one (your pension at " + (pens.map(p => p.age).join(" and ") || gl.pensionAge) + (sc.hasPartner ? ", your partner's remaining salary years" : "") + "). Counted in, the target drops to <strong>" + eur(proj.fireTargetAdj) + "</strong> — the cautious number stays the headline on purpose.</p>" : "")));
   } else {
     concepts.push(concept("Your FIRE number", eur(proj.fireTarget), "your budget, run backwards",
       '<div class="expl-rows">' +
       row("Budget to fund", eur(Math.round(today(budAnn(retIdx), retIdx) / 12)) + "/mo today's €" + ' <span class="tgt">' + mo(budAnn(retIdx)) + " in " + m.retYear + "</span>") +
       row("Years it must last", (gl.lifeExp - retAge) + ' <span class="tgt">age ' + retAge + " &rarr; " + gl.lifeExp + "</span>") +
-      row("State pension helps from " + gl.pensionAge, eur(gl.pensionAmt) + "/mo today's €") +
+      (pens.length ? pens.map(p => row("State pension helps from " + p.age, eur(p.amt) + "/mo today's €")).join("") : row("State pension", "none entered")) +
       row("= your FIRE number", eur(proj.fireTarget), CV[i]) + "</div>" +
       "<p>Priced like an annuity you buy yourself: the pot at " + retAge + " whose withdrawals — your real budget, growing with inflation, grossed up for capital-gains tax, minus pensions in the years they flow — run out exactly at age " + gl.lifeExp + ".</p>"));
   }
