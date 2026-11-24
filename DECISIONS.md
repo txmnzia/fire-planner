@@ -5,6 +5,15 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.18.5 A light impact panel
+
+- **"Impact on your scenarios" shows only what matters** (the owner): per scenario, the
+  stop age (saved → now when it moved) and the FIRE target now as €1.41M, with an up
+  or down icon when it moved by more than 0.5% since the saved version. The
+  field-by-field list and the net worth at the end are gone; changed fields are
+  already marked in the tiles. Save / Undo stay.
+- **One narrow column** (280px instead of 360px), so the tiles get the width.
+
 ## 2026-11-24 · v8.18.4 New plans start switched off; flat move after buying
 
 - **A new plan is on in no scenario** (the owner): a new pay change, flat move, move

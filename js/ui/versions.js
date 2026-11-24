@@ -2,19 +2,19 @@
 // version and what it does to the five scenarios, Save update / Undo all, the
 // update log (compare, restore), the first-run review and "Did this happen?".
 // Edits still autosave as before; a version is a dated copy you can go back to.
-import { el, eur } from "../util.js?v=8.18.4";
-import { state, features } from "../state.js?v=8.18.4";
-import { recalc } from "../recalc.js?v=8.18.4";
-import { collectState, applyState } from "../sync.js?v=8.18.4";
-import { getScenarioName } from "../inputs.js?v=8.18.4";
-import { snapshotOf, resultsOf, diffFields, diffLists, changeCount, impactLines, addVersion,
-         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.18.4";
-import { rentShift } from "./housing.js?v=8.18.4";
-import { updateToggleUI } from "./controls.js?v=8.18.4";
-import { revealField } from "./tiles.js?v=8.18.4";
-import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.18.4";
-import { renderNwHistory } from "./nwHistory.js?v=8.18.4";
-import { refreshedText } from "./spending.js?v=8.18.4";
+import { el, eur } from "../util.js?v=8.18.5";
+import { state, features } from "../state.js?v=8.18.5";
+import { recalc } from "../recalc.js?v=8.18.5";
+import { collectState, applyState } from "../sync.js?v=8.18.5";
+import { getScenarioName } from "../inputs.js?v=8.18.5";
+import { snapshotOf, resultsOf, diffFields, diffLists, changeCount, impactLines, impactRows, addVersion,
+         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.18.5";
+import { rentShift } from "./housing.js?v=8.18.5";
+import { updateToggleUI } from "./controls.js?v=8.18.5";
+import { revealField } from "./tiles.js?v=8.18.5";
+import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.18.5";
+import { renderNwHistory } from "./nwHistory.js?v=8.18.5";
+import { refreshedText } from "./spending.js?v=8.18.5";
 
 const fmtDay = ts => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -199,20 +199,19 @@ export function renderUpdatePanel(gl) {
   }
 
   // Impact on your scenarios: always shown; saved → now when something changed
-  const impact = () => '<div class="up-impact">' + now.map((r, i) => {
-    const p = (v && v.results || [])[i] || r;
-    const age = p.age === r.age ? (r.age ?? "\u2014") : (p.age ?? "\u2014") + " \u2192 <b>" + (r.age ?? "\u2014") + "</b>";
-    const fire = p.fire === r.fire ? eur(r.fire) : eur(p.fire || 0) + " \u2192 <b>" + eur(r.fire) + "</b>";
-    return '<div class="up-sc c' + (i + 1) + '"><span class="nm">' + esc(r.name) + "</span><span>stop " + age + "</span><span>FIRE " + fire + "</span><span>at end " + eur(r.nwEnd) + "</span></div>";
+  // v8.18.5: light rows: name · stop age (before → after) · FIRE target with a trend icon
+  const TREND = { up: '<svg class="up-tr up" viewBox="0 0 24 24" aria-label="up"><polyline points="4 16 10 10 14 14 20 8"/><polyline points="14 8 20 8 20 14"/></svg>',
+                  down: '<svg class="up-tr down" viewBox="0 0 24 24" aria-label="down"><polyline points="4 8 10 14 14 10 20 16"/><polyline points="14 16 20 16 20 10"/></svg>' };
+  const impact = () => '<div class="up-impact">' + impactRows(v && v.results, now).map((r, i) => {
+    const age = r.ageChanged ? (r.ageFrom ?? "\u2014") + " \u2192 <b>" + (r.ageTo ?? "\u2014") + "</b>" : "<b>" + (r.ageTo ?? "\u2014") + "</b>";
+    return '<div class="up-sc c' + (i + 1) + '"><span class="nm">' + esc(r.name) + '</span><span class="ag">stop ' + age + '</span><span class="fi">' + r.fire + (r.trend ? TREND[r.trend] : "") + "</span></div>";
   }).join("") + "</div>";
   h += '<div class="up-main"><div class="up-hd">Impact on your scenarios</div>';
   if (!v) h += '<div class="tgt">No saved version yet: save one to see what each change does.</div>' + impact() + '<div class="up-actions"><button type="button" class="dp-add up-save" data-save="1">Save a first version</button></div>';
   else {
     h += '<div class="tgt">' + (n ? n + (n > 1 ? " changes" : " change") + " since " + fmtDay(v.ts) : "No changes since " + fmtDay(v.ts)) + (v.note ? " (" + esc(v.note) + ")" : "") + "</div>";
-    if (n) h += '<div class="up-changes">' + fields.slice(0, 12).map(f => "<div>" + esc(labelOf(f.id)) + ': <s>' + esc(f.from || "empty") + "</s> \u2192 <b>" + esc(f.to || "empty") + "</b></div>").join("") +
-        lists.map(l => "<div>" + esc(l) + " changed</div>").join("") + (fields.length > 12 ? '<div class="tgt">and ' + (fields.length - 12) + " more</div>" : "") + "</div>";
     h += impact();
-    if (n) h += '<div class="up-actions"><input type="text" id="upNote" placeholder="Note (optional), e.g. new pension statement" maxlength="80"><button type="button" class="dp-add up-save" data-save="1">Save update</button><button type="button" class="dp-add" data-undo="1">Undo all</button></div>';
+    if (n) h += '<div class="up-actions"><input type="text" id="upNote" placeholder="Note (optional)" maxlength="80"><button type="button" class="dp-add up-save" data-save="1">Save update</button><button type="button" class="dp-add" data-undo="1">Undo all</button></div>';
   }
   h += "</div>";
 

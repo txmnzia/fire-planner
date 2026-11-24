@@ -52,6 +52,19 @@ export function impactLines(prev, cur) {
   }).filter(Boolean);
 }
 const k = v => '€' + (Math.abs(v) >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : Math.round(v / 1000) + 'k');
+export const fmtFire = v => (v > 0 ? k(v) : '—');
+
+// The impact panel (v8.18.5): one light row per scenario: stop age before → after
+// (just the age when unchanged) and the FIRE target now, with a trend when it moved
+// by more than 0.5% since the saved version ('up' = a bigger target).
+export function impactRows(prev, cur) {
+  return (Array.isArray(cur) ? cur : []).map((c, i) => {
+    const p = (Array.isArray(prev) && prev[i]) || c;
+    const moved = p.fire > 0 && c.fire > 0 && Math.abs(c.fire / p.fire - 1) > 0.005;
+    return { name: c.name, ageFrom: p.age ?? null, ageTo: c.age ?? null, ageChanged: (p.age ?? null) !== (c.age ?? null),
+             fire: fmtFire(c.fire), trend: moved ? (c.fire > p.fire ? 'up' : 'down') : null };
+  });
+}
 
 // Adds a version (newest last), keeping at most MAX_VERSIONS; never edits older ones.
 export function addVersion(list, v) {

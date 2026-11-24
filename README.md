@@ -905,7 +905,7 @@ My Situation and Plans became one tab, **Changes**, with two lanes of tiles and 
 impact panel beside them (`js/ui/tiles.js`):
 
 - **Now** (facts, the same in every scenario): Portfolio & snapshots, Spending, Pay,
-  Pensions, Housing (rent today), Where you live (country today), You & partner,
+  Pensions, Housing (rent today), Where you live (country today), You, Partner,
   Assumptions (markets and withdrawal strategy).
 - **Might happen** (plans, switched on per scenario): Buying a home, Child, Pay changes,
   Flat move (planned rents), Moving country (moves abroad), Windfalls.
@@ -915,6 +915,10 @@ opens in place; one open tile per lane, remembered per browser. A field reached 
 banner or the review opens its tile. On a phone the lanes stack and the impact panel is a
 bar at the bottom ("N changes · biggest effect"), tap to open. The inputs and their ids are
 unchanged, so saving, sync and the engine are untouched.
+
+The impact panel (v8.18.5) is one narrow column: per scenario its stop age (saved → now)
+and its FIRE target now (€1.41M) with an up/down icon when it moved by more than 0.5%
+since the saved version (`impactRows` in `js/versionsCore.js`), then Save / Undo.
 
 **Imports are snapshots.** An IBKR import writes the year's net-worth snapshot (IBKR
 total + cash, its date, what was added and what the markets did since the previous

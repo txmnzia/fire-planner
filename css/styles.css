@@ -307,10 +307,15 @@ button.wd-pill{font:inherit;font-size:12px;}
 .up-btns{display:flex;gap:6px;}
 .up-changes{display:flex;flex-direction:column;gap:2px;}
 .up-changes s{color:var(--muted);}
-.up-impact{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;}
-.up-sc{display:flex;flex-direction:column;gap:1px;padding:6px 8px;border-left:3px solid var(--sc,var(--bdr));background:var(--dim);border-radius:4px;font-family:'DM Mono',monospace;font-size:11px;}
+.up-impact{display:flex;flex-direction:column;gap:2px;}
+.up-sc{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:'nm nm' 'ag fi';align-items:center;gap:1px 10px;padding:4px 8px;border-left:3px solid var(--sc,var(--bdr));font-size:12px;}
+.up-sc .nm{grid-area:nm;} .up-sc .ag{grid-area:ag;} .up-sc .fi{grid-area:fi;}
+.up-sc .ag{color:var(--sec);font-family:'DM Mono',monospace;font-size:11.5px;white-space:nowrap;}
+.up-sc .fi{display:inline-flex;align-items:center;justify-content:flex-end;gap:4px;font-family:'DM Mono',monospace;color:var(--text);white-space:nowrap;}
+.up-tr{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.up-tr.up{color:var(--err);} .up-tr.down{color:var(--ok,#34d399);}
 .up-sc.c1{--sc:var(--s1c);} .up-sc.c2{--sc:var(--s2c);} .up-sc.c3{--sc:var(--s3c);} .up-sc.c4{--sc:var(--s4c);} .up-sc.c5{--sc:var(--s5c);}
-.up-sc .nm{font-family:inherit;color:var(--text);font-weight:600;}
+.up-sc .nm{color:var(--text);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .up-sc b{color:var(--text);}
 .up-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
 .up-actions input{flex:1;min-width:200px;height:34px;}
@@ -416,7 +421,7 @@ button.wd-pill{font:inherit;font-size:12px;}
    screen, so nothing overflows a lane. Below 1360px the impact panel becomes
    a bar at the bottom (tap to open) so the lanes keep their room. */
 #tab-panel-situation{overflow-x:hidden;}
-.chg{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:28px;padding:24px 28px 96px;max-width:1600px;margin:0 auto;box-sizing:border-box;}
+.chg{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:28px;padding:24px 28px 96px;max-width:1600px;margin:0 auto;box-sizing:border-box;}
 .chg-lanes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start;min-width:0;}
 .chg-lane{display:flex;flex-direction:column;gap:12px;min-width:0;}
 .lane-hd{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;padding:0 2px 8px;border-bottom:1px solid var(--bdr);margin-bottom:4px;}
@@ -561,8 +566,6 @@ button.wd-pill{font:inherit;font-size:12px;}
 .up-item > span:first-child,.up-prompt > span:first-child{overflow-wrap:anywhere;color:var(--sec);}
 .up-btns{display:flex;gap:6px;align-self:center;}
 .up-btns .dp-add{padding:5px 10px;font-size:11.5px;border-style:solid;white-space:nowrap;}
-.up-impact{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
-.up-sc{padding:8px 10px;gap:2px;font-size:11px;line-height:1.45;min-width:0;}
 .up-changes{gap:4px;}
 .up-actions{gap:8px;}
 .up-actions input{min-width:0;flex:1 1 160px;height:36px;}
@@ -575,7 +578,6 @@ button.wd-pill{font:inherit;font-size:12px;}
   .impact-toggle{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;background:none;border:none;color:var(--text);font:inherit;font-size:13px;font-weight:600;padding:8px 2px;cursor:pointer;text-align:left;}
   .chg-impact:not(.expanded) .update-panel{display:none;}
   .chg-impact.expanded .update-panel{padding-bottom:8px;}
-  .up-impact{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));}
 }
 @media(max-width:860px){
   .chg-lanes{grid-template-columns:minmax(0,1fr);}

@@ -65,3 +65,17 @@ test('markup and wiring: the panel exists, versions ride in the saved row', () =
   const sync = readFileSync(new URL('../js/sync.js', import.meta.url), 'utf8');
   assert.match(sync, /versions: state\.versions/); assert.match(sync, /review: state\.review/);
 });
+
+test('v8.18.5: impact rows are light: stop age before → after, FIRE as €1.41M with a trend', async () => {
+  const { impactRows, fmtFire } = await import('../js/versionsCore.js');
+  assert.equal(fmtFire(1412345), '€1.41M'); assert.equal(fmtFire(850400), '€850k'); assert.equal(fmtFire(0), '—');
+  const prev = [{ name: 'A', age: 43, fire: 1400000 }, { name: 'B', age: 45, fire: 1000000 }, { name: 'C', age: null, fire: 900000 }];
+  const cur  = [{ name: 'A', age: 42, fire: 1410000 }, { name: 'B', age: 45, fire: 1002000 }, { name: 'C', age: 50, fire: 850000 }];
+  assert.deepEqual(impactRows(prev, cur), [
+    { name: 'A', ageFrom: 43, ageTo: 42, ageChanged: true, fire: '€1.41M', trend: 'up' },      // +0.71%: shown
+    { name: 'B', ageFrom: 45, ageTo: 45, ageChanged: false, fire: '€1.00M', trend: null },     // +0.2%: no trend
+    { name: 'C', ageFrom: null, ageTo: 50, ageChanged: true, fire: '€850k', trend: 'down' }]);
+  assert.deepEqual(impactRows(null, cur).map(r => r.trend), [null, null, null]);              // no saved version yet
+  const ui = readFileSync(new URL('../js/ui/versions.js', import.meta.url), 'utf8');
+  assert.ok(!/at end/.test(ui) && !/fields.slice(0, 12)/.test(ui), 'no "at end" value, no field-by-field list in the panel');
+});
