@@ -1,18 +1,19 @@
-import { el } from "./util.js?v=8.13";
-import { initInfoTips } from "./ui/infoTips.js?v=8.13";
-import { state } from "./state.js?v=8.13";
-import { recalc } from "./recalc.js?v=8.13";
+import { el } from "./util.js?v=8.14";
+import { initInfoTips } from "./ui/infoTips.js?v=8.14";
+import { state } from "./state.js?v=8.14";
+import { recalc } from "./recalc.js?v=8.14";
 import { loadState, initSync, scheduleSave, connectSync, disconnectSync,
-         openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js?v=8.13";
+         openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js?v=8.14";
 import { switchTab, toggleFeature, updateToggleUI, scrollToScenario, updateScNav,
-         updateAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js?v=8.13";
-import { handleCSV, saveManualTotal } from "./ui/ibkr.js?v=8.13";
-import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js?v=8.13";
-import { initSituation, resetAssumptions } from "./ui/situation.js?v=8.13";
-import { initSpendTracking } from "./ui/spending.js?v=8.13";
-import { downloadCSV } from "./ui/table.js?v=8.13";
-import { runMonteCarloUI, selectMcScenario } from "./ui/mcTab.js?v=8.13";
-import { selectExplanationScenario } from "./ui/explanation.js?v=8.13";
+         updateAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js?v=8.14";
+import { handleCSV, saveManualTotal } from "./ui/ibkr.js?v=8.14";
+import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js?v=8.14";
+import { initSituation, resetAssumptions } from "./ui/situation.js?v=8.14";
+import { initSpendTracking } from "./ui/spending.js?v=8.14";
+import { initUpdatePanel } from "./ui/versions.js?v=8.14";
+import { downloadCSV } from "./ui/table.js?v=8.14";
+import { runMonteCarloUI, selectMcScenario } from "./ui/mcTab.js?v=8.14";
+import { selectExplanationScenario } from "./ui/explanation.js?v=8.14";
 
 // The HTML uses inline on* attributes (and render functions emit them too), so
 // every function they reference must exist as a global.
@@ -34,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // windfall list) BEFORE loadState — applyState() repaints them from saved data.
   initSituation();
   initSpendTracking();
+  initUpdatePanel();
 
   // Load state first — before updateAge/onWdMode which trigger recalc/scheduleSave
   // and would write empty defaults to localStorage before we get a chance to restore

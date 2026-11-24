@@ -1,4 +1,4 @@
-import { project } from "./engine.js?v=8.13";
+import { project } from "./engine.js?v=8.14";
 
 // ── MONTE CARLO ENGINE ───────────────────────────────────────────────────────
 // Historical block-bootstrap simulation. Each simulated path is built by stitching

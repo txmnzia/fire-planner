@@ -899,6 +899,31 @@ year off: one row each, switched on in the scenarios that should include it.
 
 ---
 
+## Versions, update log and prompts (v8.14)
+
+Edits still autosave (localStorage, then the Supabase row). On top of that, the panel at
+the top of My Situation compares today's settings with the **last saved version**: the
+changed fields (old → new), changed lists, and for each scenario the stop age, FIRE number
+and net worth at the end, saved → now. **Save update** (optional note) keeps a dated
+version; **Undo all** brings the last version back. The **update log** lists versions
+newest first with their effect at the time and compared with today; **Restore** brings
+one back as a new version (today's settings are kept first), so a restore can be undone.
+
+Versions live in the saved row (`versions`, last 30, additive): a copy of the settings
+(`snapshotOf`: no position list) and the five scenarios' results (`resultsOf`). Pure
+logic: `js/versionsCore.js`.
+
+**First run.** A payload saved before v8.14 (no `versions`) gets an automatic **Before
+Life update** version and a one-time review list (spending moved from the old model,
+where you live, pensions per country, rent today, ownership charges); each item has Go and
+Done, the list can be dismissed.
+
+**Did this happen?** When a dated plan's year arrives (a planned rent, a move abroad, a
+purchase or a birth that some scenarios include, a permanent pay change), the panel asks.
+Yes makes it a fact (rent today / country today replaced, later moves re-based; buying or
+the child switched on in every scenario; the new pay becomes your take-home). Not yet moves
+it to next year.
+
 ## The 5 Default Scenarios
 
 | Scenario | Default Retire Age | Partner | Property | Child | Special |

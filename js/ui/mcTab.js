@@ -1,9 +1,9 @@
-import { el, fmt, fmtK } from "../util.js?v=8.13";
-import { getGlobals, getScenario, getScenarioName } from "../inputs.js?v=8.13";
-import { withStopAges } from "./cards.js?v=8.13";
-import { project } from "../engine.js?v=8.13";
-import { runMonteCarlo, mcPct } from "../montecarlo.js?v=8.13";
-import { COLORS, COLORS_FADE, ALPHAS, GC, FIRE_LINE } from "./charts.js?v=8.13";
+import { el, fmt, fmtK } from "../util.js?v=8.14";
+import { getGlobals, getScenario, getScenarioName } from "../inputs.js?v=8.14";
+import { withStopAges } from "./cards.js?v=8.14";
+import { project } from "../engine.js?v=8.14";
+import { runMonteCarlo, mcPct } from "../montecarlo.js?v=8.14";
+import { COLORS, COLORS_FADE, ALPHAS, GC, FIRE_LINE } from "./charts.js?v=8.14";
 
 // Monte Carlo tab state (module-private)
 let mcFanChart = null, mcHistChart = null;

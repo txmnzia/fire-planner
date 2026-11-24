@@ -1,15 +1,15 @@
-import { el } from "./util.js?v=8.13";
-import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.13";
-import { state, features } from "./state.js?v=8.13";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.13";
-import { recalc } from "./recalc.js?v=8.13";
-import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.13";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.13";
-import { refreshSituationControls } from "./ui/situation.js?v=8.13";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.13";
-import { db } from "./db.js?v=8.13";
-import { migrateSpending } from "./spendMigration.js?v=8.13";
-import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.13";
+import { el } from "./util.js?v=8.14";
+import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.14";
+import { state, features } from "./state.js?v=8.14";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.14";
+import { recalc } from "./recalc.js?v=8.14";
+import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.14";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.14";
+import { refreshSituationControls } from "./ui/situation.js?v=8.14";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.14";
+import { db } from "./db.js?v=8.14";
+import { migrateSpending } from "./spendMigration.js?v=8.14";
+import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.14";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
@@ -69,6 +69,8 @@ export function collectState() {
     payChanges: state.payChanges,
     rentMoves: state.rentMoves,
     residence: state.residence,
+    versions: state.versions,
+    review: state.review,
     mc: { recenter: mcRe ? mcRe.checked : true },
     ibkr: { total: state.ibkrTotal, holdings: state.ibkrHoldings, asOf: state.ibkrAsOf, source: state.ibkrSource, imports: state.ibkrImports } };
 }
@@ -137,6 +139,11 @@ function applyStateInner(data) {
   state.payChanges = Array.isArray(data.payChanges)
     ? normalisePayChanges(data.payChanges)
     : migrateFromFields(data.fields, data.fields?.baseYear);
+  // v8.14: versions ride in the saved row; a payload without them predates the
+  // redesign: keep a "Before Life update" version and open the review list once.
+  state.versions = Array.isArray(data.versions) ? data.versions : [];
+  state.review = data.review && typeof data.review === 'object' ? data.review : null;
+  state.pendingFirstVersion = !Array.isArray(data.versions) && !!data.fields && Object.keys(data.fields).length > 0;
   state.rentMoves = normaliseRentMoves(data.rentMoves);
   state.residence = normaliseResidence(data.residence);
   renderNwHistory();

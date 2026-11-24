@@ -1,19 +1,20 @@
-import { el, eur, numVal } from "./util.js?v=8.13";
-import { state } from "./state.js?v=8.13";
-import { getGlobals, getScenario } from "./inputs.js?v=8.13";
-import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.13";
-import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.13";
-import { renderTable } from "./ui/table.js?v=8.13";
-import { renderExplanation } from "./ui/explanation.js?v=8.13";
-import { updateLabels } from "./ui/controls.js?v=8.13";
-import { markMcStale } from "./ui/mcTab.js?v=8.13";
-import { scheduleSave } from "./sync.js?v=8.13";
-import { renderIssues } from "./ui/issues.js?v=8.13";
-import { renderPlans } from "./ui/plans.js?v=8.13";
-import { renderSpendReadout } from "./ui/spending.js?v=8.13";
-import { renderAssumptions } from "./ui/situation.js?v=8.13";
-import { renderCheckin } from "./ui/ibkr.js?v=8.13";
-import { renderResNotes, renderPropReadout } from "./ui/housing.js?v=8.13";
+import { el, eur, numVal } from "./util.js?v=8.14";
+import { state } from "./state.js?v=8.14";
+import { getGlobals, getScenario } from "./inputs.js?v=8.14";
+import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.14";
+import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.14";
+import { renderTable } from "./ui/table.js?v=8.14";
+import { renderExplanation } from "./ui/explanation.js?v=8.14";
+import { updateLabels } from "./ui/controls.js?v=8.14";
+import { markMcStale } from "./ui/mcTab.js?v=8.14";
+import { scheduleSave } from "./sync.js?v=8.14";
+import { renderIssues } from "./ui/issues.js?v=8.14";
+import { renderPlans } from "./ui/plans.js?v=8.14";
+import { renderSpendReadout } from "./ui/spending.js?v=8.14";
+import { renderAssumptions } from "./ui/situation.js?v=8.14";
+import { renderCheckin } from "./ui/ibkr.js?v=8.14";
+import { renderResNotes, renderPropReadout } from "./ui/housing.js?v=8.14";
+import { renderUpdatePanel } from "./ui/versions.js?v=8.14";
 
 // ── RECALC ──────────────────────────────────────────────────────────────────
 export function recalc() {
@@ -34,7 +35,8 @@ export function recalc() {
   renderScenarioGrid(projs,gl,scenarios,stops);
   renderIssues(scenarios,gl);
   renderPlans(gl);
-  state.lastProjs=projs; state.lastGl=gl; state.lastScenarios=scenarios;
+  state.lastProjs=projs; state.lastGl=gl; state.lastScenarios=scenarios; state.lastStops=stops;
+  renderUpdatePanel(gl);
   buildChart(projs,gl); buildFlowChart(projs,gl); renderTable(projs,gl);
   updateLabels();
   renderSummaryTiles(projs,gl,scenarios);

@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.13">
+<link rel="stylesheet" href="css/styles.css?v=8.14">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.13</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.14</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -79,6 +79,8 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
       <span>These are the facts of your life today — one shared set of numbers. On the <b>Scenarios</b> tab you compare futures; your partner is switched on per scenario from her card, and the things that might happen (buying a home, a child) live on the <b>Plans</b> tab. The rail on the left maps every subject, and each card's accent colour tells you whose data you're editing.</span>
     </div>
+
+    <section class="update-panel" id="updatePanel" aria-live="polite"></section>
 
     <div class="flow-hd"><h2>You &amp; your money</h2><span class="rule"></span><span class="note">Always applies</span></div>
 
@@ -613,6 +615,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.13"></script>
+<script type="module" src="js/main.js?v=8.14"></script>
 </body>
 </html>

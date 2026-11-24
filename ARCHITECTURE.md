@@ -31,6 +31,7 @@ js/
                         (collectState/applyState, magic-link sign-in, polling).
   taxTable.js           Country tax presets (one table, shared by inputs and countries).
   countries.js          Pure (v8.11): country notes, residence periods, rent moves.
+  versionsCore.js       Pure (v8.14): snapshots, diffs, impact lines, prompts, review.
   ibkr.js               Pure (v8.10): IBKR statement parser (total, positions, gain %,
                         as-of date, deposits) and the check-in read-outs.
   pensions.js           Pure (v8.9): pension countries, legal ages and the net estimate.
@@ -77,6 +78,8 @@ js/
                         inputs, and the dynamic windfall datapoint list. Progressive
                         enhancement — the id-bearing inputs stay the source of truth.
                         Also paints the Pay changes card (renderPayList).
+    versions.js         Update panel: changes + impact, Save/Undo, log, restore,
+                        first-run review, "Did this happen?" prompts (v8.14).
     housing.js          Planned rents, planned moves abroad, rent-today edit (v8.11).
     spending.js         Spending read-outs (v8.7, v8.8): rent in the joint account,
                         her share today, "You really invest" (engine

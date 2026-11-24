@@ -5,6 +5,20 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.14 Versions, impact, prompts, first-run review
+
+- **Versions inside the saved row** (as decided earlier): last 30, each a copy of the
+  settings plus the five results at that moment, so the log can show "what it did at the
+  time" without recomputing old inputs. Autosave is unchanged; a version is an extra.
+- **Restore never deletes**: today's settings are kept as a version first, and the
+  restore itself becomes a version.
+- **Impact panel** compares with the last saved version (stop age, FIRE number, net
+  worth at the end), so every edit shows its effect on all five scenarios.
+- **"Did this happen?"** for plans whose year arrived; Yes turns them into facts.
+- **First run**: a "Before Life update" version and a one-time review list.
+- Not done: comparing actual net worth with the plan as saved at the time (the plan
+  line still re-projects with today's assumptions).
+
 ## 2026-11-24 · v8.13 Buying
 
 - **Fixed-rate period and rate after** from a bank offer; the payment is recomputed on

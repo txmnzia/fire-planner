@@ -1,13 +1,13 @@
 // Housing moves and where you live (v8.11). Two dynamic lists on My Situation:
 // planned rents (state.rentMoves) and planned moves abroad (state.residence),
 // plus the rent-today edit that keeps the joint transfers consistent.
-import { el, eur } from "../util.js?v=8.13";
-import { state } from "../state.js?v=8.13";
-import { recalc } from "../recalc.js?v=8.13";
-import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.13";
-import { COUNTRY_TAX } from "../taxTable.js?v=8.13";
-import { countryNote } from "../countries.js?v=8.13";
-import { mortgageSchedule } from "../engine.js?v=8.13";
+import { el, eur } from "../util.js?v=8.14";
+import { state } from "../state.js?v=8.14";
+import { recalc } from "../recalc.js?v=8.14";
+import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.14";
+import { COUNTRY_TAX } from "../taxTable.js?v=8.14";
+import { countryNote } from "../countries.js?v=8.14";
+import { mortgageSchedule } from "../engine.js?v=8.14";
 
 const YNOW = new Date().getFullYear();
 const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';

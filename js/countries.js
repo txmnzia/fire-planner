@@ -1,7 +1,7 @@
 // Where you live (v8.11, pure): country presets for tax on gains and the
 // residence periods the engine reads (gl.residence). Rates are flat-rate
 // approximations on the GAIN part of a sale (README "Tax"); not tax advice.
-import { COUNTRY_TAX } from "./taxTable.js?v=8.13";
+import { COUNTRY_TAX } from "./taxTable.js?v=8.14";
 
 // One line per country on where its rate comes from and what is left out.
 export const COUNTRY_NOTES = {

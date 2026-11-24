@@ -10,6 +10,9 @@ export const state = {
   payChanges: [],
   rentMoves: [],   // [{from, rent}] planned rent changes (v8.11)
   residence: [],   // [{from, country, tax, col}] planned moves abroad (v8.11)  // [{name,from,to,amt,on}] pay changes as plans (v8.6, js/payChanges.js)   // [{yr,amt,off}] one-off future windfalls; off = scenario ids it is switched off for (v8.4)
+  versions: [],    // dated copies of the settings + results (v8.14, js/versionsCore.js)
+  review: null,    // first-run review list {active, done, dismissed} (v8.14)
+  pendingFirstVersion: false, lastStops: null,
   activeScIdx: 0,
   lastProjs: null, lastGl: null, lastScenarios: null,
 };
