@@ -1,9 +1,11 @@
 // Spending refresh (v8.7): read-outs under the four spending numbers and the
 // "last refreshed" date. The numbers come from the engine (investNowMonthly), so
 // the read-out is the same calculation the projection uses in year one.
-import { el, eur, numVal } from "../util.js?v=8.9";
-import { investNowMonthly } from "../engine.js?v=8.9";
-import { PENSION_COUNTRIES, pensionNetEstimate } from "../pensions.js?v=8.9";
+import { el, eur, numVal } from "../util.js?v=8.10";
+import { investNowMonthly } from "../engine.js?v=8.10";
+import { PENSION_COUNTRIES, pensionNetEstimate } from "../pensions.js?v=8.10";
+import { depositCheck } from "../ibkr.js?v=8.10";
+import { state } from "../state.js?v=8.10";
 
 export const REFRESH_FIELDS = ['samPersonalNow', 'samPaysIn', 'partnerPaysIn', 'yearlyItems'];
 export const STALE_DAYS = 183;
@@ -41,6 +43,10 @@ export function renderSpendReadout(gl) {
     '(what she pays in), about ' + eur(n.contrib) + '/mo with yearly items');
   if (takeHome > 0) lines.push('You really invest <b class="' + (n.invest < 0 ? 'neg' : '') + '">' + eur(n.invest) + '/month</b>' +
     ' = take-home ' + eur(takeHome) + ' − your cost ' + eur(n.cost));
+  // what actually reached IBKR over the last 6 months of check-ins (story 1/2)
+  const dc = depositCheck(state.ibkrImports, n.invest, new Date().toISOString().slice(0, 10));
+  if (dc) lines.push((dc.flagged ? '<span class="warn">\u26a0 ' : '') + 'Deposits at IBKR: ' + eur(dc.perMonth) + '/month over the last ' + dc.months +
+    ' months of statements, vs ' + eur(n.invest) + ' on paper' + (dc.flagged ? ' (more than 20% apart)</span>' : ''));
   host.innerHTML = lines.map(l => '<div>' + l + '</div>').join('');
 }
 

@@ -1,14 +1,14 @@
-import { el } from "./util.js?v=8.9";
-import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.9";
-import { state, features } from "./state.js?v=8.9";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.9";
-import { recalc } from "./recalc.js?v=8.9";
-import { renderHoldings } from "./ui/ibkr.js?v=8.9";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.9";
-import { refreshSituationControls } from "./ui/situation.js?v=8.9";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.9";
-import { db } from "./db.js?v=8.9";
-import { migrateSpending } from "./spendMigration.js?v=8.9";
+import { el } from "./util.js?v=8.10";
+import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.10";
+import { state, features } from "./state.js?v=8.10";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.10";
+import { recalc } from "./recalc.js?v=8.10";
+import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.10";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.10";
+import { refreshSituationControls } from "./ui/situation.js?v=8.10";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.10";
+import { db } from "./db.js?v=8.10";
+import { migrateSpending } from "./spendMigration.js?v=8.10";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
@@ -67,7 +67,7 @@ export function collectState() {
     windfalls: state.windfalls,
     payChanges: state.payChanges,
     mc: { recenter: mcRe ? mcRe.checked : true },
-    ibkr: { total: state.ibkrTotal, holdings: state.ibkrHoldings } };
+    ibkr: { total: state.ibkrTotal, holdings: state.ibkrHoldings, asOf: state.ibkrAsOf, source: state.ibkrSource, imports: state.ibkrImports } };
 }
 
 // Applying a payload is never an edit: everything below, including the
@@ -98,7 +98,14 @@ function applyStateInner(data) {
   if (radio) radio.checked = true;
   const mcRe = el('mcRecenter'); if (mcRe && data.mc) mcRe.checked = data.mc.recenter !== false;
   for (let s = 1; s <= 5; s++) { if (data.features?.[s]) features[s] = { ...data.features[s] }; }
-  if (data.ibkr) { state.ibkrTotal = data.ibkr.total || 0; state.ibkrHoldings = data.ibkr.holdings || []; renderHoldings(); }
+  if (data.ibkr) {
+    state.ibkrTotal = data.ibkr.total || 0; state.ibkrHoldings = data.ibkr.holdings || [];
+    // v8.10 check-in fields; older payloads have none (the next import starts the log)
+    state.ibkrAsOf = data.ibkr.asOf || null; state.ibkrSource = data.ibkr.source || null;
+    state.ibkrImports = Array.isArray(data.ibkr.imports) ? data.ibkr.imports.slice(-24) : [];
+    state.ibkrWarnings = [];
+    renderHoldings(); renderCheckin();
+  }
   state.nwHistory = Array.isArray(data.nwHistory) ? data.nwHistory.map(r=>({
     year:+r.year||0, val:+r.val||0,
     income:(r.income==null||r.income==='')?null:+r.income,

@@ -54,6 +54,16 @@ Your real values come from localStorage, or from Supabase once you sign in.
 
 ### Your Portfolio
 
+**Check-in (v8.10).** Importing an IBKR activity statement sets the investments, the
+unrealised gain %, the **as-of date** (statement period end) and the period's deposits
+(`js/ibkr.js`, pure). Each check-in is kept (`ibkr.imports`, last 24): the next one shows
+the change since the last, split into *added* (the statement's Deposits & Withdrawals,
+only when its period starts at the previous check-in) and *markets*. Warnings: a statement
+ending more than 31 days ago, a total more than 25% from the last one. Without a file, a
+typed total and date can be used (gain % not refreshed). The date turns red after 3 months.
+Under Spending, deposits per month over the last 6 months of statements are compared with
+*You really invest*; a gap over 20% is flagged.
+
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
 | Cash & Savings | `cash` | — (0) | EUR | Earns `cashReturn`, not invested in stocks/bonds |

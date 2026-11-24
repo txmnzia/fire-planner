@@ -5,6 +5,15 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.10 Portfolio check-in
+
+- An import keeps its **as-of date** and the period's **deposits**; every check-in is
+  logged so the next one shows what was added and what the markets did.
+- *Added vs markets* is only split when the new statement starts at the last check-in
+  (within 3 days): with a year-to-date or longer statement the deposits would cover a
+  different span, so only the change is shown rather than a wrong split.
+- History rows are not written by a check-in (the year-end rollover does that).
+
 ## 2026-11-24 · v8.9 Pensions per country, assumption defaults, "Living alone"
 
 - **One pension per country** (Germany from 67, France from 64), each typed gross as

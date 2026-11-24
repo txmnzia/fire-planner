@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.9">
+<link rel="stylesheet" href="css/styles.css?v=8.10">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.9</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.10</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -100,10 +100,18 @@
         <div class="subj-tt"><h3>Portfolio</h3><p>Your investments and cash today</p></div>
         <div class="subj-meta"><div class="subj-total"><span id="totalPortfolio">&#x20AC; &#x2014;</span><small>Total</small></div></div></div>
       <div class="subj-body">
-        <div class="subj-subhd">Investments</div>
+        <div class="subj-subhd">Investments <span class="spend-upd" id="portUpdatedTxt"></span></div>
         <button class="upload-btn2" id="uploadBtn" onclick="document.getElementById('csvInput').click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Import IBKR activity statement</button>
         <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="handleCSV(this)">
         <div class="pb" id="holdingsList" style="display:none;margin-top:10px"></div>
+        <div class="spend-readout" id="portCheckin" aria-live="polite"></div>
+        <details class="port-manual"><summary>No file? Type the IBKR total</summary>
+          <div class="subj-grid">
+            <div class="field"><label for="ibkrManualTotal">IBKR total value <button type="button" class="info-btn" title="The account&#x2019;s total value (positions + cash at IBKR) as shown in the app. The unrealised gain % keeps its last value until you import a statement.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" id="ibkrManualTotal"></div></div>
+            <div class="field"><label for="ibkrManualDate">As of</label><div class="inp"><input type="date" id="ibkrManualDate"></div></div>
+          </div>
+          <button type="button" class="dp-add" onclick="saveManualTotal()">Use this total</button>
+        </details>
         <div class="subj-subhd">Cash</div>
         <div class="subj-grid">
           <div class="field"><label for="cash_disp">Cash &amp; savings</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="cash" id="cash_disp"><input type="hidden" id="cash" value=""></div></div>
@@ -580,6 +588,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.9"></script>
+<script type="module" src="js/main.js?v=8.10"></script>
 </body>
 </html>

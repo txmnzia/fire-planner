@@ -29,6 +29,8 @@ js/
   recalc.js             Orchestrator: inputs → engine → all renderers, then persistence.
   sync.js               localStorage persistence + Supabase cross-device sync
                         (collectState/applyState, magic-link sign-in, polling).
+  ibkr.js               Pure (v8.10): IBKR statement parser (total, positions, gain %,
+                        as-of date, deposits) and the check-in read-outs.
   pensions.js           Pure (v8.9): pension countries, legal ages and the net estimate.
   assumptions.js        Pure (v8.9): market-assumption defaults and which ones differ.
   spendMigration.js     Pure (v8.8): maps payloads saved before the one-model spending

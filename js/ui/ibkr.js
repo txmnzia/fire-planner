@@ -1,85 +1,92 @@
-import { el, eur } from "../util.js?v=8.9";
-import { state } from "../state.js?v=8.9";
-import { recalc } from "../recalc.js?v=8.9";
+import { el, eur } from "../util.js?v=8.10";
+import { state } from "../state.js?v=8.10";
+import { recalc } from "../recalc.js?v=8.10";
+import { parseIbkrStatement, importWarnings, sinceLast } from "../ibkr.js?v=8.10";
 
-// ── IBKR CSV ────────────────────────────────────────────────────────────────
-function parseLine(line) {
-  const cols = []; let cur = "", inQ = false;
-  for (const c of line) {
-    if (c === '"') { inQ = !inQ; continue; }
-    if (c === "," && !inQ) { cols.push(cur.trim()); cur = ""; continue; }
-    cur += c;
-  }
-  cols.push(cur.trim()); return cols;
-}
+// ── Portfolio check-in (v8.10) ──────────────────────────────────────────────
+// An import sets "today's" investments, the unrealised gain %, the as-of date
+// and the period's deposits. Each check-in is kept (state.ibkrImports, last 24)
+// so the next one can say what was added and what the markets did.
+const todayIso = () => new Date().toISOString().slice(0, 10);
+const fmtDate = iso => iso ? new Date(iso + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) : "";
+export const PORTFOLIO_STALE_DAYS = 92;
 
 export function renderHoldings() {
-  const btn = el("uploadBtn");
-  if (!state.ibkrHoldings.length && state.ibkrTotal === 0) return;
+  const btn = el("uploadBtn"), list = el("holdingsList");
+  if (!btn || !list) return;
+  if (!state.ibkrHoldings.length && state.ibkrTotal === 0) { list.style.display = "none"; return; }
   const posCount = state.ibkrHoldings.filter(p => p.qty !== null).length;
   btn.classList.add("loaded");
-  btn.innerHTML = "\u2713 Loaded \u2014 " + posCount + " positions";
-  const list = el("holdingsList");
+  btn.innerHTML = state.ibkrSource === "manual"
+    ? "✓ Typed total — import a statement to refresh positions"
+    : "✓ Loaded — " + posCount + " positions";
   list.style.display = "flex"; list.style.flexDirection = "column"; list.style.gap = "3px";
   let h = state.ibkrHoldings.map(p => p.qty !== null
-    ? '<div class="pb-row"><span class="k">'+p.sym+" \u00d7"+p.qty+'</span><span class="v">'+eur(p.val)+"</span></div>"
+    ? '<div class="pb-row"><span class="k">'+p.sym+" ×"+p.qty+'</span><span class="v">'+eur(p.val)+"</span></div>"
     : '<div class="pb-row"><span class="k">'+p.sym+'</span><span class="v">'+eur(p.val)+"</span></div>"
   ).join("");
-  h += '<div style="height:1px;background:var(--bdr);margin:4px 0"></div>';
+  if (h) h += '<div style="height:1px;background:var(--bdr);margin:4px 0"></div>';
   h += '<div class="pb-row"><span class="k" style="color:var(--sec)">IBKR Total</span><span class="v" style="color:var(--text)">'+eur(state.ibkrTotal)+"</span></div>";
   list.innerHTML = h;
+}
+
+// The check-in line under the import: as-of date (red when overdue), what moved
+// since the last import, and any warning from the last import.
+export function renderCheckin() {
+  const host = el("portCheckin"), stamp = el("portUpdatedTxt");
+  const asOf = state.ibkrAsOf;
+  if (stamp) {
+    const old = asOf ? (Date.parse(todayIso()) - Date.parse(asOf)) / 86400000 > PORTFOLIO_STALE_DAYS : false;
+    stamp.textContent = asOf ? "as of " + fmtDate(asOf) : "";
+    stamp.classList.toggle("stale", old);
+    stamp.title = old ? "Older than 3 months: time for a check-in" : "";
+  }
+  if (!host) return;
+  const lines = [];
+  const s = sinceLast(state.ibkrImports);
+  if (s) {
+    const sign = v => (v >= 0 ? "+" : "−") + eur(Math.abs(v));
+    const last = state.ibkrImports[state.ibkrImports.length - 1];
+    const why = last.source === "manual" ? "a typed total has no deposits" : "this statement does not start at the last check-in";
+    lines.push("<div><b>" + sign(s.change) + "</b> since " + fmtDate(s.since) +
+      (s.added != null ? ": " + eur(s.added) + " added, " + sign(s.markets) + " markets" : ' <span class="tgt">(' + why + ", so added vs markets is not split)</span>") + "</div>");
+  }
+  if (state.ibkrSource === "manual") lines.push('<div class="tgt">Typed total: the unrealised gain % was not refreshed.</div>');
+  for (const w of state.ibkrWarnings || []) lines.push('<div class="warn">⚠ ' + w + "</div>");
+  host.innerHTML = lines.join("");
+}
+
+function recordImport(imp) {
+  const prev = (state.ibkrImports || [])[state.ibkrImports.length - 1] || null;
+  state.ibkrWarnings = importWarnings(imp, prev, todayIso());
+  state.ibkrImports = [...(state.ibkrImports || []), {
+    asOf: imp.asOf, total: imp.total, deposits: imp.deposits ?? null, periodStart: imp.periodStart ?? null, source: imp.source,
+  }].slice(-24);
+  state.ibkrAsOf = imp.asOf;
+  state.ibkrSource = imp.source;
 }
 
 export function handleCSV(input) {
   if (!input.files.length) return;
   const reader = new FileReader();
   reader.onload = e => {
-    const lines = e.target.result.split("\n").map(l => l.trim()).filter(Boolean);
-    state.ibkrTotal = 0; state.ibkrHoldings = [];
-    const EQUITY_CATS = new Set(["Stocks","Stock","Equity","Equities"]);
-    const navExtras = {};
-    let positionsCostBasis = 0, costBasisValid = true;
-    // Column indices for "Open Positions" rows — resolved from the section's own
-    // header row when present, so IBKR layout changes don't silently shift values.
-    let posCols = null;
-    const DEFAULT_POS_COLS = { sym:5, qty:6, cost:8, val:11 };
-    for (const line of lines) {
-      const c = parseLine(line);
-      if (c.length < 3) continue;
-      if (c[0]==="Open Positions"&&c[1]==="Header") {
-        const find = n => c.indexOf(n);
-        const m = { sym:find("Symbol"), qty:find("Quantity"), cost:find("Cost Price"), val:find("Value") };
-        if (m.sym>0 && m.qty>0 && m.cost>0 && m.val>0) posCols = m;
-      }
-      if (c[0]==="Open Positions"&&c[1]==="Data"&&c[2]==="Summary") {
-        const ix = posCols || DEFAULT_POS_COLS;
-        const sym=c[ix.sym]||"", qty=parseFloat(c[ix.qty])||0, val=parseFloat(c[ix.val])||0;
-        const costPrice = parseFloat(c[ix.cost]);
-        if (sym) {
-          state.ibkrHoldings.push({sym,qty,val});
-          if (!isNaN(costPrice) && costPrice > 0) positionsCostBasis += qty * costPrice;
-          else costBasisValid = false;
-        }
-      }
-      if (c[0]==="Net Asset Value"&&c[1]==="Data") {
-        const cat=c[2]?.trim(), v=parseFloat(c[6]);
-        if (isNaN(v)||!cat) continue;
-        if (cat==="Total") { state.ibkrTotal=v; continue; }
-        if (!EQUITY_CATS.has(cat) && Math.abs(v)>0.01) navExtras[cat]=(navExtras[cat]||0)+v;
-      }
-    }
-    // Append non-position NAV items (Cash, etc.) after positions
-    const cashFirst = Object.entries(navExtras).sort(([a],[b])=> a==="Cash"?-1:b==="Cash"?1:a.localeCompare(b));
-    let nonEquityValue = 0;
-    for (const [cat,val] of cashFirst) { state.ibkrHoldings.push({sym:cat, qty:null, val}); nonEquityValue += val; }
-    // Auto-fill the visible (and persisted) unrealised-gain-fraction input
-    if (costBasisValid && positionsCostBasis > 0 && state.ibkrTotal > 0) {
-      const totalCostBasis = positionsCostBasis + nonEquityValue; // cash carries no gain
-      const autoGainFrac = Math.max(0, Math.min(99, Math.round((state.ibkrTotal - totalCostBasis) / state.ibkrTotal * 100)));
-      const gf = el('gainFrac'); if (gf) { gf.value = autoGainFrac; gf.dispatchEvent(new Event('input')); }
-    }
-    renderHoldings();
+    const r = parseIbkrStatement(e.target.result);
+    state.ibkrTotal = r.total; state.ibkrHoldings = r.holdings;
+    if (r.gainFrac != null) { const gf = el('gainFrac'); if (gf) { gf.value = r.gainFrac; gf.dispatchEvent(new Event('input')); } }
+    recordImport({ ...r, asOf: r.asOf || todayIso(), source: "statement" });
+    renderHoldings(); renderCheckin();
     recalc();
   };
   reader.readAsText(input.files[0]);
+}
+
+// Fallback without a file: the IBKR total and its date, typed.
+export function saveManualTotal() {
+  const v = parseFloat(String(el("ibkrManualTotal")?.value || "").replace(/[^\d.,-]/g, "").replace(/,/g, ""));
+  const d = el("ibkrManualDate")?.value || todayIso();
+  if (!(v > 0)) return;
+  state.ibkrTotal = v; state.ibkrHoldings = [];
+  recordImport({ total: v, asOf: d, source: "manual" });
+  renderHoldings(); renderCheckin();
+  recalc();
 }
