@@ -5,6 +5,12 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.12 Her parental leave
+
+- Her leave (months, leave pay) lowers her income in the birth year; that year the split
+  follows both incomes instead of what she pays in today, exactly like your own leave.
+- Defaults stay empty (personal data): the bubbles give typical German values instead.
+
 ## 2026-11-24 · v8.11 Housing and where you live
 
 - **Rent lives in one place** (rent today) and is part of the joint account; planned

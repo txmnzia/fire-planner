@@ -1,19 +1,19 @@
-import { el, eur, numVal } from "./util.js?v=8.11";
-import { state } from "./state.js?v=8.11";
-import { getGlobals, getScenario } from "./inputs.js?v=8.11";
-import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.11";
-import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.11";
-import { renderTable } from "./ui/table.js?v=8.11";
-import { renderExplanation } from "./ui/explanation.js?v=8.11";
-import { updateLabels } from "./ui/controls.js?v=8.11";
-import { markMcStale } from "./ui/mcTab.js?v=8.11";
-import { scheduleSave } from "./sync.js?v=8.11";
-import { renderIssues } from "./ui/issues.js?v=8.11";
-import { renderPlans } from "./ui/plans.js?v=8.11";
-import { renderSpendReadout } from "./ui/spending.js?v=8.11";
-import { renderAssumptions } from "./ui/situation.js?v=8.11";
-import { renderCheckin } from "./ui/ibkr.js?v=8.11";
-import { renderResNotes } from "./ui/housing.js?v=8.11";
+import { el, eur, numVal } from "./util.js?v=8.12";
+import { state } from "./state.js?v=8.12";
+import { getGlobals, getScenario } from "./inputs.js?v=8.12";
+import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.12";
+import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.12";
+import { renderTable } from "./ui/table.js?v=8.12";
+import { renderExplanation } from "./ui/explanation.js?v=8.12";
+import { updateLabels } from "./ui/controls.js?v=8.12";
+import { markMcStale } from "./ui/mcTab.js?v=8.12";
+import { scheduleSave } from "./sync.js?v=8.12";
+import { renderIssues } from "./ui/issues.js?v=8.12";
+import { renderPlans } from "./ui/plans.js?v=8.12";
+import { renderSpendReadout } from "./ui/spending.js?v=8.12";
+import { renderAssumptions } from "./ui/situation.js?v=8.12";
+import { renderCheckin } from "./ui/ibkr.js?v=8.12";
+import { renderResNotes } from "./ui/housing.js?v=8.12";
 
 // ── RECALC ──────────────────────────────────────────────────────────────────
 export function recalc() {

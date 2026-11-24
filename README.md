@@ -177,6 +177,13 @@ once by `js/spendMigration.js` (see [Partner Model](#partner-model)).
 | Dependent Until Age | `childCostUntilAge` | 25 | years | Costs apply from birth until this child age |
 | Parental Leave (months) | `childMaternityMonths` | — (0) | months | Months of reduced income in birth year |
 | Income During Leave | `childMaternityIncome` | — (0) | EUR/month | Your income during those leave months |
+| Her parental leave | `partnerLeaveMonths` | — (0) | months | v8.12: her months on leave in the birth year (max 12) |
+| Her income during leave | `partnerLeaveIncome` | — (0) | EUR/month | Her net leave pay those months |
+
+**Her leave moves the split (v8.12).** In the birth year, in scenarios with the child,
+her salary is `partnerInc × (12 − m) + partnerLeaveIncome × m` (inflated), and the split
+that year follows both incomes (pro rata) instead of what she pays in today, like your
+own leave (`partnerIncomeAt(yr, gl, draw, sc)`, `twoPersonCost`).
 
 ---
 

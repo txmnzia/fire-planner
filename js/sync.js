@@ -1,15 +1,15 @@
-import { el } from "./util.js?v=8.11";
-import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.11";
-import { state, features } from "./state.js?v=8.11";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.11";
-import { recalc } from "./recalc.js?v=8.11";
-import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.11";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.11";
-import { refreshSituationControls } from "./ui/situation.js?v=8.11";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.11";
-import { db } from "./db.js?v=8.11";
-import { migrateSpending } from "./spendMigration.js?v=8.11";
-import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.11";
+import { el } from "./util.js?v=8.12";
+import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.12";
+import { state, features } from "./state.js?v=8.12";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.12";
+import { recalc } from "./recalc.js?v=8.12";
+import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.12";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.12";
+import { refreshSituationControls } from "./ui/situation.js?v=8.12";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.12";
+import { db } from "./db.js?v=8.12";
+import { migrateSpending } from "./spendMigration.js?v=8.12";
+import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.12";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
@@ -21,7 +21,7 @@ const SYNC_FIELDS = [
   'taxNow','pensionAmt','pensionAge','pension2Amt','pension2Age','pensionUpdated',
   'partnerInc','partnerRetAge','partnerPension','partnerPensionAge',
   'propBuyYear','propPrice','propDownPct','propTxCostPct','propMortgageRate','propMortgageTerm','propRentSaved',
-  'childBirthYear','childCostYearly','childCostUntilAge','childMaternityMonths','childMaternityIncome',
+  'childBirthYear','partnerLeaveMonths','partnerLeaveIncome','childCostYearly','childCostUntilAge','childMaternityMonths','childMaternityIncome',
   'sc1name','sc2name','sc3name','sc4name','sc5name',
   's1_ret','s2_ret','s3_ret','s4_ret','s5_ret',
   's1_inc','s2_inc','s3_inc','s4_inc','s5_inc',

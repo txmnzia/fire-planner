@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.11">
+<link rel="stylesheet" href="css/styles.css?v=8.12">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.11</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.12</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -336,9 +336,12 @@
         <div class="field"><label for="childCostYearly_disp">Annual child cost <button type="button" class="info-btn" title="Total out-of-pocket cost per year: childcare, food, activities, clothing, etc.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="childCostYearly" id="childCostYearly_disp"><input type="hidden" id="childCostYearly" value=""></div></div>
         <div class="field slider-field"><label for="childCostUntilAge">Dependent until age <span class="sv"><input type="number" id="childCostUntilAge" value="25" min="10" max="30" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="childCostUntilAge" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field slider-field"><label for="childMaternityMonths">Parental leave <button type="button" class="info-btn" title="Months of reduced or no income due to parental leave.">&#x24D8;</button> <span class="sv"><input type="number" id="childMaternityMonths" value="" min="0" max="24" step="1" oninput="recalc()" onchange="recalc()"><i>mo</i></span></label>
+        <div class="field slider-field"><label for="childMaternityMonths">Your parental leave <button type="button" class="info-btn" title="Months you are on leave in the birth year, at the leave pay below instead of your take-home.">&#x24D8;</button> <span class="sv"><input type="number" id="childMaternityMonths" value="" min="0" max="24" step="1" oninput="recalc()" onchange="recalc()"><i>mo</i></span></label>
           <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="childMaternityMonths" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
-        <div class="field"><label for="childMaternityIncome_disp">Income during leave (net)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="childMaternityIncome" id="childMaternityIncome_disp"><input type="hidden" id="childMaternityIncome" value=""></div></div>
+        <div class="field"><label for="childMaternityIncome_disp">Your income during leave (net)</label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="childMaternityIncome" id="childMaternityIncome_disp"><input type="hidden" id="childMaternityIncome" value=""></div></div>
+        <div class="field slider-field"><label for="partnerLeaveMonths">Her parental leave <button type="button" class="info-btn" title="Months she is on leave in the birth year (Germany: up to 14 months shared between you, at about 65% of net pay). Her lower income that year lowers her part of the shared costs: the split follows both incomes that year.">&#x24D8;</button> <span class="sv"><input type="number" id="partnerLeaveMonths" value="" placeholder="0" min="0" max="12" step="1" oninput="recalc()" onchange="recalc()"><i>mo</i></span></label>
+          <div class="sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="partnerLeaveMonths" aria-hidden="true" tabindex="-1"><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div>
+        <div class="field"><label for="partnerLeaveIncome_disp">Her income during leave (net) <button type="button" class="info-btn" title="Her net leave pay per month (Elterngeld is about 65% of net pay, between &#x20AC;300 and &#x20AC;1,800). Used only in the birth year, in scenarios with the child.">&#x24D8;</button></label><div class="inp cur"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="partnerLeaveIncome" id="partnerLeaveIncome_disp"><input type="hidden" id="partnerLeaveIncome" value=""></div></div>
       </div></div>
     </section>
 
@@ -596,6 +599,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.11"></script>
+<script type="module" src="js/main.js?v=8.12"></script>
 </body>
 </html>

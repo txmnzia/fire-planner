@@ -45,7 +45,7 @@ function spendingIssues(sc, gl) {
 export function plansSetUp(gl) {
   return {
     prop:  gl.propPrice > 0,
-    child: gl.childCostYearly > 0 || gl.childMaternityMonths > 0,
+    child: gl.childCostYearly > 0 || gl.childMaternityMonths > 0 || gl.partnerLeaveMonths > 0,
   };
 }
 export function effectiveFeatures(feat, gl) {

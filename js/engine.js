@@ -99,14 +99,17 @@ export function actualShare(gl) {
 // Partner's net income in calendar year yr (nominal €/yr): salary until HER
 // retirement age, pension from HER pension age (age offset applied). Her savings
 // are not modelled since v8.8, so a draw is only counted if a caller passes one.
-export function partnerIncomeAt(yr, gl, herDrawAnn) {
+// v8.12: in the child's birth year (scenarios with the child) her parental leave
+// replaces her salary for its months with her leave pay (today's €, inflated).
+export function partnerIncomeAt(yr, gl, herDrawAnn, sc) {
   const t = yr - gl.baseYear, infl = Math.pow(1+gl.inflation, t);
   const herAge  = gl.currentAge + t + (gl.partnerAgeOff || 0);
   const working = herAge < gl.partnerRetAge;
-  const salary  = working ? gl.partnerInc*12*infl : 0;
+  const leaveM  = working && sc && sc.hasChild && yr === gl.childBirthYear ? Math.min(12, gl.partnerLeaveMonths || 0) : 0;
+  const salary  = working ? (gl.partnerInc*(12 - leaveM) + (gl.partnerLeaveIncome || 0)*leaveM)*infl : 0;
   const pension = herAge >= gl.partnerPensionAge ? gl.partnerPension*12*infl : 0;
   const draw    = working ? 0 : (herDrawAnn || 0);
-  return { herAge, working, salary, pension, draw, total: salary + pension + draw };
+  return { herAge, working, onLeave: leaveM > 0, salary, pension, draw, total: salary + pension + draw };
 }
 
 // Household cost components in year yr (nominal €/yr). `shared` is what gets
@@ -145,8 +148,9 @@ export function householdCosts(yr, sc, gl, samRetired, noTemp) {
 // today; otherwise the pro-rata rule applies (v8.8).
 export function twoPersonCost(yr, sc, gl, samInc, herDrawAnn, samRetired, noTemp, payChanged) {
   const hc = householdCosts(yr, sc, gl, samRetired, noTemp);
-  const her = partnerIncomeAt(yr, gl, herDrawAnn);
-  const real = (!samRetired && her.working && !payChanged) ? actualShare(gl) : null;
+  const her = partnerIncomeAt(yr, gl, herDrawAnn, sc);
+  // her real share is today's arrangement: not while her pay differs (her leave)
+  const real = (!samRetired && her.working && !her.onLeave && !payChanged) ? actualShare(gl) : null;
   const share = real != null ? real : partnerShare(her.total, samInc);
   const contrib = share*hc.shared;
   return { ...hc, her, samInc, share, shareReal: real != null, contrib, samCost: hc.samPersonal + hc.shared - contrib };
@@ -168,7 +172,7 @@ export function investNowMonthly(gl, takeHome) {
 // root); the clamp on the share keeps the fixed point (share(c) is monotone).
 export function selfFundedCost(yr, sc, gl, samPensionAnn, herDrawAnn, noTemp) {
   const hc = householdCosts(yr, sc, gl, true, noTemp);
-  const her = partnerIncomeAt(yr, gl, herDrawAnn);
+  const her = partnerIncomeAt(yr, gl, herDrawAnn, sc);
   const P = hc.samPersonal, S = hc.shared, h = her.total, pen = samPensionAnn || 0;
   let c = (P + S - h + Math.sqrt((h - P - S)*(h - P - S) + 4*P*h)) / 2;
   // c ≥ pension: your income is your cost (c). Otherwise the pension alone is
@@ -794,7 +798,7 @@ export function project(sc, gl, opts) {
 
     // Two-person ledger rows (her income and contribution; v8.8: no savings ledger)
     if (twoP) {
-      const her = tp ? tp.her : partnerIncomeAt(yr, gl, 0);
+      const her = tp ? tp.her : partnerIncomeAt(yr, gl, 0, sc);
       row.partnerContrib = Math.round(tp ? tp.contrib : 0);   // real past spending override: no split
       row.partnerShare = tp ? tp.share : 0;
       row.samShareIncome = Math.round(tp ? tp.samInc : 0);
