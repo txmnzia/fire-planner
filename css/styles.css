@@ -283,6 +283,8 @@ button.wd-pill{font:inherit;font-size:12px;}
 .subj-subhd{font-size:11px;font-weight:600;color:var(--sec);letter-spacing:.3px;margin:2px 0 12px;}
 .subj-body .subj-subhd:not(:first-child){margin-top:22px;padding-top:16px;border-top:1px dashed var(--bdrs);}
 .assump-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px;}
+.tile-body .assump-foot .spend-readout{padding:8px 12px;font-size:12px;}
+.tile-body .assump-foot .dp-add{padding:7px 12px;}
 .assump-foot .spend-readout{margin:0;}
 .spend-readout .tgt{color:var(--muted);font-size:inherit;}
 .spend-readout .warn{color:var(--warn,#fbbf24);}
@@ -447,6 +449,8 @@ button.wd-pill{font:inherit;font-size:12px;}
 .tile-body > *{margin:0;}
 .tile-body .subj-subhd{margin:6px 0 -4px;padding:0;border:none;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--sec);}
 .tile-body .subj-subhd:first-child{margin-top:0;}
+#tab-panel-situation .tile-body .subj-subhd{margin:4px 0 -6px;padding:0;min-height:0;height:auto;}
+#tab-panel-situation .tile-body .subj-subhd:first-child{margin-top:0;}
 .tile-body .sit-note{margin:0;max-width:none;font-size:12px;line-height:1.5;color:var(--muted);}
 .tile-body .subj-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px 18px;align-items:start;}
 @container (min-width:470px){ .tile-body .subj-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
@@ -465,32 +469,44 @@ button.wd-pill{font:inherit;font-size:12px;}
    Numbers that are nudged (ages, months, rates) use a compact − value + stepper;
    the range input stays in the DOM (wiring) but is hidden. */
 .tile-body .frows{display:flex;flex-direction:column;gap:0;}
-.frow{display:grid;grid-template-columns:minmax(0,120px) minmax(0,1fr);align-items:center;column-gap:14px;row-gap:6px;padding:9px 0;border-top:1px solid var(--bdrs);min-width:0;}
+.frow{display:grid;grid-template-columns:minmax(0,110px) minmax(0,1fr);align-items:center;column-gap:12px;row-gap:6px;padding:7px 0;border-top:1px solid var(--bdrs);min-width:0;}
 .frow:first-child{border-top:none;padding-top:0;}
 .frow:last-child{padding-bottom:0;}
 .frow-l{font-size:12.5px;color:var(--sec);line-height:1.35;display:block;min-width:0;}
 .frow-l .info-btn{display:inline;padding:0 0 0 3px;}
 .frow-c,.item-c,.item-hd{display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-width:0;}
 .frow-sep{font-size:12px;color:var(--muted);white-space:nowrap;}
+.frow-grp{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;margin-right:10px;}
+.frow-grp:last-child{margin-right:0;}
+/* parallel values (stocks / bonds / inflation, you / she, now / at stop): a small
+   caption above each, side by side in columns, wrapping as whole columns */
+.frow-c.grid{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:flex-end;}
+.frow-grp.cap{flex-direction:column;align-items:flex-start;gap:3px;margin:0;}
+.frow-cap{font-size:11px;color:var(--muted);white-space:nowrap;line-height:1.2;}
+.frow-grp .frow-sep .info-btn{padding-left:3px;}
+.tile-body .wd-toggle{flex-wrap:nowrap;}
+.tile-body .wd-pill{white-space:nowrap;height:34px;display:inline-flex;align-items:center;padding:0 10px;flex:0 0 auto;}
 @container (min-width:560px){ .frow{grid-template-columns:minmax(0,150px) minmax(0,1fr);} }
 @container (max-width:399px){ .frow{grid-template-columns:minmax(0,1fr);} }
 .tile-body .fc{flex:0 1 auto;min-width:0;}
-.tile-body .inp.fc,.tile-body .fc .ypick-btn,.tile-body .unit-wrap.fc input,.tile-body select.fc{height:36px;}
+.tile-body .inp.fc,.tile-body .fc .ypick-btn,.tile-body .unit-wrap.fc input,.tile-body select.fc{height:34px;}
 .tile-body .inp.cur.fc{width:116px;padding:0 9px;}
 .tile-body .inp.cur.fc .pre{padding-right:6px;}
 .tile-body .inp .suf{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);padding-left:6px;white-space:nowrap;}
 .tile-body .ypick.fc{width:auto;min-width:92px;}
 .tile-body .ypick.fc .ypick-btn{white-space:nowrap;}
 .tile-body .ypick.fc .ypick-btn{padding:0 10px;font-size:13px;}
-.tile-body .unit-wrap.fc{width:84px;}
+.tile-body .unit-wrap.fc{width:92px;}
+.tile-body .inp.fc.fc-sel{width:auto;padding:0 6px;}
+.tile-body .inp.fc-sel select{width:auto;}
 .tile-body .inp.fc:not(.cur){width:170px;}
 .tile-body .frow-c > select,.tile-body .res-c select{width:auto;min-width:150px;max-width:100%;height:36px;}
-.step{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;}
+.step{display:inline-flex;align-items:center;gap:3px;flex:0 0 auto;}
 .step input[type=range]{display:none;}
-.step .age-btn{width:28px;height:36px;border-radius:var(--rs);}
-.step-v{display:inline-flex;align-items:center;height:36px;width:62px;background:var(--dim);border:1px solid var(--bdr);border-radius:var(--rs);padding:0 8px 0 4px;}
+.step .age-btn{width:22px;height:34px;border-radius:var(--rs);}
+.step-v{display:inline-flex;align-items:center;height:34px;width:auto;background:var(--dim);border:1px solid var(--bdr);border-radius:var(--rs);padding:0 8px 0 4px;}
 .step-v:focus-within{border-color:var(--acc,var(--sec));}
-.step-v input{height:100%;border:none;background:transparent;padding:0;text-align:right;min-width:0;flex:1;}
+.step-v input{height:100%;border:none;background:transparent;padding:0;text-align:right;width:3.6ch;flex:none;}
 .step-v input:focus{background:transparent;}
 .step-v i{font-style:normal;font-family:'DM Mono',monospace;font-size:10.5px;color:var(--muted);padding-left:4px;}
 

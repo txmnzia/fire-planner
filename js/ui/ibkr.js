@@ -1,8 +1,8 @@
-import { el, eur } from "../util.js?v=8.18";
-import { state } from "../state.js?v=8.18";
-import { recalc } from "../recalc.js?v=8.18";
-import { parseIbkrStatement, importWarnings, sinceLast, snapshotFromImport } from "../ibkr.js?v=8.18";
-import { renderNwHistory } from "./nwHistory.js?v=8.18";
+import { el, eur } from "../util.js?v=8.18.1";
+import { state } from "../state.js?v=8.18.1";
+import { recalc } from "../recalc.js?v=8.18.1";
+import { parseIbkrStatement, importWarnings, sinceLast, snapshotFromImport } from "../ibkr.js?v=8.18.1";
+import { renderNwHistory } from "./nwHistory.js?v=8.18.1";
 
 // ── Portfolio check-in (v8.10) ──────────────────────────────────────────────
 // An import sets "today's" investments, the unrealised gain %, the as-of date

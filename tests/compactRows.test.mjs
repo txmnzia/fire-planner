@@ -59,3 +59,16 @@ test('windfalls: the name is saved and loaded (sync keeps it, capped at 40 chars
   assert.match(sync, /name:typeof w\.name==='string'\?w\.name\.slice\(0,40\):''/);
   assert.match(sync, /windfalls: state\.windfalls/);
 });
+
+test('v8.18.1: related values share one line (returns, bond share, withdrawal, joint transfers, …)', () => {
+  const row = lbl => { const i = chg.indexOf('<div class="frow-l">' + lbl); assert.ok(i > 0, lbl); const st = chg.lastIndexOf('<div class="frow"', i); return chg.slice(st, chg.indexOf('<div class="frow"', i + 1)); };
+  const together = { 'Returns': ['stockRet', 'bondRet', 'inflation'], 'Bond share': ['bondAllocNow', 'bondAllocRet'],
+    'Withdrawal': ['wdMode', 'swr_wrap', '"swr"'], 'Into the joint account': ['samPaysIn', 'partnerPaysIn'],
+    'Cash &amp; savings': ['cash_disp', 'cashReturn'], 'Country today': ['retCountry', 'taxNow'], 'Born': ['dob', 'lifeExp'],
+    'Her take-home': ['partnerInc', 'partnerRetAge'], 'Cash at purchase': ['propDownPct', 'propTxCostPct'] };
+  for (const [lbl, ids] of Object.entries(together)) { const r = row(lbl); for (const id of ids) assert.ok(r.includes(id), lbl + ' has ' + id); }
+  // the withdrawal rate stays hideable in fixed mode (onWdMode toggles #swr_wrap)
+  assert.match(row('Withdrawal'), /<span class="frow-grp" id="swr_wrap">/);
+  for (const old of ['Stocks return', 'Bonds return', 'Withdrawal rate', 'Cash interest', 'She pays into joint', 'Tax on gains today'])
+    assert.ok(!chg.includes('<div class="frow-l">' + old), old + ' is no longer its own line');
+});

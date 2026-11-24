@@ -5,6 +5,18 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.18.1 Related values on one line
+
+- **Values that belong together share a line**: returns (stocks, bonds, inflation), bond
+  share (now, when you stop), withdrawal (strategy and rate), joint transfers (you, she),
+  cash and its interest, country and its tax rate, birth date and plan-until age, her
+  take-home and her stop age, down payment and buying costs.
+- **Two layouts, one rule:** parallel values get a small caption above each (stocks /
+  bonds / inflation); a value that reads as a sentence uses a word between
+  ("3.5% over 25 yrs"). Steppers are narrower so three fit on a line in a lane.
+- The Assumptions tile is about a third shorter; the defaults note and Reset sit at
+  its end.
+
 ## 2026-11-24 · v8.18 Compact tiles, one line per subject
 
 - **One line per subject** in every tile: the label on the left, all the controls of
