@@ -5,6 +5,17 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.18.2 Fields flow across the tile
+
+- **Caption above, fields side by side:** every field has its name above it and the
+  fields of a tile sit next to each other, wrapping only when the line is full (the
+  owner: the right half of each tile was empty). Supersedes the label column of v8.18
+  and the captioned groups of v8.18.1; a field still keeps its own controls together
+  ("€ … until age …", "3.5% over 25 yrs").
+- **No cut numbers:** money fields are a fixed 150px with no inner padding, enough for
+  1,250,000 next to "/mo"; steppers fit 19.75. Checked in the browser with worst-case
+  values at four widths.
+
 ## 2026-11-24 · v8.18.1 Related values on one line
 
 - **Values that belong together share a line**: returns (stocks, bonds, inflation), bond
