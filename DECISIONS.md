@@ -5,6 +5,22 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.18 Compact tiles, one line per subject
+
+- **One line per subject** in every tile: the label on the left, all the controls of
+  that subject on the same line (e.g. "Your parental leave [months] at [€/mo]", then the
+  same for her). Under ~400px of tile the label goes above its controls.
+- **Steppers instead of sliders:** rates, ages and months are "− value +" (the owner's
+  idea); typing still works. Sliders took two lines each and were rarely dragged.
+- **"You" and "Partner" are separate tiles:** the old "You + partner" tile mixed both and
+  was unclear. "Plan start year" is renamed **"Plan year (today)"** and moved to
+  Assumptions, with a note: the year the plan counts as today (ages and today's money
+  start on 1 January of it; it moves on when you close the year).
+- **No scenario switches in the Changes tab:** the "Used in A–E" chips are gone; plans are
+  switched only in the Scenarios grid (one place, as decided in v8.17).
+- **Windfalls have a name**, shown as the label of their row in the Scenarios grid and in
+  the tile summary. Saved with the windfall; optional ("Windfall" when empty).
+
 ## 2026-11-24 · v8.17 One Changes tab with two lanes
 
 - **My Situation and Plans merged into "Changes"** (the owner's idea): a "Now" lane of

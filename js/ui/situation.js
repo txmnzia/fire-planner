@@ -3,13 +3,13 @@
 // The source of truth for every value stays the id-bearing form control that
 // inputs.js / sync.js already read — this module only adds friendlier controls
 // (year-picker popover, sliders, the subject rail) and the dynamic windfall list.
-import { el } from "../util.js?v=8.17.3";
-import { toggleWindfall, LETTERS, togglePay, setPayListPainter } from "./plans.js?v=8.17.3";
-import { normalisePayChanges } from "../payChanges.js?v=8.17.3";
-import { state } from "../state.js?v=8.17.3";
-import { recalc } from "../recalc.js?v=8.17.3";
-import { ASSUMPTION_DEFAULTS, assumptionChanges } from "../assumptions.js?v=8.17.3";
-import { renderRentMoves, renderResidence, initRentToday, renderResNotes } from "./housing.js?v=8.17.3";
+import { el } from "../util.js?v=8.18";
+import { setPayListPainter } from "./plans.js?v=8.18";
+import { normalisePayChanges } from "../payChanges.js?v=8.18";
+import { state } from "../state.js?v=8.18";
+import { recalc } from "../recalc.js?v=8.18";
+import { ASSUMPTION_DEFAULTS, assumptionChanges } from "../assumptions.js?v=8.18";
+import { renderRentMoves, renderResidence, initRentToday, renderResNotes } from "./housing.js?v=8.18";
 
 const YNOW = 2026;
 
@@ -142,41 +142,32 @@ function initSliders() {
   });
 }
 
-// ── PAY CHANGES (v8.6, Plans tab) ───────────────────────────────────────────
-// One row per change: what, from (year picker), until (year picker, "For good"
-// when empty), take-home (€ field), A-E chips, remove. Typing updates the plan and
-// the numbers without redrawing (focus stays); pickers, chips and add/remove redraw.
+// ── PAY CHANGES (v8.6; compact item rows v8.18) ────────────────────────────
+// One item per change: its name on top, then "from [year] until [year] · € /mo".
+// Typing updates the plan and the numbers without redrawing (focus stays);
+// pickers and add/remove redraw. Which scenarios use it: the Scenarios tab.
+const DEL = label => '<button type="button" class="dp-del" aria-label="' + label + '">×</button>';
+const MONEY = (cls, ph, suf) => '<div class="inp cur fc ' + cls + '"><span class="pre">€</span><input type="text" inputmode="decimal" autocomplete="off" placeholder="' + ph + '">' + (suf ? '<span class="suf">' + suf + '</span>' : '') + '</div>';
+const SEP = w => '<span class="frow-sep">' + w + '</span>';
 export function renderPayList() {
   const host = el('payList'); if (!host) return;
   host.innerHTML = '';
   const upd = (i, key, val) => { state.payChanges[i] = normalisePayChanges([{ ...state.payChanges[i], [key]: val }])[0]; recalc(); };
   state.payChanges.forEach((p, i) => {
-    const row = document.createElement('div'); row.className = 'pay-row';
+    const row = document.createElement('div'); row.className = 'item pay-row';
     row.innerHTML =
-      '<div class="field pay-what"><label>What</label><input type="text" class="pay-name" placeholder="e.g. 4-day week" autocomplete="off"></div>' +
-      '<div class="field pay-yr"><label>From</label><div class="ypick pay-from"></div></div>' +
-      '<div class="field pay-yr"><label>Until</label><div class="ypick pay-to"></div></div>' +
-      '<div class="field pay-amt"><label>Take-home / month</label><div class="inp cur"><span class="pre">€</span>' +
-        '<input type="text" inputmode="decimal" autocomplete="off" placeholder="0 = no pay"></div></div>' +
-      '<div class="pay-side"><div class="sc-chips pay-chips" role="group" aria-label="Scenarios using this pay change"><span class="sc-chips-lbl">Used in</span></div>' +
-      '<button type="button" class="dp-del" aria-label="Remove pay change">×</button></div>';
+      '<div class="item-hd"><input type="text" class="item-name pay-name" placeholder="Name it, e.g. 4-day week" aria-label="Name of this pay change" autocomplete="off">' + DEL('Remove pay change') + '</div>' +
+      '<div class="item-c">' + SEP('from') + '<div class="ypick fc pay-from"></div>' + SEP('until') + '<div class="ypick fc pay-to"></div>' +
+      MONEY('pay-amt', 'amount', '/mo') + '</div>';
     const name = row.querySelector('.pay-name'); name.value = p.name || '';
     name.addEventListener('input', () => upd(i, 'name', name.value));
     buildYpick(row.querySelector('.pay-from'), { min: 2024, max: 2080,
       getVal: () => state.payChanges[i].from, setVal: y => { upd(i, 'from', y); renderPayList(); } });
     buildYpick(row.querySelector('.pay-to'), { min: 2024, max: 2080, optional: true, emptyLabel: 'For good',
       getVal: () => state.payChanges[i].to, setVal: y => { upd(i, 'to', y); renderPayList(); } });
-    const amt = row.querySelector('.pay-amt input');
+    const amt = row.querySelector('.pay-amt input'); amt.setAttribute('aria-label', 'Take-home per month');
     amt.value = p.amt == null ? '' : fmtMoney(p.amt);
     amt.addEventListener('input', () => { const raw = cleanMoney(amt.value); amt.value = raw === '' ? '' : fmtMoney(raw); upd(i, 'amt', raw); });
-    const chips = row.querySelector('.pay-chips');
-    LETTERS.forEach((L, k) => {
-      const on = p.on.includes(k + 1);
-      const c = document.createElement('button'); c.type = 'button'; c.className = 'sc-chip' + (on ? ' on' : '');
-      c.textContent = L; c.setAttribute('aria-pressed', String(on)); c.setAttribute('aria-label', 'Use in scenario ' + L);
-      c.addEventListener('click', () => { togglePay(i, k + 1); renderPayList(); });
-      chips.appendChild(c);
-    });
     row.querySelector('.dp-del').addEventListener('click', () => { state.payChanges.splice(i, 1); renderPayList(); recalc(); });
     host.appendChild(row);
   });
@@ -190,36 +181,26 @@ export function renderPayList() {
 }
 setPayListPainter(renderPayList);
 
-// ── WINDFALLS (dynamic datapoint list, shares the compact row with nw-history) ─
+// ── WINDFALLS (v8.18: named; the name is the label in the Scenarios grid) ───
 export function renderWindfalls() {
   const host = el('wfList'); if (!host) return;
   host.innerHTML = '';
   state.windfalls.forEach((w, i) => {
-    const row = document.createElement('div'); row.className = 'dp-row';
+    const row = document.createElement('div'); row.className = 'item wf-row';
     row.innerHTML =
-      '<div class="dp-main"><div class="ypick mini"></div>' +
-      '<div class="inp cur mini"><span class="pre">€</span>' +
-      '<input type="text" inputmode="decimal" autocomplete="off" placeholder="Amount" value="' + (w.amt == null ? '' : fmtMoney(w.amt)) + '"></div>' +
-      '<button type="button" class="dp-del" aria-label="Remove windfall">×</button></div>';
-    // v8.4: one switch per scenario, like the other plans
-    const chips = document.createElement('div'); chips.className = 'subj-meta sc-chips wf-chips';
-    chips.setAttribute('role', 'group'); chips.setAttribute('aria-label', 'Scenarios using this windfall');
-    const lab = document.createElement('span'); lab.className = 'sc-chips-lbl'; lab.textContent = 'Used in'; chips.append(lab);
-    LETTERS.forEach((L, k) => {
-      const on = !(Array.isArray(w.off) && w.off.includes(k + 1));
-      const c = document.createElement('button'); c.type = 'button'; c.className = 'sc-chip' + (on ? ' on' : '');
-      c.textContent = L; c.setAttribute('aria-pressed', String(on));
-      c.addEventListener('click', () => { toggleWindfall(i, k + 1); renderWindfalls(); });
-      chips.append(c);
-    });
-    row.appendChild(chips);
+      '<div class="item-hd"><input type="text" class="item-name wf-name" placeholder="Name it, e.g. Inheritance" aria-label="Name of this windfall" autocomplete="off" maxlength="40">' + DEL('Remove windfall') + '</div>' +
+      '<div class="item-c">' + SEP('in') + '<div class="ypick fc"></div>' + MONEY('wf-amt', 'Amount', '') + '</div>';
     host.appendChild(row);
+    const name = row.querySelector('.wf-name'); name.value = w.name || '';
+    name.addEventListener('input', () => { w.name = name.value; recalc(); });
     buildYpick(row.querySelector('.ypick'), {
       min: 2024, max: 2080,
       getVal: () => (w.yr == null ? null : +w.yr),
       setVal: y => { w.yr = y; recalc(); },
     });
-    row.querySelector('.cur input').addEventListener('input', e => {
+    const amt = row.querySelector('.wf-amt input'); amt.setAttribute('aria-label', 'Amount');
+    amt.value = w.amt == null ? '' : fmtMoney(w.amt);
+    amt.addEventListener('input', e => {
       const raw = cleanMoney(e.target.value); e.target.value = fmtMoney(raw);
       const v = parseFloat(raw); w.amt = isNaN(v) ? null : v; recalc();
     });
@@ -229,7 +210,7 @@ export function renderWindfalls() {
   add.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add windfall';
   add.addEventListener('click', () => {
     const ny = state.windfalls.length ? Math.max(...state.windfalls.map(w => +w.yr || YNOW)) + 1 : 2030;
-    state.windfalls.push({ yr: ny, amt: null }); renderWindfalls();
+    state.windfalls.push({ name: '', yr: ny, amt: null }); renderWindfalls();
   });
   host.appendChild(add);
 }

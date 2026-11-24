@@ -13,7 +13,7 @@ const now = html.slice(html.indexOf('id="laneNow"'), html.indexOf('id="lanePlans
 const plans = html.slice(html.indexOf('id="lanePlans"'), html.indexOf('<aside class="chg-impact"'));
 
 test('lanes: facts in "Now", plans in "Might happen", the impact beside them', () => {
-  for (const t of ['tile-port', 'tile-spend', 'tile-pay', 'tile-pension', 'tile-housing', 'tile-where', 'tile-partner', 'tile-assump'])
+  for (const t of ['tile-port', 'tile-spend', 'tile-pay', 'tile-pension', 'tile-housing', 'tile-where', 'tile-you', 'tile-partner', 'tile-assump'])
     assert.ok(now.includes('id="' + t + '"'), t);
   for (const t of ['tile-buy', 'tile-child', 'tile-paychg', 'tile-flat', 'tile-move', 'tile-wf'])
     assert.ok(plans.includes('id="' + t + '"'), t);
@@ -28,7 +28,7 @@ test('lanes: facts in "Now", plans in "Might happen", the impact beside them', (
 
 test('every tile opens in place: a header button that controls its hidden body', () => {
   const tiles = [...html.matchAll(/<section class="subj tile" id="([^"]+)"/g)].map(m => m[1]);
-  assert.equal(tiles.length, 14);
+  assert.equal(tiles.length, 15);
   for (const t of tiles) {
     assert.match(html, new RegExp('<button type="button" class="tile-hd" aria-expanded="false" aria-controls="' + t + '-body">'), t);
     assert.match(html, new RegExp('id="' + t + '-body" hidden'), t);

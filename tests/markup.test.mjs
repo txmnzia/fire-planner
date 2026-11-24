@@ -98,9 +98,11 @@ test('markup: the Pay changes card is painted on start-up and after a load (v8.6
   assert.match(body('initSituation'), /renderPayList\(\)/);
   assert.match(body('refreshSituationControls'), /renderPayList\(\)/);
   const pay = body('renderPayList');
-  for (const lbl of ['What', 'From', 'Until', 'Take-home / month']) assert.ok(pay.includes('<label>' + lbl + '</label>'), lbl);
+  // v8.18: compact item row: name on top, then from / until / take-home on one line
+  assert.match(pay, /class="item-name pay-name"/);
+  for (const w of ['from', 'until']) assert.ok(pay.includes("SEP('" + w + "')"), w);
   assert.equal((pay.match(/buildYpick\(/g) || []).length, 2, 'From and Until are year pickers');
-  assert.match(pay, /class="inp cur"><span class="pre">€<\/span>/);
+  assert.match(pay, /MONEY\('pay-amt'/);
 });
 
 test('markup: no tab panel is locked against scrolling (v8.6.3)', () => {

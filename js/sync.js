@@ -1,15 +1,15 @@
-import { el } from "./util.js?v=8.17.3";
-import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.17.3";
-import { state, features } from "./state.js?v=8.17.3";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.17.3";
-import { recalc } from "./recalc.js?v=8.17.3";
-import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.17.3";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.17.3";
-import { refreshSituationControls } from "./ui/situation.js?v=8.17.3";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.17.3";
-import { db } from "./db.js?v=8.17.3";
-import { migrateSpending } from "./spendMigration.js?v=8.17.3";
-import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.17.3";
+import { el } from "./util.js?v=8.18";
+import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.18";
+import { state, features } from "./state.js?v=8.18";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.18";
+import { recalc } from "./recalc.js?v=8.18";
+import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.18";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.18";
+import { refreshSituationControls } from "./ui/situation.js?v=8.18";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.18";
+import { db } from "./db.js?v=8.18";
+import { migrateSpending } from "./spendMigration.js?v=8.18";
+import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.18";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
@@ -121,6 +121,8 @@ function applyStateInner(data) {
   // Windfalls: dynamic array on newer payloads; migrate legacy wf{i}_yr/wf{i}_amt fields otherwise.
   if (Array.isArray(data.windfalls)) {
     state.windfalls = data.windfalls.map(w=>({
+      // v8.18: a name of your choice, shown in the Scenarios grid
+      name:typeof w.name==='string'?w.name.slice(0,40):'',
       yr:(w.yr==null||w.yr==='')?null:parseInt(w.yr),
       amt:(w.amt==null||w.amt==='')?null:+w.amt,
       // v8.4: scenarios (1-5) the windfall is switched off for; absent = on everywhere

@@ -2,17 +2,14 @@
 // (plans). A tile shows a one-line summary and opens in place; one open tile per
 // lane. The fields inside are the same inputs as before (same ids), so saving,
 // sync and the engine are untouched. The impact panel sits beside the lanes.
-import { el, eur } from "../util.js?v=8.17.3";
-import { state, features } from "../state.js?v=8.17.3";
-import { refreshedText } from "./spending.js?v=8.17.3";
-import { plansSetUp } from "../checks.js?v=8.17.3";
+import { el, eur } from "../util.js?v=8.18";
+import { state } from "../state.js?v=8.18";
+import { refreshedText } from "./spending.js?v=8.18";
+import { plansSetUp } from "../checks.js?v=8.18";
 
-const L = ['A', 'B', 'C', 'D', 'E'];
 const OPEN_KEY = 'fire_open_tiles';
 const k = v => '€' + (v >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : v >= 1e4 ? Math.round(v / 1000) + 'k' : Math.round(v).toLocaleString('en-GB'));
 const fmtDay = iso => iso ? new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '';
-const usedBy = list => list.length ? 'used by ' + list.map(s => L[s - 1]).join(', ') : 'in no scenario yet';
-const featOn = f => [1, 2, 3, 4, 5].filter(s => features[s] && features[s][f]);
 
 function setOpen(tile, open) {
   const hd = tile.querySelector('.tile-hd'), body = tile.querySelector('.tile-body');
@@ -69,19 +66,19 @@ export function renderTiles(gl) {
   put('tile-housing', 'rent ' + k(gl.propRentSaved || 0) + '/month' + (nextRent ? ' · planned ' + k(nextRent.rent) + ' from ' + nextRent.from : ''), '');
   const sel = el('retCountry'), ctry = sel ? (sel.options[sel.selectedIndex] || {}).text || '' : '';
   put('tile-where', ctry.replace(/\s+[\d.]+%$/, '').trim() + ' · ' + Math.round(gl.taxRate * 1000) / 10 + '% on gains', '');
-  put('tile-partner', 'her ' + k(gl.partnerInc) + '/month · stops at ' + gl.partnerRetAge + ' · you: ' + gl.currentAge + ', plan to ' + gl.lifeExp, '');
+  put('tile-you', 'age ' + gl.currentAge + ' · plan until ' + gl.lifeExp, '');
+  put('tile-partner', 'her take-home ' + k(gl.partnerInc) + '/month · stops at ' + gl.partnerRetAge + (gl.partnerPension > 0 ? ' · pension ' + k(gl.partnerPension) + ' from ' + gl.partnerPensionAge : ''), '');
   put('tile-assump', 'stocks ' + (gl.stockRet * 100).toFixed(1).replace('.0', '') + '% · bonds ' + (gl.bondRet * 100).toFixed(1).replace('.0', '') + '% · inflation ' + (gl.inflation * 100).toFixed(1).replace('.0', '') + '% · ' + (gl.wdMode === 'swr' ? 'draw ' + (gl.swr * 100).toFixed(1).replace('.0', '') + '%' : 'fixed amount'), '');
 
   const up = plansSetUp(gl);
-  put('tile-buy', up.prop ? k(gl.propPrice) + ' in ' + gl.propBuyYear + ' · ' + usedBy(featOn('prop')) : 'not set up: type a price', '');
-  put('tile-child', up.child ? 'born ' + gl.childBirthYear + (gl.childCostYearly > 0 ? ' · ' + k(gl.childCostYearly) + '/year' : '') + ' · ' + usedBy(featOn('child')) : 'not set up: type a yearly cost', '');
-  const pc = state.payChanges || [], pcOn = [...new Set(pc.flatMap(p => p.on || []))].sort();
-  put('tile-paychg', pc.length ? pc.length + ' change' + (pc.length > 1 ? 's' : '') + ' · ' + usedBy(pcOn) : 'none: a 4-day week, a break, a new job', '');
-  const onIn = m => [1, 2, 3, 4, 5].filter(s => !(m.off || []).includes(s));
+  put('tile-buy', up.prop ? k(gl.propPrice) + ' in ' + gl.propBuyYear : 'not set up: type a price', '');
+  put('tile-child', up.child ? 'born ' + gl.childBirthYear + (gl.childCostYearly > 0 ? ' · ' + k(gl.childCostYearly) + '/year' : '') : 'not set up: type a yearly cost', '');
+  const pc = state.payChanges || [];
+  put('tile-paychg', pc.length ? pc.map(p => (p.name || 'change') + ' from ' + p.from).join(' · ') : 'none: a 4-day week, a break, a new job', '');
   const rm = (state.rentMoves || []).filter(m => m.rent != null);
-  put('tile-flat', rm.length ? rm.map(m => k(m.rent) + ' from ' + m.from).join(' · ') + ' · ' + usedBy([...new Set(rm.flatMap(onIn))].sort()) : 'none planned', '');
+  put('tile-flat', rm.length ? rm.map(m => k(m.rent) + ' from ' + m.from).join(' · ') : 'none planned', '');
   const mv = state.residence || [];
-  put('tile-move', mv.length ? mv.map(m => m.country + ' from ' + m.from).join(' · ') + ' · ' + usedBy([...new Set(mv.flatMap(onIn))].sort()) : 'none planned', '');
+  put('tile-move', mv.length ? mv.map(m => m.country + ' from ' + m.from).join(' · ') : 'none planned', '');
   const wf = (state.windfalls || []).filter(w => w.amt > 0);
-  put('tile-wf', wf.length ? wf.map(w => k(w.amt) + ' in ' + w.yr).join(' · ') : 'none', '');
+  put('tile-wf', wf.length ? wf.map(w => (w.name && w.name.trim() ? w.name.trim() + ' ' : '') + k(w.amt) + ' in ' + w.yr).join(' · ') : 'none', '');
 }

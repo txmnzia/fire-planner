@@ -66,7 +66,8 @@ js/
     infoTips.js         Tap/click/hover bubbles for every (i) button (text from its
                         title); placeTip() is the pure, tested placement.
     tiles.js            Changes tab (v8.17): tiles open in place, one-line summaries,
-                        date badges, the phone impact bar.
+                        date badges, the phone impact bar. Tile bodies (v8.18) are
+                        .frow rows (label | controls) with − value + steppers.
     plans.js            Plans: set-up badges on the plan tiles, hides grid rows
                         of plans that are not set up (rule in checks.js), and one
                         grid row per windfall with a switch per scenario

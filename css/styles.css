@@ -443,7 +443,7 @@ button.wd-pill{font:inherit;font-size:12px;}
 
 /* tile body: one rhythm for every form */
 .tile-body[hidden]{display:none;}   /* v8.17.3: the flex rule below must not override hidden */
-.tile-body{container-type:inline-size;border-top:1px solid var(--bdrs);padding:18px 18px 20px;display:flex;flex-direction:column;gap:16px;}
+.tile-body{container-type:inline-size;border-top:1px solid var(--bdrs);padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px;}
 .tile-body > *{margin:0;}
 .tile-body .subj-subhd{margin:6px 0 -4px;padding:0;border:none;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--sec);}
 .tile-body .subj-subhd:first-child{margin-top:0;}
@@ -460,21 +460,46 @@ button.wd-pill{font:inherit;font-size:12px;}
 .tile-chips{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0;padding:0;border:none;width:auto;}
 .tile-body > .tile-chips{padding-bottom:4px;}
 
-/* list items (pay changes, moves, rents, windfalls, snapshots): one card style */
-.tile-body .pay-list,.tile-body .dp-list,.tile-body .res-list{display:flex;flex-direction:column;gap:10px;}
-.pay-row,.tile .res-row{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 14px;align-items:start;
-  padding:14px 44px 14px 14px;background:var(--dim);border:1px solid var(--bdr);border-radius:var(--rs);}
-.pay-row .pay-what,.pay-row .pay-amt,.pay-row .pay-side{grid-column:1/-1;}
-.pay-row .inp,.pay-row .pay-name,.tile .res-row .inp,.tile .res-row input{background:var(--card);}
-.pay-row .pay-name{height:40px;}
-.pay-side{display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.pay-row .dp-del,.tile .res-row .dp-del{position:absolute;top:10px;right:10px;margin:0;}
-.tile .res-row .tile-chips,.pay-row .tile-chips{grid-column:1/-1;}
-@container (min-width:600px){
-  .pay-row{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr);}
-  .pay-row .pay-what,.pay-row .pay-amt{grid-column:auto;}
-  .tile .res-row{grid-template-columns:minmax(0,.8fr) minmax(0,1.4fr) minmax(0,.8fr) minmax(0,.8fr);}
-}
+/* v8.18: one line per subject. Label on the left (fixed column), the controls
+   of that subject on the same line; under 440px of tile the label goes on top.
+   Numbers that are nudged (ages, months, rates) use a compact − value + stepper;
+   the range input stays in the DOM (wiring) but is hidden. */
+.tile-body .frows{display:flex;flex-direction:column;gap:0;}
+.frow{display:grid;grid-template-columns:minmax(0,120px) minmax(0,1fr);align-items:center;column-gap:14px;row-gap:6px;padding:9px 0;border-top:1px solid var(--bdrs);min-width:0;}
+.frow:first-child{border-top:none;padding-top:0;}
+.frow:last-child{padding-bottom:0;}
+.frow-l{font-size:12.5px;color:var(--sec);line-height:1.35;display:block;min-width:0;}
+.frow-l .info-btn{display:inline;padding:0 0 0 3px;}
+.frow-c,.item-c,.item-hd{display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-width:0;}
+.frow-sep{font-size:12px;color:var(--muted);white-space:nowrap;}
+@container (min-width:560px){ .frow{grid-template-columns:minmax(0,150px) minmax(0,1fr);} }
+@container (max-width:399px){ .frow{grid-template-columns:minmax(0,1fr);} }
+.tile-body .fc{flex:0 1 auto;min-width:0;}
+.tile-body .inp.fc,.tile-body .fc .ypick-btn,.tile-body .unit-wrap.fc input,.tile-body select.fc{height:36px;}
+.tile-body .inp.cur.fc{width:116px;padding:0 9px;}
+.tile-body .inp.cur.fc .pre{padding-right:6px;}
+.tile-body .inp .suf{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);padding-left:6px;white-space:nowrap;}
+.tile-body .ypick.fc{width:auto;min-width:92px;}
+.tile-body .ypick.fc .ypick-btn{white-space:nowrap;}
+.tile-body .ypick.fc .ypick-btn{padding:0 10px;font-size:13px;}
+.tile-body .unit-wrap.fc{width:84px;}
+.tile-body .inp.fc:not(.cur){width:170px;}
+.tile-body .frow-c > select,.tile-body .res-c select{width:auto;min-width:150px;max-width:100%;height:36px;}
+.step{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;}
+.step input[type=range]{display:none;}
+.step .age-btn{width:28px;height:36px;border-radius:var(--rs);}
+.step-v{display:inline-flex;align-items:center;height:36px;width:62px;background:var(--dim);border:1px solid var(--bdr);border-radius:var(--rs);padding:0 8px 0 4px;}
+.step-v:focus-within{border-color:var(--acc,var(--sec));}
+.step-v input{height:100%;border:none;background:transparent;padding:0;text-align:right;min-width:0;flex:1;}
+.step-v input:focus{background:transparent;}
+.step-v i{font-style:normal;font-family:'DM Mono',monospace;font-size:10.5px;color:var(--muted);padding-left:4px;}
+
+/* list items (pay changes, rents, moves, windfalls): one card style */
+.tile-body .pay-list,.tile-body .dp-list,.tile-body .res-list{display:flex;flex-direction:column;gap:8px;}
+.item{display:flex;flex-direction:column;gap:8px;padding:10px 10px 10px 12px;background:var(--dim);border:1px solid var(--bdr);border-radius:var(--rs);min-width:0;}
+.item .inp,.item .ypick-btn,.item input,.item .step-v,.item select{background:var(--card);}
+.item-hd .item-name{flex:1 1 160px;height:34px;min-width:0;font-family:'DM Sans',sans-serif;font-size:13px;}
+.item-hd .dp-del,.item-c .dp-del{margin-left:auto;}
 .tile-body .dp-row{padding:10px 12px;gap:10px;}
 .tile-body .dp-main{flex-wrap:wrap;}
 .dp-src{font-size:11px;color:var(--muted);padding:0 2px;}

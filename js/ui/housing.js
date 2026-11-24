@@ -1,31 +1,16 @@
 // Housing moves and where you live (v8.11). Two dynamic lists on My Situation:
 // planned rents (state.rentMoves) and planned moves abroad (state.residence),
 // plus the rent-today edit that keeps the joint transfers consistent.
-import { el, eur } from "../util.js?v=8.17.3";
-import { state } from "../state.js?v=8.17.3";
-import { recalc } from "../recalc.js?v=8.17.3";
-import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.17.3";
-import { COUNTRY_TAX } from "../taxTable.js?v=8.17.3";
-import { countryNote } from "../countries.js?v=8.17.3";
-import { mortgageSchedule } from "../engine.js?v=8.17.3";
-import { LETTERS, flipOff } from "./plans.js?v=8.17.3";
+import { el, eur } from "../util.js?v=8.18";
+import { state } from "../state.js?v=8.18";
+import { recalc } from "../recalc.js?v=8.18";
+import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.18";
+import { COUNTRY_TAX } from "../taxTable.js?v=8.18";
+import { countryNote } from "../countries.js?v=8.18";
+import { mortgageSchedule } from "../engine.js?v=8.18";
 
 const YNOW = new Date().getFullYear();
 const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
-// A–E chips: which scenarios use this move (v8.17); m.off holds the ones it is off for.
-function usedInChips(list, i, repaint) {
-  const m = list[i], wrap = document.createElement('div');
-  wrap.className = 'sc-chips tile-chips'; wrap.setAttribute('role', 'group'); wrap.setAttribute('aria-label', 'Scenarios using this move');
-  const lab = document.createElement('span'); lab.className = 'sc-chips-lbl'; lab.textContent = 'Used in'; wrap.append(lab);
-  LETTERS.forEach((L, k) => {
-    const on = !(Array.isArray(m.off) && m.off.includes(k + 1));
-    const c = document.createElement('button'); c.type = 'button'; c.className = 'sc-chip' + (on ? ' on' : '');
-    c.textContent = L; c.setAttribute('aria-pressed', String(on));
-    c.addEventListener('click', () => { flipOff(list, i, k + 1); repaint(); recalc(); });
-    wrap.append(c);
-  });
-  return wrap;
-}
 function addButton(text, onClick) {
   const b = document.createElement('button'); b.type = 'button'; b.className = 'dp-add';
   b.innerHTML = PLUS + text; b.addEventListener('click', onClick); return b;
@@ -36,12 +21,11 @@ export function renderRentMoves() {
   const host = el('rentMovesList'); if (!host) return;
   host.innerHTML = '';
   state.rentMoves.forEach((m, i) => {
-    const row = document.createElement('div'); row.className = 'dp-row';
-    row.innerHTML = '<div class="dp-main"><span class="dp-lbl">From</span><div class="ypick mini"></div>' +
-      '<div class="inp cur mini"><span class="pre">€</span><input type="text" inputmode="decimal" autocomplete="off" placeholder="New rent / month" aria-label="New rent per month"></div>' +
+    const row = document.createElement('div'); row.className = 'item move-row';
+    row.innerHTML = '<div class="item-c"><span class="frow-sep">from</span><div class="ypick fc"></div>' +
+      '<div class="inp cur fc"><span class="pre">€</span><input type="text" inputmode="decimal" autocomplete="off" placeholder="New rent" aria-label="New rent per month"><span class="suf">/mo</span></div>' +
       '<button type="button" class="dp-del" aria-label="Remove move">×</button></div>';
     const inp = row.querySelector('.cur input'); inp.value = m.rent == null ? '' : fmtMoney(m.rent);
-    row.appendChild(usedInChips(state.rentMoves, i, renderRentMoves));
     host.appendChild(row);
     buildYpick(row.querySelector('.ypick'), { min: 2024, max: 2080, getVal: () => m.from, setVal: y => { m.from = y; recalc(); } });
     inp.addEventListener('input', () => { const raw = cleanMoney(inp.value); inp.value = fmtMoney(raw); const v = parseFloat(raw); m.rent = isNaN(v) ? null : v; recalc(); });
@@ -92,18 +76,16 @@ export function renderResidence() {
   const host = el('resList'); if (!host) return;
   host.innerHTML = '';
   state.residence.forEach((p, i) => {
-    const row = document.createElement('div'); row.className = 'res-row';
+    const row = document.createElement('div'); row.className = 'item res-item';
     row.innerHTML =
-      '<div class="field"><label>From</label><div class="ypick"></div></div>' +
-      '<div class="field"><label>Country</label><div class="inp res-c"></div></div>' +
-      '<div class="field"><label>Tax on gains</label><div class="unit-wrap"><input type="number" step="0.5" min="0" max="60" class="res-tax"><span class="u">%</span></div></div>' +
-      '<div class="field"><label>Cost of living</label><div class="unit-wrap"><input type="number" step="5" min="30" max="300" class="res-col" placeholder="100"><span class="u">%</span></div></div>' +
-      '<button type="button" class="dp-del" aria-label="Remove move">×</button>';
+      '<div class="item-hd"><span class="frow-sep">from</span><div class="ypick fc"></div><div class="res-c fc"></div>' +
+      '<button type="button" class="dp-del" aria-label="Remove move">×</button></div>' +
+      '<div class="item-c"><span class="frow-sep">tax on gains</span><span class="unit-wrap fc fc-num"><input type="number" step="0.5" min="0" max="60" class="res-tax" aria-label="Tax on gains"><span class="u">%</span></span>' +
+      '<span class="frow-sep">cost of living</span><span class="unit-wrap fc fc-num"><input type="number" step="5" min="30" max="300" class="res-col" placeholder="100" aria-label="Cost of living"><span class="u">%</span></span></div>';
     const sel = countrySelect(p.country); row.querySelector('.res-c').appendChild(sel);
     const tax = row.querySelector('.res-tax'), col = row.querySelector('.res-col');
     tax.placeholder = String(COUNTRY_TAX[p.country] ?? 30); tax.value = p.tax == null ? '' : p.tax;
     col.value = p.col == null ? '' : p.col;
-    row.appendChild(usedInChips(state.residence, i, renderResidence));
     host.appendChild(row);
     buildYpick(row.querySelector('.ypick'), { min: 2024, max: 2080, getVal: () => p.from, setVal: y => { p.from = y; recalc(); renderResNotes(); } });
     sel.addEventListener('change', () => { p.country = sel.value; tax.placeholder = String(COUNTRY_TAX[p.country] ?? 30); recalc(); renderResNotes(); });

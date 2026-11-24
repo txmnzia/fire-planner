@@ -138,7 +138,7 @@ first entry).
 | French pension / month | `pension2Amt` | — (0) | EUR/month | Gross, as printed (basic + Agirc-Arrco); empty = no rights in France |
 | French pension age | `pension2Age` | 64 | years | Legal age; change only to defer |
 | (last statement) | `pensionUpdated` | — | date | Stamped when a pension amount is edited; red after 12 months |
-| Windfalls (Year, Amount, Used in) | `state.windfalls` `[{yr,amt,off}]` | none | year, EUR, scenario ids | One-time lump-sum inflows on the **Plans** tab (v8.4); each has an A–E switch per scenario, also shown as a row in the scenario grid. `off` lists the scenarios it is switched off for; absent = on everywhere, so windfalls saved before v8.4 keep applying to every scenario (legacy `wf0/1/2` fields auto-migrate) |
+| Windfalls (Name, Year, Amount) | `state.windfalls` `[{name,yr,amt,off}]` | none | text, year, EUR, scenario ids | One-time lump-sum inflows in the **Changes** tab, "Might happen" lane; switched per scenario in the scenario grid, one row per windfall labelled with its name (v8.18; "Windfall" when unnamed). `off` lists the scenarios it is switched off for; absent = on everywhere, so windfalls saved before v8.4 keep applying to every scenario (legacy `wf0/1/2` fields auto-migrate) |
 
 ### Partner (global, toggled per scenario)
 
@@ -853,7 +853,7 @@ This significantly reduces the required FIRE portfolio if you retire well before
 
 ## Windfalls
 
-Up to 3 one-time lump-sum payments can be specified by year and amount.
+Any number of one-time lump-sum payments, each with an optional name, a year and an amount, switched per scenario in the scenario grid.
 
 In the projection loop, windfalls are added to the portfolio in the specified calendar year:
 
