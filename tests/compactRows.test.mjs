@@ -73,6 +73,9 @@ test('v8.18.2: fields flow side by side, a caption above each; a field keeps its
   assert.match(css, /\.tile-body \.frows\{display:flex;flex-wrap:wrap;/);
   assert.match(css, /\.frow\{display:flex;flex-direction:column;/);
   // money fields are wide enough for 1,250,000 next to "/mo" (checked in the browser too)
-  assert.match(css, /\.tile-body \.inp\.cur\.fc\{flex:0 0 auto;width:150px;/);
+  assert.match(css, /\.tile-body \.inp\.cur\.fc\{flex:1 1 150px;min-width:150px;/);
+  // v8.18.3: each line fills the tile (fields and their boxes grow); a field's own controls stay on one line
+  assert.match(css, /\.tile-body \.frow\{flex:1 1 0;align-items:stretch;\}/);
+  assert.match(css, /@container \(min-width:400px\)\{ \.tile-body \.frow-c,\.tile-body \.frow-grp\{flex-wrap:nowrap;\} \}/);
   assert.match(css, /\.tile-body \.inp\.cur\.fc input\{[^}]*padding:0;/);
 });

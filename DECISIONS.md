@@ -5,6 +5,15 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.18.3 Every line ends on the right edge
+
+- **Left-right alignment in every tile** (the owner): fields are packed by their real
+  size, then the fields and their boxes (money, years, steppers, pickers) grow so each
+  line of a tile ends on its right edge. Words between boxes keep their size.
+- A field's own controls never split across lines on a normal tile; on a phone-width
+  tile a field with several controls takes its own line, single boxes still pair up.
+- List items (pay changes, rents, moves, windfalls) follow the same rule.
+
 ## 2026-11-24 · v8.18.2 Fields flow across the tile
 
 - **Caption above, fields side by side:** every field has its name above it and the
