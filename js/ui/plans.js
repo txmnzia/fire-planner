@@ -1,11 +1,11 @@
 // Plans tab (v8.3): which plans are set up, shown on the plan cards and in the
 // scenario grid (a plan that is not set up has no switch there). The rule itself
 // lives in js/checks.js (plansSetUp), which also gates the calculation.
-import { el, eur, fmtK } from "../util.js?v=8.17";
-import { state } from "../state.js?v=8.17";
-import { recalc } from "../recalc.js?v=8.17";
-import { isComplete } from "../payChanges.js?v=8.17";
-import { plansSetUp } from "../checks.js?v=8.17";
+import { el, eur, fmtK } from "../util.js?v=8.17.1";
+import { state } from "../state.js?v=8.17.1";
+import { recalc } from "../recalc.js?v=8.17.1";
+import { isComplete } from "../payChanges.js?v=8.17.1";
+import { plansSetUp } from "../checks.js?v=8.17.1";
 
 const NAMES = { prop: "Buying a home", child: "Child" };
 

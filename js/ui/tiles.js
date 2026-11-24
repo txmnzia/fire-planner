@@ -2,10 +2,10 @@
 // (plans). A tile shows a one-line summary and opens in place; one open tile per
 // lane. The fields inside are the same inputs as before (same ids), so saving,
 // sync and the engine are untouched. The impact panel sits beside the lanes.
-import { el, eur } from "../util.js?v=8.17";
-import { state, features } from "../state.js?v=8.17";
-import { refreshedText } from "./spending.js?v=8.17";
-import { plansSetUp } from "../checks.js?v=8.17";
+import { el, eur } from "../util.js?v=8.17.1";
+import { state, features } from "../state.js?v=8.17.1";
+import { refreshedText } from "./spending.js?v=8.17.1";
+import { plansSetUp } from "../checks.js?v=8.17.1";
 
 const L = ['A', 'B', 'C', 'D', 'E'];
 const OPEN_KEY = 'fire_open_tiles';
@@ -30,8 +30,13 @@ export function initTiles() {
   document.querySelectorAll('.tile').forEach(t => t.querySelector('.tile-hd').addEventListener('click', () => {
     if (t.classList.contains('open')) { setOpen(t, false); saveOpen(); } else openTile(t.id);
   }));
-  // a field reached from elsewhere (banner Fix, review Go) opens its tile
-  document.addEventListener('focusin', e => { const t = e.target.closest && e.target.closest('.tile'); if (t && !t.classList.contains('open')) openTile(t.id); });
+  // a field reached from elsewhere (banner Fix, review Go) opens its tile. Only
+  // fields inside a tile's body: focusing the header button (a click on it) must
+  // not open the tile first, or the click would close it again (v8.17.1).
+  document.addEventListener('focusin', e => {
+    const b = e.target.closest && e.target.closest('.tile-body'); if (!b) return;
+    const t = b.closest('.tile'); if (t && !t.classList.contains('open')) openTile(t.id);
+  });
   let ids = []; try { ids = JSON.parse(localStorage.getItem(OPEN_KEY) || '[]'); } catch {}
   ids.forEach(id => { if (el(id)) openTile(id); });
   const tog = el('impactToggle');

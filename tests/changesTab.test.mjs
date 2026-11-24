@@ -76,3 +76,9 @@ test('engine: the same scenario with and without a flat move differs only by the
   // 2030 (her real share 37.5%): your cost is higher by 300 × 12 × 62.5% = 2,250
   assert.equal(q.rows[p.years.indexOf(2030)].netFlow - p.rows[p.years.indexOf(2030)].netFlow, 2250);
 });
+
+test('v8.17.1: focusing a tile header does not open it (only fields inside the body do)', () => {
+  const src = readFileSync(new URL('../js/ui/tiles.js', import.meta.url), 'utf8');
+  const h = src.slice(src.indexOf("addEventListener('focusin'"), src.indexOf("addEventListener('focusin'") + 300);
+  assert.match(h, /closest\('\.tile-body'\)/);
+});
