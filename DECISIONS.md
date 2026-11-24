@@ -5,6 +5,19 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.16 Edited fields are visible
+
+- A field edited since the last saved version turns amber ("was X" on hover) and its
+  card counts its changes, until the next Save update.
+
+### Still open after v8.16
+
+- Remove the Simple-model engine path (kept only for the golden master's 96 cases).
+- Pensions are used gross in the plan (net estimate shown only).
+- Plan vs actual still re-projects with today's assumptions (not the plan saved then).
+- "Owner mode" after a purchase (loan left, end of the fixed period) beyond the prompt.
+- Revolut CSV import for the four spending numbers.
+
 ## 2026-11-24 · v8.15 Year-end rollover
 
 - The closing net worth is stored as **1 January of the next year** (history rows are

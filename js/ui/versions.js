@@ -2,18 +2,18 @@
 // version and what it does to the five scenarios, Save update / Undo all, the
 // update log (compare, restore), the first-run review and "Did this happen?".
 // Edits still autosave as before; a version is a dated copy you can go back to.
-import { el, eur } from "../util.js?v=8.15";
-import { state, features } from "../state.js?v=8.15";
-import { recalc } from "../recalc.js?v=8.15";
-import { collectState, applyState } from "../sync.js?v=8.15";
-import { getScenarioName } from "../inputs.js?v=8.15";
+import { el, eur } from "../util.js?v=8.16";
+import { state, features } from "../state.js?v=8.16";
+import { recalc } from "../recalc.js?v=8.16";
+import { collectState, applyState } from "../sync.js?v=8.16";
+import { getScenarioName } from "../inputs.js?v=8.16";
 import { snapshotOf, resultsOf, diffFields, diffLists, changeCount, impactLines, addVersion,
-         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.15";
-import { rentShift } from "./housing.js?v=8.15";
-import { updateToggleUI } from "./controls.js?v=8.15";
-import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.15";
-import { renderNwHistory } from "./nwHistory.js?v=8.15";
-import { refreshedText } from "./spending.js?v=8.15";
+         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.16";
+import { rentShift } from "./housing.js?v=8.16";
+import { updateToggleUI } from "./controls.js?v=8.16";
+import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.16";
+import { renderNwHistory } from "./nwHistory.js?v=8.16";
+import { refreshedText } from "./spending.js?v=8.16";
 
 const fmtDay = ts => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -136,6 +136,27 @@ export function applyYearEnd() {
   saveVersion("Year-end " + closing, "yearend");
 }
 
+// Edited fields turn amber with "was X" (title), and each card's header counts
+// its changes since the last version (story rule 4).
+function markChanged(fields) {
+  document.querySelectorAll(".was-changed").forEach(n => { n.classList.remove("was-changed"); n.removeAttribute("data-was"); });
+  document.querySelectorAll(".subj-badge").forEach(n => n.remove());
+  const perCard = new Map();
+  for (const f of fields) {
+    const inp = el(f.id + "_disp") || el(f.id);
+    if (!inp || inp.type === "hidden") continue;
+    const d = inp.closest(".inp, .unit-wrap, .sv") || inp;
+    d.classList.add("was-changed"); d.dataset.was = "was " + (f.from || "empty");
+    d.title = "was " + (f.from || "empty");
+    const card = d.closest(".subj"); if (card) perCard.set(card, (perCard.get(card) || 0) + 1);
+  }
+  perCard.forEach((c, card) => {
+    const hd = card.querySelector(".subj-tt h3"); if (!hd) return;
+    const b = document.createElement("span"); b.className = "subj-badge"; b.textContent = c + (c > 1 ? " changes" : " change");
+    hd.appendChild(b);
+  });
+}
+
 // ── Rendering ───────────────────────────────────────────────────────────────
 export function renderUpdatePanel(gl) {
   const host = el("updatePanel"); if (!host) return;
@@ -146,6 +167,7 @@ export function renderUpdatePanel(gl) {
   const lists = v ? diffLists(v.snapshot, cur) : [];
   const now = currentResults();
   const n = fields.length + lists.length;
+  markChanged(fields);
   let h = "";
 
   // Year-end: offered once the calendar has moved past the plan's "today"
