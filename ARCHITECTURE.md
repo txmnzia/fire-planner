@@ -31,6 +31,7 @@ js/
                         (collectState/applyState, magic-link sign-in, polling).
   taxTable.js           Country tax presets (one table, shared by inputs and countries).
   countries.js          Pure (v8.11): country notes, residence periods, rent moves.
+  yearEnd.js            Pure (v8.15): year-end amounts to raise and the history row.
   versionsCore.js       Pure (v8.14): snapshots, diffs, impact lines, prompts, review.
   ibkr.js               Pure (v8.10): IBKR statement parser (total, positions, gain %,
                         as-of date, deposits) and the check-in read-outs.

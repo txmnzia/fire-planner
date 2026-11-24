@@ -5,6 +5,15 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-24 · v8.15 Year-end rollover
+
+- The closing net worth is stored as **1 January of the next year** (history rows are
+  start-of-year, like the projection), not as the closed year.
+- Amounts in today's money not refreshed during the closed year are raised by
+  inflation; **pay is not raised by default** (no raise is the realistic default; type
+  one if you got it).
+- The year's average income and spending are not written to the history row yet.
+
 ## 2026-11-24 · v8.14 Versions, impact, prompts, first-run review
 
 - **Versions inside the saved row** (as decided earlier): last 30, each a copy of the

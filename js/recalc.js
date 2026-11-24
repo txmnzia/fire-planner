@@ -1,20 +1,20 @@
-import { el, eur, numVal } from "./util.js?v=8.14";
-import { state } from "./state.js?v=8.14";
-import { getGlobals, getScenario } from "./inputs.js?v=8.14";
-import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.14";
-import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.14";
-import { renderTable } from "./ui/table.js?v=8.14";
-import { renderExplanation } from "./ui/explanation.js?v=8.14";
-import { updateLabels } from "./ui/controls.js?v=8.14";
-import { markMcStale } from "./ui/mcTab.js?v=8.14";
-import { scheduleSave } from "./sync.js?v=8.14";
-import { renderIssues } from "./ui/issues.js?v=8.14";
-import { renderPlans } from "./ui/plans.js?v=8.14";
-import { renderSpendReadout } from "./ui/spending.js?v=8.14";
-import { renderAssumptions } from "./ui/situation.js?v=8.14";
-import { renderCheckin } from "./ui/ibkr.js?v=8.14";
-import { renderResNotes, renderPropReadout } from "./ui/housing.js?v=8.14";
-import { renderUpdatePanel } from "./ui/versions.js?v=8.14";
+import { el, eur, numVal } from "./util.js?v=8.15";
+import { state } from "./state.js?v=8.15";
+import { getGlobals, getScenario } from "./inputs.js?v=8.15";
+import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.15";
+import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.15";
+import { renderTable } from "./ui/table.js?v=8.15";
+import { renderExplanation } from "./ui/explanation.js?v=8.15";
+import { updateLabels } from "./ui/controls.js?v=8.15";
+import { markMcStale } from "./ui/mcTab.js?v=8.15";
+import { scheduleSave } from "./sync.js?v=8.15";
+import { renderIssues } from "./ui/issues.js?v=8.15";
+import { renderPlans } from "./ui/plans.js?v=8.15";
+import { renderSpendReadout } from "./ui/spending.js?v=8.15";
+import { renderAssumptions } from "./ui/situation.js?v=8.15";
+import { renderCheckin } from "./ui/ibkr.js?v=8.15";
+import { renderResNotes, renderPropReadout } from "./ui/housing.js?v=8.15";
+import { renderUpdatePanel } from "./ui/versions.js?v=8.15";
 
 // ── RECALC ──────────────────────────────────────────────────────────────────
 export function recalc() {

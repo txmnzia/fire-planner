@@ -2,15 +2,18 @@
 // version and what it does to the five scenarios, Save update / Undo all, the
 // update log (compare, restore), the first-run review and "Did this happen?".
 // Edits still autosave as before; a version is a dated copy you can go back to.
-import { el, eur } from "../util.js?v=8.14";
-import { state, features } from "../state.js?v=8.14";
-import { recalc } from "../recalc.js?v=8.14";
-import { collectState, applyState } from "../sync.js?v=8.14";
-import { getScenarioName } from "../inputs.js?v=8.14";
+import { el, eur } from "../util.js?v=8.15";
+import { state, features } from "../state.js?v=8.15";
+import { recalc } from "../recalc.js?v=8.15";
+import { collectState, applyState } from "../sync.js?v=8.15";
+import { getScenarioName } from "../inputs.js?v=8.15";
 import { snapshotOf, resultsOf, diffFields, diffLists, changeCount, impactLines, addVersion,
-         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.14";
-import { rentShift } from "./housing.js?v=8.14";
-import { updateToggleUI } from "./controls.js?v=8.14";
+         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.15";
+import { rentShift } from "./housing.js?v=8.15";
+import { updateToggleUI } from "./controls.js?v=8.15";
+import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.15";
+import { renderNwHistory } from "./nwHistory.js?v=8.15";
+import { refreshedText } from "./spending.js?v=8.15";
 
 const fmtDay = ts => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -101,6 +104,38 @@ export function answerPrompt(key, yes) {
   recalc();
 }
 
+// ── Year-end rollover (v8.15) ───────────────────────────────────────────────
+function yearEndHtml(gl) {
+  const closing = gl.baseYear;
+  const fields = collectState().fields;
+  const ch = yearEndChanges(fields, closing, gl.inflation);
+  const nw = Math.round((state.ibkrTotal || 0) + (gl.cash || 0));
+  const overdue = [["Portfolio", state.ibkrAsOf, 92], ["Spending", fields.spendUpdated, 183], ["Pensions", fields.pensionUpdated, 365]]
+    .filter(([, d, days]) => !d || refreshedText(d, new Date(), days).stale).map(([n]) => n);
+  return '<div class="up-main up-ye"><div class="up-hd">Close ' + closing + '</div>' +
+    '<div><b>1 · Closing net worth</b> (written as your net worth at the start of ' + (closing + 1) + ')</div>' +
+    '<div class="up-actions"><div class="inp cur"><span class="pre">\u20ac</span><input type="text" id="yeNw" value="' + nw + '" inputmode="decimal"></div>' +
+    '<span class="tgt">IBKR ' + eur(state.ibkrTotal || 0) + (state.ibkrAsOf ? ' as of ' + state.ibkrAsOf : '') + ' + cash ' + eur(gl.cash || 0) + (state.ibkrAsOf && state.ibkrAsOf < closing + '-12-01' ? '. Import the 31 Dec statement first for an exact figure.' : '') + '</span></div>' +
+    '<div><b>2 · Move \u201ctoday\u201d to ' + (closing + 1) + '</b>: ages move up a year; amounts in today\u2019s money not refreshed in ' + closing + ' are raised by inflation (' + (gl.inflation * 100).toFixed(1) + '%). Untick any to keep it as typed.</div>' +
+    '<div class="up-changes">' + ch.map(c => '<label class="ye-row"><input type="checkbox" data-ye="' + c.id + '"' + (c.checked ? ' checked' : '') + '> ' + esc(c.label) + ': ' + eur(c.from) + ' \u2192 <b>' + eur(c.to) + '</b> <span class="tgt">(' + c.why + ')</span></label>').join('') + '</div>' +
+    '<div><b>3 · Check-ins due</b>: ' + (overdue.length ? esc(overdue.join(', ')) : 'none') + '</div>' +
+    '<div class="up-actions"><button type="button" class="dp-add up-save" data-ye-apply="1">Close ' + closing + ' and save</button><button type="button" class="dp-add" data-ye-cancel="1">Cancel</button></div></div>';
+}
+export function applyYearEnd() {
+  const gl = state.lastGl; if (!gl) return;
+  const closing = gl.baseYear, fields = collectState().fields;
+  const nw = parseFloat(String(el("yeNw")?.value || "").replace(/[^\d.]/g, ""));
+  const picked = new Set([...document.querySelectorAll("[data-ye]")].filter(c => c.checked).map(c => c.dataset.ye));
+  for (const c of yearEndChanges(fields, closing, gl.inflation)) if (picked.has(c.id)) setMoney(c.id, c.to);
+  if (picked.has("propRentSaved")) state.rentMoves = state.rentMoves.map(m => ({ ...m, rent: m.rent == null ? null : Math.round(m.rent * (1 + gl.inflation)) }));
+  if (nw > 0) { state.nwHistory = closeYearHistory(state.nwHistory, closing, nw); renderNwHistory(); }
+  const by = el("baseYear"); if (by) by.value = String(closing + 1);
+  state.yearEndOpen = false;
+  window.dispatchEvent(new Event("fire:refresh-controls"));
+  recalc();
+  saveVersion("Year-end " + closing, "yearend");
+}
+
 // ── Rendering ───────────────────────────────────────────────────────────────
 export function renderUpdatePanel(gl) {
   const host = el("updatePanel"); if (!host) return;
@@ -113,8 +148,12 @@ export function renderUpdatePanel(gl) {
   const n = fields.length + lists.length;
   let h = "";
 
-  // Did this happen?
+  // Year-end: offered once the calendar has moved past the plan's "today"
   const y = new Date().getFullYear();
+  if (state.yearEndOpen) h += yearEndHtml(gl);
+  else if (y > gl.baseYear) h += '<div class="up-prompts"><div class="up-prompt"><span>It\u2019s ' + y + ': close ' + gl.baseYear + ' (history row, today moves to ' + (gl.baseYear + 1) + ')?</span><span class="up-btns"><button type="button" class="dp-add" data-ye-open="1">Close ' + gl.baseYear + '</button></span></div></div>';
+
+  // Did this happen?
   const prompts = duePrompts({
     year: y, rentMoves: state.rentMoves, residence: state.residence,
     // a plan that is on in some scenarios but not yet a fact in all of them
@@ -156,7 +195,8 @@ export function renderUpdatePanel(gl) {
 
   // Log
   if (state.versions.length) {
-    h += '<details class="up-log"><summary>Update log (' + state.versions.length + ")</summary>" + state.versions.slice().reverse().map((x, j, arr) => {
+    h += '<details class="up-log"' + (state.logOpen ? " open" : "") + '><summary>Update log (' + state.versions.length + ")</summary>" +
+      (state.yearEndOpen ? "" : '<div class="up-entry"><span class="tgt">Closing a year normally happens in January.</span><button type="button" class="dp-add" data-ye-open="1">Close ' + gl.baseYear + ' now</button></div>') + state.versions.slice().reverse().map((x, j, arr) => {
       const older = arr[j + 1];
       const eff = older ? impactLines(older.results, x.results) : [];
       const sinceNow = impactLines(x.results, now);
@@ -178,6 +218,9 @@ export function initUpdatePanel() {
     else if (b.dataset.restore) restoreVersion(b.dataset.restore);
     else if (b.dataset.yes) answerPrompt(b.dataset.yes, true);
     else if (b.dataset.no) answerPrompt(b.dataset.no, false);
+    else if (b.dataset.yeOpen) { state.yearEndOpen = true; recalc(); host.scrollIntoView({ behavior: "smooth" }); }
+    else if (b.dataset.yeApply) applyYearEnd();
+    else if (b.dataset.yeCancel) { state.yearEndOpen = false; recalc(); }
     else if (b.dataset.dismiss) { state.review.dismissed = true; recalc(); }
     else if (b.dataset.done) { state.review.done = { ...(state.review.done || {}), [b.dataset.done]: true }; recalc(); }
     else if (b.dataset.go) {

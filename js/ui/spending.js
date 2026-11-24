@@ -1,11 +1,11 @@
 // Spending refresh (v8.7): read-outs under the four spending numbers and the
 // "last refreshed" date. The numbers come from the engine (investNowMonthly), so
 // the read-out is the same calculation the projection uses in year one.
-import { el, eur, numVal } from "../util.js?v=8.14";
-import { investNowMonthly } from "../engine.js?v=8.14";
-import { PENSION_COUNTRIES, pensionNetEstimate } from "../pensions.js?v=8.14";
-import { depositCheck } from "../ibkr.js?v=8.14";
-import { state } from "../state.js?v=8.14";
+import { el, eur, numVal } from "../util.js?v=8.15";
+import { investNowMonthly } from "../engine.js?v=8.15";
+import { PENSION_COUNTRIES, pensionNetEstimate } from "../pensions.js?v=8.15";
+import { depositCheck } from "../ibkr.js?v=8.15";
+import { state } from "../state.js?v=8.15";
 
 export const REFRESH_FIELDS = ['samPersonalNow', 'samPaysIn', 'partnerPaysIn', 'yearlyItems'];
 export const STALE_DAYS = 183;

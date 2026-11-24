@@ -924,6 +924,17 @@ Yes makes it a fact (rent today / country today replaced, later moves re-based; 
 the child switched on in every scenario; the new pay becomes your take-home). Not yet moves
 it to next year.
 
+## Year-end rollover (v8.15)
+
+Once the calendar has passed the plan's "today" (`baseYear`), the panel offers **Close
+{year}** (also in the update log, any time): (1) the closing net worth (IBKR + cash,
+editable) is written as the net-worth history row for 1 January of the next year;
+(2) `baseYear` moves on a year, so ages move up; every amount typed in today's money that
+was **not refreshed during the closed year** is raised by inflation (a list with
+checkboxes; pay is unticked by default, a raise is typed instead; planned rents follow
+rent today); (3) overdue check-ins are listed; the result is saved as a version
+"Year-end {year}". Pure logic: `js/yearEnd.js`.
+
 ## The 5 Default Scenarios
 
 | Scenario | Default Retire Age | Partner | Property | Child | Special |

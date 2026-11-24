@@ -1,7 +1,7 @@
-import { el } from "../util.js?v=8.14";
-import { state } from "../state.js?v=8.14";
-import { recalc } from "../recalc.js?v=8.14";
-import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.14";
+import { el } from "../util.js?v=8.15";
+import { state } from "../state.js?v=8.15";
+import { recalc } from "../recalc.js?v=8.15";
+import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.15";
 
 // ── NET WORTH HISTORY (plan vs actual) ───────────────────────────────────────
 // Compact datapoint rows shared with the windfalls list: one discreet line per
