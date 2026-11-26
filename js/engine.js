@@ -370,12 +370,54 @@ export function tempCostPV(fromAge, sc, gl, taxMult, herDraw) {
   gl = scGl(gl, sc);
   if (fromAge >= gl.lifeExp) return 0;
   const fromYear = gl.baseYear + fromAge - gl.currentAge, r = portReturnAt(gl, fromAge, sc.retAge);
+  const tm = risingTaxMult(gl, fromYear, taxMult, r);
   let pv = 0;
   for (let k = 0; k < gl.lifeExp - fromAge; k++) {
     const yr = fromYear + k, c = tempCostAt(yr, sc, gl, (herDraw || {})[yr - gl.baseYear] || 0);
-    if (c > 0) pv += c*taxMult/Math.pow(1+r, k+1);
+    if (c > 0) pv += c*tm(k+1)/Math.pow(1+r, k+1);   // v8.24: rising gain fraction (audit 2026-11 F5)
   }
   return pv;
+}
+// Tax gross-up for a sale `years` after fromYear, where it is taxMult: the gain
+// fraction keeps rising with growth (v8.5) at the rate of the country you live in
+// that year (v8.11). One definition for the fixed-mode target and the set-aside.
+export function risingTaxMult(gl, fromYear, taxMult, r) {
+  const rate0 = taxRateAt(gl, fromYear);
+  if (!(rate0 > 0)) return () => taxMult;   // no tax where you start: the gross-up given stays
+  const g0 = clamp01((1 - 1/taxMult)/rate0);
+  return years => {
+    const rate = taxRateAt(gl, fromYear + Math.max(0, years - 1));
+    if (!(rate > 0)) return 1;
+    const g = 1 - (1 - g0)/Math.pow(1 + Math.max(0, r), years);
+    return 1/Math.max(0.001, 1 - g*rate);
+  };
+}
+// % mode reserve schedule (v8.24): sched[k] = present value at the start of year
+// y0+k of the costs that end (and a purchase) from that year on, priced like
+// tempCostPV/purchasePV: sched[0] equals the set-aside in the FIRE number.
+export function setAsideSchedule(sc, gl, taxMult, y0) {
+  gl = scGl(gl, sc);
+  const fromAge = gl.currentAge + (y0 - gl.baseYear), n = Math.max(0, gl.lifeExp - fromAge);
+  const r = portReturnAt(gl, fromAge, sc.retAge), tm = risingTaxMult(gl, y0, taxMult, r);
+  const buy = sc.hasProp && gl.propPrice > 0 && gl.propBuyYear >= y0 ? gl.propBuyYear - y0 : -1;
+  // flows at the end of year k (costs) and at the start of the purchase year, in money of y0
+  const out = new Array(n + 1).fill(0);
+  for (let k = n - 1; k >= 0; k--) {
+    const c = tempCostAt(y0 + k, sc, gl) * tm(k + 1);
+    out[k] = (out[k + 1] + c) / (1 + r);
+    if (k === buy) out[k] += purchaseCostFor(gl, sc) * tm(k);
+  }
+  out.y0 = y0;
+  return out;
+}
+// v8.24 (audit 2026-11 F6): a home bought after you stop is paid from the
+// portfolio; % mode sets its cash aside at present value, like fixed mode.
+export function purchasePV(fromAge, sc, gl, taxMult) {
+  gl = scGl(gl, sc);
+  const fromYear = gl.baseYear + fromAge - gl.currentAge;
+  if (!sc.hasProp || !(gl.propPrice > 0) || gl.propBuyYear < fromYear) return 0;
+  const r = portReturnAt(gl, fromAge, sc.retAge), d = gl.propBuyYear - fromYear;
+  return purchaseCostFor(gl, sc)*risingTaxMult(gl, fromYear, taxMult, r)(Math.max(0, d))/Math.pow(1+r, d);
 }
 // The lifelong part of the year-one budget: yearOneBudget minus that year's
 // temporary costs. The full yearOneBudget stays the definition of the budget (I2).
@@ -469,7 +511,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
       // lifelong part × 1/SWR, plus the costs that end at their present value (v8.2)
       const perm0 = Math.max(0, a0.c.samCost - tempCostAt(fromYear, sc, gl, herDraw[tFrom] || 0));
       let target = gl.swr>0 ? Math.max(0, perm0 - a0.pen)*taxMult/gl.swr : 0;
-      target += tempCostPV(fromAge, sc, gl, taxMult, herDraw);
+      target += tempCostPV(fromAge, sc, gl, taxMult, herDraw) + purchasePV(fromAge, sc, gl, taxMult);
       if (opts.otherIncomeCredit) {
         // Adjusted: credit your pension starting later, and price later changes
         // in the partner's share (she retires: share falls, your cost rises; her
@@ -505,7 +547,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
     const pensionOffset = pensionMonthlyAt(gl, fromAge)*12*Math.pow(1+gl.inflation,tFrom);
     const annualFromPort = Math.max(0,budget-pensionOffset);   // alone here (with her: partialTargetTwo)
     let target = gl.swr>0 ? annualFromPort*taxMult/gl.swr : 0;
-    target += tempCostPV(fromAge, sc, gl, taxMult);
+    target += tempCostPV(fromAge, sc, gl, taxMult) + purchasePV(fromAge, sc, gl, taxMult);
     if (opts.otherIncomeCredit) {
       // Adjusted (non-headline) number: also credit the PV of income the headline
       // ignores — pensions that start after retirement, and partner salary until
@@ -631,6 +673,7 @@ export function project(sc, gl, opts) {
   let portfolio = startPort;
   let costBasis = startPort*(1-gl.gainFrac);
   let gainFracAtRet = null;                    // tracked gain fraction when retirement starts
+  let setAsideSched = null;                    // % mode: reserve for costs that end, by year (v8.24)
   let infeasibleYear = null;                   // first year portfolio+cash can't fund the plan
   // Two-person model: her money stays hers. Since v8.8 only her income is
   // modelled (it sets her share of shared costs); her savings are not.
@@ -699,10 +742,27 @@ export function project(sc, gl, opts) {
     // Your income for the share after retirement = pension + portfolio × SWR ×
     // netFrac (SWR even in fixed mode); hers is her salary or pension.
     const herDraw = 0;
+    // v8.24 (audit 2026-11 F2/F4): in % mode the set-aside for costs that end (and a
+    // home bought after you stop) is not part of the sustainable draw. It is priced
+    // when retirement starts (as in the FIRE number), grows with the year's return
+    // and pays those costs. Your share-income is then pension + draw on the rest +
+    // the costs that end paid this year, exactly the income selfFundedCost assumes
+    // at the target, so the row budget equals yearOneBudget there.
+    // The reserve follows a schedule fixed when retirement starts: at the start of
+    // each retirement year, the present value of the costs that end from that year
+    // on (so it falls to 0 as they end and the money is released to the draw).
+    if (gl.wdMode==="swr" && yr>=retYear && setAsideSched===null) {
+      const tmR = 1/Math.max(0.001, 1-gainFracAtRet*taxRateAt(gl, retYear));
+      setAsideSched = setAsideSchedule(sc, gl, tmR, yr);
+    }
+    const setAside = setAsideSched ? Math.min(Math.max(0, portfolio), setAsideSched[yr - (setAsideSched.y0)] || 0) : null;
     let samDrawStart = 0;
     if (twoP) {
       const gfS = portfolio>0 ? clamp01((portfolio-costBasis)/portfolio) : 0;
-      samDrawStart = Math.max(0, portfolio)*gl.swr*Math.max(0.001, 1-gfS*taxRateAt(gl, yr));
+      const nfS = Math.max(0.001, 1-gfS*taxRateAt(gl, yr));
+      samDrawStart = (gl.wdMode==="swr" && setAside!==null)
+        ? Math.max(0, portfolio - setAside)*gl.swr*nfS + tempCostAt(yr, sc, gl)
+        : Math.max(0, portfolio)*gl.swr*nfS;
     }
     let tp = null;                             // this year's two-person ledger
 
@@ -741,7 +801,7 @@ export function project(sc, gl, opts) {
       } else if (twoP) {
         // her real share holds while your pay is today's (no pay change, no parental leave)
         tp = twoPersonCost(yr, sc, gl, annInc, herDraw, false, false, Math.abs(annInc - sc.income*12*infl) > 0.5);
-        annSpendNow = tp.samPersonal + tp.shared - tp.child - tp.mortgage + tp.rentSaved;
+        annSpendNow = tp.samPersonal + tp.shared - tp.child - tp.mortgage - tp.ownership + tp.rentSaved;
         childCost   = tp.child;
       } else {
         annSpendNow = soloSpend(gl, false, yr)*12*infl;
@@ -759,21 +819,30 @@ export function project(sc, gl, opts) {
         ? annInc - tp.samCost - extraCost          // your net cost = personal + shared − her contribution
         : annInc-annSpendNow-childCost-extraCost-mortgageAnn-ownAnn+rentSavingsAnn;
       cashVal = cashVal*(1+gl.cashReturn);
-      let portEnd = portfolio*(1+r)+netFlow+windfall;
-      if (portEnd < 0) {
-        // Deficit larger than the portfolio: cover the remainder from cash instead
-        // of silently writing it off. If cash runs out too, the plan is underfunded.
-        cashVal += portEnd; portEnd = 0;
-        if (cashVal < 0) { if (infeasibleYear===null) infeasibleYear = yr; cashVal = 0; }
+      const pag = portfolio*(1+r)+windfall;     // portfolio after growth and windfall
+      costBasis += windfall;
+      let portEnd;
+      if (netFlow >= 0) { portEnd = pag+netFlow; costBasis += netFlow; }
+      else {
+        // v8.24 (audit 2026-11 F1): money taken out before you stop (the purchase
+        // cash, a year where pay is below your costs) is a sale like any other: it
+        // pays tax on its gain part, so more is sold than the net need.
+        const need = -netFlow;
+        const g = pag>0 ? clamp01((pag-costBasis)/pag) : 0, rate = taxRateAt(gl, yr);
+        const nf = Math.max(0.001, 1-g*rate);
+        let gross = need/nf;
+        if (gross <= pag) portEnd = pag-gross;
+        else {
+          // Deficit larger than the portfolio: sell it all, the rest comes from cash
+          // instead of being silently written off. Cash empty too: underfunded.
+          cashVal -= need - pag*nf; gross = pag; portEnd = 0;
+          if (cashVal < 0) { if (infeasibleYear===null) infeasibleYear = yr; cashVal = 0; }
+        }
+        costBasis = Math.max(0, costBasis*(1-(pag>0 ? Math.min(1, gross/pag) : 0)));
+        row.taxPaid = Math.round(gross*g*rate);
+        row.sold = Math.round(gross);
       }
       portfolio = portEnd;
-      if (netFlow>0) costBasis+=netFlow;
-      costBasis+=windfall;
-      if (netFlow<0 && portfolioBefore>0) {
-        const pag=portfolioBefore*(1+r)+windfall;
-        const fd=pag>0?Math.min(1,-netFlow/pag):0;
-        costBasis=Math.max(0,costBasis*(1-fd));
-      }
       row.income=Math.round(annInc); row.spending=Math.round(annSpendNow); row.childCost=Math.round(childCost); row.netFlow=Math.round(netFlow);
 
     } else {
@@ -801,7 +870,7 @@ export function project(sc, gl, opts) {
       if (twoP) {
         // your net cost, with your share-income = pension + start-of-year sustainable draw
         tp = twoPersonCost(yr, sc, gl, pAnn + samDrawStart, herDraw, true);
-        annRetSpend = tp.samPersonal + tp.shared - tp.child - tp.mortgage + tp.rentSaved;
+        annRetSpend = tp.samPersonal + tp.shared - tp.child - tp.mortgage - tp.ownership + tp.rentSaved;
         childCost = tp.child;
         budget = Math.max(0, tp.samCost);
       }
@@ -821,7 +890,8 @@ export function project(sc, gl, opts) {
           ? Math.max(0, budget - Math.max(0, twoPersonCost(yr, sc, gl, pAnn + samDrawStart, herDraw, true, true).samCost))
           : Math.min(budget, childCost + mortgageAnnRet);
         const permBudget = Math.max(0, budget - tempCost);
-        const potentialGross=portAfterGrowth*gl.swr;
+        const saGrown = Math.min(portAfterGrowth, (setAside || 0)*(1+r));
+        const potentialGross=Math.max(0, portAfterGrowth-saGrown)*gl.swr;   // v8.24: not on the set-aside
         const permNeedGross=Math.max(0,permBudget-otherInc)/netFrac;
         const tempNeed=Math.max(0, tempCost - Math.max(0, otherInc-permBudget));
         gross=Math.min(potentialGross,permNeedGross)+tempNeed/netFrac;
@@ -830,6 +900,7 @@ export function project(sc, gl, opts) {
         row.tempCost=Math.round(tempCost);
         row.swrIncome=Math.round(potentialGross*netFrac+otherInc+tempNeed);
         row.swrTarget=Math.round(budget);
+        row.setAside = Math.round(saGrown);   // reserve this year (after growth), not drawn on
       } else {
         const needNet=budget+purchaseCost-otherInc;        // net cash the portfolio must produce
         if (needNet>0) { gross=needNet/netFrac; }
@@ -846,6 +917,7 @@ export function project(sc, gl, opts) {
       const fractionSold=portAfterGrowth>0?Math.min(1,gross/portAfterGrowth):0;
       costBasis=Math.max(0,costBasis*(1-fractionSold));
       if (surplus>0) { portfolio+=surplus; costBasis+=surplus; }
+      row.surplus=Math.round(surplus);   // reinvested income beyond the budget (ledger identity, v8.24)
       row.income=Math.round(partnerSalAnn);
       row.spending=Math.round(annRetSpend); row.childCost=Math.round(childCost);
       row.pension=Math.round(pAnn); row.partnerPension=Math.round(partnerPensionAnn);
@@ -886,9 +958,18 @@ export function project(sc, gl, opts) {
   const out = {years,values,fireNums,retYear,allocations,rows,
           fireTarget, fireTargetAdj, fireTargetYearOne: fireAtRetirement, laterRise, gainFracAtRet,
           // v8.2: % mode only — the part of the FIRE number set aside for costs that end
-          tempPV: gl.wdMode==="swr" ? tempCostPV(sc.retAge, sc, gl, taxMultRet) : 0,
+          tempPV: gl.wdMode==="swr" ? tempCostPV(sc.retAge, sc, gl, taxMultRet) + purchasePV(sc.retAge, sc, gl, taxMultRet) : 0,
           infeasibleYear, finalNetWorth: portfolio+cashVal};
   return out;
+}
+
+// Your cost in a projection year, from the row's own ledger (v8.24, audit 2026-11
+// T2): spending + child + mortgage + ownership − rent saved − her contribution.
+// One definition for the Explanation tab; it equals rows[].swrTarget in % mode
+// retirement years and income − netFlow − purchase in working years (tested).
+export function rowCost(row) {
+  const r = row || {};
+  return Math.max(0, (r.spending || 0) + (r.childCost || 0) + (r.mortgagePayment || 0) + (r.ownership || 0) - (r.rentSavings || 0) - (r.partnerContrib || 0));
 }
 
 // ── PLAN vs ACTUAL ───────────────────────────────────────────────────────────

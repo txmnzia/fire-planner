@@ -69,6 +69,13 @@ If you add a budget component (a new cost or offset), it goes into **both**
 `yearOneBudget` and the `budget` expression in `project()`'s retirement branch, in the
 same commit, or the views drift apart.
 
+**I2c — Every sale pays tax, and the reserve is never drawable (v8.24, audit 2026-11).**
+A negative net flow before the stop age is a sale grossed up by the gain fraction
+(`row.sold`, `row.taxPaid`). In % mode the set-aside (costs that end + a purchase after
+the stop age, rising gain fraction) follows `setAsideSchedule`; `swrIncome` is the draw
+on (portfolio − reserve). Your cost in any row is `rowCost(row)`. Checked for every
+golden household in `tests/consistency.test.mjs` — extend that file, don't fork it.
+
 **I2b — Costs that end are set aside, not perpetuated (v8.2).** In SWR mode the FIRE
 target is `yearOnePermBudget × taxMult / swr + tempCostPV`, the card's `targetMonthly`
 is the lifelong part, its SWR income is on `portRet − cash − proj.tempPV`, and the

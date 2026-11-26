@@ -21,17 +21,17 @@ test('taxMultAfter, by hand: g0 = 40%, tax 30%, one year at 7%', () => {
 test('the year-by-year form equals the old closed form when tax is held flat (alone: 288 cases)', () => {
   // v8.23: one model; the closed form covers the scenarios without her (with her the target is year by year only)
   let n = 0;
-  for (const c of goldenCases().filter(c => c.gl.wdMode === 'fixed' && !c.sc.hasPartner))
+  for (const c of goldenCases().filter(c => c.gl.wdMode === 'fixed' && !c.sc.hasPartner && !c.gl.residence))   // the closed form predates moves abroad
     for (const age of [36, 45, 55, 66, 70, 80]) for (const tm of [1, 1.15]) {
       n++;
       assert.equal(computeFireTarget(age, c.sc, c.gl, tm, { dcfLoop: 'flat' }), computeFireTarget(age, c.sc, c.gl, tm, { closedForm: true }), c.name + ' ' + age);
     }
-  assert.equal(n, goldenCases().filter(c => c.gl.wdMode === 'fixed' && !c.sc.hasPartner).length * 12);
+  assert.equal(n, goldenCases().filter(c => c.gl.wdMode === 'fixed' && !c.sc.hasPartner && !c.gl.residence).length * 12);
   assert.ok(n >= 240, 'cases ' + n);
 });
 
 test('rising tax never lowers the target, and raises it whenever there is tax and growth', () => {
-  for (const c of goldenCases().filter(c => c.gl.wdMode === 'fixed' && !c.sc.hasPartner)) {   // v8.23: alone (with her: year by year only)
+  for (const c of goldenCases().filter(c => c.gl.wdMode === 'fixed' && !c.sc.hasPartner && !c.gl.residence)) {   // alone (with her: year by year only); the closed form predates moves abroad
     const tm = 1.15;
     const rising = computeFireTarget(45, c.sc, c.gl, tm), flat = computeFireTarget(45, c.sc, c.gl, tm, { closedForm: true });
     assert.ok(rising >= flat, c.name);

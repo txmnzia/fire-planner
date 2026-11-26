@@ -468,7 +468,11 @@ costBasis(new) = costBasis × (1 − fractionSold)
 
 ### Tax on Withdrawals
 
-Each withdrawal in retirement incurs capital gains tax on the gain portion:
+Every sale pays capital-gains tax on its gain part: in retirement, and since v8.24
+(audit 2026-11 F1) also **before you stop** — the purchase cash, a year where your pay
+is below your costs, a leave year. The row shows it as `sold` and `taxPaid`; if the
+portfolio cannot cover it, the rest comes from cash (untaxed), then the year is
+underfunded. Each withdrawal incurs capital gains tax on the gain portion:
 
 ```
 currentGainFrac = (portfolio − costBasis) / portfolio
@@ -488,6 +492,31 @@ headline capital-gains regimes — they do **not** model fund-specific rules suc
 Ireland's 41% ETF exit tax, Germany's Vorabpauschale/Teilfreistellung, the
 Netherlands' box-3 deemed-return system, or Belgium's new 2026 capital-gains
 regime. Verify the rate for your own situation and asset type.
+
+---
+
+### The reserve for costs that end (% mode, v8.24)
+
+The FIRE number sets aside, at present value, the costs that end (child costs, the
+loan) **and a home bought after you stop** (`purchasePV`, audit F6), each grossed up
+with the rising gain fraction (`risingTaxMult`, audit F5; the same rule as fixed mode).
+In the projection this reserve follows a schedule fixed when retirement starts
+(`setAsideSchedule`: at the start of each year, the present value of those costs from
+that year on, capped at the portfolio). The sustainable draw (`swrIncome`, Monte Carlo's
+funding ratio) is SWR × (portfolio − reserve), never on the reserve (audit F4), and
+with the partner your share-income is pension + that draw + the costs that end paid that
+year — the income `selfFundedCost` assumes at the target, so at the FIRE number the
+first retirement row's budget equals `yearOneBudget` (audit F2; tested).
+
+```
+e.g. 300,000 reserve, 500,000 portfolio, 4%: draw available = 4% × 200,000 = 8,000
+     (before v8.24: 4% × 500,000 = 20,000, which counted the reserve twice)
+```
+
+Your cost in any year is one definition, `rowCost(row)` = spending + child + loan +
+ownership − rent saved − her contribution; the year table shows every one of those rows
+(her contribution whenever she is in the scenario, ownership + upkeep, the reserve), so
+income − cost − purchase = net flow is visible.
 
 ---
 

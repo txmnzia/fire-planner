@@ -1,5 +1,5 @@
-import { el, fmtK } from "../util.js?v=8.23";
-import { state } from "../state.js?v=8.23";
+import { el, fmtK } from "../util.js?v=8.24";
+import { state } from "../state.js?v=8.24";
 
 // ── TABLE ──────────────────────────────────────────────────────────────────
 export function renderTable(projs,gl) {
@@ -29,15 +29,17 @@ export function renderTable(projs,gl) {
     ['Capital Gain Tax',  (r,i)=>money(r.taxPaid>0?r.taxPaid:0,'neg','-')],
     ['Mortgage',          (r,i)=>money(r.mortgagePayment>0?r.mortgagePayment:null,'neg','-')],
     ['Rent Saved',        (r,i)=>money(r.rentSavings>0?r.rentSavings:null,'pos','+')],
+    ['Ownership + upkeep', (r,i)=>money(r.ownership>0?r.ownership:null,'neg','-')],
     ['Purchase Cost',     (r,i)=>money(r.extraCost>0?r.extraCost:null,'neg','-')],
   ];
-  // two-person model: her contribution, share and own portfolio (her money, not yours)
-  if (proj.partner) ROWS.push(
+  // with the partner: what she pays of the shared costs (v8.24: shown whenever the
+  // scenario has her; the visible rows then add up to Net Flow, audit 2026-11 T1)
+  if (rows.some(r => r.partnerContrib != null)) ROWS.push(
     ['Partner Contribution', (r,i)=>money(r.partnerContrib||null,'pos','+')],
     ['  Partner Share',      (r,i)=>pct(Math.round((r.partnerShare||0)*100))],
-    ['Partner Portfolio',    (r,i)=>money(r.partnerPortfolio,'',''),],
-    ['  Partner Withdrawal', (r,i)=>money(r.partnerWithdrawal||null,'neg','-')],
   );
+  // % mode: the reserve for costs that end, not drawn on (v8.24)
+  if (rows.some(r => r.setAside > 0)) ROWS.push(['Reserved (costs that end)', (r,i)=>money(r.setAside>0?r.setAside:null,'','')]);
   let body='';
   ROWS.forEach(([label,fn])=>{
     body+='<tr><td class="tbl-lbl">'+label+'</td>';

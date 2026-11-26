@@ -33,6 +33,7 @@ js/
   countries.js          Pure (v8.11): country notes, residence periods, rent moves.
   yearEnd.js            Pure (v8.15): year-end amounts to raise and the history row.
   versionsCore.js       Pure (v8.14): snapshots, diffs, impact lines, prompts, review.
+  (engine.js v8.24: rowCost, setAsideSchedule, purchasePV, risingTaxMult; see README)
   planVsActual.js       Pure (v8.20): frozen plan paths in versions, the plan pick, the
                         gap and years ahead/behind against the frozen plan.
   ibkr.js               Pure (v8.10): IBKR statement parser (total, positions, gain %,
@@ -103,8 +104,8 @@ tests/                  node:test suites: the two pure engines, the v8 golden ma
                         deliberately changes a calculation).
   tools/set-version.mjs Sets the version in the header and as ?v= on css, main.js
                         and every relative import (browser cache busting).
-  fixtures/             v8-golden.json: 96 cases (v8.23: the one partner model; the
-                        Simple model's 96 cases and its snapshot were removed with it).
+  fixtures/             v8-golden.json: 128 cases: 96 classic + 32 shaped like getGlobals()
+                        output (v8.24). consistency.test.mjs: ledgers, one budget, verdicts.
 .github/workflows/ci.yml  Syntax-checks every module and runs the tests on push/PR.
 ```
 

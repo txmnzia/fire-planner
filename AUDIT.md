@@ -426,3 +426,68 @@ Additional fixes found while implementing: retirement-era property purchase was
 never actually paid in SWR mode (now withdrawn with tax gross-up); 0%-rate
 mortgages produced a €0 payment (now principal/term); chart rendering failures
 (e.g. CDN offline) no longer abort recalculation and auto-save.
+
+---
+
+## 2026-11-26 audit (v8.23, commit 63da177) — fresh-eyes review
+
+**Method.** A separate reviewer read the code without the author's reasoning, following
+`.claude/skills/financial-audit`. Every finding below was reproduced numerically, and
+the key ones were re-run by the author. Severity was judged against the owner's
+configuration:
+- % of portfolio mode;
+- five scenarios with automatic stop ages, with the partner in four of them;
+- a home purchase, a child, a move abroad, a windfall;
+- a state pension from 70.
+
+The owner's figures are not recorded here (rule 7).
+
+### Findings and resolution
+
+| # | Finding | Direction | Resolution |
+|---|---|---|---|
+| F1 | Money sold **before you stop** (purchase cash, years with pay below costs) paid no capital-gains tax | optimistic: net worth at the stop age too high by 1–6%, up to +1 year | **Fixed v8.24**: such sales pay tax on their gain part (`row.sold`, `row.taxPaid`) |
+| F2 | With the partner, the first retirement row's budget ≠ `yearOneBudget`: his share-income was 4% of the whole portfolio, including the set-aside | MC optimistic vs the card (2–7%) | **Fixed v8.24**: share-income = pension + draw on (portfolio − reserve) + costs that end; tested at the FIRE number |
+| F3 | The stricter % mode rule nets a later cost rise against a later pension; % mode cannot borrow from the future, so years in between can be short | optimistic (a few %) | **Open: owner decision** |
+| F4 | `swrIncome` (MC funding ratio, Explanation) counted 4% of the set-aside as available income | optimistic: MC ratio +10–17 points during loan/child years | **Fixed v8.24**: reserve schedule; draw on the rest only |
+| F5 | The set-aside used a flat tax gross-up (v8.5 rule not applied) | optimistic: 0.1–1% of the target | **Fixed v8.24**: `risingTaxMult` |
+| F6 | % mode FIRE number left out a home bought **after** the stop age | optimistic: up to ~10% of the target | **Fixed v8.24**: `purchasePV` in both % branches and in `tempPV` |
+| F7 | When she stops before her pension, the year-one rule prices that gap for life; the target jumps and funded is not monotone in the stop age | pessimistic, local | **Open: owner decision** |
+| F8 | Her pension is used gross while his are net | optimistic, small | **Open: owner decision** |
+| F9 | Purchase price: the engine reads it as the purchase-year price; the year-end rollover treats it as today's money (+inflation) | ambiguous | **Open: owner decision** |
+| T1 | The year table hid her contribution and ownership charges, so its rows did not add up to net flow | display | **Fixed v8.24** |
+| T2 | The Explanation tab re-derived the budget (no ownership charges; a Simple-model leftover `ppenOff`) | display | **Fixed v8.24**: one `rowCost(row)` |
+| T3 | Card mixed portfolio definitions: chip and margin included cash, the verdict did not | display | **Fixed v8.24**: `m.portForTarget` (cash excluded in % mode) for verdict, chip and margin |
+| Docs | README passages still described the Simple model (partner income as your income, multiplier, credits for her salary/pension) | — | Partly fixed in v8.24; remaining passages tracked |
+
+### Assumptions the owner should ratify (not bugs)
+
+1. Health insurance after stopping is not modelled. It is likely the largest omission.
+2. Pension statements project contributions to the legal age; stopping at 44–56 lowers the entitlement.
+3. Her share follows his modelled draw, which dampens Monte Carlo shortfalls.
+4. Only share changes count as "later rises" in % mode:
+   - rent moves;
+   - cost of living or tax after a move abroad;
+   - charges that start after the stop age.
+5. Windfalls must be typed net of tax.
+6. Planned pay is not raised at the year-end rollover.
+7. The pension deduction follows the pension's country, not where you live.
+8. The % mode verdict checks the first year only (see F3).
+9. Cash earns less than inflation and is only drawn last.
+
+### Tests added (`tests/consistency.test.mjs`, 128 households)
+
+- **Ledgers:**
+  - portfolio ledger every year (saved or sold while working, withdrawn and reinvested in retirement);
+  - cash ledger;
+  - visible ledger (income − cost − purchase = net flow);
+  - one budget (`rowCost` = `swrTarget`);
+  - partner ledger (share within 0–1, your cost + her contribution = own + shared).
+- **Tax:** tax on every sale, with a hand-computed example.
+- **Reserve:** set-aside = PV with the rising gain fraction; the reserve schedule starts at it; the purchase after the stop age is in the target; the draw never counts the reserve.
+- **One budget at the target:** `yearOneBudget` equals the first row at the FIRE number.
+- **Verdicts agree:** card verdict, chip and margin agree; the earliest stop age is funded and the year before is not.
+- **Monotonicity:** in money invested, spending and tax.
+- **Engines agree:** Monte Carlo with deterministic returns equals the projection; a frozen plan read against itself shows a zero gap.
+- **Coverage:** 32 production-shaped golden households: rent inside the joint account, a move abroad, charges, yearly items, her real share, two pensions plus one from another country, a rent move.
+- **Pending decisions:** F3 and F7 are recorded as `test.todo`.

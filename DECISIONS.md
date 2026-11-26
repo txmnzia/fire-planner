@@ -5,6 +5,19 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.24 Audit fixes (fresh-eyes review)
+
+- **Every sale pays tax**, including before you stop (purchase cash, low-pay years).
+- **% mode reserve:** the costs that end and a home bought after you stop are set aside
+  (rising gain fraction) and never counted as drawable; the reserve follows a schedule
+  fixed at the stop age and is released as those costs end. With the partner, your
+  share-income follows the same definition as at the target (one budget).
+- **Display:** the year table adds up (her contribution, ownership, the reserve); the
+  Explanation tab uses one cost definition; the card's verdict, chip and margin share
+  one basis (cash outside the FIRE number in % mode).
+- Effect on the owner's scenarios: C, D and E stop one year later (the untaxed sales
+  were optimistic); FIRE numbers +€8–33k. Open decisions: AUDIT.md 2026-11 F3, F7, F8, F9.
+
 ## 2026-11-26 · v8.23 The Simple model's code is gone
 
 - **Engine cleanup, no visible change:** the Simple-model branches (spending × the

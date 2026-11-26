@@ -1,9 +1,9 @@
-import { el, eur, fmtK } from "../util.js?v=8.23";
-import { scenarioIssues } from "../checks.js?v=8.23";
-import { state } from "../state.js?v=8.23";
-import { getScenarioName } from "../inputs.js?v=8.23";
-import { vsPlanFor } from "./planLine.js?v=8.23";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.23";
+import { el, eur, fmtK } from "../util.js?v=8.24";
+import { scenarioIssues } from "../checks.js?v=8.24";
+import { state } from "../state.js?v=8.24";
+import { getScenarioName } from "../inputs.js?v=8.24";
+import { vsPlanFor } from "./planLine.js?v=8.24";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.24";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -71,10 +71,16 @@ export function computeCardMetrics(sc, gl, proj) {
     // v8.19 stricter rule: when the cost rises later (her share falls), funded also
     // needs the portfolio at the stop age to reach that higher FIRE number.
     m.laterRise = !!proj.laterRise;
-    if (m.laterRise) m.incomeOk = m.incomeOk && portRet >= proj.fireTarget;
+    // v8.24 (audit 2026-11 T3): the FIRE number is priced on the invested portfolio
+    // (cash is a reserve outside it), so every comparison with it leaves cash out
+    m.portForTarget = portRet - cashAtRet;
+    if (m.laterRise) m.incomeOk = m.incomeOk && m.portForTarget >= proj.fireTarget;
+    if (m.two) { m.two.partialNW = m.portForTarget; m.two.partialOk = m.incomeOk; }
   } else {
+    m.portForTarget = portRet;   // fixed mode: cash is spent like the rest
     m.surplus = portRet - proj.fireTarget;
     m.ok = m.surplus >= 0;
+    if (m.two) m.two.partialOk = m.ok;
   }
   return m;
 }
@@ -134,7 +140,7 @@ export function scenarioGridResults(sc, gl, proj, stop) {
   const depletionAge = m.depletionYear != null ? gl.currentAge + m.depletionYear - gl.baseYear : null;
   const stopFound = stop ? !!stop.found : true;
   const stopAgeText = sc.retAge + ' \u00b7 ' + m.retYear;
-  const margin = m.portRet - m.fireTarget;
+  const margin = (m.portForTarget ?? m.portRet) - m.fireTarget;   // v8.24: same basis as the verdict
   // v8.13: scenarios that buy: home equity when you stop (net worth, not FIRE)
   const equity = sc.hasProp ? homeEquityAt(gl, sc, m.retYear) : null;
   const equityText = equity == null ? 'no purchase' : (m.retYear < gl.propBuyYear ? 'buys in ' + gl.propBuyYear : fmtK(equity));

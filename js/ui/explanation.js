@@ -1,9 +1,9 @@
-import { el, eur } from "../util.js?v=8.23";
-import { state } from "../state.js?v=8.23";
-import { getScenarioName } from "../inputs.js?v=8.23";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, project, pensionMonthlyAt, pensionList, taxRateAt, scGl } from "../engine.js?v=8.23";
-import { computeCardMetrics } from "./cards.js?v=8.23";
-import { FLOW_COLORS } from "./charts.js?v=8.23";
+import { el, eur } from "../util.js?v=8.24";
+import { state } from "../state.js?v=8.24";
+import { getScenarioName } from "../inputs.js?v=8.24";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, project, pensionMonthlyAt, pensionList, taxRateAt, scGl, rowCost } from "../engine.js?v=8.24";
+import { computeCardMetrics } from "./cards.js?v=8.24";
+import { FLOW_COLORS } from "./charts.js?v=8.24";
 
 // ── EXPLANATION TAB ──────────────────────────────────────────────────────────
 // "Your plan, explained": turns the selected scenario's projection into a
@@ -91,7 +91,7 @@ export function renderExplanation(projs, gl, scenarios) {
   // full annual outgoings in year idx, from the engine's own row composition
   // (same shape as the engine's retirement `budget` and yearOneBudget)
   // (two-person model: net of the partner's contribution, i.e. YOUR cost)
-  const budAnn = idx => { const r = rows[idx] || {}; return Math.max(0, (r.spending || 0) + (r.childCost || 0) + (r.mortgagePayment || 0) - (r.rentSavings || 0) - (r.partnerContrib || 0)); };
+  const budAnn = idx => rowCost(rows[idx]);   // v8.24: one engine definition (rowCost)
   const nwToday = (gl.invested || 0) + gl.cash;
   const nowMo = budAnn(0) / 12;          // what the household actually lives on today (€/mo)
   const gfr = proj.gainFracAtRet != null ? proj.gainFracAtRet : gl.gainFrac;
@@ -422,8 +422,8 @@ export function renderExplanation(projs, gl, scenarios) {
     const setAside = proj.tempPV || 0;                     // costs that end, at present value
     const inflRet = infl(nAccum);
     const penOff = pensionMonthlyAt(gl, retAge) * 12 * inflRet;
-    const ppenOff = (sc.hasPartner && retAge + off >= gl.partnerPensionAge) ? gl.partnerPension * 12 * inflRet : 0;
-    const fromPort = Math.max(0, budgetRet - penOff - ppenOff);
+    const ppenOff = 0;   // v8.24: her pension is hers, never your income (one model)
+    const fromPort = Math.max(0, budgetRet - penOff);
     const rebuilt = gl.swr > 0 ? Math.round(fromPort / netFracRet / gl.swr + setAside) : 0;
     // v8.19: with a later rise the headline is the year-by-year number; the year-one
     // part is rebuilt here and the rise is shown as its own line (engine values only).
