@@ -66,6 +66,7 @@ export function prodGl(over = {}) {
     rentMoves: [{ from: 2029, rent: 1600 }],
     residence: [{ from: null, country: 'DE', tax: 0.185, col: 1 }, { from: 2040, country: 'FR', tax: 0.3, col: 0.9 }], taxRate: 0.185,
     healthGainMonthly: 1600,   // v8.26: health insurance presets by country, until the first pension
+    grossNow: 62000,           // v8.27: pension rights per working year (DE, then FR from 2040)
     ...over,
   });
 }
