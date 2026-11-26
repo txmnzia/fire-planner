@@ -3,14 +3,14 @@
 // The source of truth for every value stays the id-bearing form control that
 // inputs.js / sync.js already read — this module only adds friendlier controls
 // (year-picker popover, sliders, the subject rail) and the dynamic windfall list.
-import { el } from "../util.js?v=8.25";
-import { setPayListPainter, NEW_PLAN_OFF } from "./plans.js?v=8.25";
-import { normalisePayChanges } from "../payChanges.js?v=8.25";
-import { state } from "../state.js?v=8.25";
-import { recalc } from "../recalc.js?v=8.25";
-import { ASSUMPTION_DEFAULTS, assumptionChanges } from "../assumptions.js?v=8.25";
-import { renderRentMoves, renderResidence, initRentToday, renderResNotes } from "./housing.js?v=8.25";
-import { renderPensionsMore } from "./pensions.js?v=8.25";
+import { el } from "../util.js?v=8.26";
+import { setPayListPainter, NEW_PLAN_OFF } from "./plans.js?v=8.26";
+import { normalisePayChanges } from "../payChanges.js?v=8.26";
+import { state } from "../state.js?v=8.26";
+import { recalc } from "../recalc.js?v=8.26";
+import { ASSUMPTION_DEFAULTS, assumptionChanges } from "../assumptions.js?v=8.26";
+import { renderRentMoves, renderResidence, initRentToday, renderResNotes } from "./housing.js?v=8.26";
+import { renderPensionsMore } from "./pensions.js?v=8.26";
 
 const YNOW = 2026;
 
@@ -190,7 +190,7 @@ export function renderWindfalls() {
     const row = document.createElement('div'); row.className = 'item wf-row';
     row.innerHTML =
       '<div class="item-hd"><input type="text" class="item-name wf-name" placeholder="Name it, e.g. Inheritance" aria-label="Name of this windfall" autocomplete="off" maxlength="40">' + DEL('Remove windfall') + '</div>' +
-      '<div class="item-c">' + SEP('in') + '<div class="ypick fc"></div>' + MONEY('wf-amt', 'Amount', '') + '</div>';
+      '<div class="item-c">' + SEP('in') + '<div class="ypick fc"></div>' + MONEY('wf-amt', 'After tax', '') + '</div>';
     host.appendChild(row);
     const name = row.querySelector('.wf-name'); name.value = w.name || '';
     name.addEventListener('input', () => { w.name = name.value; recalc(); });
@@ -199,7 +199,7 @@ export function renderWindfalls() {
       getVal: () => (w.yr == null ? null : +w.yr),
       setVal: y => { w.yr = y; recalc(); },
     });
-    const amt = row.querySelector('.wf-amt input'); amt.setAttribute('aria-label', 'Amount');
+    const amt = row.querySelector('.wf-amt input'); amt.setAttribute('aria-label', 'Amount after tax'); amt.title = 'What lands in your account after any inheritance or gift tax, in euros of that year. It is added to your portfolio as already-taxed money (no gain on it).';
     amt.value = w.amt == null ? '' : fmtMoney(w.amt);
     amt.addEventListener('input', e => {
       const raw = cleanMoney(e.target.value); e.target.value = fmtMoney(raw);

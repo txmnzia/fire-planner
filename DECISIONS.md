@@ -5,6 +5,21 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.26 Health insurance once you stop; planned pay keeps its value
+
+- **Health insurance is a cost from your stop age until your first state pension**
+  (then the pensioner insurance is inside the pension deduction). Empty field = a
+  preset for the country you live in that year (README lists the presets and their
+  sources); a typed amount wins everywhere. It is on your side only (never split) and
+  a cost that ends (set aside in % mode). *Rejected:* paying it for life (it would
+  double-count the pension deduction).
+- **Everything is in today's money, planned pay included:** the year-end close raises
+  planned pay changes by inflation by default, like other amounts nothing refreshes.
+- Windfalls are typed **after tax**, in euros of that year (unchanged), now labelled so.
+- Next (v8.27, decided): today keeps take-home (for spending) and adds gross pay (for
+  pension rights only); future pay changes are typed gross with an estimated net shown
+  and editable; pension rights accrue per working year in the country you work in.
+
 ## 2026-11-26 · v8.25 Four audit decisions
 
 - **% mode: every retirement year funded.** A stop age counts as funded only if no year

@@ -27,3 +27,12 @@ test('every amount in the list exists as a saved field', async () => {
   const sync = readFileSync(new URL('../js/sync.js', import.meta.url), 'utf8');
   for (const f of TODAY_MONEY) assert.match(sync, new RegExp("'" + f.id + "'"), f.id);
 });
+
+test('v8.26: planned pay changes are in today’s money and raised by default; ended ones are left out', () => {
+  const pays = [{ name: 'Abroad', from: 2028, to: null, amt: 4000 }, { name: '', from: 2024, to: 2026, amt: 3000 },
+                { name: 'Sabbatical', from: 2027, to: 2027, amt: 0 }, { name: '', from: 2027, to: 2030, amt: 2500 }];
+  const ch = yearEndChanges({}, 2026, 0.02, [], false, pays);
+  assert.deepEqual(ch.map(c => [c.id, c.label, c.from, c.to, c.checked]),
+    [['pc:0', 'Planned pay (Abroad)', 4000, 4080, true], ['pc:3', 'Planned pay from 2027', 2500, 2550, true]]);
+  assert.deepEqual(yearEndChanges({}, 2026, 0.02), []);   // old callers unchanged
+});

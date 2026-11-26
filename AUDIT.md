@@ -462,17 +462,17 @@ The owner's figures are not recorded here (rule 7).
 
 ### Assumptions the owner should ratify (not bugs)
 
-1. Health insurance after stopping is not modelled. It is likely the largest omission.
-2. Pension statements project contributions to the legal age; stopping at 44–56 lowers the entitlement.
+1. Health insurance after stopping is not modelled. It is likely the largest omission. **v8.26: modelled** from the stop age until the first state pension, with country presets (README).
+2. Pension statements project contributions to the legal age; stopping early lowers the entitlement. *Decided for v8.27: accrual per working year from gross pay.*
 3. Her share follows his modelled draw, which dampens Monte Carlo shortfalls.
 4. Only share changes count as "later rises" in % mode:
    - rent moves;
    - cost of living or tax after a move abroad;
    - charges that start after the stop age.
-5. Windfalls must be typed net of tax.
-6. Planned pay is not raised at the year-end rollover.
+5. Windfalls must be typed net of tax. **v8.26: the field says "After tax".**
+6. Planned pay is not raised at the year-end rollover. **v8.26: raised by default.**
 7. The pension deduction follows the pension's country, not where you live.
-8. The % mode verdict checks the first year only (see F3).
+8. The % mode verdict checks the first year only (see F3). **v8.25: every year funded.**
 9. Cash earns less than inflation and is only drawn last.
 
 ### Tests added (`tests/consistency.test.mjs`, 128 households)

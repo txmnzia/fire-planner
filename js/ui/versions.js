@@ -2,20 +2,20 @@
 // version and what it does to the five scenarios, Save update / Undo all, the
 // update log (compare, restore), the first-run review and "Did this happen?".
 // Edits still autosave as before; a version is a dated copy you can go back to.
-import { activePlan } from "./planLine.js?v=8.25";
-import { el, eur } from "../util.js?v=8.25";
-import { state, features } from "../state.js?v=8.25";
-import { recalc } from "../recalc.js?v=8.25";
-import { collectState, applyState } from "../sync.js?v=8.25";
-import { getScenarioName } from "../inputs.js?v=8.25";
+import { activePlan } from "./planLine.js?v=8.26";
+import { el, eur } from "../util.js?v=8.26";
+import { state, features } from "../state.js?v=8.26";
+import { recalc } from "../recalc.js?v=8.26";
+import { collectState, applyState } from "../sync.js?v=8.26";
+import { getScenarioName } from "../inputs.js?v=8.26";
 import { snapshotOf, resultsOf, diffFields, diffLists, changeCount, impactLines, impactRows, addVersion,
-         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.25";
-import { rentShift } from "./housing.js?v=8.25";
-import { updateToggleUI } from "./controls.js?v=8.25";
-import { revealField } from "./tiles.js?v=8.25";
-import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.25";
-import { renderNwHistory } from "./nwHistory.js?v=8.25";
-import { refreshedText } from "./spending.js?v=8.25";
+         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.26";
+import { rentShift } from "./housing.js?v=8.26";
+import { updateToggleUI } from "./controls.js?v=8.26";
+import { revealField } from "./tiles.js?v=8.26";
+import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.26";
+import { renderNwHistory } from "./nwHistory.js?v=8.26";
+import { refreshedText } from "./spending.js?v=8.26";
 
 const fmtDay = ts => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -152,7 +152,7 @@ export function answerPrompt(key, yes) {
 function yearEndHtml(gl) {
   const closing = gl.baseYear;
   const fields = collectState().fields;
-  const ch = yearEndChanges(fields, closing, gl.inflation, state.pensionsMore, !!state.home);
+  const ch = yearEndChanges(fields, closing, gl.inflation, state.pensionsMore, !!state.home, state.payChanges);
   const nw = Math.round((state.ibkrTotal || 0) + (gl.cash || 0));
   const overdue = [["Portfolio", state.ibkrAsOf, 92], ["Spending", fields.spendUpdated, 183], ["Pensions", fields.pensionUpdated, 365]]
     .filter(([, d, days]) => !d || refreshedText(d, new Date(), days).stale).map(([n]) => n);
@@ -170,8 +170,9 @@ export function applyYearEnd() {
   const closing = gl.baseYear, fields = collectState().fields;
   const nw = parseFloat(String(el("yeNw")?.value || "").replace(/[^\d.]/g, ""));
   const picked = new Set([...document.querySelectorAll("[data-ye]")].filter(c => c.checked).map(c => c.dataset.ye));
-  for (const c of yearEndChanges(fields, closing, gl.inflation, state.pensionsMore, !!state.home)) if (picked.has(c.id)) {
+  for (const c of yearEndChanges(fields, closing, gl.inflation, state.pensionsMore, !!state.home, state.payChanges)) if (picked.has(c.id)) {
     if (c.id.startsWith('pm:')) { const p = state.pensionsMore[+c.id.slice(3)]; if (p) p.amt = c.to; }
+    else if (c.id.startsWith('pc:')) { const p = state.payChanges[+c.id.slice(3)]; if (p) p.amt = c.to; }
     else setMoney(c.id, c.to);
   }
   if (picked.has("propRentSaved")) state.rentMoves = state.rentMoves.map(m => ({ ...m, rent: m.rent == null ? null : Math.round(m.rent * (1 + gl.inflation)) }));

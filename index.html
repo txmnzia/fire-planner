@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.25">
+<link rel="stylesheet" href="css/styles.css?v=8.26">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.25</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.26</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -161,7 +161,7 @@
         <svg class="tile-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
       </button>
       <div class="tile-body subj-body" id="tile-you-body" hidden>
-<div class="frows"><div class="frow"><div class="frow-l">Born</div><div class="frow-c"><span class="frow-grp"><div class="inp fc"><input type="date" id="dob" value="" oninput="recalc()" onchange="recalc()"></div></span><span class="frow-grp"><span class="frow-sep">plan until age <button type="button" class="info-btn" title="Life expectancy: the age the money must last to.">&#x24D8;</button></span><div class="step sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="lifeExp" aria-hidden="true" tabindex="-1"><span class="step-v"><input type="number" id="lifeExp" value="100" min="60" max="120" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></span></div></div></div>
+<div class="frows"><div class="frow"><div class="frow-l">Born</div><div class="frow-c"><span class="frow-grp"><div class="inp fc"><input type="date" id="dob" value="" oninput="recalc()" onchange="recalc()"></div></span><span class="frow-grp"><span class="frow-sep">plan until age <button type="button" class="info-btn" title="Life expectancy: the age the money must last to.">&#x24D8;</button></span><div class="step sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="lifeExp" aria-hidden="true" tabindex="-1"><span class="step-v"><input type="number" id="lifeExp" value="100" min="60" max="120" step="1" oninput="recalc()" onchange="recalc()"><i>yrs</i></span><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></span></div></div><div class="frow"><div class="frow-l">Health insurance once you stop <button type="button" class="info-btn" title="What you pay for health insurance from your stop age until your first state pension starts (after that it is inside the pension deduction). Today's money, per month. Empty = the estimate for the country you live in that year (see below).">&#x24D8;</button></div><div class="frow-c"><div class="inp cur fc"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="healthAfterStop" id="healthAfterStop_disp" placeholder="estimate"><input type="hidden" id="healthAfterStop" value=""><span class="suf">/mo</span></div></div></div></div><div class="spend-readout" id="healthReadout" aria-live="polite"></div>
       </div>
     </section>
     <section class="subj tile" id="tile-partner" style="--acc:var(--s4c)">
@@ -509,6 +509,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.25"></script>
+<script type="module" src="js/main.js?v=8.26"></script>
 </body>
 </html>

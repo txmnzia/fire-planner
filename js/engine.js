@@ -1,3 +1,4 @@
+import { healthPresetMonthly } from "./health.js?v=8.26";
 // ── MATH ───────────────────────────────────────────────────────────────────
 export function portReturnAt(gl, age, retAge) {
   const sNow=gl.stockAlloc, sRet=1-gl.bondAllocRet;
@@ -201,13 +202,30 @@ export function partnerIncomeAt(yr, gl, herDrawAnn, sc) {
 // A property purchase cost is not shared (it stays on your side, like today).
 // noTemp: leave out the costs that end (child costs, mortgage payments) — used to
 // split your cost into a lifelong part and a temporary part (v8.2, see tempCostPV).
+// Health insurance once you stop (v8.26), nominal €/yr in year yr, from your stop
+// age until your first state pension (then it is inside the pension deduction).
+// Supplied by getGlobals (gl.healthAfterStop = your amount, else the preset of the
+// country you live in that year from gl.healthGainMonthly); absent = not modelled.
+export function firstPensionAge(gl) {
+  const ages = pensionList(gl).map(p => p.age);
+  return ages.length ? Math.min(...ages) : (gl.pensionAge || 67);
+}
+export function healthCostAt(gl, yr) {
+  if (gl.healthAfterStop == null && gl.healthGainMonthly == null) return 0;
+  const age = gl.currentAge + (yr - gl.baseYear);
+  if (age >= firstPensionAge(gl)) return 0;
+  const m = gl.healthAfterStop != null ? gl.healthAfterStop : healthPresetMonthly((residenceAt(gl, yr) || {}).country, gl.healthGainMonthly);
+  return m*12*Math.pow(1+gl.inflation, yr - gl.baseYear);
+}
 export function householdCosts(yr, sc, gl, samRetired, noTemp) {
   gl = scGl(gl, sc);
   const t = yr - gl.baseYear, infl = Math.pow(1+gl.inflation, t);
   // v8.11: cost of living where you live that year scales everything but housing;
   // rent today is inside the joint account and is replaced by the rent that year.
   const col = colAt(gl, yr);
-  const samPersonal = (samRetired ? gl.samPersonalRet : gl.samPersonalNow)*12*infl*col;
+  // your own spending; once stopped, + health insurance until your pension (a cost that ends)
+  const health = samRetired ? healthCostAt(gl, yr) : 0;
+  const samPersonal = (samRetired ? gl.samPersonalRet : gl.samPersonalNow)*12*infl*col + (noTemp ? 0 : health);
   // yearly items (trips, courses, gifts; v8.7) are shared costs, now and retired
   const yearly      = samRetired && gl.yearlyItemsRet != null ? gl.yearlyItemsRet : (gl.yearlyItems || 0);
   const rentNow     = gl.rentInJoint ? (gl.propRentSaved || 0) : 0;
@@ -225,7 +243,7 @@ export function householdCosts(yr, sc, gl, samRetired, noTemp) {
   }
   const ownership = ownershipAnnual(gl, sc, yr);   // v8.13: charges + upkeep, shared like the rest
   const shared = Math.max(0, sharedBase + child + mortgage + ownership - rentSaved);
-  return { samPersonal, sharedBase, partnerPersonal, child, mortgage, ownership, rentSaved, shared };
+  return { samPersonal, sharedBase, partnerPersonal, child, mortgage, ownership, rentSaved, shared, health };
 }
 
 // Your net cost in year yr given YOUR income for the share (samInc, nominal €/yr).
@@ -338,7 +356,7 @@ export function yearOneBudget(fromAge, sc, gl, herDrawAnn) {
     const pen = pensionMonthlyAt(gl, fromAge)*12*inflF;
     return Math.max(0, selfFundedCost(fromYear, sc, gl, pen, herDrawAnn).samCost);
   }
-  let budget = soloSpend(gl, true, fromYear)*12*inflF;
+  let budget = soloSpend(gl, true, fromYear)*12*inflF + healthCostAt(gl, fromYear);
   if (sc.hasChild) {
     const childAge = fromYear - gl.childBirthYear;
     if (childAge >= 0 && childAge < gl.childCostUntilAge) budget += gl.childCostYearly*inflF;
@@ -369,7 +387,7 @@ export function tempCostAt(yr, sc, gl, herDrawAnn) {
                      - selfFundedCost(yr, sc, gl, pen, herDrawAnn, true).samCost);
   }
   const hc = householdCosts(yr, sc, gl, true);
-  return hc.child + hc.mortgage;
+  return hc.child + hc.mortgage + hc.health;   // v8.26: health insurance until your pension ends too
 }
 // Present value at fromAge of the temporary costs from fromAge to life expectancy,
 // grossed up for tax (taxMult), discounted at the portfolio return at fromAge,
@@ -632,7 +650,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
     for (let k = 0; k < n; k++) {
       const age = fromAge + k, yr = fromYear + k, infl = Math.pow(1+gl.inflation, yr - gl.baseYear);
       const spend = (soloYr ? soloSpend(gl, true, yr) : baseSpend)*12*infl, pen = pensionMonthlyAt(gl, age)*12*infl;
-      let flow = Math.max(0, spend - pen);
+      let flow = Math.max(0, spend - pen) + healthCostAt(gl, yr);   // v8.26
       if (sc.hasChild && yr >= gl.childBirthYear && yr < gl.childBirthYear + gl.childCostUntilAge) flow += gl.childCostYearly*infl;
       if (sc.hasProp) {
         flow += mortgagePaymentAt(gl, yr) + ownershipAnnual(gl, sc, yr);
@@ -728,7 +746,8 @@ export function project(sc, gl, opts) {
     const t    = yr-startYear;
     const infl = Math.pow(1+gl.inflation,t);
     const baseSpend = soloSpend(gl, true, yr);   // alone; with her the cost comes from twoPersonCost below
-    let annRetSpend = baseSpend*12*infl;
+    const healthAnn = healthCostAt(gl, yr);    // only read in retirement years (v8.26)
+    let annRetSpend = baseSpend*12*infl + healthAnn;
 
     const sNow=gl.stockAlloc, sRet=1-gl.bondAllocRet;
     const sf = age>=sc.retAge ? sRet : sNow+(sRet-sNow)*Math.max(0,Math.min(1,t/Math.max(1,sc.retAge-gl.currentAge)));
@@ -896,7 +915,7 @@ export function project(sc, gl, opts) {
         // lifelong part first, then the temporary part.
         const tempCost = twoP
           ? Math.max(0, budget - Math.max(0, twoPersonCost(yr, sc, gl, pAnn + samDrawStart, herDraw, true, true).samCost))
-          : Math.min(budget, childCost + mortgageAnnRet);
+          : Math.min(budget, childCost + mortgageAnnRet + healthAnn);
         const permBudget = Math.max(0, budget - tempCost);
         const saGrown = Math.min(portAfterGrowth, (setAside || 0)*(1+r));
         const potentialGross=Math.max(0, portAfterGrowth-saGrown)*gl.swr;   // v8.24: not on the set-aside

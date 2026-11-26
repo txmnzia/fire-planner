@@ -27,13 +27,21 @@ export const TODAY_MONEY = [
 // inflation: decimal. Returns the proposed changes [{id, label, from, to, checked}].
 // more: pensions from other countries (v8.19), [{country, amt}] → ids 'pm:<index>'.
 // owned (v8.22): the price of a home you own is a past fact, never raised.
-export function yearEndChanges(fields, closingYear, inflation, more, owned) {
+// pays (v8.26): planned pay changes [{name, from, to, amt}] → ids 'pc:<index>'.
+// They are in today's money like your take-home, but nothing refreshes them (you
+// type a raise into today's pay, not into a plan), so they are raised by default;
+// one that ended in the closing year or before is left out.
+export function yearEndChanges(fields, closingYear, inflation, more, owned, pays) {
   const refreshed = stamp => stamp && /^\d{4}-/.test(fields[stamp] || '') && +fields[stamp].slice(0, 4) >= closingYear;
   const pm = (more || []).map((p, i) => ({ p, i })).filter(({ p }) => p.amt > 0).map(({ p, i }) => {
     const r = refreshed('pensionUpdated');
     return { id: 'pm:' + i, label: 'Pension (' + p.country + ')', from: +p.amt, to: Math.round(p.amt * (1 + inflation)), checked: !r,
              why: r ? 'refreshed in ' + closingYear : 'not refreshed in ' + closingYear };
   });
+  const pc = (pays || []).map((p, i) => ({ p, i }))
+    .filter(({ p }) => p && p.amt > 0 && !(p.to != null && p.to <= closingYear))
+    .map(({ p, i }) => ({ id: 'pc:' + i, label: 'Planned pay' + (p.name ? ' (' + p.name + ')' : ' from ' + p.from), from: +p.amt,
+                          to: Math.round(p.amt * (1 + inflation)), checked: true, why: 'a plan in today\u2019s money' }));
   return [...TODAY_MONEY
     .filter(f => fields[f.id] !== undefined && fields[f.id] !== '' && +fields[f.id] > 0 && !(owned && f.id === 'propPrice'))
     .map(f => {
@@ -41,7 +49,7 @@ export function yearEndChanges(fields, closingYear, inflation, more, owned) {
       return { id: f.id, label: f.label, from, to: Math.round(from * (1 + inflation)),
                checked: !f.pay && !refreshed(f.stamp),
                why: f.pay ? 'pay: type a raise instead' : refreshed(f.stamp) ? 'refreshed in ' + closingYear : 'not refreshed in ' + closingYear };
-    }), ...pm];
+    }), ...pm, ...pc];
 }
 
 // The history row written for the closed year: net worth at the start of the new

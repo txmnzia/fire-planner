@@ -1,11 +1,12 @@
 // Spending refresh (v8.7): read-outs under the four spending numbers and the
 // "last refreshed" date. The numbers come from the engine (investNowMonthly), so
 // the read-out is the same calculation the projection uses in year one.
-import { el, eur, numVal } from "../util.js?v=8.25";
-import { investNowMonthly, partnerShare } from "../engine.js?v=8.25";
-import { pensionReadoutRows } from "./pensions.js?v=8.25";
-import { depositCheck } from "../ibkr.js?v=8.25";
-import { state } from "../state.js?v=8.25";
+import { el, eur, numVal } from "../util.js?v=8.26";
+import { investNowMonthly, partnerShare, firstPensionAge } from "../engine.js?v=8.26";
+import { healthPresetMonthly, DE_HEALTH, FR_HEALTH } from "../health.js?v=8.26";
+import { pensionReadoutRows } from "./pensions.js?v=8.26";
+import { depositCheck } from "../ibkr.js?v=8.26";
+import { state } from "../state.js?v=8.26";
 
 export const REFRESH_FIELDS = ['samPersonalNow', 'samPaysIn', 'partnerPaysIn', 'yearlyItems'];
 export const STALE_DAYS = 183;
@@ -35,6 +36,7 @@ export function renderSpendReadout(gl) {
   }
   renderPensionReadout(gl);
   renderPartnerReadout(gl);
+  renderHealthReadout(gl);
   const takeHome = numVal('baseIncome', 0);
   const n = investNowMonthly(gl, takeHome);
   const lines = [];
@@ -62,6 +64,23 @@ export function renderPartnerReadout(gl) {
   const pro = partnerShare(gl.partnerInc, you), real = investNowMonthly(gl, you).share;
   host.innerHTML = '<div>Pro rata today would be <b>' + Math.round(pro * 100) + '%</b> <span class="tgt">(her ' + eur(gl.partnerInc) + ' \u00f7 both ' + eur(gl.partnerInc + you) + ')</span>; she really pays <b>' + Math.round(real * 100) + '%</b> of the joint costs.</div>' +
     '<div class="tgt">Pro rata is used once one of you stops working or your pay changes.</div>';
+}
+
+// Health insurance read-out (v8.26): the estimate per country you would live in
+// after stopping, and until which age it is paid.
+export function renderHealthReadout(gl) {
+  const host = el('healthReadout'); if (!host) return;
+  const until = firstPensionAge(gl), seen = new Set(), lines = [];
+  for (const p of gl.residence || []) {
+    if (seen.has(p.country)) continue; seen.add(p.country);
+    const m = healthPresetMonthly(p.country, gl.healthGainMonthly);
+    const why = p.country === 'DE' ? (DE_HEALTH.rate * 100).toFixed(1) + '% of the gains you would live on (est. ' + eur(gl.healthGainMonthly) + '/mo; at least ' + eur(DE_HEALTH.minBase) + ')'
+      : p.country === 'FR' ? 'a mutuelle (~' + eur(FR_HEALTH.mutuelle) + ') + 6.5% of capital income above ' + eur(FR_HEALTH.threshold) + '/yr'
+      : 'a rough default';
+    lines.push('<div>' + countryName(p.country) + (p.from ? ' (from ' + p.from + ')' : '') + ': <b>\u2248 ' + eur(m) + '/month</b> <span class="tgt">' + why + '</span></div>');
+  }
+  host.innerHTML = (gl.healthAfterStop != null ? '<div>You typed <b>' + eur(gl.healthAfterStop) + '/month</b> (used everywhere).</div>' : lines.join('')) +
+    '<div class="tgt">Paid from your stop age until your first state pension (' + until + '); then the pension deduction covers it.</div>';
 }
 
 // Pension read-out (v8.19): the net the plan uses, next to each gross amount typed.

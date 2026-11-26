@@ -89,6 +89,7 @@ Under Spending, deposits per month over the last 6 months of statements are comp
 | She pays in / month | `partnerPaysIn` | — (0) | EUR/month | Spending. Her monthly transfer. Joint total = `samPaysIn + partnerPaysIn` |
 | Yearly items / year | `yearlyItems` | — (0) | EUR/year | Spending. Trips, courses, gifts: **shared**, split by her share, now and in retirement |
 | Spending in retirement | `retSpendChange` | 0% | % | One change on all spending once you stop (own, joint, yearly items, costs if alone); −50 to +50 |
+| Health insurance once you stop / month | `healthAfterStop` | — (country preset) | EUR/month | v8.26. Paid from your stop age until your first state pension; empty = the preset of the country you live in that year (see [Health insurance once you stop](#health-insurance-once-you-stop)) |
 | (last refresh) | `spendUpdated` | — | date | Stamped when one of the four numbers is edited; red after 6 months |
 | Withdrawal Rate | `swr` | 4% | % | %-of-portfolio mode only; % of the current portfolio available annually |
 
@@ -139,7 +140,7 @@ first entry).
 | French pension age | `pension2Age` | 64 | years | Legal age; change only to defer |
 | Other countries' pensions | `state.pensionsMore` `[{country, amt, age, ded}]` | none | code, EUR/month gross, years, % | "+ Add a country" (v8.19); `ded` = % taken off at payout, empty = 0; used net |
 | (last statement) | `pensionUpdated` | — | date | Stamped when a pension amount is edited; red after 12 months |
-| Windfalls (Name, Year, Amount) | `state.windfalls` `[{name,yr,amt,off}]` | none | text, year, EUR, scenario ids | One-time lump-sum inflows in the **Changes** tab, "Might happen" lane; switched per scenario in the scenario grid, one row per windfall labelled with its name (v8.18; "Windfall" when unnamed). A new windfall starts switched off everywhere (v8.18.4). `off` lists the scenarios it is switched off for; absent = on everywhere, so windfalls saved before v8.4 keep applying to every scenario (legacy `wf0/1/2` fields auto-migrate) |
+| Windfalls (Name, Year, Amount) | `state.windfalls` `[{name,yr,amt,off}]` | none | text, year, EUR (after tax, euros of that year), scenario ids | One-time lump-sum inflows in the **Changes** tab, "Might happen" lane; switched per scenario in the scenario grid, one row per windfall labelled with its name (v8.18; "Windfall" when unnamed). A new windfall starts switched off everywhere (v8.18.4). `off` lists the scenarios it is switched off for; absent = on everywhere, so windfalls saved before v8.4 keep applying to every scenario (legacy `wf0/1/2` fields auto-migrate) |
 
 ### Partner (global, toggled per scenario)
 
@@ -934,6 +935,35 @@ net pension (€/month, today's money) = gross × (1 − deduction)
 e.g. German 800 gross → 800 × (1 − 0.124) = 700.80 used by the plan
 ```
 
+### Health insurance once you stop
+
+While you work, health insurance comes out of your salary, so it is inside your
+take-home. From your stop age until your **first** state pension (the earliest
+pension age of any country, `firstPensionAge`) it becomes a cost of its own; from the
+pension on, the pensioner insurance is inside the pension deduction above. One function,
+`healthCostAt(gl, yr)` in `js/engine.js`, gives it in nominal €/yr; it is part of your
+personal costs (never split with the partner), a **cost that ends** (set aside in % mode,
+see the reserve), counted in `yearOneBudget`, `tempCostAt`, the fixed-mode DCF and every
+projection row. Not modelled when neither field below is supplied (unit-test fixtures).
+
+```
+health(yr) = monthly × 12 × (1 + inflation)^(yr − baseYear)   while stopped and age < first pension age
+monthly    = healthAfterStop if typed, else preset(country you live in that year, gain)
+gain       = ½ × your monthly cost today (half of what you sell is gain; rough)
+```
+
+Presets (2026 figures, today's €/month), `js/health.js`:
+
+| Country | Preset | Source |
+|---|---|---|
+| Germany | 21.1% × clamp(gain, 1,318.33, 5,812.50) | Voluntary public insurance (*freiwillig versichert*): reduced rate 14.0% (no sick pay, §243 SGB V) + average add-on 2.9% + long-term care 4.2% without children (3.6% with); minimum assessment base 1/90 of the 2026 *Bezugsgröße* × 30, ceiling = 2026 *Beitragsbemessungsgrenze* |
+| France | 90 + 6.5% × max(0, 12 × gain − 24,030) / 12 | PUMa *cotisation subsidiaire maladie*: 6.5% of capital income above 50% of the 2026 PASS (48,060 €) when earned income is low; + a private *mutuelle* of about 90 €/month |
+| Other | 250 | A rough default: type your own |
+
+Simplifications: the contribution base is an estimate of realised gains (not dividends or
+a spouse's income); private insurance (PKV) is not modelled. A read-out under the field
+shows the preset per country and until which age it is paid.
+
 ### Inflation Adjustment
 
 ```
@@ -1083,7 +1113,8 @@ editable) is written as the net-worth history row for 1 January of the next year
 (2) `baseYear` moves on a year, so ages move up; every amount typed in today's money that
 was **not refreshed during the closed year** is raised by inflation (a list with
 checkboxes; pay is unticked by default, a raise is typed instead; planned rents follow
-rent today); (3) overdue check-ins are listed; the result is saved as a version
+rent today; v8.26: planned pay changes are in today's money too and are ticked by
+default, except one that ended in the closed year or before); (3) overdue check-ins are listed; the result is saved as a version
 "Year-end {year}". Pure logic: `js/yearEnd.js`.
 
 ## The 5 Default Scenarios
