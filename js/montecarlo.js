@@ -1,4 +1,4 @@
-import { project } from "./engine.js?v=8.29.1";
+import { project } from "./engine.js?v=8.30";
 
 // ── MONTE CARLO ENGINE ───────────────────────────────────────────────────────
 // Historical block-bootstrap simulation. Each simulated path is built by stitching
@@ -82,16 +82,38 @@ export function mcPct(sorted, p){
 // return paths is reused for every scenario so differences reflect the plan, not
 // sampling noise. Returns one result object per scenario.
 export function runMonteCarlo(scenarios, gl, cfg){
-  const N = cfg.sims, blockLen = cfg.blockLen, recenter = cfg.recenter, floor = cfg.floor||0;
+  const paths = mcBuildPaths(gl, cfg);
+  return scenarios.map(sc => mcRunScenario(sc, gl, paths, cfg));
+}
+
+// The shared return paths for one run (v8.30). Every scenario of a run must use
+// the same array, so differences between scenarios reflect the plan, never noise.
+// Depends only on gl (horizon, return inputs) and cfg (sims, blockLen, recenter, seed).
+export function mcBuildPaths(gl, cfg){
+  const N = cfg.sims, blockLen = cfg.blockLen, recenter = cfg.recenter;
   const horizon = Math.max(1, gl.lifeExp - gl.currentAge);   // year-offsets per path
-  const nYears  = horizon + 1;
   const hStockMean = mcGeoMean(MC_HIST_STOCK), hBondMean = mcGeoMean(MC_HIST_BOND);
   const rng = mulberry32(cfg.seed != null ? cfg.seed : 0x1F1E33);
   const paths = new Array(N);
   for (let p=0;p<N;p++) paths[p] = mcBuildPath(rng, horizon, blockLen, recenter, gl.stockRet, gl.bondRet, hStockMean, hBondMean);
+  return paths;
+}
 
+// Run all scenarios over one set of paths, in the given order, handing each
+// result to onResult(index, result) as soon as it is ready (v8.30: the Results
+// tab computes the scenario on screen first). Results equal runMonteCarlo's.
+export function runMonteCarloOrdered(scenarios, gl, cfg, order, onResult){
+  const paths = mcBuildPaths(gl, cfg);
+  for (const i of order) if (scenarios[i]) onResult(i, mcRunScenario(scenarios[i], gl, paths, cfg));
+}
+
+// One scenario over the given paths: every metric of the two families below.
+export function mcRunScenario(sc, gl, paths, cfg){
+  const N = paths.length, floor = cfg.floor||0;
+  const horizon = Math.max(1, gl.lifeExp - gl.currentAge);
+  const nYears  = horizon + 1;
   const swr = gl.wdMode === 'swr';
-  return scenarios.map(sc => {
+  {
     const retIdx = Math.max(0, Math.min(horizon, sc.retAge - gl.currentAge));
     const nRetYears = Math.max(1, nYears - retIdx);
     const byYear = Array.from({length:nYears}, () => new Float64Array(N));      // net worth bands
@@ -180,5 +202,5 @@ export function runMonteCarlo(scenarios, gl, cfg){
       endVals: endSorted, bands,
       years: Array.from({length:nYears}, (_,y)=> gl.baseYear+y),
     };
-  });
+  }
 }

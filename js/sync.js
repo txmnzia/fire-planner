@@ -1,16 +1,16 @@
-import { el } from "./util.js?v=8.29.1";
-import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.29.1";
-import { state, features } from "./state.js?v=8.29.1";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.29.1";
-import { recalc } from "./recalc.js?v=8.29.1";
-import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.29.1";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.29.1";
-import { refreshSituationControls } from "./ui/situation.js?v=8.29.1";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.29.1";
-import { db } from "./db.js?v=8.29.1";
-import { migrateSpending } from "./spendMigration.js?v=8.29.1";
-import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.29.1";
-import { normalisePensionsMore } from "./pensions.js?v=8.29.1";
+import { el } from "./util.js?v=8.30";
+import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.30";
+import { state, features } from "./state.js?v=8.30";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.30";
+import { recalc } from "./recalc.js?v=8.30";
+import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.30";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.30";
+import { refreshSituationControls } from "./ui/situation.js?v=8.30";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.30";
+import { db } from "./db.js?v=8.30";
+import { migrateSpending } from "./spendMigration.js?v=8.30";
+import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.30";
+import { normalisePensionsMore } from "./pensions.js?v=8.30";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
@@ -63,7 +63,6 @@ export function collectState() {
   const wdEl = document.querySelector('input[name="wdMode"]:checked');
   const feat = {};
   for (let s = 1; s <= 5; s++) feat[s] = { ...features[s] };
-  const mcRe = el('mcRecenter');
   return { v: 1, fields, wdMode: wdEl ? wdEl.value : 'fixed', features: feat,
     nwHistory: state.nwHistory,
     windfalls: state.windfalls,
@@ -75,7 +74,8 @@ export function collectState() {
     residence: state.residence,
     versions: state.versions,
     review: state.review,
-    mc: { recenter: mcRe ? mcRe.checked : true },
+    // v8.30: recentering is always on; still written so an older build restores it on.
+    mc: { recenter: true },
     ibkr: { total: state.ibkrTotal, holdings: state.ibkrHoldings, asOf: state.ibkrAsOf, source: state.ibkrSource, imports: state.ibkrImports } };
 }
 
@@ -105,7 +105,7 @@ function applyStateInner(data) {
   });
   const radio = document.querySelector(`input[name="wdMode"][value="${data.wdMode}"]`);
   if (radio) radio.checked = true;
-  const mcRe = el('mcRecenter'); if (mcRe && data.mc) mcRe.checked = data.mc.recenter !== false;
+  // data.mc.recenter is ignored since v8.30: the range is always centred on your returns.
   for (let s = 1; s <= 5; s++) { if (data.features?.[s]) features[s] = { ...data.features[s] }; }
   if (data.ibkr) {
     state.ibkrTotal = data.ibkr.total || 0; state.ibkrHoldings = data.ibkr.holdings || [];

@@ -22,8 +22,9 @@ not load over `file://`.
 
 Manual smoke flows to click through (inline-handler bugs — a function missing from the
 `Object.assign(window, …)` block in `js/main.js` — only surface at click time):
-- **All 5 tabs** (Changes, Scenarios, Results, Monte Carlo, Explanation): each renders, no
-  console errors, charts appear on Results and after Run on Monte Carlo.
+- **All 4 tabs** (Changes, Scenarios, Results, Explanation): each renders, no
+  console errors, charts appear on Results and the Monte Carlo range, tiles and grid
+  row reach "up to date" on their own (v8.30, no Run button).
 - **Both withdrawal modes**: toggle Fixed Amount ↔ % of Portfolio; cards switch between
   On Track/Gap and Funded/Short chips; the Monthly Spending (retirement) field stays
   visible in % mode (AUDIT.md F8).

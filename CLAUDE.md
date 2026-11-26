@@ -22,7 +22,7 @@ There is no package.json, no npm install, no build step. Do not introduce one.
 | Path | Role |
 |---|---|
 | `js/engine.js` | **Pure** financial engine: `project()`, `computeFireTarget()`, `yearOneBudget()`, annuities, mortgage, plan-vs-actual. No DOM, no imports except within `js/`. |
-| `js/montecarlo.js` | **Pure** Monte Carlo: historical block bootstrap, seeded PRNG, percentile bands. Imports only `engine.js`. |
+| `js/montecarlo.js` | **Pure** Monte Carlo: historical block bootstrap, seeded PRNG, percentile bands. Imports only `engine.js`. Runs in the background in `js/mcWorker.js` (v8.30). |
 | `js/inputs.js` | Reads the form → plain `gl` (globals) / `sc` (scenario) objects. Country tax table. |
 | `js/state.js` | Shared mutable state object + per-scenario feature toggles. |
 | `js/recalc.js` | Orchestrator: inputs → engine → every renderer → persistence. |
@@ -30,7 +30,7 @@ There is no package.json, no npm install, no build step. Do not introduce one.
 | `js/db.js` | Supabase client for the shared `txmnzia-dbs` project, schema `fire_planner`. Loaded from a CDN, fails soft to local-only. |
 | `supabase/migrations/` | SQL for the `fire_planner` schema (run by hand in the Supabase SQL editor). |
 | `js/main.js` | Entry point; binds every inline-handler function onto `window`. |
-| `js/ui/*` | Renderers: cards, charts, table, Monte Carlo tab, IBKR import, net-worth history. |
+| `js/ui/*` | Renderers: cards, charts, table, Monte Carlo on Results (`mcTab.js`), IBKR import, net-worth history. |
 | `tests/` | `node:test` suites: the two pure engines, the v8 golden master (128 frozen cases since v8.24: 96 classic + 32 production-shaped; regenerate only with `node tests/tools/gen-golden.mjs` in a deliberate calculation change), the scenario grid, and markup wiring. |
 | `AUDIT.md` | The 2026-07 financial/technical audit and its resolution. **Read it before touching financial logic** — it is the list of mistakes already made once. |
 | `DECISIONS.md` | Product and modelling decisions taken with the owner, newest first, with reasons and rejected options. Add an entry whenever a decision is made; never contradict one silently. |

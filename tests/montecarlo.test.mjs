@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  mcGeoMean, mulberry32, mcBuildPath, mcPct, runMonteCarlo,
+  mcGeoMean, mulberry32, mcBuildPath, mcPct, runMonteCarlo, runMonteCarloOrdered,
   MC_HIST_STOCK, MC_HIST_BOND,
 } from '../js/montecarlo.js';
 
@@ -99,4 +99,26 @@ test('two-person: MC runs on your projection and is deterministic for a fixed se
   const a = runMonteCarlo(sc, gl, cfg), b = runMonteCarlo(sc, gl, cfg);
   assert.deepEqual(a, b);
   assert.ok(a[0].fundedRate >= 0 && a[0].fundedRate <= 1);
+});
+
+test('v8.30 background run: scenario order does not change any result (one shared path set)', () => {
+  // The Results tab computes the scenario on screen first. Each scenario must
+  // still see exactly the paths runMonteCarlo gives it, so A vs B stays noise-free.
+  const scs = [
+    { ...scenarios[0], id: 1, retAge: 45 },
+    { ...scenarios[0], id: 2, retAge: 50 },
+    { ...scenarios[0], id: 3, retAge: 55 },
+  ];
+  for (const wdMode of ['swr', 'fixed']) {
+    const gl = makeGl({ wdMode });
+    const cfg = { sims: 60, blockLen: 5, recenter: true, seed: 0x1F1E33 };
+    const all = runMonteCarlo(scs, gl, cfg);
+    const got = [], seen = [];
+    runMonteCarloOrdered(scs, gl, cfg, [2, 0, 1], (i, r) => { got[i] = r; seen.push(i); });
+    assert.deepEqual(seen, [2, 0, 1]);
+    assert.deepEqual(got, all);
+    const one = [];
+    runMonteCarloOrdered(scs, gl, cfg, [1], (i, r) => { one[i] = r; });
+    assert.deepEqual(one[1], all[1]);
+  }
 });

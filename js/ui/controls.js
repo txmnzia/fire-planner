@@ -1,12 +1,12 @@
-import { activePlan } from "./planLine.js?v=8.29.1";
-import { el, numVal } from "../util.js?v=8.29.1";
-import { state, features } from "../state.js?v=8.29.1";
-import { getScenarioName } from "../inputs.js?v=8.29.1";
-import { recalc } from "../recalc.js?v=8.29.1";
-import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js?v=8.29.1";
-import { renderTable } from "./table.js?v=8.29.1";
-import { renderSummaryTiles } from "./cards.js?v=8.29.1";
-import { resizeMcCharts } from "./mcTab.js?v=8.29.1";
+import { activePlan } from "./planLine.js?v=8.30";
+import { el, numVal } from "../util.js?v=8.30";
+import { state, features } from "../state.js?v=8.30";
+import { getScenarioName } from "../inputs.js?v=8.30";
+import { recalc } from "../recalc.js?v=8.30";
+import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js?v=8.30";
+import { renderTable } from "./table.js?v=8.30";
+import { renderSummaryTiles } from "./cards.js?v=8.30";
+import { resizeMcCharts, mcBandsFor, paintMcActive } from "./mcTab.js?v=8.30";
 
 // ── TAB SWITCHING ──────────────────────────────────────────────────────────
 export function switchTab(name) {
@@ -17,8 +17,7 @@ export function switchTab(name) {
     b.setAttribute("aria-selected", a);
   });
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("active", p.id==="tab-panel-"+name));
-  if (name==="results") setTimeout(resizeResultsCharts, 50);
-  if (name==="montecarlo") setTimeout(resizeMcCharts, 50);
+  if (name==="results") setTimeout(() => { resizeResultsCharts(); resizeMcCharts(); }, 50);
 }
 
 // ── FEATURE TOGGLES ────────────────────────────────────────────────────────
@@ -94,6 +93,7 @@ export function updateLabels() {
   const name=getScenarioName(state.activeScIdx);
   const dot=el('projLegDot'),lbl=el('projLegName'),dash=el('projLegDash');
   if(dot) dot.style.background=cv;
+  const lb=el('legBands'); if(lb) lb.style.setProperty('--bc',cv);   // v8.30 MC range legend
   if(dash) dash.style.borderColor=FIRE_LINE; // FIRE Target legend uses the neutral reference colour
   // Plan-vs-actual legend entries — shown only when past history exists
   const baseYr=numVal('baseYear',2026);
@@ -115,7 +115,8 @@ export function setActiveScenario(idx) {
   updateLabels();
   if (state.lastProjs && state.lastGl && state.lastScenarios) {
     renderSummaryTiles(state.lastProjs, state.lastGl, state.lastScenarios);
-    buildChart(state.lastProjs, state.lastGl);
+    buildChart(state.lastProjs, state.lastGl, mcBandsFor(idx));
+    paintMcActive();
     buildFlowChart(state.lastProjs, state.lastGl);
     renderTable(state.lastProjs, state.lastGl);
     // keep the summary-tile carousel in sync so the whole Results view matches

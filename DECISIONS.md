@@ -5,7 +5,20 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
-## 2026-11-26 · Spec for #21: Monte Carlo merged into Results (not built yet)
+## 2026-11-26 · v8.30 Monte Carlo merged into Results (#21, built)
+
+- Built as specified below. Two details settled while building:
+  - **The top of the 10–90% band is capped** at 110% of the highest of the plan line,
+    the FIRE target and the 75th percentile; lucky late-life histories otherwise
+    flattened the plan line. Exact ranges stay in the tooltip.
+  - **The spec's "bands sit below the line after the stop age" was wrong.** On real
+    inputs the MC median follows the plan up to the stop age (within a few %) and
+    then the range opens up both ways. The Explanation tab says that instead.
+- Settings are now Changes › Assumptions › *Market histories* and *Years kept
+  together*; changing them reruns through `recalc()`. `mc.recenter` is still written
+  as `true` in the saved state so an older build keeps recentering on.
+
+## 2026-11-26 · Spec for #21: Monte Carlo merged into Results
 
 - **The chart line stays the fixed plan** (your own return assumptions); Monte Carlo
   draws 10–90% and 25–75% bands around it. *Rejected:* the MC median as the main line

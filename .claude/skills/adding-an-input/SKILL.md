@@ -24,7 +24,7 @@ Pick the right home:
   only create a new section for a genuinely new topic.
 - **Per-scenario parameter** → Tab 2: one `.scg-row` with five `.scg-cell c1…c5` cells (A–E). You must add
   a cell for **all five scenarios**, ids prefixed `s1_`…`s5_`.
-- **Monte Carlo control** → Tab 4 `.mc-controls` (`.mc-ctl` wrapper).
+- **Monte Carlo setting** → Changes › Assumptions tile (`mcSims`, `mcBlock` since v8.30).
 
 Copy these exact patterns:
 
@@ -54,9 +54,8 @@ Rules:
   (step 6).
 - **Wire both `oninput` and `onchange` to `recalc()`** — every existing text/
   number/select input does both (covers typing, steppers, and paste).
-  Exception: inputs that only feed the Monte Carlo run (`mcSims`, `mcBlock`,
-  `mcRecenter`) use `onchange="scheduleSave()"` only — MC reads them at Run
-  time in `js/ui/mcTab.js`, and rerunning deterministic recalc would be noise.
+  Monte Carlo settings (`mcSims`, `mcBlock`) do the same since v8.30: recalc
+  schedules the background MC run, which reads them.
 - **Dedicated handlers**: if the input needs UI work beyond recalc (the
   `s{n}_ret` is a hidden field since v8.1 (stop ages are automatic); `updateAge(n)` remains for loading, the `wdMode` radios call
   `onWdMode()` — both in `js/ui/controls.js`, both call `recalc()` themselves),
@@ -105,10 +104,7 @@ withdrawal depended on it. The reload round-trip in step 8 is how you catch it.
 
 **Checkboxes and radios cannot go in SYNC_FIELDS** — collection reads
 `.value`, which for a checkbox is `"on"` regardless of state. Handle them
-explicitly in **both** `collectState()` and `applyState()` the way `mcRecenter`
-is (`mc: { recenter: mcRe.checked }` on collect; `mcRe.checked =
-data.mc.recenter !== false` on apply — note the backward-compatible default)
-and the way the `wdMode` radio group is (`data.wdMode` string). Non-input
+explicitly in **both** `collectState()` and `applyState()` the way the `wdMode` radio group is (`data.wdMode` string). Non-input
 state (arrays, objects) also goes through this pair — see `state-and-sync`.
 
 ## 4. Defaults — four layers, know which one you're touching

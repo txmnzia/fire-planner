@@ -28,7 +28,7 @@ test('every relative import in js/ carries ?v=<header version>', () => {
   let count = 0;
   for (const f of walk(join(root, 'js')).filter(f => f.endsWith('.js'))) {
     const src = readFileSync(f, 'utf8');
-    for (const m of src.matchAll(/(?:from|import)\s*\(?\s*["'](\.{1,2}\/[^"']+)["']/g)) {
+    for (const m of src.matchAll(/(?:from|import|URL)\s*\(?\s*["'](\.{1,2}\/[^"']+)["']/g)) {
       count++;
       if (!m[1].endsWith('.js?v=' + version)) bad.push(f.slice(root.length) + ': ' + m[1]);
     }

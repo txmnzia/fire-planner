@@ -1,9 +1,10 @@
-import { el, eur, fmtK } from "../util.js?v=8.29.1";
-import { scenarioIssues } from "../checks.js?v=8.29.1";
-import { state } from "../state.js?v=8.29.1";
-import { getScenarioName } from "../inputs.js?v=8.29.1";
-import { vsPlanFor } from "./planLine.js?v=8.29.1";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.29.1";
+import { el, eur, fmtK } from "../util.js?v=8.30";
+import { scenarioIssues } from "../checks.js?v=8.30";
+import { state } from "../state.js?v=8.30";
+import { getScenarioName } from "../inputs.js?v=8.30";
+import { vsPlanFor } from "./planLine.js?v=8.30";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.30";
+import { mcHeadlineHTML } from "./mcTab.js?v=8.30";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -266,6 +267,7 @@ export function renderSummaryTiles(projs, gl, scenarios) {
           '<div class="sc-result-row"><span class="k">NW at retirement</span><span class="v">'+eur(m.portRet)+'</span></div>' +
           twoRowsHTML(m, true) +
           infeasibleRowHTML(m) +
+          mcHeadlineHTML(i) +            // v8.30: the Monte Carlo chance (mcTab.js)
         '</div>' +
       '</div>';
   });

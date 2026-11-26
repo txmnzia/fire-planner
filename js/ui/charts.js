@@ -1,6 +1,6 @@
-import { el, fmt } from "../util.js?v=8.29.1";
-import { state } from "../state.js?v=8.29.1";
-import { planLineFor } from "./planLine.js?v=8.29.1";
+import { el, fmt } from "../util.js?v=8.30";
+import { state } from "../state.js?v=8.30";
+import { planLineFor } from "./planLine.js?v=8.30";
 
 // Chart.js instances are module-private; other modules resize via resizeResultsCharts().
 let chart = null, allocChart = null;
@@ -38,7 +38,11 @@ function makeRetPlugin(projs, gl) {
   }};
 }
 
-export function buildChart(projs,gl) {
+// v8.30 (issue #21): `bands` = the Monte Carlo range of the active scenario
+// (mcBandsFor in mcTab.js), drawn around the plan line: 10–90% light, 25–75%
+// darker. The line itself stays the deterministic plan (your own return
+// assumptions) so it matches the tiles and the year-by-year table.
+export function buildChart(projs,gl,bands) {
   if (typeof Chart === "undefined") return;   // Chart.js CDN unavailable — keep calculations & saving alive
 
   const proj=projs[state.activeScIdx], color=COLORS[state.activeScIdx], alpha=ALPHAS[state.activeScIdx], fade=COLORS_FADE[state.activeScIdx];
@@ -87,11 +91,38 @@ export function buildChart(projs,gl) {
     ds.push({label:"Partner portfolio",data:pv,borderColor:"rgba(244,114,182,.7)",borderWidth:1.5,borderDash:[2,3],pointRadius:0,pointHoverRadius:3,tension:.35,fill:false,order:4,spanGaps:false});
   }
   if (legP) legP.style.display = proj.partner ? "" : "none";
+  // Monte Carlo bands, aligned by calendar year (the x-axis may start before today).
+  const legB = el("legBands");
+  if (bands) {
+    const at = (arr) => labels.map(y => { const i = bands.years.indexOf(y); return i >= 0 ? arr[i] : null; });
+    const a = bands.stale ? .4 : 1;                 // stale range stays visible, dimmed (T5)
+    const outer = color.replace(/^#(..)(..)(..)$/, (_,r,g,b)=>"rgba("+parseInt(r,16)+","+parseInt(g,16)+","+parseInt(b,16)+","+(.13*a)+")");
+    const inner = color.replace(/^#(..)(..)(..)$/, (_,r,g,b)=>"rgba("+parseInt(r,16)+","+parseInt(g,16)+","+parseInt(b,16)+","+(.26*a)+")");
+    const base = ds.length;
+    const mk = (label, data, fill, bg) => ({label, data, borderWidth:0, borderColor:"transparent", backgroundColor:bg||"transparent",
+      pointRadius:0, pointHoverRadius:0, tension:.35, fill, order:10, spanGaps:false});
+    // Keep the plan readable: lucky histories compound far above it late in life,
+    // so the 10–90% band is capped at the top of the plan, the target and the
+    // 25–75% band (+10%); the exact values stay in the tooltip.
+    const cap = Math.max(proj.fireTarget||0, ...ds[0].data.filter(v=>v!=null), ...bands.p75) * 1.1;
+    ds.push(mk("__p10", at(bands.p10), false));
+    ds.push(mk("__p90", at(bands.p90).map(v => v == null ? null : Math.min(v, cap)), base, outer));
+    ds.push(mk("__p25", at(bands.p25), false));
+    ds.push(mk("__p75", at(bands.p75), base+2, inner));
+  }
+  if (legB) legB.style.display = bands ? "" : "none";
+  const rangeFooter = items => {
+    if (!bands || !items.length) return "";
+    const k = bands.years.indexOf(labels[items[0].dataIndex]);
+    if (k < 0) return "";
+    return ["Half of histories: \u20ac"+fmt(bands.p25[k])+" \u2013 \u20ac"+fmt(bands.p75[k]),
+            "8 in 10: \u20ac"+fmt(bands.p10[k])+" \u2013 \u20ac"+fmt(bands.p90[k])+(bands.stale?" (updating)":"")];
+  };
   if (chart) chart.destroy();
   chart=new Chart(ctx,{type:"line",data:{labels,datasets:ds},plugins:[makeRetPlugin([proj],gl)],options:{
     responsive:true,maintainAspectRatio:false,animation:{duration:300},interaction:{mode:"index",intersect:false},
-    plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",titleFont:{family:"'DM Sans'",size:11},bodyFont:{family:"'DM Mono'",size:11},padding:10,filter:item=>!item.dataset.label.startsWith("__"),callbacks:{title:items=>"Entering "+items[0].label,label:c=>" "+c.dataset.label+": €"+fmt(c.raw)}}},
-    scales:{x:{grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},y:{afterFit:AXIS_Y_FIT,grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,callback:v=>v>=1e6?"€"+(v/1e6).toFixed(1)+"M":v>=1e3?"€"+(v/1e3).toFixed(0)+"k":"€"+v}}}
+    plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",titleFont:{family:"'DM Sans'",size:11},bodyFont:{family:"'DM Mono'",size:11},padding:10,filter:item=>!item.dataset.label.startsWith("__"),callbacks:{title:items=>"Entering "+items[0].label,label:c=>" "+c.dataset.label+": €"+fmt(c.raw),footer:rangeFooter},footerColor:"#7e8faa",footerFont:{family:"'DM Mono'",size:10,weight:"400"}}},
+    scales:{x:{grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},y:{afterFit:AXIS_Y_FIT,min:bands?0:undefined,grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,callback:v=>v>=1e6?"€"+(v/1e6).toFixed(1)+"M":v>=1e3?"€"+(v/1e3).toFixed(0)+"k":"€"+v}}}
   }});
 }
 

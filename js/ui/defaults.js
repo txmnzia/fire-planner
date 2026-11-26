@@ -2,12 +2,12 @@
 // value falls back to a preset or another field shows that value as its grey
 // placeholder, never a word like "preset" or "estimate". When the value depends
 // on where you live, the countries in your plan are shown in order ("259 → 0").
-import { el } from "../util.js?v=8.29.1";
-import { COUNTRY_TAX } from "../taxTable.js?v=8.29.1";
-import { buyCostPreset } from "../countries.js?v=8.29.1";
-import { residenceAt, CHILD_BENEFIT } from "../engine.js?v=8.29.1";
-import { healthPresetMonthly } from "../health.js?v=8.29.1";
-import { fmtMoney } from "./situation.js?v=8.29.1";
+import { el } from "../util.js?v=8.30";
+import { COUNTRY_TAX } from "../taxTable.js?v=8.30";
+import { buyCostPreset } from "../countries.js?v=8.30";
+import { residenceAt, CHILD_BENEFIT } from "../engine.js?v=8.30";
+import { healthPresetMonthly } from "../health.js?v=8.30";
+import { fmtMoney } from "./situation.js?v=8.30";
 
 const num = v => String(+(+v).toFixed(2));
 const money = v => fmtMoney(Math.round(v));

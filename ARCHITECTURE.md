@@ -26,6 +26,10 @@ js/
                         source for every two-person number in the UI.
   montecarlo.js         PURE Monte Carlo engine — historical block bootstrap, seeded
                         PRNG, percentile bands. Depends only on engine.js.
+                        mcBuildPaths + mcRunScenario (runMonteCarloOrdered runs the
+                        active scenario first over one shared path set).
+  mcWorker.js           v8.30: module Web Worker that only relays a run to
+                        runMonteCarloOrdered and posts each scenario's result.
   recalc.js             Orchestrator: inputs → engine → all renderers, then persistence.
   sync.js               localStorage persistence + Supabase cross-device sync
                         (collectState/applyState, magic-link sign-in, polling).
@@ -59,12 +63,17 @@ js/
                         labels, active-scenario selection, mobile nav.
     cards.js            computeCardMetrics (single source of card numbers), the
                         automatic stop ages (earliestStopAge / withStopAges,
-                        used by recalc and the Monte Carlo tab), the Scenarios
+                        run once by recalc; Monte Carlo reuses them), the Scenarios
                         grid result cells (scenarioGridResults /
                         renderScenarioGrid) and the Results summary tiles.
     charts.js           Projection & allocation charts (Chart.js) and shared palette.
+                        buildChart(projs, gl, bands) draws the MC range around the plan.
     table.js            Year-by-year detail table + CSV export.
-    mcTab.js            Monte Carlo tab UI (cards, tiles, fan & histogram charts).
+    mcTab.js            Monte Carlo on the Results tab (v8.30): background runs
+                        (markMcStale → scheduleMcRun → worker, latest wins, results
+                        keyed by input generation), mcBandsFor (chart range),
+                        mcHeadlineHTML (tile line), the grid row, How sure tiles,
+                        Risk detail charts.
     explanation.js      Explanation tab: scenario-tailored story — lede + stat tiles,
                         visual phase timeline, per-phase chapter cards (today's-€
                         lifestyle meters, funding-mix bars, life-event list), and
@@ -124,6 +133,8 @@ form inputs ──getGlobals()/getScenario()──▶ plain gl/sc objects
                                               ▼
 recalc() ──────────────▶ renderers (cards, charts, table, labels)
    │                                          ▲
+   ├── markMcStale() (before drawing) ... scheduleMcRun() ──600 ms──▶ mcWorker.js
+   │        results arrive per scenario ──▶ mcTab paints tiles, grid row, chart range
    └── scheduleSave() → localStorage → Supabase ┘ (applyState on load/sync)
 ```
 

@@ -148,7 +148,8 @@ context where its field is hidden, unhide it or move the dependency.
 **I12 — Monte Carlo reuses `project()` — never fork it.**
 MC injects `opts.returnSeq` into the same engine. All planning logic changes propagate
 to MC automatically; a parallel simulation would drift. MC results go stale on any
-input change — `recalc()` must keep calling `markMcStale()`.
+input change — `recalc()` must keep calling `markMcStale()` (before drawing) and
+`scheduleMcRun()` (v8.30 background run).
 
 **I13 — Country tax is keyed by country code, not rate.**
 `retCountry` option values are ISO-ish codes; rates come from `COUNTRY_TAX` in

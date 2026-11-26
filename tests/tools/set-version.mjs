@@ -19,7 +19,7 @@ const walk = d => readdirSync(d).flatMap(f => { const p = join(d, f); return sta
 let n = 0;
 for (const f of walk(join(root, 'js')).filter(f => f.endsWith('.js'))) {
   const src = readFileSync(f, 'utf8');
-  const out = src.replace(/((?:from|import)\s*\(?\s*["'])(\.{1,2}\/[^"'?]+\.js)(\?v=[^"']*)?(["'])/g,
+  const out = src.replace(/((?:from|import|URL)\s*\(?\s*["'])(\.{1,2}\/[^"'?]+\.js)(\?v=[^"']*)?(["'])/g,
     (m, a, path, _old, q) => { n++; return a + path + '?v=' + v + q; });
   if (out !== src) writeFileSync(f, out);
 }

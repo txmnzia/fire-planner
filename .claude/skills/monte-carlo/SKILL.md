@@ -65,7 +65,7 @@ you ever change this formula, re-run the recentering test in `tests/montecarlo.t
 ## Seeding and reproducibility
 
 `mulberry32(seed)` is the only randomness source. `runMonteCarlo` seeds it with
-`cfg.seed`, defaulting to `0x1F1E33` when unset — and the UI (`runMonteCarloUI` in
+`cfg.seed`, defaulting to `0x1F1E33` when unset — and the UI (`startRun` in
 `js/ui/mcTab.js`) never sets a seed, so **identical inputs give identical results
 across button presses**. This is deliberate: the user must not see numbers jitter when
 nothing changed. Tests rely on explicit seeds for determinism. Never fall back to
@@ -127,15 +127,22 @@ the horizon it summarises**. If you add a metric, check both properties; if you 
 tempted to replace `min(inc,tgt)` with `inc` or drop the deflator because it "looks
 simpler", you are re-creating the v6.6 bug.
 
-## Staleness and the UI boundary
+## Staleness and the UI boundary (v8.30: background runs on Results)
 
-MC runs only when the user presses Run (`runMonteCarloUI` in `js/ui/mcTab.js`, which
-reads fresh `getGlobals()`/`getScenario()` and attaches the deterministic `fireTarget`
-per scenario for the reference line). Results are cached in module-private `mcResults`/
-`mcGl`, so any later input change makes them wrong for the screen: `recalc()` in
-`js/recalc.js` must keep calling `markMcStale()` (dims `.mc-body`, sets "Inputs changed —
-press Run to refresh"). Was T5. If you add a new code path that changes inputs without
-going through `recalc()`, it must mark MC stale too.
+There is no Run button. `recalc()` calls `markMcStale()` **before** drawing (bumps the
+input generation `gen`, so every cached result is now stale and paints dimmed) and
+`scheduleMcRun()` at the end (600 ms debounce). `startRun` in `js/ui/mcTab.js` takes
+recalc's own `state.lastScenarios`/`state.lastGl` (the automatic stop ages, never a
+re-read of the form), terminates any older worker (latest wins) and posts one job to
+`js/mcWorker.js`, which only calls `runMonteCarloOrdered` with the active scenario
+first. Each result is stored as `{gen, r}` and shown undimmed only when `gen` matches
+the inputs on screen (T5). Fallback when no module worker: the same function on the
+page, one scenario per task. `cfg.recenter` is hard-wired `true`. Scenarios with a
+blocking missing input are not run ("—"). Consumers: `mcBandsFor(i)` → the range on
+the Portfolio Projection chart, `mcHeadlineHTML(i)` → the tile line, `scr{n}_chance`
+→ the Scenarios grid row, How sure tiles, Risk detail (histogram; SWR coverage fan).
+If you add a code path that changes inputs without going through `recalc()`, it must
+call `markMcStale()` and `scheduleMcRun()` too.
 
 ## Validating a change
 

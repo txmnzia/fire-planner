@@ -63,7 +63,7 @@ Commit `829d346` is the same lesson one layer down (it concerned the old
   wdMode: 'swr' | 'fixed',                   // radio group, handled explicitly
   features: { 1..5: {partner, prop, child} },// per-scenario toggles (js/state.js)
   nwHistory: [{year, val, income, spend}],   // plan-vs-actual snapshots
-  mc: { recenter: <bool> },                  // mcRecenter checkbox, explicit
+  mc: { recenter: true },                    // v8.30: always true (checkbox gone), kept for old builds
   ibkr: { total, holdings },                 // parsed IBKR import
   ts: <ms epoch> }                           // stamped by scheduleSave()/syncSave()
 ```

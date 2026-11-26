@@ -1,88 +1,216 @@
-import { el, fmt, fmtK } from "../util.js?v=8.29.1";
-import { getGlobals, getScenario, getScenarioName } from "../inputs.js?v=8.29.1";
-import { withStopAges } from "./cards.js?v=8.29.1";
-import { project } from "../engine.js?v=8.29.1";
-import { runMonteCarlo, mcPct } from "../montecarlo.js?v=8.29.1";
-import { COLORS, COLORS_FADE, ALPHAS, GC, FIRE_LINE } from "./charts.js?v=8.29.1";
+import { el, fmt, fmtK } from "../util.js?v=8.30";
+import { state } from "../state.js?v=8.30";
+import { getScenarioName } from "../inputs.js?v=8.30";
+import { runMonteCarloOrdered, mcPct } from "../montecarlo.js?v=8.30";
+import { COLORS, COLORS_FADE, ALPHAS, GC, FIRE_LINE, buildChart } from "./charts.js?v=8.30";
 
-// Monte Carlo tab state (module-private)
+// Monte Carlo on the Results tab (v8.30, issue #21). No Run button: every
+// recalc() marks the results stale and schedules a run in a module worker
+// (js/mcWorker.js); the newest inputs always win and the scenario on screen is
+// computed first. Results are module-private, keyed by the generation of inputs
+// they were computed for, so stale output is always shown dimmed (AUDIT.md T5).
 let mcFanChart = null, mcHistChart = null;
-let mcResults = null, mcActiveIdx = 0, mcGl = null;
+let gen = 0;                        // generation of the inputs on screen (bumped by markMcStale)
+let results = [null,null,null,null,null];   // per scenario: { gen, r } or null
+let mcGl = null;                    // gl of the newest finished result (labels: lifeExp, wdMode)
+let missing = [false,false,false,false,false];   // blocking inputs: no MC for that scenario
+let timer = null, worker = null, useWorker = true, runGen = -1, lastCfg = null;
+const DEBOUNCE_MS = 600;
 
-// ── MONTE CARLO UI ───────────────────────────────────────────────────────────
-function mcEsc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function mcRateClass(rate){ return rate>=0.9?'hi':rate>=0.75?'mid':'lo'; }
 const MC_RATE_COLOR={hi:'var(--ok)',mid:'var(--s2c)',lo:'var(--err)'};
+const fresh = i => !!results[i] && results[i].gen === gen;
 
-export function runMonteCarloUI(){
-  const btn=el('mcRunBtn'); if(!btn) return;
-  el('mcStatus').textContent='Running…'; btn.disabled=true;
-  // Yield a frame so the "Running…" label paints before the blocking compute.
-  requestAnimationFrame(()=>setTimeout(()=>{
+// Read once per run; recentering is always on (DECISIONS 2026-11-26): the range
+// must stay centred on the user's own return assumptions.
+function mcConfig(){
+  return { sims: parseInt(el('mcSims')?.value)||1000, blockLen: parseInt(el('mcBlock')?.value)||5, recenter: true };
+}
+
+// ── STALENESS + SCHEDULING ─────────────────────────────────────────────────
+// Called by recalc() BEFORE the charts are built: the inputs changed, so every
+// result on screen belongs to the previous inputs. Never remove this call.
+export function markMcStale(){
+  gen++;
+  missing = (state.lastStops||[]).map(s => !!(s && s.missing));
+  paintMc();
+}
+
+// Called at the end of recalc(): debounce, then run for the inputs on screen.
+export function scheduleMcRun(){
+  clearTimeout(timer);
+  timer = setTimeout(startRun, DEBOUNCE_MS);
+}
+
+function startRun(){
+  timer = null;
+  const gl = state.lastGl, scenarios = state.lastScenarios;
+  if (!gl || !scenarios) return;
+  const myGen = gen, cfg = mcConfig();
+  const active = state.activeScIdx;
+  const order = [active, ...[0,1,2,3,4].filter(i => i !== active)]
+    .filter(i => scenarios[i] && !missing[i]);
+  const fireTargets = (state.lastProjs||[]).map(p => p ? p.fireTarget : 0);
+  const accept = (i, r) => {
+    if (myGen !== gen) return false;                    // newer inputs arrived meanwhile
+    decorate(r, i, fireTargets[i]);
+    results[i] = { gen: myGen, r }; mcGl = gl; lastCfg = cfg;
+    paintMc(i);
+    return true;
+  };
+  runGen = myGen;
+  if (useWorker && typeof Worker !== 'undefined') {
     try {
-      const gl=getGlobals();
-      const scenarios=withStopAges([1,2,3,4,5].map(s=>getScenario(s,gl)),gl).map(x=>x.sc);
-      const cfg={ sims:parseInt(el('mcSims').value)||1000,
-                  blockLen:parseInt(el('mcBlock').value)||5,
-                  recenter:el('mcRecenter').checked };
-      const t0=performance.now();
-      const results=runMonteCarlo(scenarios,gl,cfg);
-      results.forEach((r,i)=>{
-        r.name=getScenarioName(i); r.color=COLORS[i]; r.fade=COLORS_FADE[i]; r.alpha=ALPHAS[i];
-        // Reference FIRE target from the deterministic projection — priced with
-        // the tracked gain fraction at retirement, same number the other tabs show.
-        r.fireTarget=project(scenarios[i],gl).fireTarget;
-      });
-      mcResults=results; mcGl=gl;
-      if (mcActiveIdx>=results.length) mcActiveIdx=0;
-      el('mcStatus').textContent=cfg.sims.toLocaleString('en-US')+' paths · '+Math.round(performance.now()-t0)+' ms';
-      const mcBody=document.querySelector('.mc-body'); if(mcBody) mcBody.classList.remove('stale');
-      el('mcEmpty').style.display='none'; el('mcDetail').style.display='block';
-      renderMcCards(); selectMcScenario(mcActiveIdx);
-    } catch(e){ el('mcStatus').textContent='Error: '+e.message; console.error(e); }
-    finally { btn.disabled=false; }
-  },0));
-}
+      if (worker) worker.terminate();                   // latest wins: drop the older run
+      worker = new Worker(new URL("../mcWorker.js?v=8.30", import.meta.url), { type: 'module' });
+      worker.onmessage = e => {
+        const m = e.data; if (m.gen !== gen) return;
+        if (m.error) { console.error('Monte Carlo worker:', m.error); fallback(); return; }
+        if (m.done) { runGen = -1; paintStatus(); return; }
+        accept(m.i, m.result);
+      };
+      worker.onerror = e => { if (e && e.preventDefault) e.preventDefault(); fallback(); };
+      worker.postMessage({ gen: myGen, scenarios, gl, cfg, order });
+      paintStatus();
+      return;
+    } catch (e) { console.warn('Monte Carlo: no worker, running on the page', e); useWorker = false; }
+  }
+  runOnPage(myGen, scenarios, gl, cfg, order, accept);
 
-// The headline rate shown on each card. In Fixed mode it is depletion-based
-// survival; in SWR mode (where the portfolio can't deplete) it is the share of
-// simulations whose income covered the full spending target every year.
-function mcCardStat(r, swr){
-  return swr
-    ? { rate: r.fundedRate,  sub: 'retirement years on budget' }
-    : { rate: r.successRate, sub: 'survival to '+mcGl.lifeExp };
-}
-
-function renderMcCards(){
-  const wrap=el('mcCards'); if(!wrap||!mcResults) return;
-  const swr=mcGl.wdMode==='swr';
-  wrap.innerHTML=mcResults.map((r,i)=>{
-    const st=mcCardStat(r,swr), pct=Math.round(st.rate*100), cls=mcRateClass(st.rate);
-    return '<div class="mc-card'+(i===mcActiveIdx?' active':'')+'" style="--cc:'+r.color+'" onclick="selectMcScenario('+i+')">'
-      +'<div class="mc-card-name" style="color:'+r.color+'">'+mcEsc(r.name)+'</div>'
-      +'<div class="mc-card-rate mc-rate-'+cls+'">'+pct+'%</div>'
-      +'<div class="mc-card-sub">'+st.sub+'</div>'
-      +'<div class="mc-card-bar"><div class="mc-bar-'+cls+'" style="width:'+pct+'%"></div></div>'
-      +'</div>';
-  }).join('');
-  const note=el('mcModeNote');
-  if (note){
-    if (swr){
-      note.style.display='block';
-      note.innerHTML='<strong>% of Portfolio mode:</strong> up to SWR% of the current portfolio funds each year’s budget (surpluses stay invested), so the portfolio can’t hit zero — depletion-based survival is ~100% by construction. The real question is <strong>budget adequacy</strong>: how often, and by how much, the available draw (plus pensions and partner income) falls short of your full yearly budget. The cards show the share of retirement years on budget; click one for how deep the shortfalls go. Switch to Fixed-Amount mode for a classic depletion-based survival rate.';
-    } else {
-      note.style.display='none';
-    }
-    // With a partner, MC simulates YOUR portfolio covering your cost (her money stays hers).
-    note.style.display='block';
-    note.innerHTML=(swr?note.innerHTML+'<br><br>':'')+'<strong>With your partner:</strong> Monte Carlo runs on <em>your</em> portfolio covering <em>your</em> cost: your own spending plus your part of the shared costs.';
+  // A worker that fails (old browser without module workers, data it cannot
+  // copy) switches this session to the on-page run.
+  function fallback(){
+    useWorker = false;
+    if (worker) { worker.terminate(); worker = null; }
+    if (myGen === gen) runOnPage(myGen, scenarios, gl, cfg, order, accept);
   }
 }
 
-export function selectMcScenario(i){
-  mcActiveIdx=i;
-  document.querySelectorAll('#mcCards .mc-card').forEach((c,idx)=>c.classList.toggle('active',idx===i));
-  renderMcDetail();
+// Fallback: on the page, one scenario per task so the page stays responsive
+// between scenarios. Same function, same shared paths, same results.
+function runOnPage(myGen, scenarios, gl, cfg, order, accept){
+  paintStatus();
+  let k = 0;
+  const step = () => {
+    if (myGen !== gen || k >= order.length) { if (myGen === gen) { runGen = -1; paintStatus(); } return; }
+    const i = order[k++];
+    try {
+      runMonteCarloOrdered(scenarios, gl, cfg, [i], (j, r) => accept(j, r));
+    } catch (e) { console.error(e); const st = el('mcStatus'); if (st) st.textContent = 'Error: ' + e.message; return; }
+    setTimeout(step, 0);
+  };
+  setTimeout(step, 0);
+}
+
+function decorate(r, i, fireTarget){
+  r.name=getScenarioName(i); r.color=COLORS[i]; r.fade=COLORS_FADE[i]; r.alpha=ALPHAS[i];
+  // Reference FIRE target from the deterministic projection, the number the
+  // rest of Results shows (priced at the tracked gain fraction at retirement).
+  r.fireTarget=fireTarget;
+}
+
+// ── WHAT THE OTHER RENDERERS ASK FOR ───────────────────────────────────────
+// Bands for the Portfolio Projection chart (charts.js buildChart): the MC range
+// of YOUR net worth path, start-of-year, same series as proj.values.
+export function mcBandsFor(i){
+  const x = results[i]; if (!x || missing[i]) return null;
+  const b = x.r.bands;
+  return { years: x.r.years, p10: b.p10, p25: b.p25, p75: b.p75, p90: b.p90, stale: x.gen !== gen };
+}
+
+// The headline line on each Results tile. Fixed mode: depletion survival.
+// % mode: share of retirement years on budget (I3: the portfolio cannot deplete,
+// so survival is never headlined there).
+function headline(i){
+  const gl = state.lastGl, swr = gl && gl.wdMode === 'swr';
+  const label = swr ? 'Years on budget' : 'Chance it lasts to ' + (gl ? gl.lifeExp : '');
+  if (missing[i]) return { label, text: '\u2014', cls: '', stale: false };
+  const x = results[i];
+  if (!x || (mcGl && mcGl.wdMode !== (gl && gl.wdMode))) return { label, text: '\u2026', cls: '', stale: true };
+  const rate = swr ? x.r.fundedRate : x.r.successRate;
+  return { label, text: Math.round(rate*100)+'%', cls: mcRateClass(rate), stale: x.gen !== gen };
+}
+function headlineInner(i){
+  const h = headline(i);
+  return '<span class="k">'+h.label+'</span><span class="v mc-v"'+(h.cls?' style="color:'+MC_RATE_COLOR[h.cls]+'"':'')+'>'+h.text+'</span>';
+}
+export function mcHeadlineHTML(i){
+  const h = headline(i);
+  return '<div class="sc-result-row mc-line'+(h.stale?' stale':'')+'" id="tileMc'+i+'">'+headlineInner(i)+'</div>';
+}
+
+// ── PAINTING ───────────────────────────────────────────────────────────────
+// Everything MC-derived on screen, from the cached results. `arrived` is the
+// scenario whose result just landed (undefined: a staleness change).
+function paintMc(arrived){
+  for (let i = 0; i < 5; i++) {
+    const t = el('tileMc'+i);
+    if (t) { const h = headline(i); t.innerHTML = headlineInner(i); t.classList.toggle('stale', h.stale); }
+    const c = el('scr'+(i+1)+'_chance');
+    if (c) {
+      const h = headline(i);
+      c.textContent = h.text; c.style.color = h.cls ? MC_RATE_COLOR[h.cls] : '';
+      c.classList.toggle('muted', !h.cls); c.classList.toggle('stale', h.stale);
+    }
+  }
+  const lbl = el('scgMcLbl');
+  if (lbl && state.lastGl) lbl.textContent = state.lastGl.wdMode === 'swr' ? 'Years on budget' : 'Chance it lasts';
+  paintStatus();
+  const a = state.activeScIdx;
+  if (arrived === undefined || arrived === a) {
+    paintMcActive();
+    if (arrived === a && state.lastProjs && state.lastGl) buildChart(state.lastProjs, state.lastGl, mcBandsFor(a));
+  }
+}
+
+function paintStatus(){
+  const st = el('mcStatus'); if (!st) return;
+  const todo = [0,1,2,3,4].filter(i => state.lastScenarios && state.lastScenarios[i] && !missing[i]);
+  const allFresh = todo.length > 0 && todo.every(fresh);
+  const cfg = lastCfg || mcConfig();
+  st.textContent = allFresh ? cfg.sims.toLocaleString('en-US') + ' market histories \u00b7 up to date'
+                 : (todo.length ? 'Updating the range\u2026' : '');
+  st.classList.toggle('busy', !allFresh);
+}
+
+// The "How sure" tiles and the Risk detail for the active scenario. Also called
+// by setActiveScenario (tile tap, carousel or chart swipe).
+export function paintMcActive(){
+  const i = state.activeScIdx, x = results[i];
+  const wrap = el('mcSure'), tiles = el('mcTiles'), title = el('mcSureTitle');
+  if (title) title.textContent = 'How sure \u2014 ' + getScenarioName(i);
+  if (!wrap || !tiles) return;
+  if (missing[i]) { tiles.innerHTML = '<div class="mc-empty">Missing inputs: no market range for this scenario.</div>'; wrap.classList.remove('stale'); return; }
+  if (!x) { tiles.innerHTML = '<div class="mc-empty">Working out the range over thousands of market histories\u2026</div>'; return; }
+  wrap.classList.toggle('stale', x.gen !== gen);
+  renderMcDetail(x.r, mcGl);
+  const risk = el('mcRisk');
+  if (risk) risk.classList.toggle('stale', x.gen !== gen);
+  renderMcNote(mcGl);
+  if (risk && risk.open) buildRiskCharts();
+}
+
+// The Risk detail charts live in a collapsed <details>: build them when it opens
+// (a closed panel has zero size).
+export function initMc(){
+  const risk = el('mcRisk');
+  if (risk) risk.addEventListener('toggle', () => { if (risk.open) buildRiskCharts(); });
+}
+function buildRiskCharts(){
+  const x = results[state.activeScIdx]; if (!x || !mcGl) return;
+  const swr = mcGl.wdMode === 'swr';
+  const fanCard = el('mcFanCard'); if (fanCard) fanCard.hidden = !swr;
+  if (swr) buildMcFanChart(x.r, true);
+  buildMcHistChart(x.r, swr);
+}
+
+function renderMcNote(gl){
+  const note=el('mcModeNote'); if (!note || !gl) return;
+  const swr=gl.wdMode==='swr';
+  note.innerHTML=(swr
+    ? '<strong>% of portfolio mode:</strong> up to SWR% of the current portfolio funds each year\u2019s budget (surpluses stay invested), so the portfolio can\u2019t hit zero and a survival rate would be ~100% by construction. What matters is <strong>budget adequacy</strong>: how often, and by how much, the draw (plus pensions and partner income) falls short of your full yearly budget. Switch to Fixed amount for a classic survival rate.<br><br>'
+    : '')
+    +'<strong>With your partner:</strong> the range is <em>your</em> portfolio covering <em>your</em> cost: your own spending plus your part of the shared costs.';
 }
 
 function mcTile(lbl,valHtml,note,muted){
@@ -91,33 +219,29 @@ function mcTile(lbl,valHtml,note,muted){
     +'<div class="mc-tile-note">'+note+'</div></div>';
 }
 
-function renderMcDetail(){
-  if(!mcResults) return;
-  const r=mcResults[mcActiveIdx];
-  const swr=mcGl.wdMode==='swr';
+function renderMcDetail(r, gl){
+  const swr=gl.wdMode==='swr';
   const t=[];
   if (swr){
     // SWR: the portfolio can't deplete, so budget adequacy is the live risk.
     // Frequency (how often short) + depth (how far short) of the funding ratio.
     const fundClr=MC_RATE_COLOR[mcRateClass(r.fundedRate)];
     t.push(mcTile('Years under budget','<span style="color:'+fundClr+'">'+Math.round(r.yearsBelowAvg)+' / '+r.retYearsTotal+'</span>','avg retirement yrs income < budget'));
-    t.push(mcTile('Lifetime budget funded',Math.round(r.typicalCoverage*100)+'%','median sim: share of total budget covered'));
+    t.push(mcTile('Lifetime budget funded',Math.round(r.typicalCoverage*100)+'%','median history: share of total budget covered'));
     t.push(mcTile('When short, you fund',Math.round(r.condShortDepth*100)+'%','avg coverage in under-budget yrs'));
-    t.push(mcTile('Worst year (1-in-10)',Math.round(r.worstYearP10*100)+'%','leanest year in a bad path'));
+    t.push(mcTile('Worst year (1-in-10)',Math.round(r.worstYearP10*100)+'%','leanest year in a bad history'));
   } else {
     const rc=MC_RATE_COLOR[mcRateClass(r.successRate)];
-    t.push(mcTile('Success rate','<span style="color:'+rc+'">'+Math.round(r.successRate*100)+'%</span>','never depleted before age '+mcGl.lifeExp));
-    t.push(mcTile('Median ending value',fmtK(r.medianEnd),'real, today’s € (P10 '+fmtK(r.p10End)+')'));
-    t.push(mcTile('Larger end portfolio',Math.round(r.largeEndPct*100)+'%','real ending ≥ 2× value at retirement'));
-    t.push(mcTile('Smaller end portfolio',Math.round(r.smallEndPct*100)+'%','real ending ≤ ½ value at retirement'));
+    t.push(mcTile('Chance it lasts','<span style="color:'+rc+'">'+Math.round(r.successRate*100)+'%</span>','never runs out before age '+gl.lifeExp));
+    t.push(mcTile('Typical end value',fmtK(r.medianEnd),'today\u2019s \u20ac, median (bad case '+fmtK(r.p10End)+')'));
+    t.push(mcTile('Ends \u2265 2\u00d7 stop value',Math.round(r.largeEndPct*100)+'%','in today\u2019s \u20ac'));
+    t.push(mcTile('Ends \u2264 \u00bd stop value',Math.round(r.smallEndPct*100)+'%','in today\u2019s \u20ac'));
   }
   el('mcTiles').innerHTML=t.join('');
-  el('mcFanTitle').textContent=(swr?'Budget Coverage Over Retirement — ':'Outcome Range Over Time — ')+r.name;
-  if (el('mcFanRefLabel')) el('mcFanRefLabel').textContent = swr ? 'Budget (100%)' : 'FIRE Target';
+  if (el('mcFanTitle')) el('mcFanTitle').textContent='Budget Coverage Over Retirement \u2014 '+r.name;
   if (el('mcHistTitle')) el('mcHistTitle').innerHTML = swr
-    ? 'Distribution of Budget Coverage <span style="color:var(--muted);font-weight:400">(share of lifetime budget funded per sim)</span>'
-    : 'Distribution of Ending Net Worth <span style="color:var(--muted);font-weight:400">(real, today’s €)</span>';
-  buildMcFanChart(r, swr); buildMcHistChart(r, swr);
+    ? 'Distribution of Budget Coverage <span style="color:var(--muted);font-weight:400">(share of lifetime budget funded per history)</span>'
+    : 'Distribution of Ending Net Worth \u2014 '+r.name+' <span style="color:var(--muted);font-weight:400">(today\u2019s \u20ac)</span>';
 }
 
 const MC_Y_TICK=v=>v>=1e6?"€"+(v/1e6).toFixed(1)+"M":v>=1e3?"€"+(v/1e3).toFixed(0)+"k":"€"+Math.round(v);
@@ -196,11 +320,4 @@ function buildMcHistChart(r, swr){
 export function resizeMcCharts() {
   if (mcFanChart) mcFanChart.resize();
   if (mcHistChart) mcHistChart.resize();
-}
-
-// Called by recalc(): results on screen were computed for the previous inputs.
-export function markMcStale() {
-  if (!mcResults) return;
-  const st = el('mcStatus'); if (st) st.textContent = 'Inputs changed — press Run to refresh';
-  const mcBody = document.querySelector('.mc-body'); if (mcBody) mcBody.classList.add('stale');
 }

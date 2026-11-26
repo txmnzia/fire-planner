@@ -13,7 +13,6 @@ touches any displayed number. This skill is about how the UI layer is wired.
 `index.html` uses inline `on*=""` attributes everywhere (`onclick="recalc()"`,
 `oninput="updateAge(1)"`, …), and several renderers emit HTML strings containing more of
 them: `renderSummaryTiles` in `js/ui/cards.js` emits `onclick="setActiveScenario(i)"`,
-`renderMcCards` in `js/ui/mcTab.js` emits `onclick="selectMcScenario(i)"`,
 `renderNwHistory` in `js/ui/nwHistory.js` emits `updateNwRow`/`removeNwRow`.
 
 ES module scope is NOT global scope: a function exported from a module does not exist as
@@ -40,7 +39,7 @@ actual click in the browser, not just page load.
 - Chart.js instances stay **module-private** (`let chart, allocChart` in
   `js/ui/charts.js`; `let mcFanChart, mcHistChart` in `js/ui/mcTab.js`). Other modules
   never touch them directly — they call the exported `resizeResultsCharts()` /
-  `resizeMcCharts()`. Monte Carlo results (`mcResults`, `mcGl`, `mcActiveIdx`) are
+  `resizeMcCharts()`. Monte Carlo results (`results`, `gen`, `mcGl`, the worker) are
   likewise module-private to `js/ui/mcTab.js`. Do not move any of these onto `state`.
 
 ## Import cycles — intentional, and what keeps them safe
@@ -67,15 +66,17 @@ may be undefined — a top-level call breaks the whole app at load with a confus
 3. `renderScenarioGrid(projs, gl, scenarios)` fills the result rows of the Scenarios grid.
 4. Cache `state.lastProjs / lastGl / lastScenarios` (used by `setActiveScenario` and
    `downloadCSV` to re-render without recomputing).
-5. `buildChart(projs, gl)`, `buildFlowChart(projs, gl)`, `renderTable(projs, gl)`,
-   `updateLabels()`, `renderSummaryTiles(projs, gl, scenarios)`.
-6. `markMcStale()` — MC results on screen were computed for the previous inputs
-   (AUDIT.md T5); this dims `.mc-body` and sets the "Inputs changed" status. Never
+5. `markMcStale()` — BEFORE anything draws: MC results on screen were computed for
+   the previous inputs (AUDIT.md T5); bumps the input generation so the range, tile
+   lines, grid row and How sure tiles paint dimmed ("Updating the range…"). Never
    remove this call.
-7. `scheduleSave()` — persists to localStorage and debounces a Supabase sync.
+6. `buildChart(projs, gl, mcBandsFor(active))`, `buildFlowChart(projs, gl)`,
+   `renderTable(projs, gl)`, `updateLabels()`, `renderSummaryTiles(projs, gl, scenarios)`.
+7. `scheduleMcRun()` — v8.30: debounced background Monte Carlo (js/mcWorker.js).
+8. `scheduleSave()` — persists to localStorage and debounces a Supabase sync.
 
 **Adding a renderer:** export a `renderX(projs, gl)` from a `js/ui/` module and call it
-from `recalc()` between steps 3 and 6. If it must react to active-scenario changes
+from `recalc()` between steps 3 and 7. If it must react to active-scenario changes
 without a recalc, also call it from `setActiveScenario` in `js/ui/controls.js` using the
 `state.last*` caches. It must not throw — see the Chart.js section.
 
@@ -109,8 +110,9 @@ the `financial-invariants` skill before touching it.
   Gotcha: `COLORS` duplicates the CSS `--s1c…--s5c` values; if you change one, change
   both (CSS drives cards/tiles/dots, JS drives canvases).
 - Tab switching hides panels with `display:none`, so charts on a hidden tab have zero
-  size. `switchTab` in `js/ui/controls.js` calls `setTimeout(resizeResultsCharts, 50)` /
-  `setTimeout(resizeMcCharts, 50)` after activating the panel. A new chart on a new tab
+  size. `switchTab` in `js/ui/controls.js` calls `resizeResultsCharts()` and
+  `resizeMcCharts()` 50 ms after activating Results. The Risk detail charts sit in a
+  closed `<details>` and are built on its `toggle` event (`initMc`). A new chart on a new tab
   needs the same resize hook.
 - Custom drawing (retirement labels, reference lines) is done with inline Chart.js
   plugins (`makeRetPlugin`, `retPl`, `refPlugin`) passed via the `plugins:[…]` array.
@@ -118,8 +120,8 @@ the `financial-invariants` skill before touching it.
 ## The 5-scenario structure
 
 - Stop ages are automatic since v8.1: `withStopAges()` (js/ui/cards.js) sets each
-  scenario's `retAge` to its earliest funded age; `recalc()` and `mcTab.js` both call
-  it. `s{n}_ret` is now a hidden input that only keeps the saved value.
+  scenario's `retAge` to its earliest funded age; `recalc()` calls it once and
+  `mcTab.js` reuses `state.lastScenarios`. `s{n}_ret` is now a hidden input that only keeps the saved value.
 - Element id conventions: per-scenario inputs are `s{n}_ret` (hidden), `s{n}_inc`, `s{n}_chgYear`,
   `s{n}_chgInc`, names `sc{n}name`, toggle switches `tog{n}_partner|prop|child`, card
   grid result cells `scr{n}_status|target|nw|lasts|household`, n = 1..5 (v8 grid;
@@ -155,7 +157,7 @@ All wired in `main.js` `DOMContentLoaded` — every scroll/touch listener uses
 - `addChartSwipe` on `.proj-canvas-wrap`/`.alloc-canvas-wrap`: horizontal touch swipe
   (>40px, dominantly horizontal) steps `state.activeScIdx`.
 - Swipeable card rows use equal-width flex children + `scroll-snap-type:x mandatory`
-  (`.sc-card` at `100vw`, `.mc-card` at `42%` — commit 2485130): a card's width must
+  (`.sc-card` at `100vw` — commit 2485130): a card's width must
   never depend on its content or the dot/scroll-position math breaks.
 
 ## css/styles.css conventions
@@ -169,7 +171,8 @@ All wired in `main.js` `DOMContentLoaded` — every scroll/touch listener uses
   mobile block → sync modal). Mobile rules are **additive** inside one
   `@media(max-width:767px)` block at the end — desktop must never be affected by it.
   Inputs get `height:44px;font-size:16px` there (16px prevents iOS Safari focus zoom).
-- `.mc-body.stale` dims MC output — the visual half of `markMcStale()`.
+- `.stale` on `.mc-sure`, `.mc-line`, `.scg-out`, `.mc-risk` dims MC output — the
+  visual half of `markMcStale()` (the chart range dims via `bands.stale`).
 
 ## Accessibility — maintain what exists
 

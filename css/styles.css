@@ -714,39 +714,32 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .csv-dl-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--bdr);background:var(--dim);color:var(--sec);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:border-color .15s,color .15s;}
 .csv-dl-btn:hover{border-color:var(--sec);color:var(--text);}
 
-/* ── MONTE CARLO TAB ── */
-.mc-body{padding:18px;display:flex;flex-direction:column;gap:14px;}
-.mc-controls{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:12px 16px;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;}
-.mc-ctl{display:flex;flex-direction:column;gap:4px;}
-.mc-ctl label{font-size:10px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;}
-.mc-ctl select{background:var(--dim);border:1px solid var(--bdr);border-radius:var(--rs);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:6px 8px;cursor:pointer;}
-.mc-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:var(--sec);user-select:none;}
-.mc-toggle input{accent-color:var(--s4c);width:15px;height:15px;cursor:pointer;}
-.mc-run-btn{margin-left:auto;background:var(--s4a);border:1px solid var(--s4c);color:var(--s4c);font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;padding:8px 20px;border-radius:var(--rs);cursor:pointer;transition:background .15s;white-space:nowrap;}
-.mc-run-btn:hover{background:rgba(244,114,182,.22);}
-.mc-run-btn:disabled{opacity:.5;cursor:default;}
-.mc-status{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);align-self:center;}
-.mc-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
-.mc-body.stale #mcCards,.mc-body.stale #mcDetail{opacity:.4;transition:opacity .2s;}
-.mc-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:12px;cursor:pointer;transition:border-color .15s,background .15s;border-top:3px solid var(--cc,var(--bdr));}
-.mc-card:hover{border-color:var(--sec);}
-.mc-card.active{background:var(--dim);border-color:var(--sec);}
-.mc-card-name{font-size:11px;font-weight:600;color:var(--sec);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px;}
-.mc-card-rate{font-family:'DM Mono',monospace;font-size:24px;font-weight:500;line-height:1;}
-.mc-card-sub{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:5px;}
-.mc-card-bar{height:4px;border-radius:2px;background:var(--dim);margin-top:8px;overflow:hidden;}
-.mc-card-bar>div{height:100%;border-radius:2px;}
-.mc-rate-hi{color:var(--ok);} .mc-rate-mid{color:var(--s2c);} .mc-rate-lo{color:var(--err);}
-.mc-bar-hi{background:var(--ok);} .mc-bar-mid{background:var(--s2c);} .mc-bar-lo{background:var(--err);}
+/* ── MONTE CARLO ON RESULTS (v8.30, #21) ── */
+.mc-status{font-size:10.5px;font-family:'DM Mono',monospace;color:var(--sec);border:1px solid var(--bdr);border-radius:20px;padding:2px 9px;white-space:nowrap;}
+.mc-status:empty{display:none;}
+.mc-status.busy{color:var(--s2c);border-color:rgba(251,191,36,.35);}
+.leg-band{width:14px;height:8px;border-radius:2px;background:var(--bc,var(--s1c));}
+.leg-band.in{opacity:.45;} .leg-band.out{opacity:.2;margin-left:6px;}
+.mc-sure{display:flex;flex-direction:column;gap:8px;transition:opacity .2s;}
+.mc-sure-hd{display:flex;align-items:baseline;gap:8px;font-size:13px;font-weight:600;color:var(--text);}
+.mc-sure-hd .note,.mc-risk summary .note{font-size:11px;font-weight:400;color:var(--muted);}
+.mc-sure.stale,.mc-risk.stale .mc-risk-body,.mc-line.stale,.scg-out.stale{opacity:.4;transition:opacity .2s;}
 .mc-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
 .mc-tile{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:12px 14px;}
 .mc-tile-lbl{font-size:10px;color:var(--muted);letter-spacing:.3px;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
 .mc-tile-val{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--text);}
 .mc-tile-val.muted{color:var(--muted);font-size:14px;}
 .mc-tile-note{font-size:10px;color:var(--muted);margin-top:4px;}
+.mc-empty{grid-column:1/-1;text-align:center;color:var(--muted);font-size:12px;padding:18px 12px;background:var(--card);border:1px solid var(--bdrs);border-radius:var(--r);}
+.mc-risk{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);}
+.mc-risk summary{cursor:pointer;padding:12px 16px;font-size:13px;font-weight:600;color:var(--text);list-style-position:inside;}
+.mc-risk[open] summary{border-bottom:1px solid var(--bdrs);}
+.mc-risk-body{padding:12px;display:flex;flex-direction:column;gap:12px;}
 .mc-modenote{font-size:11px;color:var(--s2c);background:var(--s2a);border:1px solid rgba(251,191,36,.25);border-radius:var(--rs);padding:8px 12px;line-height:1.5;}
-.mc-empty{text-align:center;color:var(--muted);font-size:13px;padding:40px 20px;}
-.mc-info{font-size:11px;color:var(--muted);line-height:1.5;background:var(--card);border:1px solid var(--bdrs);border-radius:var(--r);padding:12px 14px;}
+.expl-mc{margin-top:18px;max-width:960px;font-size:12.5px;line-height:1.6;color:var(--sec);background:var(--card);border:1px solid var(--bdrs);border-radius:var(--r);padding:14px 16px;}
+.expl-mc h3{font-size:13px;color:var(--text);margin:0 0 6px;}
+.expl-mc p{margin:0 0 8px;} .expl-mc p:last-child{margin:0;}
+.expl-mc em,.expl-mc strong{color:var(--text);}
 
 /* ── MOBILE-ONLY COMPONENTS (hidden on desktop) ── */
 .sc-nav{display:none;justify-content:center;align-items:center;gap:4px;padding:10px 0 2px;flex-shrink:0;}
@@ -956,11 +949,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
   .dp-row .inp.mini,.dp-row .ypick.mini .ypick-btn{height:40px;}
   .sc-chip{width:34px;height:34px;font-size:12px;}
 
-  /* ── MONTE CARLO ── */
-  /* Scenario cards: equal-width, horizontally swipeable (name never changes tile size) */
-  .mc-cards{display:flex;grid-template-columns:none;overflow-x:auto;gap:10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;}
-  .mc-cards::-webkit-scrollbar{display:none;}
-  .mc-card{flex:0 0 42%;scroll-snap-align:start;}
+  /* ── MONTE CARLO (Results) ── */
   /* Metric tiles: 2×2 grid instead of one thin row */
   .mc-tiles{grid-template-columns:1fr 1fr;}
 

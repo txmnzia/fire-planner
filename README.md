@@ -232,7 +232,7 @@ pensions/partner salary is reinvested.
 > and then inflation-adjusts that fixed amount). A %-of-portfolio draw can never
 > fully deplete the portfolio — its risk shows up as **income variability**
 > instead. That is why the scenario cards headline **budget adequacy**
-> (✓ Funded / × Short) rather than a survival chip, and why the Monte Carlo tab
+> (✓ Funded / × Short) rather than a survival chip, and why Monte Carlo
 > reports funding ratios in this mode. For Bengen-style fixed-real withdrawals
 > with genuine depletion risk, use **Fixed Amount** mode.
 
@@ -636,8 +636,8 @@ year-one budget; fixed mode: net worth at stop ≥ FIRE number) **and** the mone
 lasts (no infeasible year, no depletion before life expectancy). With the
 partner on, "funded" means **your** costs are covered while she keeps working to
 her own stop age. A scenario with a missing input is not searched. No funded age → "not by 75",
-shown at 75. `withStopAges()` is what `recalc()` and the Monte Carlo tab both use,
-so every tab shows the same age. The old `s{n}_ret` values stay saved (hidden) for
+shown at 75. `withStopAges()` runs once in `recalc()` and Monte Carlo reuses those
+scenarios (`state.lastScenarios`), so every view shows the same age. The old `s{n}_ret` values stay saved (hidden) for
 older builds.
 
 | Row | Meaning | Source |
@@ -1219,7 +1219,7 @@ You can rename scenarios and switch life events, windfalls and pay changes per s
 
 ## Monte Carlo Simulation
 
-The **Monte Carlo** tab (4th tab) stress-tests every scenario against thousands of possible market histories, instead of the single deterministic average-return path used by the other tabs. It answers: *"What are the odds my portfolio actually survives — and how wide is the range of outcomes?"*
+Since v8.30 Monte Carlo lives on the **Results** tab (issue #21; the separate Monte Carlo tab is gone). It stress-tests every scenario against thousands of possible market histories, instead of the single deterministic average-return path used by the other tabs. It answers: *"What are the odds my portfolio actually survives — and how wide is the range of outcomes?"*
 
 ### Method: historical block bootstrap
 
@@ -1231,9 +1231,9 @@ Rather than drawing returns from a synthetic bell curve (which understates crash
 
 Because blocks are *consecutive* real history, each path keeps realistic short-run dynamics — momentum, volatility clustering, and crash-then-recovery sequences (1973–74, 2000–02, 2008, 2022). Only the *order* of historical episodes is randomized. This is the standard way to get thousands of statistically-distinct multi-decade paths from a finite history, which pure sequential backtesting cannot provide over a 50–70 year horizon.
 
-### Recentering to your assumptions (default ON)
+### Recentering to your assumptions (always on)
 
-The embedded series is developed-markets, USD-denominated history. With **recentering** on, each sampled return keeps history's shape but is re-anchored so the **long-run compound (geometric) return equals your** assumed `stockRet` / `bondRet`:
+The embedded series is developed-markets, USD-denominated history. Each sampled return keeps history's shape but is re-anchored so the **long-run compound (geometric) return equals your** assumed `stockRet` / `bondRet`:
 
 ```
 1 + recentered = (1 + yourReturn) × (1 + historicalReturn) / (1 + historicalGeoMean)
@@ -1245,20 +1245,30 @@ consistent with the deterministic tabs (they compound your input directly). An
 additive arithmetic-mean shift would instead compound roughly σ²/2 ≈ 1.5
 percentage points *below* your input (volatility drag) and silently contradict
 the other tabs. Your `stockRet` input is therefore interpreted everywhere as a
-**CAGR / geometric** return. Turn recentering off to use the raw historical
-series instead.
+**CAGR / geometric** return. Recentering is always on since v8.30 (the old
+checkbox is gone): the range must stay centred on your own plan line, and with
+raw history (stocks ≈ 9.4% compound) it drifted above it.
 
 > **Note on the data:** the embedded return arrays are *approximate* annual figures compiled from public sources, chosen to reproduce realistic year-to-year dynamics rather than exact index levels. They live in `MC_HIST_STOCK` / `MC_HIST_BOND` in `js/montecarlo.js` and can be edited to plug in your own return history (the two arrays must stay aligned by year and equal in length). **Inflation is kept deterministic** (your inflation input) in this version.
 
-### Inputs
+### Inputs (Changes › Assumptions)
 
 | Input | Default | Notes |
 |-------|---------|-------|
-| Simulations | 1,000 | Paths per scenario (500 / 1,000 / 2,500 / 5,000). All five scenarios share the same set of paths for a fair comparison. |
-| Block length | 5 years | Length of each consecutive-history block. Larger blocks preserve longer real sequences; `1` = single-year resampling. |
-| Recenter to my return assumptions | On | Re-anchors sampled means to your `stockRet` / `bondRet` (see above). |
+| Market histories (`mcSims`) | 1,000 | Paths per scenario (500 / 1,000 / 2,500 / 5,000). All five scenarios share the same set of paths for a fair comparison. |
+| Years kept together (`mcBlock`) | 5 years | Length of each consecutive-history block. Larger blocks preserve longer real sequences; `1` = single-year resampling. |
 
-Runs are reproducible (seeded RNG) — identical inputs give identical results. Press **Run simulation** to (re)compute; it is not run automatically on every keystroke.
+### When it runs
+
+There is no Run button. Every change to any input recalculates the plan at once
+and, about 0.6 s after the last change, runs Monte Carlo again **in a background
+Web Worker** (`js/mcWorker.js`), so the page never freezes. The newest inputs
+always win: a run still going when you change something is stopped and replaced.
+The scenario on screen is computed first, the other four after, all over the
+same set of histories. Until a result matches the inputs on screen it is shown
+dimmed with *Updating the range…*. If the browser cannot start a module worker,
+the same code runs on the page, one scenario at a time. Runs are reproducible
+(seeded RNG): identical inputs give identical results.
 
 ### Metrics reported
 
@@ -1270,10 +1280,10 @@ Withdrawals are a fixed real amount, so the portfolio *can* run out. The headlin
 
 | Metric | Definition |
 |--------|------------|
-| **Success rate** (card headline) | % of paths where net worth never hits zero before life expectancy. |
-| **Median ending value** | Median **real** ending net worth across all paths (10th-percentile shown alongside). |
-| **Larger end portfolio** | % of paths whose **real** ending net worth is **≥ 2×** that path's inflation-adjusted value at retirement. |
-| **Smaller end portfolio** | % of paths whose **real** ending net worth is **≤ ½** that path's value at retirement. |
+| **Chance it lasts** (tile and grid headline) | % of paths where net worth never hits zero before life expectancy. |
+| **Typical end value** | Median **real** ending net worth across all paths (10th-percentile shown alongside). |
+| **Ends ≥ 2× stop value** | % of paths whose **real** ending net worth is **≥ 2×** that path's inflation-adjusted value at retirement. |
+| **Ends ≤ ½ stop value** | % of paths whose **real** ending net worth is **≤ ½** that path's value at retirement. |
 
 #### SWR mode — budget-adequacy risk
 
@@ -1288,7 +1298,7 @@ A one-time property purchase lump is excluded from the budget. Then:
 
 | Metric | Captures | Definition |
 |--------|----------|------------|
-| **Years on budget** (card headline) | frequency | Share of all retirement years (across all paths) where income ≥ budget. Used instead of a "≥ 1 short year" frequency, which saturates near 100% over a multi-decade retirement. |
+| **Years on budget** (tile and grid headline) | frequency | Share of all retirement years (across all paths) where income ≥ budget. Used instead of a "≥ 1 short year" frequency, which saturates near 100% over a multi-decade retirement. |
 | **Years under budget** | frequency | Average number of retirement years per simulation where income < budget, shown as `X / Y` of total retirement years. |
 | **Lifetime budget funded** | depth | Median across sims of each sim's `Σ min(income, budget) ÷ Σ budget` over all retirement years (real terms). **Capped at 100% per year** — surplus years can't inflate it. An uncapped average would be dominated by late-life snowball years (unspent surpluses compound), producing absurd headline figures (500%+) that say nothing about adequacy. |
 | **When short, you fund** | depth | Average funding ratio across only the years that fall short — "when you miss, you typically cover this much of budget." |
@@ -1296,21 +1306,18 @@ A one-time property purchase lump is excluded from the budget. Then:
 
 These deliberately separate **how often** you fall short from **how far**: a plan can average comfortably above 100% yet still dip below budget in early-retirement years, which the worst-year and years-under-budget figures expose.
 
-#### Visuals
+#### Where it shows (Results tab, v8.30)
 
-- **Scenario cards** — the five scenarios with their headline rate (green ≥ 90%, amber 75–90%, red < 75%). Click one to drill in.
-- **Fan chart** — percentile bands (10–90th, 25–75th, median) over time. In Fixed mode this is **net worth** with the FIRE Target line; in SWR mode it is **budget coverage** (funding ratio) over the retirement years with a 100% reference line, so you can see *when* coverage is tightest.
-- **Distribution histogram** — in Fixed mode the spread of real ending net worth (depleted paths highlighted); in SWR mode the spread of each simulation's **lifetime budget coverage** (capped share of total budget funded), coloured green / amber / red around the 100% line.
+- **Portfolio Projection** — the solid line stays the deterministic plan (your own return assumptions, the same numbers as the tiles and the year-by-year table). Around it, the active scenario's Monte Carlo range of the same net-worth series: 25–75th percentile (darker) and 10–90th (light). The top of the light band is capped at 110% of the highest of the plan, the target and the 75th percentile so lucky late-life histories don't flatten the plan; the tooltip shows the exact ranges. The MC median is not drawn (it would disagree slightly with the table below).
+- **Scenario tiles and the Scenarios grid** — one headline per scenario: *Chance it lasts to {life expectancy}* (Fixed) or *Years on budget* (SWR), green ≥ 90%, amber 75–90%, red < 75%.
+- **How sure** — the four metric tiles above for the active scenario.
+- **Risk detail** (collapsed) — the distribution histogram (Fixed: real ending net worth, depleted paths highlighted; SWR: each simulation's lifetime budget coverage) and, in SWR mode, the budget-coverage fan chart over the retirement years with a 100% line.
 
-### Visuals
-
-- **Scenario cards** — the five scenarios side by side, each showing its success rate (green ≥ 90%, amber 75–90%, red < 75%). Click a card to drill in.
-- **Fan chart** — the selected scenario's portfolio value over time as percentile bands: the 10th–90th percentile range (light), the 25th–75th range (darker), and the median line, with the FIRE Target reference line.
-- **Distribution histogram** — the spread of real ending net worth across all paths (the leftmost/zero bucket, highlighted, is the depleted/failed paths).
+Up to the stop age the MC median follows the plan line closely (recentering); after it the range opens up fast, because withdrawals turn bad early-retirement years into lasting damage (sequence-of-returns risk). That is why the chance it lasts can be well below 100% at the stop age the deterministic plan calls funded (confidence-based stop ages: issue #22).
 
 ### Engine integration
 
-The Monte Carlo tab reuses the exact same `project()` cash-flow engine as the other tabs — all spending, tax, pension, glide-path and add-on logic is identical. The only difference is that `project()` is fed a sampled per-year return sequence (`opts.returnSeq`) instead of the deterministic glide-path return. This keeps the two views consistent and means any change to the planning logic automatically applies to the simulation.
+Monte Carlo reuses the exact same `project()` cash-flow engine as the other tabs — all spending, tax, pension, glide-path and add-on logic is identical. The only difference is that `project()` is fed a sampled per-year return sequence (`opts.returnSeq`) instead of the deterministic glide-path return. This keeps the two views consistent and means any change to the planning logic automatically applies to the simulation.
 
 ---
 
@@ -1320,7 +1327,7 @@ The Monte Carlo tab reuses the exact same `project()` cash-flow engine as the ot
 
 1. **All returns are nominal** (before inflation). Real returns = nominal − inflation.
 2. **Inflation is constant** at the rate you specify, compounding annually.
-3. **The first three tabs are deterministic** — they use constant average returns (no sequence-of-returns risk). For probabilistic sequence-risk analysis, use the **Monte Carlo** tab (see the [Monte Carlo Simulation](#monte-carlo-simulation) section).
+3. **The first three tabs are deterministic** — they use constant average returns (no sequence-of-returns risk). For probabilistic sequence-risk analysis, see the shaded range and the *How sure* tiles on Results (see the [Monte Carlo Simulation](#monte-carlo-simulation) section).
 4. **Capital gains tax** is applied only on the gain fraction of each withdrawal. It does not model income tax on salary or pension.
 5. **Partner pension** is assumed to start at a fixed age and grow with inflation like the state pension.
 6. **The mortgage rate is fixed** for the entire term — no variable rate modeling.

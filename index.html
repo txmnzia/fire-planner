@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.29.1">
+<link rel="stylesheet" href="css/styles.css?v=8.30">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.29.1</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.30</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -39,11 +39,8 @@
   <button class="tab-btn" role="tab" data-tab="results" aria-selected="false" onclick="switchTab('results')">
     <span class="tab-num">3</span> Results
   </button>
-  <button class="tab-btn" role="tab" data-tab="montecarlo" aria-selected="false" onclick="switchTab('montecarlo')">
-    <span class="tab-num">4</span> Monte Carlo
-  </button>
   <button class="tab-btn" role="tab" data-tab="explanation" aria-selected="false" onclick="switchTab('explanation')">
-    <span class="tab-num">5</span> Explanation
+    <span class="tab-num">4</span> Explanation
   </button>
 </nav>
 <div class="issues" id="inputIssues" role="alert" hidden></div>
@@ -230,7 +227,7 @@
 <div class="frows"><div class="frow"><div class="frow-l">Stocks return <button type="button" class="info-btn" title="Nominal, per year, after fees.">&#x24D8;</button></div><div class="frow-c"><div class="step sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="stockRet" aria-hidden="true" tabindex="-1"><span class="step-v"><input type="number" id="stockRet" value="7" min="0" max="20" step="0.5" oninput="recalc()" onchange="recalc()"><i>%</i></span><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div></div><div class="frow"><div class="frow-l">Bonds return <button type="button" class="info-btn" title="Nominal, per year, after fees.">&#x24D8;</button></div><div class="frow-c"><div class="step sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="bondRet" aria-hidden="true" tabindex="-1"><span class="step-v"><input type="number" id="bondRet" value="3" min="0" max="15" step="0.5" oninput="recalc()" onchange="recalc()"><i>%</i></span><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div></div><div class="frow"><div class="frow-l">Inflation</div><div class="frow-c"><div class="step sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="inflation" aria-hidden="true" tabindex="-1"><span class="step-v"><input type="number" id="inflation" value="2" min="0" max="10" step="0.5" oninput="recalc()" onchange="recalc()"><i>%</i></span><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div></div><div class="frow"><div class="frow-l">Bonds now <button type="button" class="info-btn" title="The bond share moves gradually from today&#x2019;s to the one at your stop age.">&#x24D8;</button></div><div class="frow-c"><div class="step sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="bondAllocNow" aria-hidden="true" tabindex="-1"><span class="step-v"><input type="number" id="bondAllocNow" value="0" min="0" max="100" step="5" oninput="recalc()" onchange="recalc()"><i>%</i></span><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div></div><div class="frow"><div class="frow-l">Bonds when you stop</div><div class="frow-c"><div class="step sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="bondAllocRet" aria-hidden="true" tabindex="-1"><span class="step-v"><input type="number" id="bondAllocRet" value="40" min="0" max="100" step="5" oninput="recalc()" onchange="recalc()"><i>%</i></span><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></div></div><div class="frow"><div class="frow-l">Withdrawal <button type="button" class="info-btn" title="Annual % of the current portfolio available to withdraw each year. This is a %-of-portfolio strategy: income varies with markets and the portfolio cannot fully deplete. It is NOT the classic Bengen fixed-real-amount rule (use Fixed Amount mode for that behaviour).">&#x24D8;</button></div><div class="frow-c"><span class="frow-grp"><div class="wd-toggle">
               <label class="wd-pill"><input type="radio" name="wdMode" value="fixed" checked onchange="onWdMode()">Fixed amount</label>
               <label class="wd-pill"><input type="radio" name="wdMode" value="swr" onchange="onWdMode()">% of portfolio</label>
-            </div></span><span class="frow-grp" id="swr_wrap"><div class="step sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="swr" aria-hidden="true" tabindex="-1"><span class="step-v"><input type="number" id="swr" value="4" min="0.5" max="20" step="0.25" oninput="recalc()" onchange="recalc()"><i>%</i></span><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></span></div></div><div class="frow"><div class="frow-l">Plan year (today) <button type="button" class="info-btn" title="The year the plan counts as today: ages and every amount in today&#x2019;s money start on 1 January of it. It moves on when you close the year (Update log &#x2192; Close year).">&#x24D8;</button></div><div class="frow-c"><div class="ypick fc" data-target="baseYear" data-min="2020" data-max="2040"></div><input type="hidden" id="baseYear" value="2026"></div></div></div><div class="assump-foot"><span class="spend-readout" id="assumpReadout" aria-live="polite"></span><button type="button" class="dp-add" onclick="resetAssumptions()">Reset to defaults</button></div>
+            </div></span><span class="frow-grp" id="swr_wrap"><div class="step sl-ctrl"><button type="button" class="age-btn" data-d="-1" aria-label="Decrease">&#x2212;</button><input type="range" data-for="swr" aria-hidden="true" tabindex="-1"><span class="step-v"><input type="number" id="swr" value="4" min="0.5" max="20" step="0.25" oninput="recalc()" onchange="recalc()"><i>%</i></span><button type="button" class="age-btn" data-d="1" aria-label="Increase">&#x2B;</button></div></span></div></div><div class="frow"><div class="frow-l">Plan year (today) <button type="button" class="info-btn" title="The year the plan counts as today: ages and every amount in today&#x2019;s money start on 1 January of it. It moves on when you close the year (Update log &#x2192; Close year).">&#x24D8;</button></div><div class="frow-c"><div class="ypick fc" data-target="baseYear" data-min="2020" data-max="2040"></div><input type="hidden" id="baseYear" value="2026"></div></div><div class="frow"><div class="frow-l">Market histories <button type="button" class="info-btn" title="How many market histories the shaded range on Results replays. More is steadier but slower; it runs in the background either way.">&#x24D8;</button></div><div class="frow-c"><select id="mcSims" oninput="recalc()" onchange="recalc()"><option value="500">500</option><option value="1000" selected>1,000</option><option value="2500">2,500</option><option value="5000">5,000</option></select></div></div><div class="frow"><div class="frow-l">Years kept together <button type="button" class="info-btn" title="Each history stitches blocks of this many consecutive real market years, so crashes and recoveries stay in their real order. 5 is the usual choice; 1 shuffles single years.">&#x24D8;</button></div><div class="frow-c"><select id="mcBlock" oninput="recalc()" onchange="recalc()"><option value="1">1 year</option><option value="3">3 years</option><option value="5" selected>5 years</option><option value="10">10 years</option></select></div></div></div><div class="assump-foot"><span class="spend-readout" id="assumpReadout" aria-live="polite"></span><button type="button" class="dp-add" onclick="resetAssumptions()">Reset to defaults</button></div>
       </div>
     </section>
     </div>
@@ -384,6 +381,14 @@
       <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_lasts">&#x2014;</span></div>
       <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_lasts">&#x2014;</span></div>
     </div>
+    <div class="scg-row scg-r-out" role="row">
+      <div class="scg-lbl" role="rowheader"><span id="scgMcLbl">Chance it lasts</span> <button type="button" class="info-btn" title="Over thousands of market histories with your own average returns: fixed amount, the share where the money never runs out before your life expectancy; % of portfolio, the share of retirement years on full budget. Updates on its own a moment after each change." aria-label="About: Chance it lasts">&#x24D8;</button></div>
+      <div class="scg-cell c1" role="cell"><span class="scg-out" id="scr1_chance">&#x2014;</span></div>
+      <div class="scg-cell c2" role="cell"><span class="scg-out" id="scr2_chance">&#x2014;</span></div>
+      <div class="scg-cell c3" role="cell"><span class="scg-out" id="scr3_chance">&#x2014;</span></div>
+      <div class="scg-cell c4" role="cell"><span class="scg-out" id="scr4_chance">&#x2014;</span></div>
+      <div class="scg-cell c5" role="cell"><span class="scg-out" id="scr5_chance">&#x2014;</span></div>
+    </div>
     <div class="scg-row scg-r-out" role="row" id="scgEquityRow" hidden>
       <div class="scg-lbl" role="rowheader">Home equity when you stop <button type="button" class="info-btn" title="Scenarios that buy: the home&#x2019;s value (price growing with inflation, no real price growth) minus the loan left, when you stop. In your net worth, not in the FIRE number: you live in it." aria-label="About: Home equity">&#x24D8;</button></div>
       <div class="scg-cell c1" role="cell"><span class="scg-out" id="scr1_equity">&#x2014;</span></div>
@@ -413,9 +418,19 @@
         <div class="leg-item" id="legPlan" style="display:none"><div class="leg-dash" id="legPlanDash" style="border-color:var(--s1c)"></div><span>Plan</span></div>
         <div class="leg-item"><div class="leg-line" id="projLegDash" style="border-color:var(--s1c)"></div><span>FIRE Target</span></div>
         <div class="leg-item" id="legPartner" style="display:none"><div class="leg-dash" style="border-color:var(--s4c)"></div><span>Partner portfolio</span></div>
+        <div class="leg-item" id="legBands" style="display:none"><div class="leg-band in" id="legBandIn"></div><span>Half of histories</span><div class="leg-band out" id="legBandOut"></div><span>8 in 10</span></div>
       </div>
+      <span class="mc-status" id="mcStatus" aria-live="polite"></span>
     </div>
-    <div class="proj-canvas-wrap" style="position:relative;height:210px"><canvas id="fireChart"></canvas></div>
+    <div class="proj-canvas-wrap" style="position:relative;height:240px"><canvas id="fireChart"></canvas></div>
+  </div>
+
+  <!-- v8.30 (#21): Monte Carlo merged into Results. The line above is the plan
+       (your own return assumptions); the shaded range and these tiles come from
+       thousands of market histories, run in the background on every change. -->
+  <div class="mc-sure" id="mcSure">
+    <div class="mc-sure-hd"><span id="mcSureTitle">How sure</span><span class="note">over thousands of market histories</span></div>
+    <div class="mc-tiles" id="mcTiles"></div>
   </div>
 
   <div class="chart-card">
@@ -424,6 +439,30 @@
     </div>
     <div class="alloc-canvas-wrap" style="position:relative;height:260px"><canvas id="allocChart"></canvas></div>
   </div>
+
+  <details class="mc-risk" id="mcRisk">
+    <summary>Risk detail <span class="note">how the histories end, and how deep a bad one goes</span></summary>
+    <div class="mc-risk-body">
+      <div class="mc-modenote" id="mcModeNote"></div>
+      <div class="chart-card" id="mcFanCard" hidden>
+        <div class="chart-top">
+          <div class="chart-title" id="mcFanTitle">Budget Coverage Over Retirement</div>
+          <div class="chart-legend">
+            <div class="leg-item"><div class="leg-dot" style="background:var(--s4c)"></div><span>Median</span></div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--s4a);border:1px solid var(--s4c)"></div><span>10th&#x2013;90th pct</span></div>
+            <div class="leg-item"><div class="leg-line" style="border-color:var(--sec)"></div><span id="mcFanRefLabel">Budget (100%)</span></div>
+          </div>
+        </div>
+        <div style="position:relative;height:220px"><canvas id="mcFanChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-top">
+          <div class="chart-title" id="mcHistTitle">Distribution of Ending Net Worth</div>
+        </div>
+        <div style="position:relative;height:160px"><canvas id="mcHistChart"></canvas></div>
+      </div>
+    </div>
+  </details>
 
   <div class="tbl-card">
     <div class="tbl-hdr" role="button" tabindex="0" onclick="toggleTable()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTable();}" aria-expanded="true" aria-controls="tblWrap" id="tblToggle">
@@ -438,84 +477,33 @@
 </div>
 </div><!-- /tab-panel-results -->
 
-<!-- ════════════════════════════════════════════════════════════
-     TAB 4 — MONTE CARLO
-════════════════════════════════════════════════════════════ -->
-<div class="tab-panel" id="tab-panel-montecarlo" role="tabpanel">
-<div class="mc-body">
-
-  <div class="mc-controls">
-    <div class="mc-ctl">
-      <label for="mcSims">Simulations</label>
-      <select id="mcSims" onchange="scheduleSave()">
-        <option value="500">500</option>
-        <option value="1000" selected>1,000</option>
-        <option value="2500">2,500</option>
-        <option value="5000">5,000</option>
-      </select>
-    </div>
-    <div class="mc-ctl">
-      <label for="mcBlock">Block length</label>
-      <select id="mcBlock" onchange="scheduleSave()">
-        <option value="1">1 year</option>
-        <option value="3">3 years</option>
-        <option value="5" selected>5 years</option>
-        <option value="10">10 years</option>
-      </select>
-    </div>
-    <label class="mc-toggle"><input type="checkbox" id="mcRecenter" checked onchange="scheduleSave()"> Recenter to my return assumptions</label>
-    <span class="mc-status" id="mcStatus"></span>
-    <button class="mc-run-btn" id="mcRunBtn" onclick="runMonteCarloUI()">&#x25B6; Run simulation</button>
-  </div>
-
-  <div class="mc-cards" id="mcCards"></div>
-  <div class="mc-modenote" id="mcModeNote" style="display:none"></div>
-
-  <div id="mcDetail" style="display:none">
-    <div class="mc-tiles" id="mcTiles"></div>
-
-    <div class="chart-card" style="margin-top:14px">
-      <div class="chart-top">
-        <div class="chart-title" id="mcFanTitle">Outcome Range Over Time</div>
-        <div class="chart-legend">
-          <div class="leg-item"><div class="leg-dot" style="background:var(--s4c)"></div><span>Median</span></div>
-          <div class="leg-item"><div class="leg-dot" style="background:var(--s4a);border:1px solid var(--s4c)"></div><span>10th–90th pct</span></div>
-          <div class="leg-item"><div class="leg-line" style="border-color:var(--sec)"></div><span id="mcFanRefLabel">FIRE Target</span></div>
-        </div>
-      </div>
-      <div style="position:relative;height:240px"><canvas id="mcFanChart"></canvas></div>
-    </div>
-
-    <div class="chart-card" style="margin-top:14px">
-      <div class="chart-top">
-        <div class="chart-title" id="mcHistTitle">Distribution of Ending Net Worth <span style="color:var(--muted);font-weight:400">(real, today's €)</span></div>
-      </div>
-      <div style="position:relative;height:160px"><canvas id="mcHistChart"></canvas></div>
-    </div>
-  </div>
-
-  <div class="mc-empty" id="mcEmpty">Run a simulation to see how your scenarios hold up across thousands of market histories.</div>
-
-  <div class="mc-info">
-    <strong>Method:</strong> historical block bootstrap. Each path stitches random blocks of consecutive
-    real market years (MSCI World developed-markets total returns + a global government-bond proxy, 1970–2024),
-    preserving real crashes, recoveries and stock/bond co-movement. With recentering on, history's
-    volatility and sequencing are kept but the long-run <em>compound</em> (geometric) return is re-anchored to your
-    own stock/bond assumptions, so the median path is consistent with the deterministic tabs. Inflation is held
-    at your fixed input. <strong>Success</strong> = portfolio never depleted before life expectancy. Larger-end and
-    smaller-end figures compare each path against its own inflation-adjusted value at retirement.
-  </div>
-
-</div>
-</div><!-- /tab-panel-montecarlo -->
 
 <!-- ═══════════════════════════════════════════
-     TAB 5 — EXPLANATION (scenario-tailored guide)
+     TAB 4 — EXPLANATION (scenario-tailored guide)
 ═══════════════════════════════════════════ -->
 <div class="tab-panel" id="tab-panel-explanation" role="tabpanel">
 <div class="sit-body expl">
   <p class="expl-intro">Pick a scenario and this page turns it into a story: <em>your journey on one timeline</em>, the phases of life it splits into, what you can spend in each phase (in today's money, next to what you live on now), the moments your life changes — and the FIRE jargon translated into your own numbers.</p>
   <div id="explBody"></div>
+  <section class="expl-mc">
+    <h3>The shaded range on Results</h3>
+    <p>The line is your plan: your own return assumptions, every year exactly average. The shaded range replays
+    thousands of market histories instead, built by stitching together random blocks of consecutive real years
+    (MSCI World developed-markets total returns and a global government-bond proxy, 1970&#x2013;2024), so real crashes,
+    recoveries and the way stocks and bonds moved together are kept. Each history is scaled so its long-run
+    <em>compound</em> return matches your assumptions: the range is centred on your plan, not on history&#x2019;s
+    higher average. Inflation stays at your input. Every scenario sees the same histories, so the differences
+    between scenarios come from the plans, not from luck.</p>
+    <p>Up to the age you stop, the middle of the range follows the line closely. After it, the range opens up
+    fast: the same withdrawals now come out of a portfolio that may be up or down, and a bad run in the first
+    years of retirement, while you are selling to live, does lasting damage (sequence-of-returns risk). That low
+    end is why the chance it lasts can sit well below 100% even when the line reaches your FIRE number: the line
+    assumes an exactly average market every single year.</p>
+    <p><strong>Chance it lasts</strong> (fixed amount): the share of histories where the money never runs out before
+    your life expectancy. <strong>Years on budget</strong> (% of portfolio): that mode cannot run out by design, so
+    it shows the share of retirement years where the draw, pensions and partner income cover the full budget.
+    End values compare each history with its own value when you stop, in today&#x2019;s money.</p>
+  </section>
 </div><!-- /expl -->
 </div><!-- /tab-panel-explanation -->
 </div><!-- /tab-panels -->
@@ -553,6 +541,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.29.1"></script>
+<script type="module" src="js/main.js?v=8.30"></script>
 </body>
 </html>

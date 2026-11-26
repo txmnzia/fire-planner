@@ -81,7 +81,34 @@ test('scenario grid: stop ages are automatic (no input, saved value kept hidden 
 
 test('every tab uses the automatic stop ages (recalc and Monte Carlo)', () => {
   assert.match(read('js/recalc.js'), /const stops=withStopAges\(\[1,2,3,4,5\]\.map\(s=>getScenario\(s,gl\)\),gl\);/);
-  assert.match(read('js/ui/mcTab.js'), /withStopAges\(\[1,2,3,4,5\]\.map\(s=>getScenario\(s,gl\)\),gl\)\.map\(x=>x\.sc\)/);
+  // v8.30: Monte Carlo runs on recalc's own scenarios (state.lastScenarios), never re-reads the form
+  const mc = read('js/ui/mcTab.js');
+  assert.match(mc, /const gl = state\.lastGl, scenarios = state\.lastScenarios;/);
+  assert.ok(!/getScenario\(|getGlobals\(/.test(mc), 'mcTab must not build its own scenarios');
+});
+
+test('v8.30 (#21): Monte Carlo lives on Results, runs by itself, settings in Assumptions', () => {
+  assert.equal(count('tab-panel-montecarlo'), 0, 'no Monte Carlo tab');
+  assert.ok(!/data-tab="montecarlo"/.test(html));
+  for (const id of ['mcRunBtn', 'mcRecenter', 'mcCards']) assert.equal(count(id), 0, id + ' removed');
+  for (const id of ['mcStatus', 'mcSure', 'mcTiles', 'mcRisk', 'mcHistChart', 'mcFanChart', 'legBands', 'scgMcLbl'])
+    assert.equal(count(id), 1, id);
+  for (let n = 1; n <= 5; n++) assert.equal(count('scr' + n + '_chance'), 1, 'scr' + n + '_chance');
+  // settings sit in the Assumptions tile and rerun through recalc
+  const assump = html.slice(html.indexOf('id="tile-assump-body"'), html.indexOf('class="assump-foot"'));
+  for (const id of ['mcSims', 'mcBlock']) {
+    assert.ok(assump.includes('id="' + id + '"'), id + ' in Assumptions');
+    assert.match(html.match(new RegExp('<select id="' + id + '"[^>]*>'))[0], /onchange="recalc\(\)"/);
+  }
+  // staleness before drawing, run after; recentering always on
+  const rc = read('js/recalc.js');
+  assert.ok(rc.indexOf('markMcStale();') > -1 && rc.indexOf('markMcStale();') < rc.indexOf('buildChart('), 'stale before the chart draws');
+  assert.ok(rc.indexOf('scheduleMcRun();') > rc.indexOf('buildChart('), 'run scheduled after rendering');
+  assert.match(read('js/ui/mcTab.js'), /recenter: true \}/);
+  // the worker only relays to the pure engine
+  const w = read('js/mcWorker.js');
+  assert.match(w, /import \{ runMonteCarloOrdered \} from "\.\/montecarlo\.js/);
+  assert.ok(!/document|window|localStorage/.test(w.replace(/\/\/.*$/gm, '')));
 });
 
 test('scenario grid: no retired card markup is left behind', () => {
