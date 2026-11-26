@@ -1,5 +1,8 @@
-// Capital-gains tax rate per country (flat-rate approximation; see README).
-// v8.11: Germany 18.5% = 26.375% on 70% of the gain (equity-fund partial exemption).
-export const COUNTRY_TAX = { FR:30, PT:28, ES:26, DE:18.5, IT:26, NL:32, BE:0, LU:0, AT:28, IE:33, GR:15,
-                      CY:0, MT:0, HR:10, HU:15, RO:10, BG:10, PL:19, SI:25, EE:20, LV:20, LT:15,
-                      SK:19, SE:30, DK:27, FI:30 };
+// Tax rate on the GAIN part of a sale, by country of residence (flat-rate
+// approximation for an early retiree living off EU UCITS equity ETFs held at a
+// foreign broker; 2026 rules; README "Tax"). v8.29: realistic retirement
+// countries, researched one by one (notes and caveats in countries.js).
+// Germany 18.5% = 26.375% on 70% of the gain (equity-fund partial exemption).
+export const COUNTRY_TAX = { AL:15, AD:0, AR:15, AT:27.5, BE:10, BR:15, BG:0, KH:20, CL:8, CO:15, CR:0, HR:0, CY:0, CZ:0, DK:37, DO:27, EC:15, EE:22, FI:30, FR:31.4, GE:0, DE:18.5, GR:0, HU:15, IS:22, ID:20, IE:38, IT:26, LV:25.5, LT:20, LU:0, MY:0, MT:0, MU:0, MX:20, MC:0, ME:15, MA:20, NL:36, MK:10, PA:0, PY:0, PE:15, PH:0, PL:19, PT:28, RO:16, RS:15, SK:0, SI:25, ZA:12, ES:21, LK:15, SE:30, CH:0, TH:12, TN:10, TR:0, AE:0, UY:0, VN:20 };
+// English names, for the country lists (sorted by name, not by code).
+export const COUNTRY_NAMES = { AL:"Albania", AD:"Andorra", AR:"Argentina", AT:"Austria", BE:"Belgium", BR:"Brazil", BG:"Bulgaria", KH:"Cambodia", CL:"Chile", CO:"Colombia", CR:"Costa Rica", HR:"Croatia", CY:"Cyprus", CZ:"Czech Republic", DK:"Denmark", DO:"Dominican Republic", EC:"Ecuador", EE:"Estonia", FI:"Finland", FR:"France", GE:"Georgia", DE:"Germany", GR:"Greece", HU:"Hungary", IS:"Iceland", ID:"Indonesia", IE:"Ireland", IT:"Italy", LV:"Latvia", LT:"Lithuania", LU:"Luxembourg", MY:"Malaysia", MT:"Malta", MU:"Mauritius", MX:"Mexico", MC:"Monaco", ME:"Montenegro", MA:"Morocco", NL:"Netherlands", MK:"North Macedonia", PA:"Panama", PY:"Paraguay", PE:"Peru", PH:"Philippines", PL:"Poland", PT:"Portugal", RO:"Romania", RS:"Serbia", SK:"Slovakia", SI:"Slovenia", ZA:"South Africa", ES:"Spain", LK:"Sri Lanka", SE:"Sweden", CH:"Switzerland", TH:"Thailand", TN:"Tunisia", TR:"Turkey", AE:"United Arab Emirates", UY:"Uruguay", VN:"Vietnam" };

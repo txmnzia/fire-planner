@@ -5,6 +5,17 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.29 Realistic retirement countries, sorted by name
+
+- **61 countries** where an EU early retiree can realistically live (e.g. Thailand,
+  Vietnam, Malaysia, Georgia, Panama; not Myanmar; countries without a residence route
+  for retirees left out), sorted by name, each with a researched 2026 rate on gains and
+  a note. The list shows names only; the rate is the tax-on-gains field.
+- **Existing presets corrected for 2026:** France 31.4, Spain 21, Netherlands 36, Belgium
+  10, Ireland 38, Greece 0 (UCITS), Croatia 0 (held over 2 years), Romania 16, Bulgaria 0
+  (EU market), Estonia 22, Latvia 25.5, Lithuania 20, Slovakia 0, Denmark 37.
+  *Rejected:* modelling wealth taxes and yearly taxes on unrealised gains here.
+
 ## 2026-11-26 · v8.28.1 Empty fields show the value they use
 
 - **Transparency rule:** a field that falls back to a preset or another field shows

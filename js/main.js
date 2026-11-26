@@ -1,20 +1,20 @@
-import { el } from "./util.js?v=8.28.2";
-import { initInfoTips } from "./ui/infoTips.js?v=8.28.2";
-import { state } from "./state.js?v=8.28.2";
-import { recalc } from "./recalc.js?v=8.28.2";
+import { el } from "./util.js?v=8.29";
+import { initInfoTips } from "./ui/infoTips.js?v=8.29";
+import { state } from "./state.js?v=8.29";
+import { recalc } from "./recalc.js?v=8.29";
 import { loadState, initSync, scheduleSave, connectSync, disconnectSync,
-         openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js?v=8.28.2";
+         openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js?v=8.29";
 import { switchTab, toggleFeature, updateToggleUI, scrollToScenario, updateScNav,
-         updateAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js?v=8.28.2";
-import { handleCSV } from "./ui/ibkr.js?v=8.28.2";
-import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js?v=8.28.2";
-import { initSituation, resetAssumptions } from "./ui/situation.js?v=8.28.2";
-import { initSpendTracking } from "./ui/spending.js?v=8.28.2";
-import { initUpdatePanel } from "./ui/versions.js?v=8.28.2";
-import { initTiles } from "./ui/tiles.js?v=8.28.2";
-import { downloadCSV } from "./ui/table.js?v=8.28.2";
-import { runMonteCarloUI, selectMcScenario } from "./ui/mcTab.js?v=8.28.2";
-import { selectExplanationScenario } from "./ui/explanation.js?v=8.28.2";
+         updateAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js?v=8.29";
+import { handleCSV } from "./ui/ibkr.js?v=8.29";
+import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js?v=8.29";
+import { initSituation, resetAssumptions } from "./ui/situation.js?v=8.29";
+import { initSpendTracking } from "./ui/spending.js?v=8.29";
+import { initUpdatePanel } from "./ui/versions.js?v=8.29";
+import { initTiles } from "./ui/tiles.js?v=8.29";
+import { downloadCSV } from "./ui/table.js?v=8.29";
+import { runMonteCarloUI, selectMcScenario } from "./ui/mcTab.js?v=8.29";
+import { selectExplanationScenario } from "./ui/explanation.js?v=8.29";
 
 // The HTML uses inline on* attributes (and render functions emit them too), so
 // every function they reference must exist as a global.

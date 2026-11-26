@@ -1,15 +1,15 @@
 // Housing moves and where you live (v8.11). Two dynamic lists on My Situation:
 // planned rents (state.rentMoves) and planned moves abroad (state.residence),
 // plus the rent-today edit that keeps the joint transfers consistent.
-import { el, eur } from "../util.js?v=8.28.2";
-import { state, features } from "../state.js?v=8.28.2";
-import { recalc } from "../recalc.js?v=8.28.2";
-import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.28.2";
-import { NEW_PLAN_OFF } from "./plans.js?v=8.28.2";
-import { COUNTRY_TAX } from "../taxTable.js?v=8.28.2";
-import { countryNote, rentMoveNoEffect } from "../countries.js?v=8.28.2";
-import { mortgageSchedule, purchaseCostFor, mortgageBalanceAt, mortgagePaymentAt, homeEquityAt, priceAtBuy } from "../engine.js?v=8.28.2";
-import { undoOwner } from "./versions.js?v=8.28.2";
+import { el, eur } from "../util.js?v=8.29";
+import { state, features } from "../state.js?v=8.29";
+import { recalc } from "../recalc.js?v=8.29";
+import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.29";
+import { NEW_PLAN_OFF } from "./plans.js?v=8.29";
+import { COUNTRY_TAX, COUNTRY_NAMES } from "../taxTable.js?v=8.29";
+import { countryNote, rentMoveNoEffect } from "../countries.js?v=8.29";
+import { mortgageSchedule, purchaseCostFor, mortgageBalanceAt, mortgagePaymentAt, homeEquityAt, priceAtBuy } from "../engine.js?v=8.29";
+import { undoOwner } from "./versions.js?v=8.29";
 
 const YNOW = new Date().getFullYear();
 const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
@@ -112,7 +112,7 @@ export function renderResNotes() {
     const preset = COUNTRY_TAX[r.code] ?? 30;
     const own = r.tax != null && r.tax !== preset ? ' <b>Your override: ' + r.tax + '%; preset ' + preset + '%.</b>' : '';
     const k = r.code + own; if (seen.has(k)) return ''; seen.add(k);
-    return '<div><b>' + r.code + '</b> (' + r.when + '): ' + countryNote(r.code) + own + '</div>';
+    return '<div><b>' + (COUNTRY_NAMES[r.code] || r.code) + '</b> (' + r.when + '): ' + countryNote(r.code) + own + '</div>';
   }).join('') + '<div class="tgt">Cost of living scales all spending except housing (rent and mortgage); 100% = as today.</div>';
 }
 

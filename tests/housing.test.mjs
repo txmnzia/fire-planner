@@ -87,12 +87,34 @@ test('projection: the withdrawal year uses the tax rate where you live that year
 test('residence: presets, overrides and moves', () => {
   assert.equal(COUNTRY_TAX.DE, 18.5);
   const r = buildResidence('DE', null, [{ from: '2035', country: 'FR', tax: '', col: '90' }, { from: '', country: 'ES' }]);
-  assert.deepEqual(r, [{ from: null, country: 'DE', tax: 0.185, col: 1 }, { from: 2035, country: 'FR', tax: 0.3, col: 0.9, off: [] }]);
+  assert.deepEqual(r, [{ from: null, country: 'DE', tax: 0.185, col: 1 }, { from: 2035, country: 'FR', tax: 0.314, col: 0.9, off: [] }]);   // v8.29: France 31.4% from 2026
   assert.equal(buildResidence('FR', 25, [])[0].tax, 0.25);
   assert.deepEqual(normaliseResidence([{ from: 2040, country: 'XX' }])[0].country, 'FR');
   assert.deepEqual(normaliseRentMoves([{ from: '2031', rent: '1500' }, { from: '', rent: 1 }]), [{ from: 2031, rent: 1500, off: [] }]);
   assert.match(countryNote('DE'), /70% of the gain/);
-  assert.match(countryNote('PT'), /28% flat rate/);
+  assert.match(countryNote('PT'), /28% flat on gains/);
+  assert.match(countryNote('XX'), /flat rate on gains \(approximation\)/);   // unknown code: generic line
+});
+
+test('v8.29 country list: every country has a rate, a name and a note; the list is sorted by name', async () => {
+  const { COUNTRY_NAMES } = await import('../js/taxTable.js');
+  const { COUNTRY_NOTES } = await import('../js/countries.js');
+  const codes = Object.keys(COUNTRY_TAX);
+  assert.ok(codes.length >= 60);
+  for (const c of codes) {
+    assert.ok(COUNTRY_TAX[c] >= 0 && COUNTRY_TAX[c] <= 45, c);
+    assert.ok(COUNTRY_NAMES[c], c + ' name');
+    assert.ok(COUNTRY_NOTES[c] && COUNTRY_NOTES[c].length > 20, c + ' note');
+  }
+  // spot checks against the 2026 research (README "Tax rates by country")
+  assert.deepEqual([COUNTRY_TAX.FR, COUNTRY_TAX.ES, COUNTRY_TAX.BE, COUNTRY_TAX.IE, COUNTRY_TAX.NL, COUNTRY_TAX.TH, COUNTRY_TAX.MY], [31.4, 21, 10, 38, 36, 12, 0]);
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const sel = html.slice(html.indexOf('<select id="retCountry"'), html.indexOf('</select>', html.indexOf('<select id="retCountry"')));
+  const listed = [...sel.matchAll(/<option value="([A-Z]{2})"[^>]*>([^<]*)<\/option>/g)].map(m => [m[1], m[2].replace(/&#x[0-9A-F]+;/g, '').trim()]);
+  assert.deepEqual(listed.map(x => x[0]).sort(), codes.sort());
+  const names = listed.map(x => x[1]);
+  assert.deepEqual(names, [...names].sort((a, b) => a.localeCompare(b)));
+  for (const [c, n] of listed) assert.equal(n, COUNTRY_NAMES[c]);
 });
 
 test('rent today edit: transfers move by the same amount, split like today; never on a first entry', async () => {

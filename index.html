@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.28.2">
+<link rel="stylesheet" href="css/styles.css?v=8.29">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.28.2</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.29</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -124,32 +124,67 @@
       </button>
       <div class="tile-body subj-body" id="tile-where-body" hidden>
 <div class="frows"><div class="frow"><div class="frow-l">Country today <button type="button" class="info-btn" title="Where you live now. Gains you sell are taxed at this country&#x2019;s rate until a planned move below. Rates are flat approximations on the gain part of a sale.">&#x24D8;</button></div><div class="frow-c"><span class="frow-grp"><div class="inp fc fc-sel"><select id="retCountry" oninput="recalc()" onchange="recalc()">
-          <option value="FR" selected>&#x1F1EB;&#x1F1F7; France</option>
-          <option value="PT">&#x1F1F5;&#x1F1F9; Portugal</option>
-          <option value="ES">&#x1F1EA;&#x1F1F8; Spain</option>
-          <option value="DE">&#x1F1E9;&#x1F1EA; Germany</option>
-          <option value="IT">&#x1F1EE;&#x1F1F9; Italy</option>
-          <option value="NL">&#x1F1F3;&#x1F1F1; Netherlands</option>
-          <option value="BE">&#x1F1E7;&#x1F1EA; Belgium</option>
-          <option value="LU">&#x1F1F1;&#x1F1FA; Luxembourg</option>
+          <option value="AL">&#x1F1E6;&#x1F1F1; Albania</option>
+          <option value="AD">&#x1F1E6;&#x1F1E9; Andorra</option>
+          <option value="AR">&#x1F1E6;&#x1F1F7; Argentina</option>
           <option value="AT">&#x1F1E6;&#x1F1F9; Austria</option>
-          <option value="IE">&#x1F1EE;&#x1F1EA; Ireland</option>
-          <option value="GR">&#x1F1EC;&#x1F1F7; Greece</option>
-          <option value="CY">&#x1F1E8;&#x1F1FE; Cyprus</option>
-          <option value="MT">&#x1F1F2;&#x1F1F9; Malta</option>
-          <option value="HR">&#x1F1ED;&#x1F1F7; Croatia</option>
-          <option value="HU">&#x1F1ED;&#x1F1FA; Hungary</option>
-          <option value="RO">&#x1F1F7;&#x1F1F4; Romania</option>
+          <option value="BE">&#x1F1E7;&#x1F1EA; Belgium</option>
+          <option value="BR">&#x1F1E7;&#x1F1F7; Brazil</option>
           <option value="BG">&#x1F1E7;&#x1F1EC; Bulgaria</option>
-          <option value="PL">&#x1F1F5;&#x1F1F1; Poland</option>
-          <option value="SI">&#x1F1F8;&#x1F1EE; Slovenia</option>
+          <option value="KH">&#x1F1F0;&#x1F1ED; Cambodia</option>
+          <option value="CL">&#x1F1E8;&#x1F1F1; Chile</option>
+          <option value="CO">&#x1F1E8;&#x1F1F4; Colombia</option>
+          <option value="CR">&#x1F1E8;&#x1F1F7; Costa Rica</option>
+          <option value="HR">&#x1F1ED;&#x1F1F7; Croatia</option>
+          <option value="CY">&#x1F1E8;&#x1F1FE; Cyprus</option>
+          <option value="CZ">&#x1F1E8;&#x1F1FF; Czech Republic</option>
+          <option value="DK">&#x1F1E9;&#x1F1F0; Denmark</option>
+          <option value="DO">&#x1F1E9;&#x1F1F4; Dominican Republic</option>
+          <option value="EC">&#x1F1EA;&#x1F1E8; Ecuador</option>
           <option value="EE">&#x1F1EA;&#x1F1EA; Estonia</option>
+          <option value="FI">&#x1F1EB;&#x1F1EE; Finland</option>
+          <option value="FR" selected>&#x1F1EB;&#x1F1F7; France</option>
+          <option value="GE">&#x1F1EC;&#x1F1EA; Georgia</option>
+          <option value="DE">&#x1F1E9;&#x1F1EA; Germany</option>
+          <option value="GR">&#x1F1EC;&#x1F1F7; Greece</option>
+          <option value="HU">&#x1F1ED;&#x1F1FA; Hungary</option>
+          <option value="IS">&#x1F1EE;&#x1F1F8; Iceland</option>
+          <option value="ID">&#x1F1EE;&#x1F1E9; Indonesia</option>
+          <option value="IE">&#x1F1EE;&#x1F1EA; Ireland</option>
+          <option value="IT">&#x1F1EE;&#x1F1F9; Italy</option>
           <option value="LV">&#x1F1F1;&#x1F1FB; Latvia</option>
           <option value="LT">&#x1F1F1;&#x1F1F9; Lithuania</option>
+          <option value="LU">&#x1F1F1;&#x1F1FA; Luxembourg</option>
+          <option value="MY">&#x1F1F2;&#x1F1FE; Malaysia</option>
+          <option value="MT">&#x1F1F2;&#x1F1F9; Malta</option>
+          <option value="MU">&#x1F1F2;&#x1F1FA; Mauritius</option>
+          <option value="MX">&#x1F1F2;&#x1F1FD; Mexico</option>
+          <option value="MC">&#x1F1F2;&#x1F1E8; Monaco</option>
+          <option value="ME">&#x1F1F2;&#x1F1EA; Montenegro</option>
+          <option value="MA">&#x1F1F2;&#x1F1E6; Morocco</option>
+          <option value="NL">&#x1F1F3;&#x1F1F1; Netherlands</option>
+          <option value="MK">&#x1F1F2;&#x1F1F0; North Macedonia</option>
+          <option value="PA">&#x1F1F5;&#x1F1E6; Panama</option>
+          <option value="PY">&#x1F1F5;&#x1F1FE; Paraguay</option>
+          <option value="PE">&#x1F1F5;&#x1F1EA; Peru</option>
+          <option value="PH">&#x1F1F5;&#x1F1ED; Philippines</option>
+          <option value="PL">&#x1F1F5;&#x1F1F1; Poland</option>
+          <option value="PT">&#x1F1F5;&#x1F1F9; Portugal</option>
+          <option value="RO">&#x1F1F7;&#x1F1F4; Romania</option>
+          <option value="RS">&#x1F1F7;&#x1F1F8; Serbia</option>
           <option value="SK">&#x1F1F8;&#x1F1F0; Slovakia</option>
+          <option value="SI">&#x1F1F8;&#x1F1EE; Slovenia</option>
+          <option value="ZA">&#x1F1FF;&#x1F1E6; South Africa</option>
+          <option value="ES">&#x1F1EA;&#x1F1F8; Spain</option>
+          <option value="LK">&#x1F1F1;&#x1F1F0; Sri Lanka</option>
           <option value="SE">&#x1F1F8;&#x1F1EA; Sweden</option>
-          <option value="DK">&#x1F1E9;&#x1F1F0; Denmark</option>
-          <option value="FI">&#x1F1EB;&#x1F1EE; Finland</option>
+          <option value="CH">&#x1F1E8;&#x1F1ED; Switzerland</option>
+          <option value="TH">&#x1F1F9;&#x1F1ED; Thailand</option>
+          <option value="TN">&#x1F1F9;&#x1F1F3; Tunisia</option>
+          <option value="TR">&#x1F1F9;&#x1F1F7; Turkey</option>
+          <option value="AE">&#x1F1E6;&#x1F1EA; United Arab Emirates</option>
+          <option value="UY">&#x1F1FA;&#x1F1FE; Uruguay</option>
+          <option value="VN">&#x1F1FB;&#x1F1F3; Vietnam</option>
         </select></div></span><span class="frow-grp"><span class="frow-sep">tax on gains <button type="button" class="info-btn" title="Empty = the country&#x2019;s preset. Type a rate to override it; the note below then marks it as yours.">&#x24D8;</button></span><span class="unit-wrap fc fc-num"><input type="number" id="taxNow" step="0.5" min="0" max="60" placeholder="" oninput="recalc()" onchange="recalc()"><span class="u">%</span></span></span></div></div><div class="frow"><div class="frow-l">Taxed as <button type="button" class="info-btn" title="For the take-home estimated from a gross pay (planned pay changes). Married or PACS: taxed together with your partner (Germany: splitting; France: 2 parts). A child counts from its birth year in scenarios with the child.">&#x24D8;</button></div><div class="frow-c"><div class="inp fc fc-sel"><select id="taxHousehold" oninput="recalc()" onchange="recalc()"><option value="single" selected>Not married</option><option value="joint">Married or PACS</option></select></div></div></div><div class="frow"><div class="frow-l">Health insurance once you stop <button type="button" class="info-btn" title="What you pay for health insurance from your stop age until your first state pension starts (after that it is inside the pension deduction). Today's money, per month. Empty = the estimate for the country you live in that year (see below).">&#x24D8;</button></div><div class="frow-c"><div class="inp cur fc"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="healthAfterStop" id="healthAfterStop_disp" placeholder=""><input type="hidden" id="healthAfterStop" value=""><span class="suf">/mo</span></div></div></div></div><div class="spend-readout" id="healthReadout" aria-live="polite"></div>
       </div>
     </section>
@@ -509,6 +544,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.28.2"></script>
+<script type="module" src="js/main.js?v=8.29"></script>
 </body>
 </html>

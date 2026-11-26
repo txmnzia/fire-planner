@@ -491,12 +491,20 @@ To compute the required **gross** withdrawal to meet a **net** spending need:
 GrossWithdrawal = NetSpending / (1 − currentGainFrac × taxRate)
 ```
 
-**Tax rates by country** (examples, matching the dropdown): France 30%, Portugal 28%,
-Germany 18.5% (26.375% on 70% of an equity fund's gain), Ireland 33%, Belgium 0%. These
-are flat-rate approximations of headline capital-gains regimes — they do **not** model
-fund-specific rules such as Ireland's 41% ETF exit tax, the Netherlands' box-3
-deemed-return system, or Belgium's new 2026 capital-gains regime. Verify the rate for
-your own situation and asset type. Germany's yearly fund tax is modelled (below).
+**Tax rates by country** (v8.29): 61 realistic retirement countries, listed by name,
+each with one rate on the **gain part** of a sale (`COUNTRY_TAX` in `js/taxTable.js`) and a
+note on where it comes from and what it leaves out (`COUNTRY_NOTES` in `js/countries.js`,
+shown under Where you live). Researched for 2026 for one profile: an EU citizen who
+becomes a new tax resident, has no local job and lives off EU UCITS equity ETFs held at a
+foreign broker, realising roughly €25–40k of gain a year. Progressive scales use the rate
+at that level; territorial systems, remittance rules and long tax holidays give 0;
+holding-period exemptions assume long-held lots. Examples: France 31.4% (flat tax with
+the 2026 social charges), Germany 18.5%, Spain 21%, Portugal 28%, Belgium 10% (new 2026
+tax), Ireland 38% (fund exit tax), Netherlands 36% (box 3, approximated), Thailand 12%,
+Malaysia, Panama, Costa Rica, Georgia, UAE 0%. Taxes that do not fit a rate on gains are
+not modelled (wealth taxes, yearly taxes on unrealised gains in the Netherlands, Denmark
+and Ireland), and notes flag low-confidence rates. Not tax advice: type your own rate in
+**tax on gains** to override. Germany's yearly fund tax is modelled (below).
 
 ### German yearly fund tax (Vorabpauschale, v8.28)
 

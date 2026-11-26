@@ -1,9 +1,9 @@
-import { el, eur, fmtK } from "../util.js?v=8.28.2";
-import { scenarioIssues } from "../checks.js?v=8.28.2";
-import { state } from "../state.js?v=8.28.2";
-import { getScenarioName } from "../inputs.js?v=8.28.2";
-import { vsPlanFor } from "./planLine.js?v=8.28.2";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.28.2";
+import { el, eur, fmtK } from "../util.js?v=8.29";
+import { scenarioIssues } from "../checks.js?v=8.29";
+import { state } from "../state.js?v=8.29";
+import { getScenarioName } from "../inputs.js?v=8.29";
+import { vsPlanFor } from "./planLine.js?v=8.29";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.29";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
