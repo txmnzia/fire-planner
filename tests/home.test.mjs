@@ -39,7 +39,7 @@ test('confirming: rent goes to 0 and the joint transfers drop by it, split like 
   // rent 2,000; you 2,400 and she 600 into joint (her 20%) → you −1,600, she −400
   assert.deepEqual(rentShift(2000, 0, 2400, 600), { you: 800, she: 200, delta: -2000 });
   const ui = read('js/ui/versions.js');
-  assert.match(ui, /becomeOwner\(\); \}/);
+  assert.match(ui, /becomeOwner\(before\); \}/);   // remembers which scenarios had the plan on, for the undo
   assert.match(ui, /setMoney\("propRentSaved", 0\)/);
   assert.match(ui, /state\.home = \{ since: /);
 });
