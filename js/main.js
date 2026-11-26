@@ -1,19 +1,19 @@
-import { el } from "./util.js?v=8.33";
-import { initInfoTips } from "./ui/infoTips.js?v=8.33";
-import { state } from "./state.js?v=8.33";
-import { recalc } from "./recalc.js?v=8.33";
+import { el } from "./util.js?v=8.34";
+import { initInfoTips } from "./ui/infoTips.js?v=8.34";
+import { state } from "./state.js?v=8.34";
+import { recalc } from "./recalc.js?v=8.34";
 import { loadState, initSync, scheduleSave, connectSync, disconnectSync,
-         openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js?v=8.33";
+         openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js?v=8.34";
 import { switchTab, toggleFeature, updateToggleUI, scrollToScenario, updateScNav,
-         updateAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js?v=8.33";
-import { handleCSV } from "./ui/ibkr.js?v=8.33";
-import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js?v=8.33";
-import { initSituation, resetAssumptions } from "./ui/situation.js?v=8.33";
-import { initSpendTracking } from "./ui/spending.js?v=8.33";
-import { initUpdatePanel } from "./ui/versions.js?v=8.33";
-import { initTiles } from "./ui/tiles.js?v=8.33";
-import { downloadCSV } from "./ui/table.js?v=8.33";
-import { selectExplanationScenario } from "./ui/explanation.js?v=8.33";
+         updateAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js?v=8.34";
+import { handleCSV } from "./ui/ibkr.js?v=8.34";
+import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js?v=8.34";
+import { initSituation, resetAssumptions } from "./ui/situation.js?v=8.34";
+import { initSpendTracking } from "./ui/spending.js?v=8.34";
+import { initUpdatePanel } from "./ui/versions.js?v=8.34";
+import { initTiles } from "./ui/tiles.js?v=8.34";
+import { downloadCSV } from "./ui/table.js?v=8.34";
+import { selectExplanationScenario } from "./ui/explanation.js?v=8.34";
 
 // The HTML uses inline on* attributes (and render functions emit them too), so
 // every function they reference must exist as a global.

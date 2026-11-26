@@ -1,9 +1,9 @@
-import { el, eur } from "../util.js?v=8.33";
-import { state } from "../state.js?v=8.33";
-import { getScenarioName } from "../inputs.js?v=8.33";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, project, pensionMonthlyAt, pensionList, taxRateAt, scGl, rowCost, priceAtBuy } from "../engine.js?v=8.33";
-import { computeCardMetrics } from "./cards.js?v=8.33";
-import { FLOW_COLORS } from "./charts.js?v=8.33";
+import { el, eur } from "../util.js?v=8.34";
+import { state } from "../state.js?v=8.34";
+import { getScenarioName } from "../inputs.js?v=8.34";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, project, pensionMonthlyAt, pensionList, taxRateAt, scGl, rowCost, priceAtBuy } from "../engine.js?v=8.34";
+import { computeCardMetrics } from "./cards.js?v=8.34";
+import { FLOW_COLORS } from "./charts.js?v=8.34";
 
 // ── EXPLANATION TAB ──────────────────────────────────────────────────────────
 // "Your plan, explained": turns the selected scenario's projection into a

@@ -88,7 +88,8 @@ their stop age / margin / money-lasts / equity rows)
 (`netMonthly`, `targetMonthly`, `fireTarget`, `coastNow`, `depletionYear`, `vsPlan`, …).
 The two views duplicated ~60 lines of this logic once and drifted (T8). **Never compute
 a display financial figure inline in a renderer** — extend `computeCardMetrics` (or the
-shared row helpers `vsPlanRowHTML`/`infeasibleRowHTML`/`fireNumRowHTML`) and consume the
+shared tile cell helpers `vsPlanCell`/`fireNumCell` (v8.34: `renderSummaryTiles`
+lays out one fixed row set so rows align across tiles)) and consume the
 result through `scenarioGridResults` in `renderSummaryTiles`. Check the agreement matrix in
 the `financial-invariants` skill before touching it.
 

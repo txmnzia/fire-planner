@@ -1,9 +1,9 @@
 // Banner listing missing inputs (from js/checks.js) under the tab bar, on every
 // tab, with a button that jumps to the field. Text goes in via textContent.
-import { el } from "../util.js?v=8.33";
-import { allIssues } from "../checks.js?v=8.33";
-import { switchTab } from "./controls.js?v=8.33";
-import { revealField } from "./tiles.js?v=8.33";
+import { el } from "../util.js?v=8.34";
+import { allIssues } from "../checks.js?v=8.34";
+import { switchTab } from "./controls.js?v=8.34";
+import { revealField } from "./tiles.js?v=8.34";
 
 export function renderIssues(scenarios, gl) {
   const box = el("inputIssues"); if (!box) return;

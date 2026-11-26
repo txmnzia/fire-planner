@@ -5,6 +5,13 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.34 Tile rows line up across scenarios
+
+- The five Results tiles share one row set: a row that applies to any tile shows on
+  all ("—" where it does not), labels never wrap ("FIRE Number (you)" became
+  "FIRE Number", the partner meaning is in its tooltip), and secondary text
+  ("w/ pensions", "incl. home") sits on a sub-line reserved on every tile.
+
 ## 2026-11-26 · v8.33 The FIRE metrics on a Results tile (chosen by the owner)
 
 - **Kept:** stop age, FIRE number, chance it lasts, vs plan.

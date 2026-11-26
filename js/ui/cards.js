@@ -1,10 +1,10 @@
-import { el, eur, fmtK } from "../util.js?v=8.33";
-import { scenarioIssues } from "../checks.js?v=8.33";
-import { state } from "../state.js?v=8.33";
-import { getScenarioName } from "../inputs.js?v=8.33";
-import { vsPlanFor } from "./planLine.js?v=8.33";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.33";
-import { mcHeadlineHTML } from "./mcTab.js?v=8.33";
+import { el, eur, fmtK } from "../util.js?v=8.34";
+import { scenarioIssues } from "../checks.js?v=8.34";
+import { state } from "../state.js?v=8.34";
+import { getScenarioName } from "../inputs.js?v=8.34";
+import { vsPlanFor } from "./planLine.js?v=8.34";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.34";
+import { mcHeadlineHTML } from "./mcTab.js?v=8.34";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -186,48 +186,24 @@ export function scenarioGridResults(sc, gl, proj, stop) {
   };
 }
 
-export function vsPlanRowHTML(m) {
-  if (m.vsPlan === null) return '';
+// ── Results tile cells (v8.34) ──────────────────────────────────────────────
+// Each returns { v, sub, cls, title } for one row; the tile renderer lays them
+// out so every row sits at the same height on all five tiles.
+function vsPlanCell(m) {
+  if (m.vsPlan === null) return null;
   const d = m.vsPlan, onPlan = d === 0 && !m.vsPlanOpen, ahead = d > 0 || m.vsPlanOpen, n = Math.abs(d);
-  const txt = onPlan ? 'on plan' : (m.vsPlanOpen ? '>' : '') + n + 'y ' + (ahead ? 'ahead of' : 'behind') + ' plan';
+  const txt = onPlan ? 'on plan' : (m.vsPlanOpen ? '>' : '') + n + 'y ' + (ahead ? 'ahead' : 'behind');
   // v8.20: the € gap to where the frozen plan expected you today
   const gap = m.vsPlanGap != null ? ' <span class="tgt">' + (m.vsPlanGap >= 0 ? '+' : '\u2212') + fmtK(Math.abs(m.vsPlanGap)) + '</span>' : '';
-  return '<div class="sc-result-row" title="'+(m.vsPlanLabel||'').replace(/"/g,'&quot;')+'"><span class="k">vs Plan</span><span class="v '+(onPlan?'':(ahead?'ok':'err'))+'">'+(onPlan?'':(ahead?'▲ ':'▼ '))+txt+gap+'</span></div>';
+  return { v: (onPlan ? '' : (ahead ? '\u25b2 ' : '\u25bc ')) + txt + gap, cls: onPlan ? '' : (ahead ? 'ok' : 'err'), title: m.vsPlanLabel || '' };
 }
-
-// Partner scenario: your FIRE (target · net worth at retirement · chip) plus the
-// note on what she contributes and how your cost changes when her income does.
-export function twoRowsHTML(m, compact) {
-  const t = m.two; if (!t) return '';
-  const chip = (ok, yes, no) => '<span class="ms-chip sm '+(ok?'ok':'err')+'">'+(ok?'\u2713 '+yes:'\u00d7 '+no)+'</span>';
-  const line = (k, tgt, nw, ok, yes, no) =>
-    '<div class="sc-result-row two-row"><span class="k">'+k+' '+chip(ok, yes, no)+'</span><span class="v">'+eur(tgt)+' <span class="tgt">/ NW '+eur(nw)+'</span></span></div>';
-  let html = line('Your FIRE', t.partialTarget, t.partialNW, t.partialOk, 'Funded', 'Short');
-  if (!compact && t.note) {
-    const n = t.note;
-    html += '<div class="sc-result-note">Assumes partner contributes '+eur(n.contribMonthly)+'/mo'
-      + (n.untilHerAge != null ? ' until her age '+n.untilHerAge+(n.costAfterMonthly != null ? '; after that your cost becomes '+eur(n.costAfterMonthly)+'/mo' : '') : '')
-      + ' (today\u2019s \u20ac).</div>';
-  }
-  return html;
-}
-
-export function infeasibleRowHTML(m) {
-  if (m.infeasibleYear == null) return '';
-  return '<div class="sc-result-row"><span class="k">⚠ Underfunded</span><span class="v err">'+m.infeasibleYear+' (savings exhausted)</span></div>';
-}
-
-// FIRE Number row; in %-of-portfolio mode also shows the lower alternative
-// target that credits future pensions & partner salary (see README).
-export function fireNumRowHTML(m, gl, cc) {
-  let adj = '';
-  if (gl.wdMode === 'swr' && m.fireTargetAdj < m.fireTarget * 0.99) {
-    adj = ' <span class="tgt">/ '+eur(m.fireTargetAdj)+' w/ pensions</span>';
-  } else if (gl.wdMode === 'swr' && m.laterRise) {
-    // v8.19: the headline already includes a cost that rises later (stricter rule)
-    adj = ' <span class="tgt">incl. later cost rise</span>';
-  }
-  return '<div class="sc-result-row"><span class="k">'+(m.two ? 'FIRE Number (you)' : 'FIRE Number')+'</span><span class="v '+cc+'">'+eur(m.fireTarget)+adj+'</span></div>';
+// FIRE number; in %-of-portfolio mode the lower alternative that credits future
+// pensions (I4: the headline stays the conservative one) goes on the sub-line.
+function fireNumCell(m, gl) {
+  let sub = '';
+  if (gl.wdMode === 'swr' && m.fireTargetAdj < m.fireTarget * 0.99) sub = eur(m.fireTargetAdj) + ' w/ pensions';
+  else if (gl.wdMode === 'swr' && m.laterRise) sub = 'incl. later cost rise';   // v8.19 stricter rule
+  return { v: eur(m.fireTarget), sub, title: m.two ? 'Your FIRE number: your portfolio covering your own cost.' : '' };
 }
 
 // Results tiles (v8.32): the only place scenario results are shown. The Scenarios
@@ -240,43 +216,58 @@ export function renderSummaryTiles(projs, gl, scenarios, stops) {
   if (!row) return;
   const CV = ['s1c','s2c','s3c','s4c','s5c'];
   const swr = gl.wdMode === 'swr';
-  const rowHTML = (k, v, cls, title) => '<div class="sc-result-row"'+(title?' title="'+tileEsc(title)+'"':'')+'><span class="k">'+k+'</span><span class="v'+(cls?' '+cls:'')+'">'+v+'</span></div>';
-  let html = '';
-  projs.forEach((proj, i) => {
-    const sc = scenarios[i], cv = CV[i], name = tileEsc(getScenarioName(i));
+  // v8.34: one fixed row set for all five tiles. A row that applies to any tile is
+  // drawn on every tile ("—" where it does not apply), each row is one line, and a
+  // row with a sub-line on any tile reserves it on all, so rows line up across tiles.
+  const ROWS = [
+    ['age', 'Stop age', 'The first age at which this scenario is funded, worked out by trying every age from today to 75.'],
+    ['plan', 'vs Plan', ''],
+    ['fire', 'FIRE Number', ''],
+    ['nw', 'NW at stop', 'Portfolio + cash + home equity (home value minus the loan left) when you stop. The FIRE number is compared with the portfolio only.'],
+    ['prog', 'Progress today', 'What you hold today as a share of this scenario\u2019s FIRE number in today\u2019s money (the number deflated from the stop year).'],
+    ['under', '\u26a0 Underfunded', 'Savings run out before the stop age.'],
+    ['lasts', 'Money lasts', 'Age the money runs out in the plan (shown only when it does not reach life expectancy).'],
+  ];
+  const tiles = projs.map((proj, i) => {
+    const sc = scenarios[i];
     const m = computeCardMetrics(sc, gl, proj);
     const r = scenarioGridResults(sc, gl, proj, stops ? stops[i] : null);
     const missing = r.missing.length > 0;
+    const cells = { age: { v: r.stopAgeText, cls: missing ? 'muted' : (r.stopFound ? '' : 'err') } };
+    if (!missing) {
+      cells.plan = vsPlanCell(m);
+      cells.fire = fireNumCell(m, gl);
+      cells.nw = { v: eur(m.netWorthAtStop),
+        sub: sc.hasProp ? (m.retYear < gl.propBuyYear ? 'buys in ' + gl.propBuyYear : 'incl. home ' + fmtK(m.homeEquity)) : '' };
+      if (m.progressNow != null) cells.prog = { v: Math.round(m.progressNow*100) + '% <span class="tgt">of FIRE nb</span>', cls: m.progressNow >= 1 ? 'ok' : '' };
+      if (m.infeasibleYear != null) cells.under = { v: m.infeasibleYear + ' (savings exhausted)', cls: 'err' };
+      if (!r.lastsOk) cells.lasts = { v: r.lasts, cls: 'err' };
+    }
     const chip = missing
       ? '<span class="ms-chip err">\u26a0 Missing input</span>'
       : swr ? '<span class="ms-chip '+(m.incomeOk?'ok':'err')+'">'+(m.incomeOk?'\u2713 Funded':'\u00d7 Short')+'</span>'
             : '<span class="ms-chip '+(m.ok?'ok':'err')+'">'+(m.ok?'\u2713 On Track':'\u00d7 Gap')+'</span>';
-    // v8.33: the owner's FIRE metrics, each once: stop age, vs plan, FIRE number,
-    // net worth at stop incl. home, progress today, then warnings only when they
-    // apply, then the Monte Carlo chance.
-    let body = rowHTML('Stop age', r.stopAgeText, missing ? 'muted' : (r.stopFound ? '' : 'err'),
-      'The first age at which this scenario is funded, worked out by trying every age from today to 75.');
-    if (!missing) {
-      body += vsPlanRowHTML(m);
-      body += fireNumRowHTML(m, gl, '');
-      const home = sc.hasProp
-        ? (m.retYear < gl.propBuyYear ? ' <span class="tgt">buys in '+gl.propBuyYear+'</span>' : ' <span class="tgt">incl. home '+fmtK(m.homeEquity)+'</span>')
-        : '';
-      body += rowHTML('NW at stop', eur(m.netWorthAtStop)+home, '',
-        'Portfolio + cash + home equity (home value minus the loan left) when you stop. The FIRE number is compared with the portfolio only.');
-      if (m.progressNow != null) body += rowHTML('Progress today', Math.round(m.progressNow*100)+'% <span class="tgt">of FIRE nb</span>', m.progressNow >= 1 ? 'ok' : '',
-        'What you hold today as a share of this scenario\u2019s FIRE number in today\u2019s money (the number deflated from the stop year).');
-      body += infeasibleRowHTML(m);
-      if (!r.lastsOk) body += rowHTML('Money lasts', r.lasts, 'err');
-    }
-    body += mcHeadlineHTML(i);            // v8.30: the Monte Carlo chance (mcTab.js)
+    return { cells, chip };
+  });
+  const used = ROWS.filter(([k]) => tiles.some(t => t.cells[k]));
+  const withSub = new Set(used.filter(([k]) => tiles.some(t => t.cells[k] && t.cells[k].sub)).map(([k]) => k));
+  let html = '';
+  tiles.forEach((t, i) => {
+    const cv = CV[i], name = tileEsc(getScenarioName(i));
+    const body = used.map(([k, label, tip]) => {
+      const c = t.cells[k] || { v: '\u2014', cls: 'muted' };
+      const title = c.title || tip;
+      return '<div class="sc-result-row'+(withSub.has(k)?' has-sub':'')+'"'+(title?' title="'+tileEsc(title)+'"':'')+'>'
+        + '<span class="k">'+label+'</span>'
+        + '<span class="v'+(c.cls?' '+c.cls:'')+'">'+c.v+(withSub.has(k)?'<span class="sub">'+(c.sub||'&nbsp;')+'</span>':'')+'</span></div>';
+    }).join('');
     html +=
       '<div class="sc-summary-tile'+(i===state.activeScIdx?' active':'')+'" style="border-top:2.5px solid var(--'+cv+')" onclick="setActiveScenario('+i+')">' +
         '<div class="tile-hd">' +
-          '<span style="font-size:13px;font-weight:700;color:var(--'+cv+')">'+name+'</span>' +
-          chip +
+          '<span class="tile-name" style="color:var(--'+cv+')">'+name+'</span>' +
+          t.chip +
         '</div>' +
-        '<div class="sc-result-rows" style="margin-top:6px">' + body + '</div>' +
+        '<div class="sc-result-rows">' + body + mcHeadlineHTML(i) + '</div>' +   // v8.30: MC chance last
       '</div>';
   });
   row.innerHTML = html;

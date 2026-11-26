@@ -750,7 +750,16 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .sc-summary-tile{flex:1 1 0;min-width:0;background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:4px;scroll-snap-align:start;cursor:pointer;transition:border-color .15s,background .15s;}
 .sc-summary-tile:hover{border-color:var(--sec);}
 .sc-summary-tile.active{background:var(--dim);border-color:var(--sec);}
-.sc-summary-tile .tile-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;min-height:2.4em;}
+.sc-summary-tile .tile-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;min-height:2.4em;padding:0;}
+/* v8.34: rows line up across the five tiles: one line each, sub-line reserved */
+.sc-summary-tile .tile-name{font-size:13px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;align-self:center;}
+.sc-summary-tile .tile-hd{align-items:center;}
+.sc-summary-tile .sc-result-rows{margin-top:6px;}
+.sc-summary-tile .sc-result-row{white-space:nowrap;gap:8px;min-height:15px;}
+.sc-summary-tile .sc-result-row .k{flex:none;}
+.sc-summary-tile .sc-result-row .v{min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:right;}
+.sc-summary-tile .sc-result-row.has-sub{align-items:flex-start;}
+.sc-summary-tile .sc-result-row .sub{display:block;font-size:9px;color:var(--muted);line-height:1.3;}
 
 /* ══════════════════════════════════════════════════════════
    MOBILE (≤ 767px) — touch-first responsive layout

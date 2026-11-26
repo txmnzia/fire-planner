@@ -649,12 +649,16 @@ Results tile rows (v8.33: the owner's choice of FIRE metrics; each row once):
 | Chip | ✓ On Track / × Gap (fixed), ✓ Funded / × Short (%), ⚠ Missing input | `computeCardMetrics()` |
 | Stop age | earliest funded age · its year; "not by 75" in red | `earliestStopAge()` |
 | vs Plan | years ahead/behind the frozen plan (only with a plan) | `computeCardMetrics().vsPlan` |
-| FIRE Number | portfolio needed at the stop age (% mode: also the lower figure crediting pensions) | `proj.fireTarget` via `fireNumRowHTML()` |
+| FIRE Number | portfolio needed at the stop age (% mode: also the lower figure crediting pensions) | `proj.fireTarget` via `fireNumCell()` |
 | NW at stop | portfolio + cash + **home equity** at the stop age (scenarios that buy: "incl. home €x"). Context only: the FIRE number is compared with the portfolio | `computeCardMetrics().netWorthAtStop` |
 | Progress today | today's holdings ÷ FIRE number deflated to today's money (`fireTarget / (1+inflation)^(stop age − age)`); fixed mode counts cash, % mode leaves it out, as the verdict does | `computeCardMetrics().progressNow` |
 | ⚠ Underfunded | savings exhausted before the stop (only then) | `computeCardMetrics().infeasibleYear` |
 | Money lasts | "runs out at {age}", only when it does not reach life expectancy | `computeCardMetrics().depletionYear` |
 | Chance it lasts / Years on budget | Monte Carlo headline | `mcHeadlineHTML()` |
+
+Since v8.34 the five tiles share one row set: a row shown on any tile is shown on
+all ("—" where it does not apply), each row is one line, and a sub-line ("w/ pensions",
+"incl. home") is reserved on every tile, so the rows line up across tiles.
 
 Progress depends on the scenario: a later stop age has a smaller FIRE number in
 today's money, so the same holdings show as more progress.

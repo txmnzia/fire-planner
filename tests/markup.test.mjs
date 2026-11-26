@@ -73,6 +73,9 @@ test('v8.32: the Scenarios tab models life events only; results live on the Resu
   assert.match(fn, /computeCardMetrics\(sc, gl, proj\)/);
   for (const k of ['Stop age', 'NW at stop', 'Progress today', 'Money lasts']) assert.ok(fn.includes("'" + k + "'"), k);
   assert.ok(!/twoRowsHTML\(/.test(fn.slice(0, fn.indexOf('\n}\n'))), 'v8.33: no duplicate Your FIRE row on the tile');
+  // v8.34: one fixed row set, so rows line up across tiles
+  assert.match(fn, /const used = ROWS\.filter\(\(\[k\]\) => tiles\.some\(t => t\.cells\[k\]\)\);/);
+  assert.match(fn, /withSub\.has\(k\)/);
   assert.match(read('js/recalc.js'), /renderSummaryTiles\(projs,gl,scenarios,stops\)/);
   assert.match(read('js/ui/controls.js'), /renderSummaryTiles\(state\.lastProjs, state\.lastGl, state\.lastScenarios, state\.lastStops\)/);
 });
