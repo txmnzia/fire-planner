@@ -5,6 +5,21 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · Spec for #21: Monte Carlo merged into Results (not built yet)
+
+- **The chart line stays the fixed plan** (your own return assumptions); Monte Carlo
+  draws 10–90% and 25–75% bands around it. *Rejected:* the MC median as the main line
+  (it would disagree with the year-by-year table, tiles and stop ages below it).
+- **Recentering is always on; the checkbox goes.** The range must be centred on your
+  own return assumptions. *Rejected:* keeping it as an option (with it off the bands
+  use history's ~9.4% stock return and drift away from the plan line).
+- **MC runs in the background in a Web Worker** after each change (debounced, latest
+  run wins, active scenario first). No Run button. Stale output stays dimmed (T5).
+- **The Monte Carlo tab is removed**: headline chance on the Results tiles and as a new
+  row in the Scenarios grid, the 4 detail tiles under the chart, histogram in a
+  collapsed "Risk detail". Settings (paths, block length) move to Assumptions.
+- **Confidence-based stop age is a separate change** (#22), not part of #21.
+
 ## 2026-11-26 · v8.29.1 Western countries added
 
 - Japan, United Kingdom, United States, Canada, Australia, New Zealand, Singapore, South
