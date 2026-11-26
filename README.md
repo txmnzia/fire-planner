@@ -89,7 +89,7 @@ Under Spending, deposits per month over the last 6 months of statements are comp
 | She pays in / month | `partnerPaysIn` | — (0) | EUR/month | Spending. Her monthly transfer. Joint total = `samPaysIn + partnerPaysIn` |
 | Yearly items / year | `yearlyItems` | — (0) | EUR/year | Spending. Trips, courses, gifts: **shared**, split by her share, now and in retirement |
 | Spending in retirement | `retSpendChange` | 0% | % | One change on all spending once you stop (own, joint, yearly items, costs if alone); −50 to +50 |
-| Health insurance once you stop / month | `healthAfterStop` | — (country preset) | EUR/month | v8.26. Paid from your stop age until your first state pension; empty = the preset of the country you live in that year (see [Health insurance once you stop](#health-insurance-once-you-stop)) |
+| Health insurance once you stop / month | `healthAfterStop` | — (country preset) | EUR/month | v8.26, in the **Where you live** tile (v8.26.1). Paid from your stop age until your first state pension; empty = the preset of the country you live in that year (see [Health insurance once you stop](#health-insurance-once-you-stop)) |
 | (last refresh) | `spendUpdated` | — | date | Stamped when one of the four numbers is edited; red after 6 months |
 | Withdrawal Rate | `swr` | 4% | % | %-of-portfolio mode only; % of the current portfolio available annually |
 

@@ -1,8 +1,8 @@
-import { el, numVal, optVal } from "./util.js?v=8.26";
-import { state, features } from "./state.js?v=8.26";
-import { effectiveFeatures } from "./checks.js?v=8.26";
-import { payChangesFor } from "./payChanges.js?v=8.26";
-import { pensionNet, pensionsMoreNet } from "./pensions.js?v=8.26";
+import { el, numVal, optVal } from "./util.js?v=8.26.1";
+import { state, features } from "./state.js?v=8.26.1";
+import { effectiveFeatures } from "./checks.js?v=8.26.1";
+import { payChangesFor } from "./payChanges.js?v=8.26.1";
+import { pensionNet, pensionsMoreNet } from "./pensions.js?v=8.26.1";
 
 
 // Optional money field: null when empty (unlike optVal, 0 is a valid value).
@@ -29,16 +29,16 @@ export function getWindfalls() {
     .filter(w => !isNaN(w.yr) && !isNaN(w.amt) && w.amt > 0);
 }
 
-export { COUNTRY_TAX } from "./taxTable.js?v=8.26";
-import { COUNTRY_TAX } from "./taxTable.js?v=8.26";
+export { COUNTRY_TAX } from "./taxTable.js?v=8.26.1";
+import { COUNTRY_TAX } from "./taxTable.js?v=8.26.1";
 // Legacy saved states stored the numeric rate as the select value; map to a country code.
 export const LEGACY_RATE_TO_CODE = { "30":"FR", "28":"PT", "26":"ES", "32":"NL", "0":"BE", "33":"IE",
                               "15":"GR", "10":"HR", "19":"PL", "25":"SI", "20":"EE", "27":"DK" };
 
 // Living alone costs about 70% of what two people spend: SOLO_SHARE lives in the
 // engine since v8.11 (one constant); re-exported for older importers.
-import { SOLO_SHARE, residenceAt, investNowMonthly } from "./engine.js?v=8.26";
-import { buildResidence, normaliseRentMoves, buyCostPreset, plansForScenario } from "./countries.js?v=8.26";
+import { SOLO_SHARE, residenceAt, investNowMonthly } from "./engine.js?v=8.26.1";
+import { buildResidence, normaliseRentMoves, buyCostPreset, plansForScenario } from "./countries.js?v=8.26.1";
 export { SOLO_SHARE };
 // v8.7: yearly items (€/yr, shared) count in the default too, as a monthly amount.
 export function soloSharedFrom(entered, sharedNow, yearlyItems) {

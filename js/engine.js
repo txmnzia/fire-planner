@@ -1,4 +1,4 @@
-import { healthPresetMonthly } from "./health.js?v=8.26";
+import { healthPresetMonthly } from "./health.js?v=8.26.1";
 // ── MATH ───────────────────────────────────────────────────────────────────
 export function portReturnAt(gl, age, retAge) {
   const sNow=gl.stockAlloc, sRet=1-gl.bondAllocRet;

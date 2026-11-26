@@ -1,9 +1,9 @@
 // The plan line and "vs plan" for a scenario (v8.20). One place for the chart,
 // its legend and the cards: the frozen path of the plan version when there is
 // one, else the old re-calculation from the first snapshot with today's settings.
-import { state } from "../state.js?v=8.26";
-import { buildPlanProj, planYearsAhead } from "../engine.js?v=8.26";
-import { pickPlan, vsFrozenPlan, fracYear } from "../planVsActual.js?v=8.26";
+import { state } from "../state.js?v=8.26.1";
+import { buildPlanProj, planYearsAhead } from "../engine.js?v=8.26.1";
+import { pickPlan, vsFrozenPlan, fracYear } from "../planVsActual.js?v=8.26.1";
 
 const fmtDay = ts => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 export const activePlan = () => pickPlan(state.versions, state.planId);

@@ -36,6 +36,9 @@ test('Changes tab: leave is one line per person, You and Partner are separate ti
   assert.ok(her.includes('partnerLeaveMonths') && her.includes('partnerLeaveIncome'));
   const tile = id => chg.slice(chg.indexOf('id="' + id + '-body"'), chg.indexOf('</section>', chg.indexOf('id="' + id + '-body"')));
   assert.ok(tile('tile-you').includes('id="dob"') && tile('tile-you').includes('id="lifeExp"'));
+  // v8.26.1: health insurance depends on the country, so it sits in Where you live
+  assert.ok(tile('tile-where').includes('id="healthAfterStop"') && tile('tile-where').includes('id="healthReadout"'));
+  assert.ok(!tile('tile-you').includes('healthAfterStop'));
   for (const id of ['partnerInc', 'partnerRetAge', 'partnerBirthYear', 'partnerPension']) assert.ok(tile('tile-partner').includes('id="' + id + '"'), id);
   assert.ok(!tile('tile-partner').includes('id="dob"'));
 });
