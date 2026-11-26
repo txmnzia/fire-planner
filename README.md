@@ -678,7 +678,9 @@ against a horizontal line made that gap explode into implausible values like
 ## Partner Model
 
 One model since v8.8 (the Simple model with its spending multiplier, Household FIRE
-and her savings ledger were removed: DECISIONS.md, 2026-11-23). Each person keeps their
+and her savings ledger were removed: DECISIONS.md, 2026-11-23; v8.23 removed the
+Simple model's engine code too, so `partnerModel`, `spendNow`, `spendRet` and
+`partnerSpendMult` are no longer read anywhere). Each person keeps their
 own money. Your FIRE number covers **your** cost: your own spending plus your part of
 the shared costs. Her salary and pension are never your income; they only set her share.
 All formulas live in `js/engine.js` (`actualShare`, `partnerShare`, `partnerIncomeAt`,

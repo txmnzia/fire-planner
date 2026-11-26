@@ -1,6 +1,6 @@
-import { el, fmt } from "../util.js?v=8.22";
-import { state } from "../state.js?v=8.22";
-import { planLineFor } from "./planLine.js?v=8.22";
+import { el, fmt } from "../util.js?v=8.23";
+import { state } from "../state.js?v=8.23";
+import { planLineFor } from "./planLine.js?v=8.23";
 
 // Chart.js instances are module-private; other modules resize via resizeResultsCharts().
 let chart = null, allocChart = null;

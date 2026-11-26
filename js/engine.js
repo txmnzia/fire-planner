@@ -67,7 +67,7 @@ export function ownershipAnnual(gl, sc, yr) {
 export function purchaseCostFor(gl, sc) {
   if (gl.homeOwned) return 0;
   const all = (gl.propPrice || 0)*(gl.propDownPct + gl.propTxCostPct);
-  return isTwoPerson(gl) && sc.hasPartner ? all*(1 - (gl.propHerShare || 0)) : all;
+  return sc.hasPartner ? all*(1 - (gl.propHerShare || 0)) : all;
 }
 // Your home equity at the start of yr (nominal): the price, growing with inflation
 // from the purchase year (no real price growth assumed), minus the loan left.
@@ -85,12 +85,13 @@ export function mortgageAnnual(gl) {
   return principal*mr*Math.pow(1+mr,nm)/(Math.pow(1+mr,nm)-1)*12;
 }
 
-// ── TWO-PERSON HOUSEHOLD MODEL ─────────────────────────────────────────────
-// gl.partnerModel: 'simple' (or absent) = the original model (partner salary
-// added to household income, spending × partnerSpendMult). 'two' = each person
-// has their own finances; shared costs are split pro rata to the two net
-// incomes. Every two-person figure on screen comes from the functions below.
-export function isTwoPerson(gl) { return gl.partnerModel === 'two'; }
+// ── THE PARTNER MODEL ──────────────────────────────────────────────────────
+// One model since v8.8 (engine path cleaned in v8.23): each person keeps their own
+// money; shared costs are split between you (her real share while you both work
+// as today, else pro rata to the two incomes). Her salary is never your income.
+// The Simple model (spending × partnerSpendMult, her salary added) is gone, and
+// gl.partnerModel / spendNow / spendRet / partnerSpendMult are no longer read.
+
 
 // Your state pensions at a given age (today's €/month), v8.9: one per country,
 // each from its own start age. pension2 (France) and pensionsMore (other
@@ -139,7 +140,7 @@ export function rentSavedMonthly(gl, sc, yr) {
   gl = scGl(gl, sc);
   if (!sc.hasProp || yr < gl.propBuyYear) return 0;
   const r = rentAt(gl, yr);
-  return (gl.rentInJoint && isTwoPerson(gl) && !sc.hasPartner) ? r*SOLO_SHARE : r;
+  return (gl.rentInJoint && !sc.hasPartner) ? r*SOLO_SHARE : r;
 }
 
 // The pensions as a list, for credits and texts: [{amt, age}] with amt > 0.
@@ -265,7 +266,7 @@ export function selfFundedCost(yr, sc, gl, samPensionAnn, herDrawAnn, noTemp) {
 // Card note: what the partner contributes (today's €/mo) when you retire, until
 // which of her ages, and what your cost becomes after that change.
 export function partnerContributionNote(sc, gl, proj) {
-  if (!isTwoPerson(gl) || !sc.hasPartner || !proj) return null;
+  if (!sc.hasPartner || !proj) return null;
   const off = gl.partnerAgeOff || 0;
   const at = yr => {
     const t = yr - gl.baseYear, age = gl.currentAge + t, infl = Math.pow(1+gl.inflation, t);
@@ -325,13 +326,11 @@ export function yearOneBudget(fromAge, sc, gl, herDrawAnn) {
   const tFrom = fromAge - gl.currentAge;
   const fromYear = gl.baseYear + tFrom;
   const inflF = Math.pow(1+gl.inflation, tFrom);
-  if (isTwoPerson(gl) && sc.hasPartner) {
+  if (sc.hasPartner) {
     const pen = pensionMonthlyAt(gl, fromAge)*12*inflF;
     return Math.max(0, selfFundedCost(fromYear, sc, gl, pen, herDrawAnn).samCost);
   }
-  let budget = isTwoPerson(gl)
-    ? soloSpend(gl, true, fromYear)*12*inflF
-    : gl.spendRet*(sc.hasPartner ? gl.partnerSpendMult : 1)*12*inflF;
+  let budget = soloSpend(gl, true, fromYear)*12*inflF;
   if (sc.hasChild) {
     const childAge = fromYear - gl.childBirthYear;
     if (childAge >= 0 && childAge < gl.childCostUntilAge) budget += gl.childCostYearly*inflF;
@@ -355,7 +354,7 @@ export function yearOneBudget(fromAge, sc, gl, herDrawAnn) {
 // your net cost makes with and without them, at the same share).
 export function tempCostAt(yr, sc, gl, herDrawAnn) {
   gl = scGl(gl, sc);
-  if (isTwoPerson(gl) && sc.hasPartner) {
+  if (sc.hasPartner) {
     const t = yr - gl.baseYear, age = gl.currentAge + t;
     const pen = pensionMonthlyAt(gl, age)*12*Math.pow(1+gl.inflation, t);
     return Math.max(0, selfFundedCost(yr, sc, gl, pen, herDrawAnn).samCost
@@ -416,11 +415,8 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
   opts = opts || {};
   if (fromAge>=gl.lifeExp) return 0;
   const tFrom    = fromAge-gl.currentAge;
-  const off      = gl.partnerAgeOff || 0;   // partner's age = your age + off
   // effective retirement spending: partner multiplier increases it, child costs are time-limited
-  const baseSpend = isTwoPerson(gl) && !sc.hasPartner
-    ? soloSpend(gl, true)
-    : gl.spendRet * (sc.hasPartner ? gl.partnerSpendMult : 1);
+  const baseSpend = soloSpend(gl, true);   // with the partner the target is partialTargetTwo below
   const spendNom  = baseSpend*12*Math.pow(1+gl.inflation,tFrom);
   const pensionNom= gl.pensionAmt*12*Math.pow(1+gl.inflation,tFrom);
   const rFrom     = portReturnAt(gl,fromAge,sc.retAge);
@@ -455,7 +451,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
     return pensionList(gl).filter(p => fromAge < p.age).reduce((a, p) => a + incomeCredit(p.amt, p.age, gl.lifeExp), 0);
   }
 
-  if (isTwoPerson(gl) && sc.hasPartner) return partialTargetTwo();
+  if (sc.hasPartner) return partialTargetTwo();
 
   // Two-person model, partner scenario: Partial FIRE = your own portfolio covers
   // YOUR net cost (selfFundedCost) while the partner keeps contributing. Child
@@ -507,9 +503,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
     // that end (child, mortgage) are added at their present value.
     const budget = yearOnePermBudget(fromAge, sc, gl);
     const pensionOffset = pensionMonthlyAt(gl, fromAge)*12*Math.pow(1+gl.inflation,tFrom);
-    let partnerPenOff = 0;
-    if (sc.hasPartner && fromAge+off>=gl.partnerPensionAge) partnerPenOff = gl.partnerPension*12*Math.pow(1+gl.inflation,tFrom);
-    const annualFromPort = Math.max(0,budget-pensionOffset-partnerPenOff);
+    const annualFromPort = Math.max(0,budget-pensionOffset);   // alone here (with her: partialTargetTwo)
     let target = gl.swr>0 ? annualFromPort*taxMult/gl.swr : 0;
     target += tempCostPV(fromAge, sc, gl, taxMult);
     if (opts.otherIncomeCredit) {
@@ -517,20 +511,11 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
       // ignores — pensions that start after retirement, and partner salary until
       // the partner retires.
       target -= laterPensionCredit();
-      if (sc.hasPartner && fromAge+off < gl.partnerPensionAge) target -= incomeCredit(gl.partnerPension, gl.partnerPensionAge-off, gl.lifeExp);
-      if (sc.hasPartner && fromAge+off < gl.partnerRetAge)     target -= incomeCredit(gl.partnerInc, fromAge, gl.partnerRetAge-off);
       target = Math.max(0, target);
     }
     return Math.round(target);
   }
 
-  // PV credits against the DCF FIRE target: partner pension from the partner's
-  // pension age, and partner salary while the partner is still working.
-  function partnerPenCredit() {
-    if (!sc.hasPartner) return 0;
-    return incomeCredit(gl.partnerPension, gl.partnerPensionAge-off, gl.lifeExp)
-         + incomeCredit(gl.partnerInc, fromAge, gl.partnerRetAge-off);
-  }
 
   // PV of child costs (increases FIRE target) — DCF mode only
   function childCostPV() {
@@ -592,7 +577,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
   // fraction that rises as the remaining portfolio keeps growing.
   function dcfLoop(tm) {
     const fromYear = gl.baseYear + tFrom, n = Math.max(0, gl.lifeExp - fromAge);
-    const soloYr = isTwoPerson(gl) && !sc.hasPartner;   // v8.11: solo spending varies by year (moves, cost of living)
+    const soloYr = !sc.hasPartner;   // v8.11: solo spending varies by year (moves, cost of living)
     let pv = 0;
     for (let k = 0; k < n; k++) {
       const age = fromAge + k, yr = fromYear + k, infl = Math.pow(1+gl.inflation, yr - gl.baseYear);
@@ -602,10 +587,6 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
       if (sc.hasProp) {
         flow += mortgagePaymentAt(gl, yr) + ownershipAnnual(gl, sc, yr);
         flow -= rentSavedMonthly(gl, sc, yr)*12*infl;
-      }
-      if (sc.hasPartner) {
-        if (gl.partnerPension > 0 && age + off >= gl.partnerPensionAge) flow -= gl.partnerPension*12*infl;
-        if (gl.partnerInc > 0 && age + off < gl.partnerRetAge) flow -= gl.partnerInc*12*infl;
       }
       pv += flow*tm(k)/Math.pow(1+rFrom, k+1);
     }
@@ -619,7 +600,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
   if (fromAge>=gl.pensionAge) {
     const n   = Math.max(0,gl.lifeExp-fromAge);
     const netW= Math.max(0,spendNom-pensionNom)*taxMult;
-    return Math.round(Math.max(0, annuityPV(netW,rFrom,gl.inflation,n) + childCostPV() + propNetPV() - partnerPenCredit()));
+    return Math.round(Math.max(0, annuityPV(netW,rFrom,gl.inflation,n) + childCostPV() + propNetPV()));
   }
   const n1  = gl.pensionAge-fromAge;
   const pv1 = annuityPV(spendNom*taxMult,rFrom,gl.inflation,n1);
@@ -630,7 +611,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
   const n2         = Math.max(0,gl.lifeExp-gl.pensionAge);
   const pv2AtPen   = annuityPV(netAtPen,rFrom,gl.inflation,n2);
   const pv2        = pv2AtPen/Math.pow(1+rFrom,n1);
-  return Math.round(Math.max(0, pv1+pv2 + childCostPV() + propNetPV() - partnerPenCredit()));
+  return Math.round(Math.max(0, pv1+pv2 + childCostPV() + propNetPV()));
 }
 
 export function project(sc, gl, opts) {
@@ -649,13 +630,11 @@ export function project(sc, gl, opts) {
   const years=[],values=[],fireNums=[],allocations=[],rows=[];
   let portfolio = startPort;
   let costBasis = startPort*(1-gl.gainFrac);
-  const off = gl.partnerAgeOff || 0;           // partner's age = your age + off
   let gainFracAtRet = null;                    // tracked gain fraction when retirement starts
   let infeasibleYear = null;                   // first year portfolio+cash can't fund the plan
   // Two-person model: her money stays hers. Since v8.8 only her income is
   // modelled (it sets her share of shared costs); her savings are not.
-  const two  = isTwoPerson(gl);
-  const twoP = two && sc.hasPartner;
+  const twoP = !!sc.hasPartner;   // v8.23: one model
   const fireNumMult = [];
 
   // mortgage amortisation
@@ -697,9 +676,7 @@ export function project(sc, gl, opts) {
     const age  = gl.currentAge+(yr-startYear);
     const t    = yr-startYear;
     const infl = Math.pow(1+gl.inflation,t);
-    const baseSpend = two && !sc.hasPartner
-      ? soloSpend(gl, true, yr)
-      : gl.spendRet*(sc.hasPartner ? gl.partnerSpendMult : 1);
+    const baseSpend = soloSpend(gl, true, yr);   // alone; with her the cost comes from twoPersonCost below
     let annRetSpend = baseSpend*12*infl;
 
     const sNow=gl.stockAlloc, sRet=1-gl.bondAllocRet;
@@ -757,8 +734,6 @@ export function project(sc, gl, opts) {
         annInc = incomeInYear(yr, annInc, infl);
         // partner income until the partner retires; partner pension once they reach pension age
         // simple model only: the two-person model keeps her income on her side
-        if (sc.hasPartner && !two && age+off < gl.partnerRetAge) annInc += gl.partnerInc*12*infl;
-        if (sc.hasPartner && !two && age+off >= gl.partnerPensionAge) { const ppAcc=gl.partnerPension*12*infl; annInc+=ppAcc; row.partnerPension=Math.round(ppAcc); }
       }
       let annSpendNow, childCost;
       if (ov && ov.sp != null) {
@@ -768,11 +743,8 @@ export function project(sc, gl, opts) {
         tp = twoPersonCost(yr, sc, gl, annInc, herDraw, false, false, Math.abs(annInc - sc.income*12*infl) > 0.5);
         annSpendNow = tp.samPersonal + tp.shared - tp.child - tp.mortgage + tp.rentSaved;
         childCost   = tp.child;
-      } else if (two) {
-        annSpendNow = soloSpend(gl, false, yr)*12*infl;
-        childCost   = childCostInYear(yr);
       } else {
-        annSpendNow = gl.spendNow*12*infl*(sc.hasPartner ? gl.partnerSpendMult : 1);
+        annSpendNow = soloSpend(gl, false, yr)*12*infl;
         childCost   = childCostInYear(yr);
       }
       // property
@@ -814,8 +786,6 @@ export function project(sc, gl, opts) {
       // the partner keeps earning after YOUR retirement until their own retirement age.
       const pAnn = pensionMonthlyAt(gl, age)*12*infl;
       let partnerPensionAnn=0, partnerSalAnn=0;
-      if (sc.hasPartner && !two && age+off>=gl.partnerPensionAge) partnerPensionAnn=gl.partnerPension*12*infl;
-      if (sc.hasPartner && !two && age+off<gl.partnerRetAge)      partnerSalAnn=gl.partnerInc*12*infl;
 
       // property cash flows continue into retirement
       let mortgageAnnRet=0, rentSavingsAnnRet=0, purchaseCost=0, ownAnnRet=0;

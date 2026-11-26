@@ -14,7 +14,7 @@ for f in js/*.js js/ui/*.js; do node --check "$f"; done   # syntax check (CI run
 
 Current state (verified, v8.0): **251 tests, all pass**: 31 in `tests/engine.test.mjs`,
 9 in `tests/montecarlo.test.mjs`, 195 in `tests/golden.test.mjs` (the v8 golden master:
-192 cases frozen from the v7.3 engine in `tests/fixtures/v8-golden.json`, built from
+96 cases (v8.23: one partner model; originally 192 frozen from the v7.3 engine) in `tests/fixtures/v8-golden.json`, built from
 `tests/golden-cases.mjs`, plus purity and determinism), 8 in `tests/scenarioGrid.test.mjs`
 (grid cells = `computeCardMetrics`), 8 in `tests/markup.test.mjs` (unique ids, every
 `SYNC_FIELDS` id has an input, every inline handler is on `window`, grid rows have five

@@ -15,7 +15,7 @@ const golden = JSON.parse(readFileSync(new URL('./fixtures/v8-golden.json', impo
 const cases = goldenCases();
 
 test('golden: the fixture covers exactly the generated cases', () => {
-  assert.equal(cases.length, 192);
+  assert.equal(cases.length, 96);
   assert.deepEqual(Object.keys(golden).sort(), cases.map(c => c.name).sort());
 });
 

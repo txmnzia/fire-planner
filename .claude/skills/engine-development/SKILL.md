@@ -35,7 +35,7 @@ truth for units. Rates arrive **already divided by 100** (decimals); money input
 | `invested` | EUR, investable portfolio today (`state.ibkrTotal`) |
 | `cash`, `cashReturn` | EUR reserve outside the portfolio; decimal rate p.a. |
 | `lifeExp`, `baseYear` | simulation ends at age `lifeExp`; year 0 of the plan |
-| `spendNow`, `spendRet` | EUR/month, today's money. Simple model only: always 0 from the UI since v8.8 (one partner model); kept for the golden master |
+| `spendNow`, `spendRet` | No longer read (v8.23: the Simple model is gone). Spending is `samPersonalNow/Ret`, `sharedNow`, `soloShared` (two-person) |
 | `inflation`, `stockRet`, `bondRet` | decimals p.a.; returns are **geometric/CAGR** |
 | `stockAlloc` | decimal stock share today (`1 − bondAllocNow/100`) |
 | `bondAllocRet` | decimal bond share at retirement (glide-path endpoint) |

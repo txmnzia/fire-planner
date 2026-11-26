@@ -5,6 +5,15 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.23 The Simple model's code is gone
+
+- **Engine cleanup, no visible change:** the Simple-model branches (spending × the
+  partner multiplier, her salary added to your income) were kept since v8.8 only for
+  the golden master. They are removed with `isTwoPerson`; the golden master keeps its
+  96 one-model cases (unchanged) and drops the 96 Simple-model ones, in its own commit.
+  Hand-computed tests that used Simple-model fixtures now use "alone" fixtures with the
+  same totals (own spending + costs if alone). The owner's results are unchanged.
+
 ## 2026-11-26 · v8.22 Your home
 
 - **"Yes, we bought" makes the purchase a fact:** on in every scenario (the grid row

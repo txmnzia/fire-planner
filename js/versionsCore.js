@@ -3,7 +3,7 @@
 // results at that moment; the UI (js/ui/versions.js) stores them in the saved
 // row (payload.versions, additive) and renders the impact panel and the log.
 
-import { pathOf } from "./planVsActual.js?v=8.22";
+import { pathOf } from "./planVsActual.js?v=8.23";
 export const MAX_VERSIONS = 30;
 
 // The state a version keeps: everything the payload has except the versions

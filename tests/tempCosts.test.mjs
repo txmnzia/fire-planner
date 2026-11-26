@@ -12,7 +12,7 @@ import { earliestStopAge } from '../js/ui/cards.js';
 import { baseGl, baseSc, goldenCases } from './golden-cases.mjs';
 
 const flat = over => baseGl({ stockRet: 0, bondRet: 0, inflation: 0, gainFrac: 0, taxRate: 0, cash: 0, cashReturn: 0,
-  pensionAmt: 0, windfalls: [], invested: 300000, spendNow: 2000, spendRet: 2000, partnerModel: 'simple',
+  pensionAmt: 0, windfalls: [], invested: 300000, samPersonalNow: 1500, samPersonalRet: 1500, soloShared: 500,   // v8.23 one model: 2,000 alone
   childBirthYear: 2030, childCostYearly: 12000, childCostUntilAge: 23, childMaternityMonths: 0,
   propBuyYear: 2032, propPrice: 300000, propDownPct: 0.2, propTxCostPct: 0, propMortgageRate: 0, propMortgageTerm: 25,
   propRentSaved: 1000, ...over });

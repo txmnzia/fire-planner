@@ -50,10 +50,11 @@ the target by up to ~15% (households "funded" that ran dry).
 Using today's fraction for a retirement-era quantity was bugs F1, F4 and T6 —
 it understates targets and overstates card income by 8–18%.
 
-**v8.8 note:** the app always uses the two-person model (`gl.partnerModel = 'two'`, set
-in `getGlobals`); `spendNow`/`spendRet`/`partnerSpendMult` reach the engine as 0 and the
-Simple-model branches below survive only for the golden master. With a partner, the
-budget is your cost from `twoPersonCost`/`selfFundedCost`; without, `soloSpend`.
+**v8.23 note:** one partner model, in the engine too: the Simple-model branches
+(`spendNow`/`spendRet` × `partnerSpendMult`, her salary added to your income) and
+`isTwoPerson` are gone; those gl fields are not read. Where the rules below mention
+`spendRet` or the partner multiplier, read: with a partner, your cost from
+`twoPersonCost`/`selfFundedCost`; without, `soloSpend`.
 
 **I2 — The retirement budget is defined once.**
 `yearOneBudget(fromAge, sc, gl)` in `js/engine.js` is THE definition of the annual

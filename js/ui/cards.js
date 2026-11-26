@@ -1,9 +1,9 @@
-import { el, eur, fmtK } from "../util.js?v=8.22";
-import { scenarioIssues } from "../checks.js?v=8.22";
-import { state } from "../state.js?v=8.22";
-import { getScenarioName } from "../inputs.js?v=8.22";
-import { vsPlanFor } from "./planLine.js?v=8.22";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, isTwoPerson, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.22";
+import { el, eur, fmtK } from "../util.js?v=8.23";
+import { scenarioIssues } from "../checks.js?v=8.23";
+import { state } from "../state.js?v=8.23";
+import { getScenarioName } from "../inputs.js?v=8.23";
+import { vsPlanFor } from "./planLine.js?v=8.23";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.23";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -15,7 +15,6 @@ export function computeCardMetrics(sc, gl, proj) {
   const iRet    = Math.min(Math.max(0, retIdx), proj.values.length - 1);
   const portRet = proj.values[iRet] || 0;
   const retYear = gl.baseYear + Math.max(0, sc.retAge - gl.currentAge);
-  const off     = gl.partnerAgeOff || 0;
   const nAccum  = Math.max(0, sc.retAge - gl.currentAge);
   // depletion: start-of-year values plus the final end-of-year state
   let depletionYear = null;
@@ -38,7 +37,7 @@ export function computeCardMetrics(sc, gl, proj) {
               infeasibleYear: proj.infeasibleYear };
   // With the partner: the target is YOUR FIRE (your portfolio covers your cost:
   // own spending + your part of shared costs). Household FIRE was removed in v8.8.
-  const twoP = isTwoPerson(gl) && sc.hasPartner;
+  const twoP = !!sc.hasPartner;
   const herDrawRet = 0;
   if (twoP) {
     m.two = {
@@ -56,11 +55,9 @@ export function computeCardMetrics(sc, gl, proj) {
     const swrPortfolio = Math.round(investAtRet * gl.swr * (1 - gfr * taxRateAt(scGl(gl, sc), proj.retYear)) / 12);
     const inflAtRet = Math.pow(1 + gl.inflation, nAccum);
     const pensionMonthly = Math.round(pensionMonthlyAt(gl, sc.retAge) * inflAtRet);
-    // in the two-person model her salary and pension are hers, not your income
-    const partnerPensionMonthly = (sc.hasPartner && !isTwoPerson(gl) && sc.retAge + off >= gl.partnerPensionAge)
-      ? Math.round(gl.partnerPension * inflAtRet) : 0;
-    const partnerSalMonthly = (sc.hasPartner && !isTwoPerson(gl) && sc.retAge + off < gl.partnerRetAge)
-      ? Math.round(gl.partnerInc * inflAtRet) : 0;
+    // her salary and pension are hers, never your income (one model, v8.23): the
+    // breakdown keeps the two slots at 0 for the Explanation tab's layout
+    const partnerPensionMonthly = 0, partnerSalMonthly = 0;
     m.netMonthly = swrPortfolio + pensionMonthly + partnerPensionMonthly + partnerSalMonthly;
     // component split, so the Explanation tab can show where the income comes from
     // without re-deriving it (single source — must stay equal to netMonthly).

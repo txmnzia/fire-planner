@@ -15,7 +15,7 @@ state.nwHistory = [];
 // % mode, 4%: funded when 4% of the portfolio covers 2,000/mo, i.e. portfolio
 // >= 2,000 x 12 / 0.04 = 600k. 300k + 24k x n >= 600k  ->  n = 12.5  ->  13 years.
 const flat = over => baseGl({ stockRet: 0, bondRet: 0, inflation: 0, gainFrac: 0, taxRate: 0, cash: 0,
-  cashReturn: 0, pensionAmt: 0, windfalls: [], invested: 300000, spendNow: 2000, spendRet: 2000, ...over });
+  cashReturn: 0, pensionAmt: 0, windfalls: [], invested: 300000, samPersonalNow: 1500, samPersonalRet: 1500, soloShared: 500, ...over });   // v8.23 one model: alone = 1,500 own + 500 if alone = 2,000
 const flatSc = over => baseSc({ income: 4000, ...over });
 
 test('hand-computed: earliest stop age is 35 + 13 = 48 (% mode)', () => {

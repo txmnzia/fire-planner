@@ -3,7 +3,7 @@
 // and the cell texts follow from those numbers by hand-checkable rules.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { project, isTwoPerson } from '../js/engine.js';
+import { project } from '../js/engine.js';
 import { computeCardMetrics, scenarioGridResults } from '../js/ui/cards.js';
 import { state } from '../js/state.js';
 import { fmtK, stepClamp } from '../js/util.js';

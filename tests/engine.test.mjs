@@ -7,7 +7,6 @@ import {
   computeFireTarget, project, buildPlanProj, planYearsAhead,
   partnerShare, partnerIncomeAt, twoPersonCost, selfFundedCost, partnerContributionNote,
 } from '../js/engine.js';
-import { readFileSync } from 'node:fs';
 
 // A globals object mirroring what inputs.js getGlobals() produces.
 function makeGl(over = {}) {
@@ -25,8 +24,8 @@ function makeGl(over = {}) {
     propMortgageRate: 0.035, propMortgageTerm: 25, propRentSaved: 1000,
     childBirthYear: 2034, childCostYearly: 9000, childCostUntilAge: 22,
     childMaternityMonths: 6, childMaternityIncome: 2000,
-    // two-person model (made-up numbers); partnerModel 'simple' = original model
-    partnerModel: 'simple', samPersonalNow: 1200, samPersonalRet: 1100,
+    // v8.23: one model (each person's own money); partnerModel is no longer read
+    partnerModel: 'two', samPersonalNow: 1200, samPersonalRet: 1100,
     sharedNow: 2400, sharedRet: 2200, soloShared: 1500, partnerPersonal: 700,
     partnerPortfolio: 30000, partnerGainFrac: 0.1, shareMin: 0, shareMax: 0.5,
     ...over,
@@ -74,16 +73,17 @@ test('portReturnAt: glide path endpoints', () => {
   assert.ok(Math.abs(portReturnAt(gl, 45, 45) - (0.6 * 0.07 + 0.4 * 0.03)) < 1e-12); // at retirement: 60/40
 });
 
-test('yearOneBudget: base case is inflated retirement spending', () => {
+test('yearOneBudget: alone = your own retired spending + costs if alone, inflated', () => {
+  // v8.23 one model: no partner → 1,100 own (retired) + 1,500 if alone = 2,600/month
   const gl = makeGl(), sc = makeSc();
-  const expected = 2400 * 12 * Math.pow(1.02, 10); // retire at 45, 10y from age 35
+  const expected = (1100 + 1500) * 12 * Math.pow(1.02, 10); // retire at 45, 10y from age 35
   assert.ok(Math.abs(yearOneBudget(45, sc, gl) - expected) < 1e-6);
 });
 
-test('yearOneBudget: partner multiplier and child cost add up', () => {
-  const gl = makeGl(), sc = makeSc({ hasPartner: true, hasChild: true });
+test('yearOneBudget: a child adds its yearly cost (alone)', () => {
+  const gl = makeGl(), sc = makeSc({ hasChild: true });
   const inflF = Math.pow(1.02, 10);
-  const expected = 2400 * 1.5 * 12 * inflF + 9000 * inflF; // child born 2034, still <22 in 2036
+  const expected = (1100 + 1500) * 12 * inflF + 9000 * inflF; // child born 2034, still <22 in 2036
   assert.ok(Math.abs(yearOneBudget(45, sc, gl) - expected) < 1e-6);
 });
 
@@ -152,35 +152,6 @@ test('planYearsAhead: ahead of plan when actual NW beats the plan curve early', 
 const twoGl = (over = {}) => makeGl({ partnerModel: 'two', ...over });
 const flat = (over = {}) => twoGl({ inflation: 0, stockRet: 0, bondRet: 0, cashReturn: 0, ...over });
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
-
-test('two-person 1 — regression: simple mode is identical to the pre-change snapshot', () => {
-  // Snapshot taken from project() BEFORE the two-person code existed
-  // (tests/fixtures/simple-mode-snapshot.json). Same cases, with the new gl
-  // fields present (partnerModel 'simple') and with partnerModel absent.
-  const snap = JSON.parse(readFileSync(new URL('./fixtures/simple-mode-snapshot.json', import.meta.url)));
-  const cases = [
-    ['base', {}, {}], ['partner', { hasPartner: true }, {}], ['partnerOff3', { hasPartner: true }, { partnerAgeOff: 3 }],
-    ['prop', { hasProp: true }, {}], ['child', { hasChild: true }, {}],
-    ['all', { hasPartner: true, hasProp: true, hasChild: true }, { windfalls: [{ yr: 2032, amt: 80000 }] }],
-    ['early', { retAge: 40, chgYear: 2030, chgInc: 3000 }, {}],
-  ];
-  // v8.2 deliberately changed %-mode scenarios with child or property costs (costs
-  // that end are priced at present value): those three are covered by
-  // tests/tempCosts.test.mjs and the regenerated v8 golden master instead. The
-  // fields v8.2 added (tempPV, rows[].tempCost) are not in this older snapshot.
-  // v8.5 then moved every fixed-mode case (tax priced on a rising gain fraction).
-  const movedInV82 = new Set(['swr_prop', 'swr_child', 'swr_all', ...cases.map(c => 'fixed_' + c[0])]);
-  const strip = p => { delete p.tempPV; delete p.fireTargetYearOne; delete p.laterRise; p.rows.forEach(r => delete r.tempCost); return p; };   // v8.19 fields too
-  for (const wd of ['swr', 'fixed']) for (const [k, sco, glo] of cases) {
-    if (movedInV82.has(wd + '_' + k)) continue;
-    const glS = makeGl({ wdMode: wd, ...glo });
-    const glA = { ...glS }; delete glA.partnerModel;
-    for (const g of [glS, glA]) {
-      const p = strip(JSON.parse(JSON.stringify(project(makeSc(sco), g))));
-      assert.deepEqual(p, snap[wd + '_' + k], wd + '_' + k);
-    }
-  }
-});
 
 test('two-person 2 — share math: 6,000 vs 2,000 → 25%, contribution 750, your cost 3,250', () => {
   const gl = flat({ samPersonalNow: 1000, sharedNow: 3000, partnerInc: 2000 });

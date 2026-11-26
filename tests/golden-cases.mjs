@@ -33,7 +33,7 @@ export function baseSc(over = {}) {
 export function goldenCases() {
   const cases = [];
   for (const wdMode of ['swr', 'fixed'])
-    for (const partnerModel of ['simple', 'two'])
+    for (const partnerModel of ['two'])   // v8.23: one model (the Simple model's 96 cases are gone)
       for (let f = 0; f < 8; f++)
         for (const retAge of [40, 50, 60])
           for (const pay of ['flat', 'change']) {
