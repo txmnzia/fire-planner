@@ -2,19 +2,20 @@
 // version and what it does to the five scenarios, Save update / Undo all, the
 // update log (compare, restore), the first-run review and "Did this happen?".
 // Edits still autosave as before; a version is a dated copy you can go back to.
-import { el, eur } from "../util.js?v=8.19.1";
-import { state, features } from "../state.js?v=8.19.1";
-import { recalc } from "../recalc.js?v=8.19.1";
-import { collectState, applyState } from "../sync.js?v=8.19.1";
-import { getScenarioName } from "../inputs.js?v=8.19.1";
+import { activePlan } from "./planLine.js?v=8.20";
+import { el, eur } from "../util.js?v=8.20";
+import { state, features } from "../state.js?v=8.20";
+import { recalc } from "../recalc.js?v=8.20";
+import { collectState, applyState } from "../sync.js?v=8.20";
+import { getScenarioName } from "../inputs.js?v=8.20";
 import { snapshotOf, resultsOf, diffFields, diffLists, changeCount, impactLines, impactRows, addVersion,
-         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.19.1";
-import { rentShift } from "./housing.js?v=8.19.1";
-import { updateToggleUI } from "./controls.js?v=8.19.1";
-import { revealField } from "./tiles.js?v=8.19.1";
-import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.19.1";
-import { renderNwHistory } from "./nwHistory.js?v=8.19.1";
-import { refreshedText } from "./spending.js?v=8.19.1";
+         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.20";
+import { rentShift } from "./housing.js?v=8.20";
+import { updateToggleUI } from "./controls.js?v=8.20";
+import { revealField } from "./tiles.js?v=8.20";
+import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.20";
+import { renderNwHistory } from "./nwHistory.js?v=8.20";
+import { refreshedText } from "./spending.js?v=8.20";
 
 const fmtDay = ts => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -32,17 +33,19 @@ const lastVersion = () => state.versions[state.versions.length - 1] || null;
 
 export function saveVersion(note, kind) {
   const snap = snapshotOf(collectState());
-  const prev = lastVersion();
+  const prev = lastVersion(), ts = Date.now();
   state.versions = addVersion(state.versions, {
-    id: Date.now().toString(36), ts: Date.now(), kind: kind || "save",
+    id: ts.toString(36), ts, kind: kind || "save",
     note: (note || "").trim(), changes: prev ? changeCount(prev.snapshot, snap) : 0,
-    snapshot: snap, results: currentResults(),
+    // v8.20: the results keep each scenario's net-worth path: the frozen plan
+    snapshot: snap, results: state.lastScenarios && state.lastProjs
+      ? resultsOf(state.lastScenarios, state.lastProjs, state.lastStops, [0, 1, 2, 3, 4].map(getScenarioName), ts) : [],
   });
   recalc();   // re-renders the panel and autosaves (versions ride in the saved row)
 }
 
 function restoreSnapshot(snapshot) {
-  const keep = { versions: state.versions, review: state.review };
+  const keep = { versions: state.versions, review: state.review, planId: state.planId };
   applyState({ ...JSON.parse(JSON.stringify(snapshot)), v: 1, ts: Date.now(), ...keep });
 }
 export function undoAll() {
@@ -218,16 +221,20 @@ export function renderUpdatePanel(gl) {
   }
   h += "</div>";
 
-  // Log
+  // Log (v8.20: "Use as plan" picks the version actual net worth is compared with)
+  const plan = activePlan();
   if (state.versions.length) {
     h += '<details class="up-log"' + (state.logOpen ? " open" : "") + '><summary>Update log (' + state.versions.length + ")</summary>" +
       (state.yearEndOpen ? "" : '<div class="up-entry"><span class="tgt">Closing a year normally happens in January.</span><button type="button" class="dp-add" data-ye-open="1">Close ' + gl.baseYear + ' now</button></div>') + state.versions.slice().reverse().map((x, j, arr) => {
       const older = arr[j + 1];
       const eff = older ? impactLines(older.results, x.results) : [];
       const sinceNow = impactLines(x.results, now);
-      return '<div class="up-entry"><div><b>' + fmtDay(x.ts) + "</b> · " + esc(x.note || (x.changes ? x.changes + " changes" : "version")) +
+      const isPlan = plan && plan.id === x.id, hasPath = (x.results || []).some(r => r && r.path);
+      return '<div class="up-entry' + (isPlan ? ' is-plan' : '') + '"><div><b>' + fmtDay(x.ts) + "</b> · " + esc(x.note || (x.changes ? x.changes + " changes" : "version")) +
+        (isPlan ? ' <span class="plan-tag">the plan</span>' : "") +
         (eff.length ? ' <span class="tgt">' + esc(eff.join("; ")) + "</span>" : "") + "</div>" +
-        '<div class="up-btns">' + (j > 0 ? '<button type="button" class="dp-add" data-restore="' + x.id + '">Restore</button>' : "") + "</div>" +
+        '<div class="up-btns">' + (hasPath && !isPlan ? '<button type="button" class="dp-add" data-plan="' + x.id + '" title="Compare your actual net worth with what this version expected">Use as plan</button>' : "") +
+        (j > 0 ? '<button type="button" class="dp-add" data-restore="' + x.id + '">Restore</button>' : "") + "</div>" +
         (j > 0 ? '<div class="tgt">Compared with today: ' + esc(sinceNow.join("; ") || "same results") + "</div>" : "") + "</div>";
     }).join("") + "</details>";
   }
@@ -244,6 +251,7 @@ export function initUpdatePanel() {
     if (b.dataset.save) saveVersion(el("upNote") ? el("upNote").value : "", "save");
     else if (b.dataset.undo) undoAll();
     else if (b.dataset.restore) restoreVersion(b.dataset.restore);
+    else if (b.dataset.plan) { state.planId = b.dataset.plan; state.logOpen = true; recalc(); }
     else if (b.dataset.yes) answerPrompt(b.dataset.yes, true);
     else if (b.dataset.no) answerPrompt(b.dataset.no, false);
     else if (b.dataset.yeOpen) { state.yearEndOpen = true; recalc(); host.scrollIntoView({ behavior: "smooth" }); }

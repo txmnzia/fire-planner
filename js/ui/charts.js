@@ -1,6 +1,6 @@
-import { el, fmt } from "../util.js?v=8.19.1";
-import { state } from "../state.js?v=8.19.1";
-import { buildPlanProj } from "../engine.js?v=8.19.1";
+import { el, fmt } from "../util.js?v=8.20";
+import { state } from "../state.js?v=8.20";
+import { planLineFor } from "./planLine.js?v=8.20";
 
 // Chart.js instances are module-private; other modules resize via resizeResultsCharts().
 let chart = null, allocChart = null;
@@ -44,15 +44,19 @@ export function buildChart(projs,gl) {
   const proj=projs[state.activeScIdx], color=COLORS[state.activeScIdx], alpha=ALPHAS[state.activeScIdx], fade=COLORS_FADE[state.activeScIdx];
   const ctx=el("fireChart").getContext("2d");
   const sc = state.lastScenarios ? state.lastScenarios[state.activeScIdx] : null;
-  const planProj = sc ? buildPlanProj(sc, gl, state.nwHistory) : null;
+  const plan = planLineFor(state.activeScIdx, sc, gl);   // v8.20: frozen plan, else re-calculated
 
   let labels, ds;
-  if (planProj) {
+  if (plan) {
     // Extended view: x-axis runs from the first snapshot. One solid "Net Worth"
     // line = actual points (past) flowing straight into the forward projection;
     // one dashed "Plan" line. Dataset[0] is the solid line so makeRetPlugin can
     // place the retirement marker on it. Dots mark real (actual) data points.
-    labels = planProj.years.slice();
+    // x-axis: from the first snapshot or the plan's start (whichever is earlier) to the end
+    const hist = state.nwHistory.filter(r=>r.val>0&&r.year>0).map(r=>r.year);
+    const y0 = Math.min(plan.years[0], gl.baseYear, ...hist), yN = proj.years[proj.years.length-1];
+    labels = []; for (let y = y0; y <= yN; y++) labels.push(y);
+    const planData = labels.map(y => { const i = plan.years.indexOf(y); return i >= 0 ? plan.values[i] : null; });
     const actualMap = {};
     state.nwHistory.filter(r=>r.val>0&&r.year>0).forEach(r => { actualMap[r.year] = r.val; });
     actualMap[gl.baseYear] = (gl.invested || 0) + gl.cash; // "today" joins actuals to the projection
@@ -65,7 +69,7 @@ export function buildChart(projs,gl) {
     const ptHR = labels.map(y => isActual(y) ? 5 : 4);
     ds = [
       {label:"Net Worth",data:combined,borderColor:color,backgroundColor:alpha,borderWidth:2.5,pointRadius:ptR,pointHoverRadius:ptHR,pointBackgroundColor:color,tension:.35,fill:false,order:1,spanGaps:true},
-      {label:"Plan",data:planProj.values,borderColor:fade,borderWidth:1.5,borderDash:[5,5],pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:2,spanGaps:true},
+      {label:"Plan",data:planData,borderColor:fade,borderWidth:1.5,borderDash:[5,5],pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,order:2,spanGaps:true},
     ];
     ds.push({label:"FIRE Target",data:labels.map(()=>proj.fireTarget),borderColor:FIRE_LINE,borderWidth:1.5,pointRadius:0,tension:0,fill:false,order:3});
   } else {
@@ -140,8 +144,13 @@ export function buildFlowChart(projs,gl) {
   // label range here and pad the leading (pre-plan) years with nulls, so both
   // charts show the same time horizon and their retirement markers line up.
   const sc = state.lastScenarios ? state.lastScenarios[state.activeScIdx] : null;
-  const planProj = sc ? buildPlanProj(sc, gl, state.nwHistory) : null;
-  const years = planProj ? planProj.years.slice() : proj.years;
+  const plan = planLineFor(state.activeScIdx, sc, gl);
+  let years = proj.years;
+  if (plan) {   // same x-axis as the projection chart (v8.20 rule above)
+    const hist = state.nwHistory.filter(r=>r.val>0&&r.year>0).map(r=>r.year);
+    const y0 = Math.min(plan.years[0], gl.baseYear, ...hist), yN = proj.years[proj.years.length-1];
+    years = []; for (let y = y0; y <= yN; y++) years.push(y);
+  }
   const pad   = years.length - rows.length; // leading label slots with no flow data
   const padData = data => pad>0 ? Array(pad).fill(null).concat(data) : data;
   // One dataset per line item, dropping any that is zero across every year

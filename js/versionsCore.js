@@ -3,24 +3,27 @@
 // results at that moment; the UI (js/ui/versions.js) stores them in the saved
 // row (payload.versions, additive) and renders the impact panel and the log.
 
+import { pathOf } from "./planVsActual.js?v=8.20";
 export const MAX_VERSIONS = 30;
 
 // The state a version keeps: everything the payload has except the versions
 // themselves, the review list and the IBKR position list (large, not settings).
 export function snapshotOf(payload) {
-  const { versions, review, ts, ...rest } = payload || {};
+  const { versions, review, ts, planId, ...rest } = payload || {};   // v8.20: the plan pick is not a setting
   const ibkr = rest.ibkr ? { ...rest.ibkr, holdings: [] } : rest.ibkr;
   return JSON.parse(JSON.stringify({ ...rest, ibkr }));
 }
 
 // One line per scenario: the figures the impact panel compares.
 // stops/projs/scenarios as recalc() has them; names from the grid.
-export function resultsOf(scenarios, projs, stops, names) {
+// savedAt (v8.20): when given, each line also keeps the frozen net-worth path.
+export function resultsOf(scenarios, projs, stops, names, savedAt) {
   return scenarios.map((sc, i) => ({
     name: names[i] || String.fromCharCode(65 + i),
     age: stops && stops[i] && stops[i].found && !stops[i].missing ? sc.retAge : null,
     fire: Math.round(projs[i].fireTarget || 0),
     nwEnd: Math.round(projs[i].finalNetWorth || 0),
+    ...(savedAt != null ? { path: pathOf(projs[i], savedAt) } : {}),
   }));
 }
 

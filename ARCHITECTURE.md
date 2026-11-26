@@ -33,6 +33,8 @@ js/
   countries.js          Pure (v8.11): country notes, residence periods, rent moves.
   yearEnd.js            Pure (v8.15): year-end amounts to raise and the history row.
   versionsCore.js       Pure (v8.14): snapshots, diffs, impact lines, prompts, review.
+  planVsActual.js       Pure (v8.20): frozen plan paths in versions, the plan pick, the
+                        gap and years ahead/behind against the frozen plan.
   ibkr.js               Pure (v8.10): IBKR statement parser (total, positions, gain %,
                         as-of date, deposits) and the check-in read-outs.
   pensions.js           Pure (v8.9): pension countries, legal ages, the net rule the plan
@@ -68,6 +70,8 @@ js/
                         title); placeTip() is the pure, tested placement.
     pensions.js         Pensions from other countries ("+ Add a country", v8.19) and
                         the net read-out rows; the net rule itself is js/pensions.js.
+    planLine.js         The plan line and "vs plan" for a scenario (v8.20): frozen
+                        plan when there is one, else the re-calculated fallback.
     tiles.js            Changes tab (v8.17): tiles open in place, one-line summaries,
                         date badges, the phone impact bar. Tile bodies (v8.18.2) are
                         .frow fields (caption above controls) flowing side by

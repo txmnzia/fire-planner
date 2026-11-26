@@ -1,8 +1,9 @@
-import { el, eur, fmtK } from "../util.js?v=8.19.1";
-import { scenarioIssues } from "../checks.js?v=8.19.1";
-import { state } from "../state.js?v=8.19.1";
-import { getScenarioName } from "../inputs.js?v=8.19.1";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, buildPlanProj, planYearsAhead, isTwoPerson, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.19.1";
+import { el, eur, fmtK } from "../util.js?v=8.20";
+import { scenarioIssues } from "../checks.js?v=8.20";
+import { state } from "../state.js?v=8.20";
+import { getScenarioName } from "../inputs.js?v=8.20";
+import { vsPlanFor } from "./planLine.js?v=8.20";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, isTwoPerson, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.20";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -28,10 +29,11 @@ export function computeCardMetrics(sc, gl, proj) {
   const coastNow = growthFactor > 0 ? proj.fireTarget / growthFactor : proj.fireTarget;
   const coasting = ((gl.invested || 0) + gl.cash) >= coastNow;
   // vs plan: when did the plan curve expect you to be where you actually are today?
-  const pos = planYearsAhead(buildPlanProj(sc, gl, state.nwHistory), gl);
+  // v8.20: against the frozen plan (a saved version) when there is one
+  const pos = vsPlanFor((sc.id || 1) - 1, sc, gl);
   const vsPlan = pos ? pos.years : null;   // +ve = ahead of plan
   const m = { retIdx, portRet, retYear, depletionYear, coastNow, coasting,
-              vsPlan, vsPlanOpen: pos ? pos.open : false,
+              vsPlan, vsPlanOpen: pos ? pos.open : false, vsPlanGap: pos ? pos.gap : null, vsPlanLabel: pos ? pos.label : '',
               fireTarget: proj.fireTarget, fireTargetAdj: proj.fireTargetAdj, laterRise: !!proj.laterRise,
               infeasibleYear: proj.infeasibleYear };
   // With the partner: the target is YOUR FIRE (your portfolio covers your cost:
@@ -185,7 +187,9 @@ export function vsPlanRowHTML(m) {
   if (m.vsPlan === null) return '';
   const d = m.vsPlan, onPlan = d === 0 && !m.vsPlanOpen, ahead = d > 0 || m.vsPlanOpen, n = Math.abs(d);
   const txt = onPlan ? 'on plan' : (m.vsPlanOpen ? '>' : '') + n + 'y ' + (ahead ? 'ahead of' : 'behind') + ' plan';
-  return '<div class="sc-result-row"><span class="k">vs Plan</span><span class="v '+(onPlan?'':(ahead?'ok':'err'))+'">'+(onPlan?'':(ahead?'▲ ':'▼ '))+txt+'</span></div>';
+  // v8.20: the € gap to where the frozen plan expected you today
+  const gap = m.vsPlanGap != null ? ' <span class="tgt">' + (m.vsPlanGap >= 0 ? '+' : '\u2212') + fmtK(Math.abs(m.vsPlanGap)) + '</span>' : '';
+  return '<div class="sc-result-row" title="'+(m.vsPlanLabel||'').replace(/"/g,'&quot;')+'"><span class="k">vs Plan</span><span class="v '+(onPlan?'':(ahead?'ok':'err'))+'">'+(onPlan?'':(ahead?'▲ ':'▼ '))+txt+gap+'</span></div>';
 }
 
 // Partner scenario: your FIRE (target · net worth at retirement · chip) plus the

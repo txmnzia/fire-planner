@@ -636,7 +636,30 @@ Target Monthly = yearOneBudget(retAge) / 12
 
 ### vs Plan (years ahead/behind)
 
-Shown when you have past net-worth snapshots. It is **position-based**: the plan
+**v8.20: against a frozen plan.** Every saved version keeps, per scenario, the
+net-worth path its projection expected (`results[i].path = {t0, y0, v}`: start-of-year
+values rounded to €100; `js/planVsActual.js`). "The plan" is the version picked with
+**Use as plan** in the update log, else the latest year-end close, else the latest
+version. Today's net worth (IBKR + cash) is compared with that frozen path, so a later
+change of assumptions never moves the plan:
+
+```
+expected(today) = linear between the path's yearly points, point k at t0 + k
+                  (t0 = the save moment as a fractional year: the engine's first year
+                   starts "today")
+gap             = net worth today − expected(today)
+years ahead     = round(t* − today), t* = when the path reaches today's net worth
+                  (below the path's start: its first year's slope extended back;
+                   above its end: "at least" the horizon, open)
+e.g. path 100k, 130k, 160k, 190k from 2026.0; mid-2026 with 170k: expected 115k,
+     gap +55k, t* = 2028 + 10/30 = 2028.33 → 1.83 → 2 years ahead
+```
+
+The Results chart draws the frozen path as the dashed "Plan of <date>" line. While
+the plan is a version saved before v8.20 (no path), the old behaviour below is kept and
+labelled "re-calculated with today's settings".
+
+**Before v8.20 (fallback):** shown when you have past net-worth snapshots. It is **position-based**: the plan
 curve (your history re-projected with plan assumptions) is scanned for the first
 year it expected you to reach **today's actual net worth**:
 

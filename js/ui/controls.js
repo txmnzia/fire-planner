@@ -1,11 +1,12 @@
-import { el, numVal } from "../util.js?v=8.19.1";
-import { state, features } from "../state.js?v=8.19.1";
-import { getScenarioName } from "../inputs.js?v=8.19.1";
-import { recalc } from "../recalc.js?v=8.19.1";
-import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js?v=8.19.1";
-import { renderTable } from "./table.js?v=8.19.1";
-import { renderSummaryTiles } from "./cards.js?v=8.19.1";
-import { resizeMcCharts } from "./mcTab.js?v=8.19.1";
+import { activePlan } from "./planLine.js?v=8.20";
+import { el, numVal } from "../util.js?v=8.20";
+import { state, features } from "../state.js?v=8.20";
+import { getScenarioName } from "../inputs.js?v=8.20";
+import { recalc } from "../recalc.js?v=8.20";
+import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js?v=8.20";
+import { renderTable } from "./table.js?v=8.20";
+import { renderSummaryTiles } from "./cards.js?v=8.20";
+import { resizeMcCharts } from "./mcTab.js?v=8.20";
 
 // ── TAB SWITCHING ──────────────────────────────────────────────────────────
 export function switchTab(name) {
@@ -97,10 +98,12 @@ export function updateLabels() {
   // Plan-vs-actual legend entries — shown only when past history exists
   const baseYr=numVal('baseYear',2026);
   const showAct = state.nwHistory.length>0 && state.nwHistory.some(r=>r.val>0) && Math.min(...state.nwHistory.map(r=>r.year))<baseYr;
+  // v8.20: a frozen plan (a saved version) shows the plan line even without past snapshots
+  const plan = activePlan();
   // the solid line is your actuals → projection; label it "Actuals" once history exists
   if(lbl) lbl.textContent = showAct ? 'Actuals' : name;
   const lp=el('legPlan'), lpd=el('legPlanDash');
-  if(lp) lp.style.display=showAct?'':'none';
+  if(lp) { lp.style.display=(showAct||plan)?'':'none'; const t=lp.querySelector('span'); if(t) t.textContent = plan ? 'Plan of '+new Date(plan.ts).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : 'Plan'; }
   if(lpd) lpd.style.borderColor=cv;
   // FIRE Target line is always shown now (including SWR mode)
   const fireLegItem=dash?dash.closest('.leg-item'):null;

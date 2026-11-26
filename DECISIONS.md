@@ -5,6 +5,19 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.20 Plan vs actual against a frozen plan
+
+- **The plan is frozen when saved** (spec reviewed by the owner): every saved version
+  keeps each scenario's expected net-worth path; "vs plan" and the dashed plan line
+  compare today with that path, so changing an assumption no longer moves the plan.
+- **Which version is the plan:** the one picked with "Use as plan" in the log, else the
+  latest year-end close (each year measured against the plan of 1 January), else the
+  latest save. Paths kept for **every** version (owner's choice; about 2 KB each).
+- The card adds the € gap ("+€23k") next to years ahead/behind. Mid-year, the plan is
+  read between its yearly points from the save date. Scenarios are matched by column.
+- Versions saved before v8.20 have no path: while one is the plan, the old
+  re-calculation is used and labelled so.
+
 ## 2026-11-24 · v8.19.1 The stricter FIRE number in % mode
 
 - **When your cost rises later, the FIRE number includes it** (owner's decision; the

@@ -8,6 +8,7 @@ export const state = {
   nwHistory: [],   // [{year,val,income,spend}] manual net-worth snapshots for plan-vs-actual
   windfalls: [],
   payChanges: [],
+  planId: null,       // v8.20: the saved version used as "the plan" (null = default pick)
   pensionsMore: [],   // [{country, amt (gross), age, ded}] pensions from other countries (v8.19)
   rentMoves: [],   // [{from, rent}] planned rent changes (v8.11)
   residence: [],   // [{from, country, tax, col}] planned moves abroad (v8.11)  // [{name,from,to,amt,on}] pay changes as plans (v8.6, js/payChanges.js)   // [{yr,amt,off}] one-off future windfalls; off = scenario ids it is switched off for (v8.4)

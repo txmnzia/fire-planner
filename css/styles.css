@@ -574,6 +574,7 @@ button.wd-pill{font:inherit;font-size:12px;}
 .up-actions{gap:8px;}
 .up-actions input{min-width:0;flex:1 1 160px;height:36px;}
 .impact-toggle{display:none;}
+.plan-tag{font-size:10.5px;font-weight:600;color:var(--s1c);border:1px solid currentColor;border-radius:4px;padding:0 5px;margin-left:4px;}
 
 @media(max-width:1359px){
   .chg{grid-template-columns:minmax(0,1fr);padding-bottom:120px;}
