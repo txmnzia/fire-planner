@@ -140,7 +140,8 @@ the inputs on screen (T5). Fallback when no module worker: the same function on 
 page, one scenario per task. `cfg.recenter` is hard-wired `true`. Scenarios with a
 blocking missing input are not run ("—"). Consumers: `mcBandsFor(i)` → the range on
 the Portfolio Projection chart, `mcHeadlineHTML(i)` → the tile line, `scr{n}_chance`
-→ the Scenarios grid row, How sure tiles, Risk detail (histogram; SWR coverage fan).
+→ the Scenarios grid row, How sure tiles + distribution tile (histogram; the SWR
+coverage fan was removed in v8.31).
 If you add a code path that changes inputs without going through `recalc()`, it must
 call `markMcStale()` and `scheduleMcRun()` too.
 

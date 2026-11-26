@@ -1,15 +1,15 @@
-import { el, fmt, fmtK } from "../util.js?v=8.30";
-import { state } from "../state.js?v=8.30";
-import { getScenarioName } from "../inputs.js?v=8.30";
-import { runMonteCarloOrdered, mcPct } from "../montecarlo.js?v=8.30";
-import { COLORS, COLORS_FADE, ALPHAS, GC, FIRE_LINE, buildChart } from "./charts.js?v=8.30";
+import { el, fmtK } from "../util.js?v=8.31";
+import { state } from "../state.js?v=8.31";
+import { getScenarioName } from "../inputs.js?v=8.31";
+import { runMonteCarloOrdered, mcPct } from "../montecarlo.js?v=8.31";
+import { COLORS, GC, buildChart } from "./charts.js?v=8.31";
 
 // Monte Carlo on the Results tab (v8.30, issue #21). No Run button: every
 // recalc() marks the results stale and schedules a run in a module worker
 // (js/mcWorker.js); the newest inputs always win and the scenario on screen is
 // computed first. Results are module-private, keyed by the generation of inputs
 // they were computed for, so stale output is always shown dimmed (AUDIT.md T5).
-let mcFanChart = null, mcHistChart = null;
+let mcHistChart = null;
 let gen = 0;                        // generation of the inputs on screen (bumped by markMcStale)
 let results = [null,null,null,null,null];   // per scenario: { gen, r } or null
 let mcGl = null;                    // gl of the newest finished result (labels: lifeExp, wdMode)
@@ -62,7 +62,7 @@ function startRun(){
   if (useWorker && typeof Worker !== 'undefined') {
     try {
       if (worker) worker.terminate();                   // latest wins: drop the older run
-      worker = new Worker(new URL("../mcWorker.js?v=8.30", import.meta.url), { type: 'module' });
+      worker = new Worker(new URL("../mcWorker.js?v=8.31", import.meta.url), { type: 'module' });
       worker.onmessage = e => {
         const m = e.data; if (m.gen !== gen) return;
         if (m.error) { console.error('Monte Carlo worker:', m.error); fallback(); return; }
@@ -103,7 +103,7 @@ function runOnPage(myGen, scenarios, gl, cfg, order, accept){
 }
 
 function decorate(r, i, fireTarget){
-  r.name=getScenarioName(i); r.color=COLORS[i]; r.fade=COLORS_FADE[i]; r.alpha=ALPHAS[i];
+  r.name=getScenarioName(i); r.color=COLORS[i];
   // Reference FIRE target from the deterministic projection, the number the
   // rest of Results shows (priced at the tracked gain fraction at retirement).
   r.fireTarget=fireTarget;
@@ -173,44 +173,32 @@ function paintStatus(){
   st.classList.toggle('busy', !allFresh);
 }
 
-// The "How sure" tiles and the Risk detail for the active scenario. Also called
-// by setActiveScenario (tile tap, carousel or chart swipe).
+// The "How sure" tiles and the distribution tile for the active scenario. Also
+// called by setActiveScenario (tile tap, carousel or chart swipe). v8.31: the
+// distribution is a tile here (no collapsed Risk detail, no SWR coverage fan: the
+// chart above and these tiles already carry the range).
 export function paintMcActive(){
   const i = state.activeScIdx, x = results[i];
-  const wrap = el('mcSure'), tiles = el('mcTiles'), title = el('mcSureTitle');
+  const wrap = el('mcSure'), tiles = el('mcTiles'), title = el('mcSureTitle'), hist = el('mcHistTile');
   if (title) title.textContent = 'How sure \u2014 ' + getScenarioName(i);
   if (!wrap || !tiles) return;
-  if (missing[i]) { tiles.innerHTML = '<div class="mc-empty">Missing inputs: no market range for this scenario.</div>'; wrap.classList.remove('stale'); return; }
-  if (!x) { tiles.innerHTML = '<div class="mc-empty">Working out the range over thousands of market histories\u2026</div>'; return; }
+  const showHist = on => { if (hist) hist.hidden = !on; };
+  if (missing[i]) { tiles.innerHTML = '<div class="mc-empty">Missing inputs: no market range for this scenario.</div>'; wrap.classList.remove('stale'); showHist(false); return; }
+  if (!x) { tiles.innerHTML = '<div class="mc-empty">Working out the range over thousands of market histories\u2026</div>'; showHist(false); return; }
   wrap.classList.toggle('stale', x.gen !== gen);
   renderMcDetail(x.r, mcGl);
-  const risk = el('mcRisk');
-  if (risk) risk.classList.toggle('stale', x.gen !== gen);
   renderMcNote(mcGl);
-  if (risk && risk.open) buildRiskCharts();
+  showHist(true);
+  buildMcHistChart(x.r, mcGl.wdMode === 'swr');
 }
 
-// The Risk detail charts live in a collapsed <details>: build them when it opens
-// (a closed panel has zero size).
-export function initMc(){
-  const risk = el('mcRisk');
-  if (risk) risk.addEventListener('toggle', () => { if (risk.open) buildRiskCharts(); });
-}
-function buildRiskCharts(){
-  const x = results[state.activeScIdx]; if (!x || !mcGl) return;
-  const swr = mcGl.wdMode === 'swr';
-  const fanCard = el('mcFanCard'); if (fanCard) fanCard.hidden = !swr;
-  if (swr) buildMcFanChart(x.r, true);
-  buildMcHistChart(x.r, swr);
-}
-
+// What the numbers mean in this mode, behind the (i) of the How sure header.
 function renderMcNote(gl){
-  const note=el('mcModeNote'); if (!note || !gl) return;
-  const swr=gl.wdMode==='swr';
-  note.innerHTML=(swr
-    ? '<strong>% of portfolio mode:</strong> up to SWR% of the current portfolio funds each year\u2019s budget (surpluses stay invested), so the portfolio can\u2019t hit zero and a survival rate would be ~100% by construction. What matters is <strong>budget adequacy</strong>: how often, and by how much, the draw (plus pensions and partner income) falls short of your full yearly budget. Switch to Fixed amount for a classic survival rate.<br><br>'
-    : '')
-    +'<strong>With your partner:</strong> the range is <em>your</em> portfolio covering <em>your</em> cost: your own spending plus your part of the shared costs.';
+  const b = el('mcSureInfo'); if (!b || !gl) return;
+  b.dataset.tip = (gl.wdMode === 'swr'
+    ? '% of portfolio mode: up to SWR% of the current portfolio funds each year\u2019s budget (surpluses stay invested), so the portfolio can\u2019t hit zero and a survival rate would be ~100% by construction. These tiles measure budget adequacy instead: how often, and by how much, the draw (plus pensions and partner income) falls short of your full yearly budget. Switch to Fixed amount for a classic survival rate. '
+    : 'Fixed amount mode: the share of histories where the money lasts to your life expectancy, and how the histories end in today\u2019s money. ')
+    + 'With your partner, the range is your portfolio covering your cost: your own spending plus your part of the shared costs.';
 }
 
 function mcTile(lbl,valHtml,note,muted){
@@ -238,45 +226,12 @@ function renderMcDetail(r, gl){
     t.push(mcTile('Ends \u2264 \u00bd stop value',Math.round(r.smallEndPct*100)+'%','in today\u2019s \u20ac'));
   }
   el('mcTiles').innerHTML=t.join('');
-  if (el('mcFanTitle')) el('mcFanTitle').textContent='Budget Coverage Over Retirement \u2014 '+r.name;
-  if (el('mcHistTitle')) el('mcHistTitle').innerHTML = swr
-    ? 'Distribution of Budget Coverage <span style="color:var(--muted);font-weight:400">(share of lifetime budget funded per history)</span>'
-    : 'Distribution of Ending Net Worth \u2014 '+r.name+' <span style="color:var(--muted);font-weight:400">(today\u2019s \u20ac)</span>';
+  // Tile label style (uppercase, muted): the scenario is already in the header.
+  if (el('mcHistTitle')) el('mcHistTitle').textContent = swr
+    ? 'Lifetime budget funded, per history'
+    : 'Ending net worth, per history (today\u2019s \u20ac)';
 }
 
-const MC_Y_TICK=v=>v>=1e6?"€"+(v/1e6).toFixed(1)+"M":v>=1e3?"€"+(v/1e3).toFixed(0)+"k":"€"+Math.round(v);
-const MC_PCT_TICK=v=>Math.round(v*100)+"%";
-
-// Fan chart. In SWR mode it plots the funding ratio (income ÷ budget) over the
-// retirement years with a reference line at 100%; otherwise net worth over time
-// with the FIRE target line.
-function buildMcFanChart(r, swr){
-  if (typeof Chart === "undefined") return;   // Chart.js CDN unavailable — keep calculations & saving alive
-
-  const ctx=el('mcFanChart').getContext('2d');
-  const labels = swr ? r.ratioYears : r.years;
-  const bands  = swr ? r.ratioBands : r.bands;
-  const refData= swr ? labels.map(()=>1) : labels.map(()=>r.fireTarget);
-  const refLbl = swr ? 'Budget (100%)' : 'FIRE Target';
-  const band18 = r.fade.replace('.5)','.2)');   // darker inner-band fill from the fade colour
-  const mk=(data,opt)=>Object.assign({data,pointRadius:0,pointHoverRadius:0,borderWidth:0,tension:.3,fill:false},opt);
-  const ds=[
-    mk(bands.p10,{label:'10th pct',borderColor:'transparent'}),
-    mk(bands.p90,{label:'90th pct',borderColor:'transparent',backgroundColor:r.alpha,fill:'-1'}),
-    mk(bands.p25,{label:'p25',borderColor:'transparent'}),
-    mk(bands.p75,{label:'p75',borderColor:'transparent',backgroundColor:band18,fill:'-1'}),
-    mk(bands.p50,{label:'Median',borderColor:r.color,borderWidth:2.5}),
-    mk(refData,{label:refLbl,borderColor:FIRE_LINE,borderWidth:1.5,borderDash:[5,5]}),
-  ];
-  const shown=new Set(['10th pct','Median','90th pct',refLbl]);
-  const valFmt = swr ? (v=>Math.round(v*100)+"%") : (v=>"€"+fmt(v));
-  if(mcFanChart) mcFanChart.destroy();
-  mcFanChart=new Chart(ctx,{type:'line',data:{labels,datasets:ds},options:{
-    responsive:true,maintainAspectRatio:false,animation:{duration:250},interaction:{mode:'index',intersect:false},
-    plugins:{legend:{display:false},tooltip:{backgroundColor:"#0b0e17",borderColor:"#1a2236",borderWidth:1,titleColor:"#7e8faa",bodyColor:"#dde4f2",titleFont:{family:"'DM Sans'",size:11},bodyFont:{family:"'DM Mono'",size:11},padding:10,filter:i=>shown.has(i.dataset.label),callbacks:{title:items=>items[0].label,label:c=>" "+c.dataset.label+": "+valFmt(c.raw)}}},
-    scales:{x:{grid:{color:GC.g},ticks:{color:GC.t,font:GC.f,maxTicksLimit:12},border:{color:"rgba(255,255,255,.05)"}},y:{min:0,grid:{color:GC.g},border:{color:"rgba(255,255,255,.05)"},ticks:{color:GC.t,font:GC.f,callback: swr?MC_PCT_TICK:MC_Y_TICK}}}
-  }});
-}
 
 // Histogram. SWR: distribution of each sim's average budget coverage (funding
 // ratio), with the 100% line marked. Otherwise: distribution of ending net worth.
@@ -318,6 +273,5 @@ function buildMcHistChart(r, swr){
 }
 
 export function resizeMcCharts() {
-  if (mcFanChart) mcFanChart.resize();
   if (mcHistChart) mcHistChart.resize();
 }

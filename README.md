@@ -1310,8 +1310,8 @@ These deliberately separate **how often** you fall short from **how far**: a pla
 
 - **Portfolio Projection** — the solid line stays the deterministic plan (your own return assumptions, the same numbers as the tiles and the year-by-year table). Around it, the active scenario's Monte Carlo range of the same net-worth series: 25–75th percentile (darker) and 10–90th (light). The top of the light band is capped at 110% of the highest of the plan, the target and the 75th percentile so lucky late-life histories don't flatten the plan; the tooltip shows the exact ranges. The MC median is not drawn (it would disagree slightly with the table below).
 - **Scenario tiles and the Scenarios grid** — one headline per scenario: *Chance it lasts to {life expectancy}* (Fixed) or *Years on budget* (SWR), green ≥ 90%, amber 75–90%, red < 75%.
-- **How sure** — the four metric tiles above for the active scenario.
-- **Risk detail** (collapsed) — the distribution histogram (Fixed: real ending net worth, depleted paths highlighted; SWR: each simulation's lifetime budget coverage) and, in SWR mode, the budget-coverage fan chart over the retirement years with a 100% line.
+- **How sure** — the four metric tiles above for the active scenario, plus the distribution tile below.
+- **Distribution tile** (inside How sure, v8.31) — Fixed: real ending net worth per history (the lowest bucket in red); SWR: each history's lifetime budget coverage, coloured green / amber / red around the 100% line. The (i) next to *How sure* explains what the numbers mean in the current mode. The SWR budget-coverage fan chart was removed in v8.31 as redundant with the range on the projection chart and the tiles.
 
 Up to the stop age the MC median follows the plan line closely (recentering); after it the range opens up fast, because withdrawals turn bad early-retirement years into lasting damage (sequence-of-returns risk). That is why the chance it lasts can be well below 100% at the stop age the deterministic plan calls funded (confidence-based stop ages: issue #22).
 

@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.30">
+<link rel="stylesheet" href="css/styles.css?v=8.31">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.30</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.31</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -429,8 +429,12 @@
        (your own return assumptions); the shaded range and these tiles come from
        thousands of market histories, run in the background on every change. -->
   <div class="mc-sure" id="mcSure">
-    <div class="mc-sure-hd"><span id="mcSureTitle">How sure</span><span class="note">over thousands of market histories</span></div>
+    <div class="mc-sure-hd"><span id="mcSureTitle">How sure</span><button type="button" class="info-btn" id="mcSureInfo" title="What these numbers mean in your withdrawal mode." aria-label="About: How sure">&#x24D8;</button><span class="note">over thousands of market histories</span></div>
     <div class="mc-tiles" id="mcTiles"></div>
+    <div class="mc-tile mc-hist" id="mcHistTile" hidden>
+      <div class="mc-tile-lbl" id="mcHistTitle">Distribution of ending net worth</div>
+      <div style="position:relative;height:150px"><canvas id="mcHistChart"></canvas></div>
+    </div>
   </div>
 
   <div class="chart-card">
@@ -439,30 +443,6 @@
     </div>
     <div class="alloc-canvas-wrap" style="position:relative;height:260px"><canvas id="allocChart"></canvas></div>
   </div>
-
-  <details class="mc-risk" id="mcRisk">
-    <summary>Risk detail <span class="note">how the histories end, and how deep a bad one goes</span></summary>
-    <div class="mc-risk-body">
-      <div class="mc-modenote" id="mcModeNote"></div>
-      <div class="chart-card" id="mcFanCard" hidden>
-        <div class="chart-top">
-          <div class="chart-title" id="mcFanTitle">Budget Coverage Over Retirement</div>
-          <div class="chart-legend">
-            <div class="leg-item"><div class="leg-dot" style="background:var(--s4c)"></div><span>Median</span></div>
-            <div class="leg-item"><div class="leg-dot" style="background:var(--s4a);border:1px solid var(--s4c)"></div><span>10th&#x2013;90th pct</span></div>
-            <div class="leg-item"><div class="leg-line" style="border-color:var(--sec)"></div><span id="mcFanRefLabel">Budget (100%)</span></div>
-          </div>
-        </div>
-        <div style="position:relative;height:220px"><canvas id="mcFanChart"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-top">
-          <div class="chart-title" id="mcHistTitle">Distribution of Ending Net Worth</div>
-        </div>
-        <div style="position:relative;height:160px"><canvas id="mcHistChart"></canvas></div>
-      </div>
-    </div>
-  </details>
 
   <div class="tbl-card">
     <div class="tbl-hdr" role="button" tabindex="0" onclick="toggleTable()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTable();}" aria-expanded="true" aria-controls="tblWrap" id="tblToggle">
@@ -541,6 +521,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.30"></script>
+<script type="module" src="js/main.js?v=8.31"></script>
 </body>
 </html>

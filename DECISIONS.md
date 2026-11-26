@@ -5,6 +5,15 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.31 Distribution moves into How sure; coverage fan removed
+
+- **The distribution histogram is a tile inside How sure** (ending net worth in fixed
+  mode, lifetime budget coverage in % mode), always visible. The collapsed Risk detail
+  is gone; its mode note is the (i) next to *How sure*.
+- **The SWR "Budget Coverage Over Retirement" fan chart is removed:** redundant with
+  the range on the projection chart and the four tiles. *Accepted loss:* there is no
+  longer a year-by-year view of when coverage is tightest.
+
 ## 2026-11-26 · v8.30 Monte Carlo merged into Results (#21, built)
 
 - Built as specified below. Two details settled while building:

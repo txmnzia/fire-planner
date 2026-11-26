@@ -1,20 +1,19 @@
-import { el } from "./util.js?v=8.30";
-import { initInfoTips } from "./ui/infoTips.js?v=8.30";
-import { state } from "./state.js?v=8.30";
-import { recalc } from "./recalc.js?v=8.30";
+import { el } from "./util.js?v=8.31";
+import { initInfoTips } from "./ui/infoTips.js?v=8.31";
+import { state } from "./state.js?v=8.31";
+import { recalc } from "./recalc.js?v=8.31";
 import { loadState, initSync, scheduleSave, connectSync, disconnectSync,
-         openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js?v=8.30";
+         openSyncModal, closeSyncModal, syncNow, withoutSave } from "./sync.js?v=8.31";
 import { switchTab, toggleFeature, updateToggleUI, scrollToScenario, updateScNav,
-         updateAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js?v=8.30";
-import { handleCSV } from "./ui/ibkr.js?v=8.30";
-import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js?v=8.30";
-import { initSituation, resetAssumptions } from "./ui/situation.js?v=8.30";
-import { initSpendTracking } from "./ui/spending.js?v=8.30";
-import { initUpdatePanel } from "./ui/versions.js?v=8.30";
-import { initTiles } from "./ui/tiles.js?v=8.30";
-import { downloadCSV } from "./ui/table.js?v=8.30";
-import { initMc } from "./ui/mcTab.js?v=8.30";
-import { selectExplanationScenario } from "./ui/explanation.js?v=8.30";
+         updateAge, toggleTable, onWdMode, setActiveScenario } from "./ui/controls.js?v=8.31";
+import { handleCSV } from "./ui/ibkr.js?v=8.31";
+import { addNwRow, updateNwRow, removeNwRow } from "./ui/nwHistory.js?v=8.31";
+import { initSituation, resetAssumptions } from "./ui/situation.js?v=8.31";
+import { initSpendTracking } from "./ui/spending.js?v=8.31";
+import { initUpdatePanel } from "./ui/versions.js?v=8.31";
+import { initTiles } from "./ui/tiles.js?v=8.31";
+import { downloadCSV } from "./ui/table.js?v=8.31";
+import { selectExplanationScenario } from "./ui/explanation.js?v=8.31";
 
 // The HTML uses inline on* attributes (and render functions emit them too), so
 // every function they reference must exist as a global.
@@ -38,7 +37,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initSpendTracking();
   initUpdatePanel();
   initTiles();
-  initMc();   // v8.30: Risk detail charts build when the panel opens
 
   // Load state first — before updateAge/onWdMode which trigger recalc/scheduleSave
   // and would write empty defaults to localStorage before we get a chance to restore

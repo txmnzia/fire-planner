@@ -1,15 +1,15 @@
 // Housing moves and where you live (v8.11). Two dynamic lists on My Situation:
 // planned rents (state.rentMoves) and planned moves abroad (state.residence),
 // plus the rent-today edit that keeps the joint transfers consistent.
-import { el, eur } from "../util.js?v=8.30";
-import { state, features } from "../state.js?v=8.30";
-import { recalc } from "../recalc.js?v=8.30";
-import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.30";
-import { NEW_PLAN_OFF } from "./plans.js?v=8.30";
-import { COUNTRY_TAX, COUNTRY_NAMES } from "../taxTable.js?v=8.30";
-import { countryNote, rentMoveNoEffect } from "../countries.js?v=8.30";
-import { mortgageSchedule, purchaseCostFor, mortgageBalanceAt, mortgagePaymentAt, homeEquityAt, priceAtBuy } from "../engine.js?v=8.30";
-import { undoOwner } from "./versions.js?v=8.30";
+import { el, eur } from "../util.js?v=8.31";
+import { state, features } from "../state.js?v=8.31";
+import { recalc } from "../recalc.js?v=8.31";
+import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.31";
+import { NEW_PLAN_OFF } from "./plans.js?v=8.31";
+import { COUNTRY_TAX, COUNTRY_NAMES } from "../taxTable.js?v=8.31";
+import { countryNote, rentMoveNoEffect } from "../countries.js?v=8.31";
+import { mortgageSchedule, purchaseCostFor, mortgageBalanceAt, mortgagePaymentAt, homeEquityAt, priceAtBuy } from "../engine.js?v=8.31";
+import { undoOwner } from "./versions.js?v=8.31";
 
 const YNOW = new Date().getFullYear();
 const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';

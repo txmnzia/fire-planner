@@ -37,7 +37,7 @@ actual click in the browser, not just page load.
   (`features[s].partner|prop|child`, s = 1..5); toggled via `toggleFeature` in
   `js/ui/controls.js`, mirrored to the DOM by `updateToggleUI`.
 - Chart.js instances stay **module-private** (`let chart, allocChart` in
-  `js/ui/charts.js`; `let mcFanChart, mcHistChart` in `js/ui/mcTab.js`). Other modules
+  `js/ui/charts.js`; `let mcHistChart` in `js/ui/mcTab.js`). Other modules
   never touch them directly — they call the exported `resizeResultsCharts()` /
   `resizeMcCharts()`. Monte Carlo results (`results`, `gen`, `mcGl`, the worker) are
   likewise module-private to `js/ui/mcTab.js`. Do not move any of these onto `state`.
@@ -111,8 +111,7 @@ the `financial-invariants` skill before touching it.
   both (CSS drives cards/tiles/dots, JS drives canvases).
 - Tab switching hides panels with `display:none`, so charts on a hidden tab have zero
   size. `switchTab` in `js/ui/controls.js` calls `resizeResultsCharts()` and
-  `resizeMcCharts()` 50 ms after activating Results. The Risk detail charts sit in a
-  closed `<details>` and are built on its `toggle` event (`initMc`). A new chart on a new tab
+  `resizeMcCharts()` 50 ms after activating Results. A new chart on a new tab
   needs the same resize hook.
 - Custom drawing (retirement labels, reference lines) is done with inline Chart.js
   plugins (`makeRetPlugin`, `retPl`, `refPlugin`) passed via the `plugins:[…]` array.

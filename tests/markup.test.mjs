@@ -90,8 +90,11 @@ test('every tab uses the automatic stop ages (recalc and Monte Carlo)', () => {
 test('v8.30 (#21): Monte Carlo lives on Results, runs by itself, settings in Assumptions', () => {
   assert.equal(count('tab-panel-montecarlo'), 0, 'no Monte Carlo tab');
   assert.ok(!/data-tab="montecarlo"/.test(html));
-  for (const id of ['mcRunBtn', 'mcRecenter', 'mcCards']) assert.equal(count(id), 0, id + ' removed');
-  for (const id of ['mcStatus', 'mcSure', 'mcTiles', 'mcRisk', 'mcHistChart', 'mcFanChart', 'legBands', 'scgMcLbl'])
+  for (const id of ['mcRunBtn', 'mcRecenter', 'mcCards', 'mcRisk', 'mcFanChart', 'mcModeNote']) assert.equal(count(id), 0, id + ' removed');
+  // v8.31: the distribution is a tile inside How sure
+  const sure = html.slice(html.indexOf('id="mcSure"'), html.indexOf('Revenue &amp; Costs'));
+  assert.ok(sure.includes('id="mcHistChart"'), 'histogram inside How sure');
+  for (const id of ['mcStatus', 'mcSure', 'mcTiles', 'mcHistTile', 'mcHistChart', 'mcSureInfo', 'legBands', 'scgMcLbl'])
     assert.equal(count(id), 1, id);
   for (let n = 1; n <= 5; n++) assert.equal(count('scr' + n + '_chance'), 1, 'scr' + n + '_chance');
   // settings sit in the Assumptions tile and rerun through recalc

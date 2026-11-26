@@ -72,8 +72,8 @@ js/
     mcTab.js            Monte Carlo on the Results tab (v8.30): background runs
                         (markMcStale → scheduleMcRun → worker, latest wins, results
                         keyed by input generation), mcBandsFor (chart range),
-                        mcHeadlineHTML (tile line), the grid row, How sure tiles,
-                        Risk detail charts.
+                        mcHeadlineHTML (tile line), the grid row, How sure tiles
+                        and the distribution tile (histogram).
     explanation.js      Explanation tab: scenario-tailored story — lede + stat tiles,
                         visual phase timeline, per-phase chapter cards (today's-€
                         lifestyle meters, funding-mix bars, life-event list), and
