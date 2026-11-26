@@ -73,6 +73,7 @@ js/
                         with a feature off quantify life-event impacts).
     infoTips.js         Tap/click/hover bubbles for every (i) button (text from its
                         title); placeTip() is the pure, tested placement.
+    defaults.js         Empty fields show the value they use (v8.28.1).
     pensions.js         Pensions from other countries ("+ Add a country", v8.19) and
                         the net read-out rows; the net rule itself is js/pensions.js.
     planLine.js         The plan line and "vs plan" for a scenario (v8.20): frozen

@@ -5,6 +5,13 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.28.1 Empty fields show the value they use
+
+- **Transparency rule:** a field that falls back to a preset or another field shows
+  that value in grey (tax on gains, health insurance, child benefit, buying costs,
+  fixed-rate years, rate after, charges, gross pay), never "preset" or "estimate".
+  Values that depend on the country list each country of the plan in order ("259 → 0").
+
 ## 2026-11-26 · v8.28 Child benefit and Germany's yearly fund tax
 
 - **Child benefit lowers the child cost** (Germany Kindergeld, France none for a first

@@ -110,3 +110,13 @@ test('markup: no tab panel is locked against scrolling (v8.6.3)', () => {
   const locked = [...css.matchAll(/#tab-panel-[\w-]+\{[^}]*overflow(-y)?:hidden/g)].map(m => m[0]);
   assert.deepEqual(locked, [], 'a growing panel must scroll: ' + locked.join(' | '));
 });
+
+test('v8.28.1 transparency: no empty field says "preset"/"estimate"/"same"/"all"; each fallback is shown as a value', async () => {
+  const { readFileSync } = await import('node:fs');
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.doesNotMatch(html, /placeholder="(preset|estimate|optional|same|all)"/);
+  const def = readFileSync(new URL('../js/ui/defaults.js', import.meta.url), 'utf8');
+  for (const id of ['taxNow', 'healthAfterStop_disp', 'childBenefit_disp', 'propTxCostPct', 'propFixedYears', 'propRateAfter', 'propCharges_disp', 'grossNow_disp'])
+    assert.match(def, new RegExp("ph\\('" + id + "'"), id);
+  assert.match(readFileSync(new URL('../js/recalc.js', import.meta.url), 'utf8'), /renderDefaults\(gl\)/);
+});

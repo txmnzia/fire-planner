@@ -1,21 +1,22 @@
-import { el, eur, numVal } from "./util.js?v=8.28";
-import { state } from "./state.js?v=8.28";
-import { getGlobals, getScenario } from "./inputs.js?v=8.28";
-import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.28";
-import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.28";
-import { renderTable } from "./ui/table.js?v=8.28";
-import { renderExplanation } from "./ui/explanation.js?v=8.28";
-import { updateLabels } from "./ui/controls.js?v=8.28";
-import { markMcStale } from "./ui/mcTab.js?v=8.28";
-import { scheduleSave } from "./sync.js?v=8.28";
-import { renderIssues } from "./ui/issues.js?v=8.28";
-import { renderPlans } from "./ui/plans.js?v=8.28";
-import { renderSpendReadout } from "./ui/spending.js?v=8.28";
-import { renderAssumptions } from "./ui/situation.js?v=8.28";
-import { renderCheckin } from "./ui/ibkr.js?v=8.28";
-import { renderResNotes, renderPropReadout } from "./ui/housing.js?v=8.28";
-import { renderUpdatePanel } from "./ui/versions.js?v=8.28";
-import { renderTiles } from "./ui/tiles.js?v=8.28";
+import { el, eur, numVal } from "./util.js?v=8.28.1";
+import { state } from "./state.js?v=8.28.1";
+import { getGlobals, getScenario } from "./inputs.js?v=8.28.1";
+import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.28.1";
+import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.28.1";
+import { renderTable } from "./ui/table.js?v=8.28.1";
+import { renderExplanation } from "./ui/explanation.js?v=8.28.1";
+import { updateLabels } from "./ui/controls.js?v=8.28.1";
+import { markMcStale } from "./ui/mcTab.js?v=8.28.1";
+import { scheduleSave } from "./sync.js?v=8.28.1";
+import { renderIssues } from "./ui/issues.js?v=8.28.1";
+import { renderPlans } from "./ui/plans.js?v=8.28.1";
+import { renderSpendReadout } from "./ui/spending.js?v=8.28.1";
+import { renderAssumptions } from "./ui/situation.js?v=8.28.1";
+import { renderCheckin } from "./ui/ibkr.js?v=8.28.1";
+import { renderResNotes, renderPropReadout } from "./ui/housing.js?v=8.28.1";
+import { renderUpdatePanel } from "./ui/versions.js?v=8.28.1";
+import { renderTiles } from "./ui/tiles.js?v=8.28.1";
+import { renderDefaults } from "./ui/defaults.js?v=8.28.1";
 
 // ── RECALC ──────────────────────────────────────────────────────────────────
 export function recalc() {
@@ -25,6 +26,7 @@ export function recalc() {
   el("totalPill").textContent=eur(port);
   el("calcTime").textContent=new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
   renderSpendReadout(gl);
+  renderDefaults(gl);   // v8.28.1: empty fields show the value they use
   renderAssumptions();
   renderCheckin();
   renderResNotes();

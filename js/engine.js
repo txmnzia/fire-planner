@@ -1,5 +1,5 @@
-import { healthPresetMonthly } from "./health.js?v=8.28";
-import { accrualGrossMonthly, pensionNet } from "./pensions.js?v=8.28";
+import { healthPresetMonthly } from "./health.js?v=8.28.1";
+import { accrualGrossMonthly, pensionNet } from "./pensions.js?v=8.28.1";
 // ── MATH ───────────────────────────────────────────────────────────────────
 export function portReturnAt(gl, age, retAge) {
   const sNow=gl.stockAlloc, sRet=1-gl.bondAllocRet;
