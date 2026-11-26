@@ -2,11 +2,11 @@
 // France. Each row: country, amount as printed (gross), start age, and the share
 // taken off at payout (health and social charges; income tax is not deducted).
 // Germany and France have presets; any other country starts at 0% until typed.
-import { el, eur } from "../util.js?v=8.27";
-import { state } from "../state.js?v=8.27";
-import { recalc } from "../recalc.js?v=8.27";
-import { fmtMoney, cleanMoney } from "./situation.js?v=8.27";
-import { PENSION_COUNTRIES, pensionNet } from "../pensions.js?v=8.27";
+import { el, eur } from "../util.js?v=8.28";
+import { state } from "../state.js?v=8.28";
+import { recalc } from "../recalc.js?v=8.28";
+import { fmtMoney, cleanMoney } from "./situation.js?v=8.28";
+import { PENSION_COUNTRIES, pensionNet } from "../pensions.js?v=8.28";
 
 const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
 // Countries offered: the country list of "Where you live", without Germany and France

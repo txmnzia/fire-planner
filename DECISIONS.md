@@ -5,6 +5,16 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.28 Child benefit and Germany's yearly fund tax
+
+- **Child benefit lowers the child cost** (Germany Kindergeld, France none for a first
+  child), by the country you live in each year, while the cost runs and at most until
+  25; a typed amount wins. *Rejected:* the German tax allowance instead (worth a little
+  more at high incomes; left out, conservative).
+- **Germany's yearly fund tax (Vorabpauschale) is modelled** in every German year: paid
+  from the portfolio, credited to the cost basis. The 2026 Basiszins is kept for later
+  years.
+
 ## 2026-11-26 · v8.27 Gross pay for pension rights; planned pay typed gross
 
 - **Today: both.** Take-home stays what you live on; gross pay is added only to count

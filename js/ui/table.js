@@ -1,5 +1,5 @@
-import { el, fmtK } from "../util.js?v=8.27";
-import { state } from "../state.js?v=8.27";
+import { el, fmtK } from "../util.js?v=8.28";
+import { state } from "../state.js?v=8.28";
 
 // ── TABLE ──────────────────────────────────────────────────────────────────
 export function renderTable(projs,gl) {
@@ -40,6 +40,8 @@ export function renderTable(projs,gl) {
   );
   // % mode: the reserve for costs that end, not drawn on (v8.24)
   if (rows.some(r => r.setAside > 0)) ROWS.push(['Reserved (costs that end)', (r,i)=>money(r.setAside>0?r.setAside:null,'','')]);
+  // v8.28: German yearly fund tax (Vorabpauschale), paid from the portfolio
+  if (rows.some(r => r.vorabTax > 0)) ROWS.push(['German yearly fund tax', (r,i)=>money(r.vorabTax>0?r.vorabTax:null,'neg','-')]);
   let body='';
   ROWS.forEach(([label,fn])=>{
     body+='<tr><td class="tbl-lbl">'+label+'</td>';

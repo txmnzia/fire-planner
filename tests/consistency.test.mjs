@@ -15,7 +15,7 @@ const CASES = goldenCases();
 const near = (a, b, tol, msg) => assert.ok(Math.abs(a - b) <= tol, `${msg}: ${a} vs ${b} (±${tol})`);
 
 // ── 1. Ledgers: every euro is accounted for, every year ─────────────────────
-test('portfolio ledger: next = this + return + windfall + saved − sold (working) / − withdrawn + reinvested (retired)', () => {
+test('portfolio ledger: next = this + return + windfall − yearly fund tax + saved − sold (working) / − withdrawn + reinvested (retired)', () => {
   let rowsChecked = 0;
   for (const c of CASES) {
     const p = project(c.sc, c.gl);
@@ -23,7 +23,7 @@ test('portfolio ledger: next = this + return + windfall + saved − sold (workin
       const r = p.rows[i], port = p.values[i] - r.cashVal, next = p.values[i + 1] - p.rows[i + 1].cashVal;
       if (next <= 0) continue;                                  // overflow into cash: the cash chain below
       const flow = r.phase === 'acc' ? (r.netFlow >= 0 ? r.netFlow : -(r.sold || 0)) : -r.withdrawal + (r.surplus || 0);
-      near(next, port + r.portReturn + r.windfall + flow, 3, `${c.name} ${r.yr}`);
+      near(next, port + r.portReturn + r.windfall - (r.vorabTax || 0) + flow, 3, `${c.name} ${r.yr}`);   // v8.28: German yearly fund tax
       rowsChecked++;
     }
   }

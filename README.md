@@ -91,6 +91,7 @@ Under Spending, deposits per month over the last 6 months of statements are comp
 | She pays in / month | `partnerPaysIn` | — (0) | EUR/month | Spending. Her monthly transfer. Joint total = `samPaysIn + partnerPaysIn` |
 | Yearly items / year | `yearlyItems` | — (0) | EUR/year | Spending. Trips, courses, gifts: **shared**, split by her share, now and in retirement |
 | Spending in retirement | `retSpendChange` | 0% | % | One change on all spending once you stop (own, joint, yearly items, costs if alone); −50 to +50 |
+| Child benefit / month | `childBenefit` | — (country preset) | EUR/month | v8.28, Child tile. Lowers the child cost; empty = Germany 259, France 0 |
 | Health insurance once you stop / month | `healthAfterStop` | — (country preset) | EUR/month | v8.26, in the **Where you live** tile (v8.26.1). Paid from your stop age until your first state pension; empty = the preset of the country you live in that year (see [Health insurance once you stop](#health-insurance-once-you-stop)) |
 | (last refresh) | `spendUpdated` | — | date | Stamped when one of the four numbers is edited; red after 6 months |
 | Withdrawal Rate | `swr` | 4% | % | %-of-portfolio mode only; % of the current portfolio available annually |
@@ -491,11 +492,29 @@ GrossWithdrawal = NetSpending / (1 − currentGainFrac × taxRate)
 ```
 
 **Tax rates by country** (examples, matching the dropdown): France 30%, Portugal 28%,
-Germany 26%, Ireland 33%, Belgium 0%. These are flat-rate approximations of
-headline capital-gains regimes — they do **not** model fund-specific rules such as
-Ireland's 41% ETF exit tax, Germany's Vorabpauschale/Teilfreistellung, the
-Netherlands' box-3 deemed-return system, or Belgium's new 2026 capital-gains
-regime. Verify the rate for your own situation and asset type.
+Germany 18.5% (26.375% on 70% of an equity fund's gain), Ireland 33%, Belgium 0%. These
+are flat-rate approximations of headline capital-gains regimes — they do **not** model
+fund-specific rules such as Ireland's 41% ETF exit tax, the Netherlands' box-3
+deemed-return system, or Belgium's new 2026 capital-gains regime. Verify the rate for
+your own situation and asset type. Germany's yearly fund tax is modelled (below).
+
+### German yearly fund tax (Vorabpauschale, v8.28)
+
+In every year you live in Germany, accumulating funds are taxed on a notional yield,
+paid from the portfolio (`vorabAt` in `js/engine.js`, row `vorabTax`, table row
+"German yearly fund tax"). The taxed amount is added to the cost basis, so it is not
+taxed again at the sale: the tax is paid earlier, not twice.
+
+```
+base = min(start-of-year value × Basiszins 3.20% × 70%, the year's gain), ≥ 0
+tax  = max(0, base − allowance / 0.7) × rate on gains (Germany 18.5%)
+allowance = 1,000 € (2,000 € married or PACS), nominal
+e.g. 1,000,000 € at +7%: base 22,400 → (22,400 − 1,428.57) × 18.5% = 3,879.71 €
+```
+
+Simplified: the 2026 Basiszins is kept for later years (it follows long-term German
+bond yields); the allowance is not used by sales elsewhere in the model; bond funds
+are treated like equity funds; distributions are not modelled separately.
 
 ---
 
@@ -820,8 +839,15 @@ When you toggle **"With Child"** for a scenario:
 ### Annual Costs
 
 ```
-childCostInYear(yr) = childCostYearly × (1 + inflation)^(yr − baseYear)
+childCostAt(yr) = max(0, childCostYearly − childBenefit(yr) × 12) × (1 + inflation)^(yr − baseYear)
 ```
+
+**Child benefit (v8.28):** what you receive for the child lowers its cost every year
+(`childBenefitAt`), while the cost runs and at most until 25: `childBenefit` if typed
+(€/month, today's money), else the country you live in that year: Germany Kindergeld
+259 € (2026); France 0 (family allowances start with the second child; the PAJE base
+allowance is means-tested out at higher incomes). Kinderfreibetrag (the German tax
+allowance, worth slightly more at high incomes) is not modelled: conservative.
 
 Costs apply for every year where:
 ```

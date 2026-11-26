@@ -1,5 +1,5 @@
-import { healthPresetMonthly } from "./health.js?v=8.27";
-import { accrualGrossMonthly, pensionNet } from "./pensions.js?v=8.27";
+import { healthPresetMonthly } from "./health.js?v=8.28";
+import { accrualGrossMonthly, pensionNet } from "./pensions.js?v=8.28";
 // ── MATH ───────────────────────────────────────────────────────────────────
 export function portReturnAt(gl, age, retAge) {
   const sNow=gl.stockAlloc, sRet=1-gl.bondAllocRet;
@@ -260,6 +260,43 @@ export function healthCostAt(gl, yr) {
   const m = gl.healthAfterStop != null ? gl.healthAfterStop : healthPresetMonthly((residenceAt(gl, yr) || {}).country, gl.healthGainMonthly);
   return m*12*Math.pow(1+gl.inflation, yr - gl.baseYear);
 }
+// ── Child benefit (v8.28) ───────────────────────────────────────────────────
+// Paid per child per month (today's €), by the country you live in that year:
+// Germany Kindergeld 259 € (2026); France 0 for a first child (family allowances
+// start with the second; the PAJE base allowance is means-tested out at these
+// incomes). gl.childBenefit (typed) wins everywhere. It runs while the child cost
+// runs, at most until 25.
+export const CHILD_BENEFIT = { DE: 259, FR: 0 };
+export const CHILD_BENEFIT_MAX_AGE = 25;
+export function childBenefitAt(gl, yr) {
+  const childAge = yr - gl.childBirthYear;
+  if (!(childAge >= 0 && childAge < Math.min(gl.childCostUntilAge, CHILD_BENEFIT_MAX_AGE))) return 0;
+  if (gl.childBenefit != null) return gl.childBenefit;
+  return CHILD_BENEFIT[(residenceAt(gl, yr) || {}).country] || 0;
+}
+// The child cost in year yr (nominal €/yr), net of the child benefit, never below 0:
+// the one definition every budget, target and projection row uses.
+export function childCostAt(gl, yr) {
+  const childAge = yr - gl.childBirthYear;
+  if (!(childAge >= 0 && childAge < gl.childCostUntilAge)) return 0;
+  return Math.max(0, gl.childCostYearly - childBenefitAt(gl, yr)*12)*Math.pow(1+gl.inflation, yr - gl.baseYear);
+}
+
+// ── German yearly fund tax (Vorabpauschale, v8.28) ─────────────────────────
+// While you live in Germany, accumulating funds are taxed every year on a notional
+// yield: start-of-year value × Basiszins (3.20% for 2026, kept for later years) ×
+// 70%, at most the year's gain, less the yearly allowance (1,000 €, 2,000 married;
+// 1,000 / 0.7 of fund gain after the 30% partial exemption). The tax is paid from the
+// portfolio at the German rate on gains; the taxed amount raises the cost basis, so
+// it is not taxed again when you sell.
+export const VORAB = { basiszins: 0.032, share: 0.7, allowance: 1000, exemption: 0.3 };
+export function vorabAt(gl, yr, value, r) {
+  if ((residenceAt(gl, yr) || {}).country !== 'DE' || !(value > 0)) return { base: 0, tax: 0 };
+  const base = Math.max(0, Math.min(value*VORAB.basiszins*VORAB.share, value*r));
+  const free = (gl.taxJoint ? 2 : 1)*VORAB.allowance/(1 - VORAB.exemption);   // nominal, fixed by law
+  const tax = Math.max(0, base - free)*taxRateAt(gl, yr);
+  return { base, tax };
+}
 export function householdCosts(yr, sc, gl, samRetired, noTemp) {
   gl = scGl(gl, sc);
   const t = yr - gl.baseYear, infl = Math.pow(1+gl.inflation, t);
@@ -277,8 +314,7 @@ export function householdCosts(yr, sc, gl, samRetired, noTemp) {
   const partnerPersonal = (gl.partnerPersonal || 0)*12*infl;
   let child = 0, mortgage = 0, rentSaved = 0;
   if (sc.hasChild && !noTemp) {
-    const childAge = yr - gl.childBirthYear;
-    if (childAge >= 0 && childAge < gl.childCostUntilAge) child = gl.childCostYearly*infl;
+    child = childCostAt(gl, yr);   // v8.28: net of the child benefit
   }
   if (sc.hasProp) {
     if (!noTemp) mortgage = mortgagePaymentAt(gl, yr);
@@ -401,8 +437,7 @@ export function yearOneBudget(fromAge, sc, gl, herDrawAnn) {
   }
   let budget = soloSpend(gl, true, fromYear)*12*inflF + healthCostAt(gl, fromYear);
   if (sc.hasChild) {
-    const childAge = fromYear - gl.childBirthYear;
-    if (childAge >= 0 && childAge < gl.childCostUntilAge) budget += gl.childCostYearly*inflF;
+    budget += childCostAt(gl, fromYear);   // v8.28: net of the child benefit
   }
   if (sc.hasProp) {
     budget += mortgagePaymentAt(gl, fromYear) + ownershipAnnual(gl, sc, fromYear);
@@ -694,7 +729,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
       const age = fromAge + k, yr = fromYear + k, infl = Math.pow(1+gl.inflation, yr - gl.baseYear);
       const spend = (soloYr ? soloSpend(gl, true, yr) : baseSpend)*12*infl, pen = pensionMonthlyAt(gl, age)*12*infl;
       let flow = Math.max(0, spend - pen) + healthCostAt(gl, yr);   // v8.26
-      if (sc.hasChild && yr >= gl.childBirthYear && yr < gl.childBirthYear + gl.childCostUntilAge) flow += gl.childCostYearly*infl;
+      if (sc.hasChild) flow += childCostAt(gl, yr);   // v8.28: net of the child benefit
       if (sc.hasProp) {
         flow += mortgagePaymentAt(gl, yr) + ownershipAnnual(gl, sc, yr);
         flow -= rentSavedMonthly(gl, sc, yr)*12*infl;
@@ -754,10 +789,7 @@ export function project(sc, gl, opts) {
   // child cost helper: annual cost in year yr
   function childCostInYear(yr) {
     if (!sc.hasChild) return 0;
-    const childAge = yr - gl.childBirthYear;
-    if (childAge < 0 || childAge >= gl.childCostUntilAge) return 0;
-    const t = yr - startYear;
-    return gl.childCostYearly * Math.pow(1+gl.inflation, t);
+    return childCostAt(gl, yr);   // v8.28: net of the child benefit
   }
 
   // income helper: handles parental leave
@@ -850,8 +882,9 @@ export function project(sc, gl, opts) {
     const windfall = (gl.windfalls||[]).filter(w=>w.yr===yr && !(w.off && w.off.includes(sc.id))).reduce((s,w)=>s+w.amt,0);
     const portfolioBefore=portfolio, cashBefore=cashVal;
     const portGrowth=Math.round(portfolio*r), cashGrowth=Math.round(cashVal*gl.cashReturn);
+    const vb = vorabAt(gl, yr, portfolio, r);   // v8.28: German yearly fund tax (0 elsewhere)
     const row={yr,age,phase:yr<retYear?"acc":"ret",portReturn:portGrowth,cashReturn:cashGrowth,windfall,
-      income:0,spending:0,netFlow:0,pension:0,withdrawal:0,taxPaid:0,childCost:0,
+      income:0,spending:0,netFlow:0,pension:0,withdrawal:0,taxPaid:0,childCost:0,vorabTax:Math.round(vb.tax),
       cashVal:cashBefore,mortgagePayment:0,rentSavings:0,extraCost:0,partnerPension:0};
 
     if (yr<retYear) {
@@ -889,8 +922,8 @@ export function project(sc, gl, opts) {
         ? annInc - tp.samCost - extraCost          // your net cost = personal + shared − her contribution
         : annInc-annSpendNow-childCost-extraCost-mortgageAnn-ownAnn+rentSavingsAnn;
       cashVal = cashVal*(1+gl.cashReturn);
-      const pag = portfolio*(1+r)+windfall;     // portfolio after growth and windfall
-      costBasis += windfall;
+      const pag = portfolio*(1+r)+windfall-vb.tax;     // portfolio after growth, windfall and the yearly fund tax
+      costBasis += windfall + vb.base;
       let portEnd;
       if (netFlow >= 0) { portEnd = pag+netFlow; costBasis += netFlow; }
       else {
@@ -917,8 +950,9 @@ export function project(sc, gl, opts) {
 
     } else {
       cashVal=cashVal*(1+gl.cashReturn);
-      const portAfterGrowth=portfolio*(1+r)+windfall;
+      const portAfterGrowth=portfolio*(1+r)+windfall-vb.tax;   // v8.28: less the yearly fund tax
       if (windfall>0) costBasis+=windfall;
+      costBasis += vb.base;
       const gainFracNow=portAfterGrowth>0?Math.max(0,Math.min(1,(portAfterGrowth-costBasis)/portAfterGrowth)):0;
       const netFrac=Math.max(0.001,1-gainFracNow*taxRateAt(gl, yr));   // € received per € withdrawn (v8.11: rate where you live that year)
       // Non-portfolio income: state pension, partner pension, and partner salary —

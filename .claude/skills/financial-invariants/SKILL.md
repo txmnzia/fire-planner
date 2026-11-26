@@ -155,7 +155,8 @@ input change — `recalc()` must keep calling `markMcStale()`.
 `js/inputs.js`; legacy numeric saved values migrate through `LEGACY_RATE_TO_CODE` in
 `applyState()`. Rates are flat-rate approximations — documented as such in README; do
 not present them as authoritative tax advice (see AUDIT.md Part 4 for the known gaps:
-Irish ETF exit tax, German Vorabpauschale, etc.).
+Irish ETF exit tax, etc.; the German Vorabpauschale is modelled since v8.28 — `vorabAt`,
+row `vorabTax`, part of the portfolio ledger and credited to cost basis).
 
 ## Agreement matrix — one number, many places
 

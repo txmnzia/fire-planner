@@ -1,16 +1,16 @@
 // Spending refresh (v8.7): read-outs under the four spending numbers and the
 // "last refreshed" date. The numbers come from the engine (investNowMonthly), so
 // the read-out is the same calculation the projection uses in year one.
-import { el, eur, numVal } from "../util.js?v=8.27";
-import { investNowMonthly, partnerShare, firstPensionAge } from "../engine.js?v=8.27";
-import { healthPresetMonthly, DE_HEALTH, FR_HEALTH } from "../health.js?v=8.27";
-import { netPay, hasNetCalc } from "../netPay.js?v=8.27";
-import { accrualGrossMonthly, pensionNet } from "../pensions.js?v=8.27";
-import { payContext, resolvePay } from "../inputs.js?v=8.27";
-import { pensionReadoutRows } from "./pensions.js?v=8.27";
-import { fmtMoney } from "./situation.js?v=8.27";
-import { depositCheck } from "../ibkr.js?v=8.27";
-import { state } from "../state.js?v=8.27";
+import { el, eur, numVal } from "../util.js?v=8.28";
+import { investNowMonthly, partnerShare, firstPensionAge } from "../engine.js?v=8.28";
+import { healthPresetMonthly, DE_HEALTH, FR_HEALTH } from "../health.js?v=8.28";
+import { netPay, hasNetCalc } from "../netPay.js?v=8.28";
+import { accrualGrossMonthly, pensionNet } from "../pensions.js?v=8.28";
+import { payContext, resolvePay } from "../inputs.js?v=8.28";
+import { pensionReadoutRows } from "./pensions.js?v=8.28";
+import { fmtMoney } from "./situation.js?v=8.28";
+import { depositCheck } from "../ibkr.js?v=8.28";
+import { state } from "../state.js?v=8.28";
 
 export const REFRESH_FIELDS = ['samPersonalNow', 'samPaysIn', 'partnerPaysIn', 'yearlyItems'];
 export const STALE_DAYS = 183;
