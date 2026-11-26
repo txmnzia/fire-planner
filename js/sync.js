@@ -1,16 +1,16 @@
-import { el } from "./util.js?v=8.20";
-import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.20";
-import { state, features } from "./state.js?v=8.20";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.20";
-import { recalc } from "./recalc.js?v=8.20";
-import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.20";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.20";
-import { refreshSituationControls } from "./ui/situation.js?v=8.20";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.20";
-import { db } from "./db.js?v=8.20";
-import { migrateSpending } from "./spendMigration.js?v=8.20";
-import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.20";
-import { normalisePensionsMore } from "./pensions.js?v=8.20";
+import { el } from "./util.js?v=8.20.1";
+import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.20.1";
+import { state, features } from "./state.js?v=8.20.1";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.20.1";
+import { recalc } from "./recalc.js?v=8.20.1";
+import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.20.1";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.20.1";
+import { refreshSituationControls } from "./ui/situation.js?v=8.20.1";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.20.1";
+import { db } from "./db.js?v=8.20.1";
+import { migrateSpending } from "./spendMigration.js?v=8.20.1";
+import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.20.1";
+import { normalisePensionsMore } from "./pensions.js?v=8.20.1";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [

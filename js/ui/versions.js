@@ -2,20 +2,20 @@
 // version and what it does to the five scenarios, Save update / Undo all, the
 // update log (compare, restore), the first-run review and "Did this happen?".
 // Edits still autosave as before; a version is a dated copy you can go back to.
-import { activePlan } from "./planLine.js?v=8.20";
-import { el, eur } from "../util.js?v=8.20";
-import { state, features } from "../state.js?v=8.20";
-import { recalc } from "../recalc.js?v=8.20";
-import { collectState, applyState } from "../sync.js?v=8.20";
-import { getScenarioName } from "../inputs.js?v=8.20";
+import { activePlan } from "./planLine.js?v=8.20.1";
+import { el, eur } from "../util.js?v=8.20.1";
+import { state, features } from "../state.js?v=8.20.1";
+import { recalc } from "../recalc.js?v=8.20.1";
+import { collectState, applyState } from "../sync.js?v=8.20.1";
+import { getScenarioName } from "../inputs.js?v=8.20.1";
 import { snapshotOf, resultsOf, diffFields, diffLists, changeCount, impactLines, impactRows, addVersion,
-         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.20";
-import { rentShift } from "./housing.js?v=8.20";
-import { updateToggleUI } from "./controls.js?v=8.20";
-import { revealField } from "./tiles.js?v=8.20";
-import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.20";
-import { renderNwHistory } from "./nwHistory.js?v=8.20";
-import { refreshedText } from "./spending.js?v=8.20";
+         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.20.1";
+import { rentShift } from "./housing.js?v=8.20.1";
+import { updateToggleUI } from "./controls.js?v=8.20.1";
+import { revealField } from "./tiles.js?v=8.20.1";
+import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.20.1";
+import { renderNwHistory } from "./nwHistory.js?v=8.20.1";
+import { refreshedText } from "./spending.js?v=8.20.1";
 
 const fmtDay = ts => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -218,6 +218,10 @@ export function renderUpdatePanel(gl) {
     h += '<div class="tgt">' + (n ? n + (n > 1 ? " changes" : " change") + " since " + fmtDay(v.ts) : "No changes since " + fmtDay(v.ts)) + (v.note ? " (" + esc(v.note) + ")" : "") + "</div>";
     h += impact();
     if (n) h += '<div class="up-actions"><input type="text" id="upNote" placeholder="Note (optional)" maxlength="80"><button type="button" class="dp-add up-save" data-save="1">Save update</button><button type="button" class="dp-add" data-undo="1">Undo all</button></div>';
+    // v8.20.1: no frozen plan yet (versions saved before v8.20) and nothing to save:
+    // one tap saves today's version, which becomes the plan
+    else if (!activePlan()) h += '<div class="tgt">No plan to compare with yet: save today\u2019s version and it becomes your plan.</div>' +
+      '<div class="up-actions"><button type="button" class="dp-add up-save" data-save="1" data-note="Plan">Save as my plan</button></div>';
   }
   h += "</div>";
 
@@ -248,7 +252,7 @@ export function initUpdatePanel() {
   const host = el("updatePanel"); if (!host) return;
   host.addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return;
-    if (b.dataset.save) saveVersion(el("upNote") ? el("upNote").value : "", "save");
+    if (b.dataset.save) saveVersion(el("upNote") ? el("upNote").value : (b.dataset.note || ""), "save");
     else if (b.dataset.undo) undoAll();
     else if (b.dataset.restore) restoreVersion(b.dataset.restore);
     else if (b.dataset.plan) { state.planId = b.dataset.plan; state.logOpen = true; recalc(); }

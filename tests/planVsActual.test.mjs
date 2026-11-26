@@ -75,3 +75,8 @@ test('wiring: saved and synced; chart, legend and cards share one plan line', ()
   assert.match(read('js/ui/charts.js'), /planLineFor\(state\.activeScIdx, sc, gl\)/);
   assert.ok(!/buildPlanProj/.test(read('js/ui/cards.js') + read('js/ui/charts.js')));
 });
+
+test('v8.20.1: with no frozen plan and nothing to save, one tap saves today as the plan', () => {
+  const ui = read('js/ui/versions.js');
+  assert.match(ui, /else if \(!activePlan\(\)\) h \+= [^\n]*\n?[^\n]*data-save="1" data-note="Plan">Save as my plan/);
+});
