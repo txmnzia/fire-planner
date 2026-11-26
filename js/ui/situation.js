@@ -3,14 +3,14 @@
 // The source of truth for every value stays the id-bearing form control that
 // inputs.js / sync.js already read — this module only adds friendlier controls
 // (year-picker popover, sliders, the subject rail) and the dynamic windfall list.
-import { el } from "../util.js?v=8.26.1";
-import { setPayListPainter, NEW_PLAN_OFF } from "./plans.js?v=8.26.1";
-import { normalisePayChanges } from "../payChanges.js?v=8.26.1";
-import { state } from "../state.js?v=8.26.1";
-import { recalc } from "../recalc.js?v=8.26.1";
-import { ASSUMPTION_DEFAULTS, assumptionChanges } from "../assumptions.js?v=8.26.1";
-import { renderRentMoves, renderResidence, initRentToday, renderResNotes } from "./housing.js?v=8.26.1";
-import { renderPensionsMore } from "./pensions.js?v=8.26.1";
+import { el } from "../util.js?v=8.27";
+import { setPayListPainter, NEW_PLAN_OFF } from "./plans.js?v=8.27";
+import { normalisePayChanges } from "../payChanges.js?v=8.27";
+import { state } from "../state.js?v=8.27";
+import { recalc } from "../recalc.js?v=8.27";
+import { ASSUMPTION_DEFAULTS, assumptionChanges } from "../assumptions.js?v=8.27";
+import { renderRentMoves, renderResidence, initRentToday, renderResNotes } from "./housing.js?v=8.27";
+import { renderPensionsMore } from "./pensions.js?v=8.27";
 
 const YNOW = 2026;
 
@@ -155,17 +155,22 @@ export function renderPayList() {
   host.innerHTML = '';
   const upd = (i, key, val) => { state.payChanges[i] = normalisePayChanges([{ ...state.payChanges[i], [key]: val }])[0]; recalc(); };
   state.payChanges.forEach((p, i) => {
-    const row = document.createElement('div'); row.className = 'item pay-row';
+    const row = document.createElement('div'); row.className = 'item pay-row'; row.dataset.i = i;
     row.innerHTML =
       '<div class="item-hd"><input type="text" class="item-name pay-name" placeholder="Name it, e.g. 4-day week" aria-label="Name of this pay change" autocomplete="off">' + DEL('Remove pay change') + '</div>' +
       '<div class="item-c">' + SEP('from') + '<div class="ypick fc pay-from"></div>' + SEP('until') + '<div class="ypick fc pay-to"></div>' +
-      MONEY('pay-amt', 'amount', '/mo') + '</div>';
+      '</div><div class="item-c">' + MONEY('pay-gross', 'gross', '/yr') + SEP('take-home') + MONEY('pay-amt', 'take-home', '/mo') + '</div>';
     const name = row.querySelector('.pay-name'); name.value = p.name || '';
     name.addEventListener('input', () => upd(i, 'name', name.value));
     buildYpick(row.querySelector('.pay-from'), { min: 2024, max: 2080,
       getVal: () => state.payChanges[i].from, setVal: y => { upd(i, 'from', y); renderPayList(); } });
     buildYpick(row.querySelector('.pay-to'), { min: 2024, max: 2080, optional: true, emptyLabel: 'For good',
       getVal: () => state.payChanges[i].to, setVal: y => { upd(i, 'to', y); renderPayList(); } });
+    // v8.27: type the gross; the take-home is estimated (shown grey) unless you type it
+    const gross = row.querySelector('.pay-gross input'); gross.setAttribute('aria-label', 'Gross pay per year');
+    gross.title = 'Gross salary per year (today\u2019s money). The take-home is estimated where you live then (Germany, France) and used unless you type your own.';
+    gross.value = p.gross == null ? '' : fmtMoney(p.gross);
+    gross.addEventListener('input', () => { const raw = cleanMoney(gross.value); gross.value = raw === '' ? '' : fmtMoney(raw); upd(i, 'gross', raw); });
     const amt = row.querySelector('.pay-amt input'); amt.setAttribute('aria-label', 'Take-home per month');
     amt.value = p.amt == null ? '' : fmtMoney(p.amt);
     amt.addEventListener('input', () => { const raw = cleanMoney(amt.value); amt.value = raw === '' ? '' : fmtMoney(raw); upd(i, 'amt', raw); });

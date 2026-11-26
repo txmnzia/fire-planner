@@ -1,4 +1,5 @@
-import { healthPresetMonthly } from "./health.js?v=8.26.1";
+import { healthPresetMonthly } from "./health.js?v=8.27";
+import { accrualGrossMonthly, pensionNet } from "./pensions.js?v=8.27";
 // ── MATH ───────────────────────────────────────────────────────────────────
 export function portReturnAt(gl, age, retAge) {
   const sNow=gl.stockAlloc, sRet=1-gl.bondAllocRet;
@@ -119,10 +120,52 @@ export const SOLO_SHARE = 0.7;
 // Plans that apply per scenario (v8.17): a scenario can carry its own planned
 // rents and moves abroad (sc.rentMoves, sc.residence, those switched on for it);
 // every entry point reads the settings through this, so the formulas are unchanged.
+// v8.27: with your gross pay set (gl.grossNow, €/yr), the overlay also adds the
+// pension rights each working year earns until this scenario's stop age (see
+// accruedPensions), so it depends on sc.retAge and is rebuilt when that changes.
 export function scGl(gl, sc) {
-  if (!sc || (sc.rentMoves === undefined && sc.residence === undefined)) return gl;
-  if (gl._sc === sc) return gl;
-  return { ...gl, rentMoves: sc.rentMoves ?? gl.rentMoves, residence: sc.residence ?? gl.residence, _sc: sc };
+  if (!sc) return gl;
+  if (gl._sc === sc && gl._ret === sc.retAge) return gl;
+  const base = gl._base || gl;
+  const acc = base.grossNow > 0;
+  if (!acc && sc.rentMoves === undefined && sc.residence === undefined) return base;
+  const out = { ...base, rentMoves: sc.rentMoves ?? base.rentMoves, residence: sc.residence ?? base.residence,
+                _sc: sc, _ret: sc.retAge, _base: base };
+  if (acc) {
+    const a = accruedPensions(out, sc);
+    out.accrued = a;
+    out.pensionAmt = (base.pensionAmt || 0) + a.de;
+    out.pension2Amt = (base.pension2Amt || 0) + a.fr;
+  }
+  return out;
+}
+
+// Your gross pay in year yr (€/yr, today's money), v8.27: gl.grossNow, replaced by
+// the pay change that applies that year (same rule as payIncomeAt). A change typed
+// without a gross scales today's gross by its take-home (inputs.js normally fills
+// the gross from the take-home with the country's calculator).
+export function grossPayAt(gl, sc, yr) {
+  let g = gl.grossNow || 0, start = -Infinity;
+  for (const c of sc.payChanges || [])
+    if (yr >= c.from && (c.to === null || c.to === undefined || yr <= c.to) && c.from >= start) {
+      start = c.from;
+      g = c.gross != null ? c.gross : (c.amt > 0 && sc.income > 0 ? (gl.grossNow || 0) * c.amt / sc.income : 0);
+    }
+  return g;
+}
+// Pension rights earned from today (baseYear) until the year before you stop, in the
+// country you live in each year: { de, fr } net €/month (today's money), plus the
+// years counted per country. Countries without a rule (other than DE, FR) add none.
+export function accruedPensions(gl, sc) {
+  const retYear = gl.baseYear + (sc.retAge - gl.currentAge);
+  let de = 0, fr = 0, yDE = 0, yFR = 0;
+  for (let yr = gl.baseYear; yr < retYear; yr++) {
+    const c = (residenceAt(gl, yr) || {}).country, g = grossPayAt(gl, sc, yr);
+    if (!(g > 0)) continue;
+    if (c === 'DE') { de += accrualGrossMonthly('DE', g); yDE++; }
+    else if (c === 'FR') { fr += accrualGrossMonthly('FR', g); yFR++; }
+  }
+  return { de: pensionNet('DE', de), fr: pensionNet('FR', fr), deGross: de, frGross: fr, yDE, yFR };
 }
 
 // Rent in year yr (today's €/month): rent today (propRentSaved), replaced by each

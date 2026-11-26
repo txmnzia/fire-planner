@@ -3,7 +3,7 @@
 // results at that moment; the UI (js/ui/versions.js) stores them in the saved
 // row (payload.versions, additive) and renders the impact panel and the log.
 
-import { pathOf } from "./planVsActual.js?v=8.26.1";
+import { pathOf } from "./planVsActual.js?v=8.27";
 export const MAX_VERSIONS = 30;
 
 // The state a version keeps: everything the payload has except the versions
@@ -85,8 +85,11 @@ export function duePrompts(d) {
     out.push({ key: 'res:' + i, kind: 'residence', index: i, text: 'Did you move to ' + p.country + ' (planned for ' + p.from + ')?' }); });
   if (d.propOn && d.propBuyYear <= y) out.push({ key: 'buy', kind: 'buy', text: 'Did you buy your home (planned for ' + d.propBuyYear + ')?' });
   if (d.childOn && d.childBirthYear <= y) out.push({ key: 'child', kind: 'child', text: 'Was your child born (planned for ' + d.childBirthYear + ')?' });
-  (d.payChanges || []).forEach((c, i) => { if (c.to == null && c.from <= y && c.amt != null && c.amt !== d.baseIncome && (c.on || []).length)
-    out.push({ key: 'pay:' + i, kind: 'pay', index: i, text: 'Is €' + c.amt + ' your take-home now (' + (c.name || 'pay change') + ', from ' + c.from + ')?' }); });
+  // v8.27: a change typed gross only asks about its gross pay
+  (d.payChanges || []).forEach((c, i) => { if (c.to == null && c.from <= y && (c.on || []).length && (c.amt != null ? c.amt !== d.baseIncome : c.gross != null))
+    out.push({ key: 'pay:' + i, kind: 'pay', index: i, text: c.amt != null
+      ? 'Is €' + c.amt + ' your take-home now (' + (c.name || 'pay change') + ', from ' + c.from + ')?'
+      : 'Is €' + c.gross + ' a year your gross pay now (' + (c.name || 'pay change') + ', from ' + c.from + ')? Then type your take-home.' }); });
   return out;
 }
 

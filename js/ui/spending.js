@@ -1,12 +1,16 @@
 // Spending refresh (v8.7): read-outs under the four spending numbers and the
 // "last refreshed" date. The numbers come from the engine (investNowMonthly), so
 // the read-out is the same calculation the projection uses in year one.
-import { el, eur, numVal } from "../util.js?v=8.26.1";
-import { investNowMonthly, partnerShare, firstPensionAge } from "../engine.js?v=8.26.1";
-import { healthPresetMonthly, DE_HEALTH, FR_HEALTH } from "../health.js?v=8.26.1";
-import { pensionReadoutRows } from "./pensions.js?v=8.26.1";
-import { depositCheck } from "../ibkr.js?v=8.26.1";
-import { state } from "../state.js?v=8.26.1";
+import { el, eur, numVal } from "../util.js?v=8.27";
+import { investNowMonthly, partnerShare, firstPensionAge } from "../engine.js?v=8.27";
+import { healthPresetMonthly, DE_HEALTH, FR_HEALTH } from "../health.js?v=8.27";
+import { netPay, hasNetCalc } from "../netPay.js?v=8.27";
+import { accrualGrossMonthly, pensionNet } from "../pensions.js?v=8.27";
+import { payContext, resolvePay } from "../inputs.js?v=8.27";
+import { pensionReadoutRows } from "./pensions.js?v=8.27";
+import { fmtMoney } from "./situation.js?v=8.27";
+import { depositCheck } from "../ibkr.js?v=8.27";
+import { state } from "../state.js?v=8.27";
 
 export const REFRESH_FIELDS = ['samPersonalNow', 'samPaysIn', 'partnerPaysIn', 'yearlyItems'];
 export const STALE_DAYS = 183;
@@ -37,6 +41,7 @@ export function renderSpendReadout(gl) {
   renderPensionReadout(gl);
   renderPartnerReadout(gl);
   renderHealthReadout(gl);
+  renderPayReadout(gl);
   const takeHome = numVal('baseIncome', 0);
   const n = investNowMonthly(gl, takeHome);
   const lines = [];
@@ -81,6 +86,38 @@ export function renderHealthReadout(gl) {
   }
   host.innerHTML = (gl.healthAfterStop != null ? '<div>You typed <b>' + eur(gl.healthAfterStop) + '/month</b> (used everywhere).</div>' : lines.join('')) +
     '<div class="tgt">Paid from your stop age until your first state pension (' + until + '); then the pension deduction covers it.</div>';
+}
+
+// Pay read-out (v8.27): what today's gross gives as take-home (a check on the
+// calculator), and the pension rights one more working year adds where you live.
+// Also refreshes the estimated take-home shown in each planned pay change.
+export function renderPayReadout(gl) {
+  const host = el('payReadout');
+  if (host) {
+    const lines = [], g = gl.grossNow, seen = new Set();
+    if (g > 0) {
+      const { country, opts } = payContext(gl, gl.baseYear, gl.residence, true);
+      if (hasNetCalc(country)) {
+        const net = netPay(country, g, opts).net / 12, typed = numVal('baseIncome', 0);
+        lines.push('<div>In ' + countryName(country) + ' this gives <b>\u2248 ' + eur(net) + '/month</b> take-home' +
+          (typed > 0 ? ' <span class="tgt">you typed ' + eur(typed) + (Math.abs(net - typed) > 0.1 * typed ? ': check one of the two' : '') + '</span>' : '') + '</div>');
+      }
+      for (const p of gl.residence || []) {
+        if (seen.has(p.country)) continue; seen.add(p.country);
+        const add = pensionNet(p.country, accrualGrossMonthly(p.country, g));
+        if (add > 0) lines.push('<div>Each year you work in ' + countryName(p.country) + (p.from ? ' (from ' + p.from + ')' : '') +
+          ' adds <b>\u2248 ' + eur(add) + '/month</b> to your pension <span class="tgt">net, today\u2019s money, at this pay</span></div>');
+      }
+      if (seen.has('FR')) lines.push('<div class="tgt">France: the full rate is assumed at your French pension age; with fewer than 172 quarters in all (EU careers count) it only comes at 67.</div>');
+      lines.push('<div class="tgt">Rights stop at each scenario\u2019s stop age; other countries add none.</div>');
+    } else lines.push('<div class="tgt">Set your gross pay to count the pension rights you keep earning until you stop (your statements show what you have earned so far).</div>');
+    host.innerHTML = lines.join('');
+  }
+  (state.payChanges || []).forEach((p, i) => {
+    const inp = document.querySelector('.pay-row[data-i="' + i + '"] .pay-amt input'); if (!inp) return;
+    const r = p.gross != null && p.amt == null ? resolvePay(p, gl, gl.residence, true) : null;
+    inp.placeholder = r && r.amt != null ? '\u2248 ' + fmtMoney(Math.round(r.amt)) : 'take-home';
+  });
 }
 
 // Pension read-out (v8.19): the net the plan uses, next to each gross amount typed.

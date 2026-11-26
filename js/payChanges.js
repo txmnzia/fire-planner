@@ -14,18 +14,26 @@ export function normalisePayChanges(list) {
     from: num(p.from) === null ? null : Math.round(num(p.from)),
     to: num(p.to) === null ? null : Math.round(num(p.to)),
     amt: num(p.amt),
+    gross: num(p.gross),   // v8.27: gross €/yr, typed; the take-home is then estimated (inputs.js)
     on: Array.isArray(p.on) ? [...new Set(p.on.map(Number).filter(n => n >= 1 && n <= 5))].sort() : [],
   }));
 }
 
 // A plan counts once it has a start year and an amount (0 allowed: a break).
-export const isComplete = p => p && Number.isFinite(p.from) && p.amt !== null && p.amt >= 0
+// v8.27: a gross alone is enough (the take-home is estimated from it).
+export const isComplete = p => p && Number.isFinite(p.from) && ((p.amt !== null && p.amt >= 0) || (p.gross != null && p.gross >= 0))
   && (p.to === null || p.to >= p.from);
 
 // The changes one scenario uses, as the engine reads them ({from, to, amt}).
-export function payChangesFor(list, s) {
+// v8.27: resolve(p) fills the missing one of take-home (amt) and gross from the
+// other (inputs.js, with the calculator of the country you live in that year);
+// a change whose take-home stays unknown (gross typed for a country without a
+// calculator) is left out rather than read as 0.
+export function payChangesFor(list, s, resolve) {
   return normalisePayChanges(list).filter(p => isComplete(p) && p.on.includes(s))
-    .map(p => ({ from: p.from, to: p.to, amt: p.amt }));
+    .map(p => resolve ? resolve(p) : p)
+    .filter(p => p.amt !== null && p.amt >= 0)
+    .map(p => ({ from: p.from, to: p.to, amt: p.amt, gross: p.gross ?? null }));
 }
 
 // Old per-scenario fields → plans. Identical changes used by several scenarios

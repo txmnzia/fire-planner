@@ -1,16 +1,16 @@
-import { el } from "./util.js?v=8.26.1";
-import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.26.1";
-import { state, features } from "./state.js?v=8.26.1";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.26.1";
-import { recalc } from "./recalc.js?v=8.26.1";
-import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.26.1";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.26.1";
-import { refreshSituationControls } from "./ui/situation.js?v=8.26.1";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.26.1";
-import { db } from "./db.js?v=8.26.1";
-import { migrateSpending } from "./spendMigration.js?v=8.26.1";
-import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.26.1";
-import { normalisePensionsMore } from "./pensions.js?v=8.26.1";
+import { el } from "./util.js?v=8.27";
+import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.27";
+import { state, features } from "./state.js?v=8.27";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.27";
+import { recalc } from "./recalc.js?v=8.27";
+import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.27";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.27";
+import { refreshSituationControls } from "./ui/situation.js?v=8.27";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.27";
+import { db } from "./db.js?v=8.27";
+import { migrateSpending } from "./spendMigration.js?v=8.27";
+import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.27";
+import { normalisePensionsMore } from "./pensions.js?v=8.27";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
@@ -20,7 +20,7 @@ const SYNC_FIELDS = [
   'stockRet','bondRet','inflation','bondAllocNow','bondAllocRet',
   'retCountry',
   'taxNow','pensionAmt','pensionAge','pension2Amt','pension2Age','pensionUpdated',
-  'partnerInc','partnerRetAge','partnerPension','partnerPensionCountry','partnerPensionAge','healthAfterStop',
+  'partnerInc','partnerRetAge','partnerPension','partnerPensionCountry','partnerPensionAge','healthAfterStop','grossNow','taxHousehold',
   'propBuyYear','propPrice','propDownPct','propTxCostPct','propMortgageRate','propMortgageTerm','propRentSaved','propFixedYears','propRateAfter','propCharges','propHerShare',
   'childBirthYear','partnerLeaveMonths','partnerLeaveIncome','childCostYearly','childCostUntilAge','childMaternityMonths','childMaternityIncome',
   'sc1name','sc2name','sc3name','sc4name','sc5name',

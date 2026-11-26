@@ -83,6 +83,8 @@ Under Spending, deposits per month over the last 6 months of statements are comp
 | Parameter | Input ID | Default | Unit | Notes |
 |-----------|----------|---------|------|-------|
 | Monthly Income (net) | `baseIncome` | — (0) | EUR/month | Your take-home income today |
+| Your gross pay | `grossNow` | — (off) | EUR/year | v8.27. Only for pension rights: set = each working year adds rights (see [Pension rights per working year](#pension-rights-per-working-year)); empty = none after your statements |
+| Taxed as | `taxHousehold` | single | code | v8.27, Where you live tile. `single` = not married, `joint` = married or PACS; only for the take-home estimated from a gross |
 | Rent today / month | `propRentSaved` | — (0) | EUR/month | Part of the joint account; a scenario that buys stops paying it from the purchase year |
 | Your own spending / month | `samPersonalNow` | — (0) | EUR/month | Spending (v8.8). Personal spending only, without your transfer to the joint account |
 | You pay into joint / month | `samPaysIn` | — (0) | EUR/month | Spending (v8.8). Your monthly transfer to the joint account |
@@ -935,6 +937,51 @@ net pension (€/month, today's money) = gross × (1 − deduction)
 e.g. German 800 gross → 800 × (1 − 0.124) = 700.80 used by the plan
 ```
 
+### Pension rights per working year
+
+The amounts on the statements are what you have **earned so far** (German
+Renteninformation: the pension without further contributions; French relevé: the
+quarters you have now). When your gross pay is set (`grossNow`), every year from
+today until the year before a scenario's stop age adds rights in the country you live
+in that year, at that year's gross (`grossPayAt`: today's gross, or the pay change that
+applies; a break earns nothing). `accruedPensions` in `js/engine.js` adds them, net, to
+the German and French pensions inside the scenario overlay (`scGl`), so every figure
+(targets, projection, cards, Monte Carlo, the stop-age search) sees the pension that
+stop age earns. Today's money; pension point values are assumed to keep pace with
+prices (they usually follow wages: slightly conservative).
+
+```
+Germany (2026): gross €/month per year = min(gross, 101,400) / 51,944 × 42.52
+France: basic   = 50% × min(gross, PASS 48,060) × 4 / 172 / 12      (full rate assumed)
+        Agirc-Arrco = (6.20% × T1 + 17.00% × T2) / 20.1877 × 1.4386 / 12
+                      T1 = min(gross, PASS), T2 = min(gross, 8 PASS) − PASS
+then net as above (Germany −12.4%, France −9.1%)
+e.g. 60,000 gross: Germany 49.11 €/month a year (43.02 net); France 76.32 (69.37 net)
+```
+
+Sources: Rentenwert from 1 July 2026 (DRV), the 2026 ceiling and provisional average pay
+(Sozialversicherungsrechengrößen 2026), Agirc-Arrco purchase price 2025 and point value
+(unchanged in Nov 2025). Limits: France's full rate needs 172 quarters (all EU careers
+count) or age 67, otherwise a discount applies that is not modelled; your best-25-years
+average is approximated by each year's pay; other countries add no rights.
+
+### Gross and take-home
+
+`js/netPay.js`, for an employee, 2026 rules, today's money (simplified: no church tax,
+no child benefit, no benefits in kind):
+
+- **Germany:** employee contributions pension 9.3% + unemployment 1.3% (up to 101,400 €),
+  health 7.3% + half the average add-on 1.45% and long-term care 1.8% (+0.6% without
+  children) (up to 69,750 €); taxable = gross − 1,230 − 36 − pension − 8.45% health −
+  care; §32a 2026 tariff; solidarity surcharge above 20,350 € of tax. Married: splitting
+  on both taxable incomes (her gross from her take-home), your share by taxable income.
+- **France:** employee contributions (old age, Agirc-Arrco, CEG, CET, CSG/CRDS ≈ 21%);
+  taxable = net + 2.9% non-deductible CSG/CRDS, − 10%; barème on 2025 income (11 / 30 /
+  41 / 45% above 11,600 / 29,579 / 84,577 / 181,917 €); parts 1 alone, 2 married or PACS,
+  +½ for the child (cap 1,807 €); décote. Married or PACS: one household, your share by
+  taxable income.
+- The child counts from its birth year in scenarios with the child.
+
 ### Health insurance once you stop
 
 While you work, health insurance comes out of your salary, so it is inside your
@@ -1010,7 +1057,12 @@ it earlier when a windfall lands.
 
 Pay changes are **plans** (the Pay changes tile): a name, a start year, an optional end
 year (inclusive; empty = for good) and the take-home per month during it (today's
-money; 0 = no pay, e.g. a year off), with an A–E switch per scenario. The scenario
+money; 0 = no pay, e.g. a year off), with an A–E switch per scenario. Since v8.27 a
+change can be typed **gross** (€/year, `gross`): its take-home is then estimated where
+you live in its start year (see [Gross and take-home](#gross-and-take-home)), shown grey
+and used unless you type your own; a change typed as take-home gets its gross by
+inverting the same calculator (for pension rights). A gross for a country without a
+calculator needs the take-home typed; until then the change is left out. The scenario
 grid shows one row per pay change. Outside every change you earn your take-home
 from the Pay tile; when several apply in a year, the one that **started latest**
 wins (`payIncomeAt()` in `js/engine.js`).

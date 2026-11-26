@@ -39,7 +39,11 @@ js/
   ibkr.js               Pure (v8.10): IBKR statement parser (total, positions, gain %,
                         as-of date, deposits) and the check-in read-outs.
   pensions.js           Pure (v8.9): pension countries, legal ages, the net rule the plan
-                        uses (pensionNet, v8.19) and the other-country list.
+                        uses (pensionNet, v8.19), the other-country list and the rights
+                        one working year earns (accrualGrossMonthly, v8.27).
+  netPay.js             Pure (v8.27): take-home from gross pay, Germany and France 2026
+                        (and the inverse); for planned pay typed gross.
+  health.js             Pure (v8.26): health insurance presets once you stop.
   assumptions.js        Pure (v8.9): market-assumption defaults and which ones differ.
   spendMigration.js     Pure (v8.8): maps payloads saved before the one-model spending
                         onto the four account numbers (migrateSpending).

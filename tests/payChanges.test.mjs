@@ -56,11 +56,15 @@ test('migration: old per-scenario fields become plans; identical changes merge',
 
 test('normalise and completeness: numbers, scenario ids, a break at 0 is valid, an end before the start is not', () => {
   const [p] = normalisePayChanges([{ name: 'x', from: '2030', to: '', amt: '0', on: ['3', 9, 1, 3] }]);
-  assert.deepEqual(p, { name: 'x', from: 2030, to: null, amt: 0, on: [1, 3] });
+  assert.deepEqual(p, { name: 'x', from: 2030, to: null, amt: 0, gross: null, on: [1, 3] });
   assert.equal(isComplete(p), true);
   assert.equal(isComplete({ ...p, to: 2029 }), false);
   assert.equal(isComplete({ ...p, amt: null }), false);
-  assert.deepEqual(payChangesFor([p], 3), [{ from: 2030, to: null, amt: 0 }]);
+  assert.equal(isComplete({ ...p, amt: null, gross: 50000 }), true);   // v8.27: a gross alone is enough
+  assert.deepEqual(payChangesFor([p], 3), [{ from: 2030, to: null, amt: 0, gross: null }]);
+  // a gross without a take-home is left out unless resolved (never read as 0)
+  assert.deepEqual(payChangesFor([{ ...p, amt: null, gross: 50000 }], 3), []);
+  assert.deepEqual(payChangesFor([{ ...p, amt: null, gross: 50000 }], 3, q => ({ ...q, amt: 3000 })), [{ from: 2030, to: null, amt: 3000, gross: 50000 }]);
   assert.deepEqual(payChangesFor([p], 2), []);
 });
 
@@ -69,7 +73,7 @@ test('wiring: saved with the state, migrated on load, read per scenario; old fie
   const sync = read('js/sync.js'), inputs = read('js/inputs.js'), html = read('index.html');
   assert.match(sync, /payChanges: state\.payChanges,/);
   assert.match(sync, /Array\.isArray\(data\.payChanges\)\s*\? normalisePayChanges\(data\.payChanges\)\s*: migrateFromFields\(data\.fields, data\.fields\?\.baseYear\)/);
-  assert.match(inputs, /payChanges: payChangesFor\(state\.payChanges, s\)/);
+  assert.match(inputs, /payChanges: payChangesFor\(state\.payChanges, s, p => resolvePay\(p, gl, plans\.residence, feat\.child\)\)/);
   assert.match(inputs, /chgYear:  null,/);
   for (let n = 1; n <= 5; n++) for (const k of ['inc', 'chgYear', 'chgInc'])
     assert.match(html, new RegExp('<input type="hidden" id="s' + n + '_' + k + '"'));

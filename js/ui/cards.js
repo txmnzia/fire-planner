@@ -1,9 +1,9 @@
-import { el, eur, fmtK } from "../util.js?v=8.26.1";
-import { scenarioIssues } from "../checks.js?v=8.26.1";
-import { state } from "../state.js?v=8.26.1";
-import { getScenarioName } from "../inputs.js?v=8.26.1";
-import { vsPlanFor } from "./planLine.js?v=8.26.1";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.26.1";
+import { el, eur, fmtK } from "../util.js?v=8.27";
+import { scenarioIssues } from "../checks.js?v=8.27";
+import { state } from "../state.js?v=8.27";
+import { getScenarioName } from "../inputs.js?v=8.27";
+import { vsPlanFor } from "./planLine.js?v=8.27";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.27";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -54,7 +54,7 @@ export function computeCardMetrics(sc, gl, proj) {
     const gfr = proj.gainFracAtRet != null ? proj.gainFracAtRet : gl.gainFrac;
     const swrPortfolio = Math.round(investAtRet * gl.swr * (1 - gfr * taxRateAt(scGl(gl, sc), proj.retYear)) / 12);
     const inflAtRet = Math.pow(1 + gl.inflation, nAccum);
-    const pensionMonthly = Math.round(pensionMonthlyAt(gl, sc.retAge) * inflAtRet);
+    const pensionMonthly = Math.round(pensionMonthlyAt(scGl(gl, sc), sc.retAge) * inflAtRet);   // v8.27: with the rights this scenario earns
     // her salary and pension are hers, never your income (one model, v8.23): the
     // breakdown keeps the two slots at 0 for the Explanation tab's layout
     const partnerPensionMonthly = 0, partnerSalMonthly = 0;

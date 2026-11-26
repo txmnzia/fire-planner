@@ -463,7 +463,7 @@ The owner's figures are not recorded here (rule 7).
 ### Assumptions the owner should ratify (not bugs)
 
 1. Health insurance after stopping is not modelled. It is likely the largest omission. **v8.26: modelled** from the stop age until the first state pension, with country presets (README).
-2. Pension statements project contributions to the legal age; stopping early lowers the entitlement. *Decided for v8.27: accrual per working year from gross pay.*
+2. Pension statements project contributions to the legal age; stopping early lowers the entitlement. **v8.27: accrual per working year from gross pay, until the stop age.**
 3. Her share follows his modelled draw, which dampens Monte Carlo shortfalls.
 4. Only share changes count as "later rises" in % mode:
    - rent moves;

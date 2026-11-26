@@ -5,6 +5,19 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.27 Gross pay for pension rights; planned pay typed gross
+
+- **Today: both.** Take-home stays what you live on; gross pay is added only to count
+  pension rights. Empty gross = no rights beyond the statements (they show what is
+  earned so far).
+- **Pension rights accrue per working year until each scenario's stop age**, in the
+  country you live in that year (Germany: earnings points; France: basic + Agirc-Arrco,
+  full rate assumed at the pension age set). *Rejected:* a flat yearly add-on.
+- **Planned pay is typed gross**; the take-home is estimated (Germany or France 2026,
+  simplified) and editable.
+- **Tax household is a setting** (not married / married or PACS); the child counts in the
+  household once born. The default is not married.
+
 ## 2026-11-26 · v8.26 Health insurance once you stop; planned pay keeps its value
 
 - **Health insurance is a cost from your stop age until your first state pension**

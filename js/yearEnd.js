@@ -21,6 +21,7 @@ export const TODAY_MONEY = [
   { id: 'propPrice', label: 'Purchase price' },
   { id: 'baseIncome', label: 'Your take-home', pay: true },
   { id: 'partnerInc', label: 'Her take-home', pay: true },
+  { id: 'grossNow', label: 'Your gross pay', pay: true },
 ];
 
 // fields: the saved field values (strings); closingYear: the year being closed;

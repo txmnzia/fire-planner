@@ -1,9 +1,9 @@
-import { el, eur } from "../util.js?v=8.26.1";
-import { state } from "../state.js?v=8.26.1";
-import { getScenarioName } from "../inputs.js?v=8.26.1";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, project, pensionMonthlyAt, pensionList, taxRateAt, scGl, rowCost, priceAtBuy } from "../engine.js?v=8.26.1";
-import { computeCardMetrics } from "./cards.js?v=8.26.1";
-import { FLOW_COLORS } from "./charts.js?v=8.26.1";
+import { el, eur } from "../util.js?v=8.27";
+import { state } from "../state.js?v=8.27";
+import { getScenarioName } from "../inputs.js?v=8.27";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, project, pensionMonthlyAt, pensionList, taxRateAt, scGl, rowCost, priceAtBuy } from "../engine.js?v=8.27";
+import { computeCardMetrics } from "./cards.js?v=8.27";
+import { FLOW_COLORS } from "./charts.js?v=8.27";
 
 // ── EXPLANATION TAB ──────────────────────────────────────────────────────────
 // "Your plan, explained": turns the selected scenario's projection into a
@@ -101,7 +101,7 @@ export function renderExplanation(projs, gl, scenarios) {
 
   // ── phases ────────────────────────────────────────────────────────────────
   // v8.9: up to two state pensions (Germany, France); phases start at the first one
-  const pens = pensionList(gl);
+  const pens = pensionList(scGl(gl, sc));   // v8.27: with the rights this scenario earns
   const firstPenAge = pens.length ? Math.min(...pens.map(p => p.age)) : gl.pensionAge;
   const penIdx = firstPenAge - currentAge;
   const phases = [];
@@ -371,7 +371,7 @@ export function renderExplanation(projs, gl, scenarios) {
         const covers = budSMo > 0 && penMoS > 0 ? Math.round(penMoS / budSMo * 100) : 0;
         lead = (p.fromRet
           ? "You retire at <strong>" + ageAt(p.s) + "</strong>, already past pension age, so the state pension flows from day one: <strong>" + mo(rS.pension || 0) + "/mo</strong>"
-          : "From <strong>age " + firstPenAge + "</strong> your state pension starts: <strong>" + mo(rS.pension || 0) + "/mo</strong> in " + yearAt(p.s) + " money (" + eur(pensionMonthlyAt(gl, firstPenAge)) + " today's €)") +
+          : "From <strong>age " + firstPenAge + "</strong> your state pension starts: <strong>" + mo(rS.pension || 0) + "/mo</strong> in " + yearAt(p.s) + " money (" + eur(pensionMonthlyAt(scGl(gl, sc), firstPenAge)) + " today's €)") +
           (covers ? ", covering about <strong>" + covers + "%</strong> of the budget — the portfolio only tops up the rest" : "") + ". " +
           (m.depletionYear
             ? "Even so, on this path the portfolio <strong>runs out in " + m.depletionYear + "</strong> (age " + (currentAge + m.depletionYear - baseYear) + ")."
@@ -421,7 +421,7 @@ export function renderExplanation(projs, gl, scenarios) {
     const budgetRet = yearOnePermBudget(retAge, sc, gl);   // lifelong part (v8.2)
     const setAside = proj.tempPV || 0;                     // costs that end, at present value
     const inflRet = infl(nAccum);
-    const penOff = pensionMonthlyAt(gl, retAge) * 12 * inflRet;
+    const penOff = pensionMonthlyAt(scGl(gl, sc), retAge) * 12 * inflRet;
     const ppenOff = 0;   // v8.24: her pension is hers, never your income (one model)
     const fromPort = Math.max(0, budgetRet - penOff);
     const rebuilt = gl.swr > 0 ? Math.round(fromPort / netFracRet / gl.swr + setAside) : 0;

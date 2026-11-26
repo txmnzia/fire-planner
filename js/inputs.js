@@ -1,8 +1,8 @@
-import { el, numVal, optVal } from "./util.js?v=8.26.1";
-import { state, features } from "./state.js?v=8.26.1";
-import { effectiveFeatures } from "./checks.js?v=8.26.1";
-import { payChangesFor } from "./payChanges.js?v=8.26.1";
-import { pensionNet, pensionsMoreNet } from "./pensions.js?v=8.26.1";
+import { el, numVal, optVal } from "./util.js?v=8.27";
+import { state, features } from "./state.js?v=8.27";
+import { effectiveFeatures } from "./checks.js?v=8.27";
+import { payChangesFor } from "./payChanges.js?v=8.27";
+import { pensionNet, pensionsMoreNet } from "./pensions.js?v=8.27";
 
 
 // Optional money field: null when empty (unlike optVal, 0 is a valid value).
@@ -29,16 +29,17 @@ export function getWindfalls() {
     .filter(w => !isNaN(w.yr) && !isNaN(w.amt) && w.amt > 0);
 }
 
-export { COUNTRY_TAX } from "./taxTable.js?v=8.26.1";
-import { COUNTRY_TAX } from "./taxTable.js?v=8.26.1";
+export { COUNTRY_TAX } from "./taxTable.js?v=8.27";
+import { COUNTRY_TAX } from "./taxTable.js?v=8.27";
 // Legacy saved states stored the numeric rate as the select value; map to a country code.
 export const LEGACY_RATE_TO_CODE = { "30":"FR", "28":"PT", "26":"ES", "32":"NL", "0":"BE", "33":"IE",
                               "15":"GR", "10":"HR", "19":"PL", "25":"SI", "20":"EE", "27":"DK" };
 
 // Living alone costs about 70% of what two people spend: SOLO_SHARE lives in the
 // engine since v8.11 (one constant); re-exported for older importers.
-import { SOLO_SHARE, residenceAt, investNowMonthly } from "./engine.js?v=8.26.1";
-import { buildResidence, normaliseRentMoves, buyCostPreset, plansForScenario } from "./countries.js?v=8.26.1";
+import { SOLO_SHARE, residenceAt, investNowMonthly } from "./engine.js?v=8.27";
+import { netPay, grossFromNet, hasNetCalc } from "./netPay.js?v=8.27";
+import { buildResidence, normaliseRentMoves, buyCostPreset, plansForScenario } from "./countries.js?v=8.27";
 export { SOLO_SHARE };
 // v8.7: yearly items (€/yr, shared) count in the default too, as a monthly amount.
 export function soloSharedFrom(entered, sharedNow, yearlyItems) {
@@ -142,6 +143,9 @@ export function getGlobals() {
     childMaternityIncome:numVal("childMaternityIncome",0),
     // v8.26: health insurance once you stop, until your pension (your €/month, else the preset)
     healthAfterStop:     optNum("healthAfterStop"),
+    // v8.27: gross pay today (€/yr; only for pension rights) and how you are taxed
+    grossNow:            optNum("grossNow"),
+    taxJoint:            (el("taxHousehold") || {}).value === "joint",
   };
   // the preset needs the realised gains you would live on: half of your monthly cost today
   gl.healthGainMonthly = 0.5 * Math.max(0, investNowMonthly(gl, numVal("baseIncome", 0)).cost);
@@ -151,6 +155,7 @@ export function getGlobals() {
 export function getScenario(s, gl) {
   // a switch only counts once its plan is set up (v8.3, js/checks.js)
   const feat = effectiveFeatures(features[s], gl);
+  const plans = plansForScenario(gl, s);
   return {
     id:       s,
     retAge:   numVal("s"+s+"_ret", 38+(s-1)*4),
@@ -159,14 +164,34 @@ export function getScenario(s, gl) {
     income:   numVal("baseIncome", 0),
     chgYear:  null,
     chgInc:   null,
-    payChanges: payChangesFor(state.payChanges, s),
+    payChanges: payChangesFor(state.payChanges, s, p => resolvePay(p, gl, plans.residence, feat.child)),
     // v8.17: planned rents and moves abroad switched on for this scenario
-    ...plansForScenario(gl, s),
+    ...plans,
     // feature flags
     hasPartner: feat.partner,
     hasProp:    feat.prop,
     hasChild:   feat.child,
   };
+}
+
+// v8.27: a planned pay change typed gross gets its take-home estimated, and one
+// typed as take-home gets a gross (for pension rights), with the calculator of the
+// country you live in from its start year and your household then (married or
+// PACS, her take-home today, the child once born in a scenario with the child).
+export function payContext(gl, from, residence, withChild) {
+  const country = (residenceAt({ residence: residence || gl.residence }, from) || {}).country;
+  const opts = { joint: !!gl.taxJoint, partnerNet: (gl.partnerInc || 0) * 12,
+                 child: !!withChild && gl.childBirthYear != null && from >= gl.childBirthYear };
+  return { country, opts };
+}
+export function resolvePay(p, gl, residence, withChild) {
+  if (!Number.isFinite(p.from)) return p;
+  const { country, opts } = payContext(gl, p.from, residence, withChild);
+  let amt = p.amt, gross = p.gross;
+  if (amt == null && gross != null && hasNetCalc(country)) amt = Math.round(netPay(country, gross, opts).net / 12);
+  if (gross == null && amt === 0) gross = 0;
+  else if (gross == null && amt > 0 && gl.grossNow > 0 && hasNetCalc(country)) gross = grossFromNet(country, amt * 12, opts);
+  return { ...p, amt, gross };
 }
 
 // ── LABELS ─────────────────────────────────────────────────────────────────

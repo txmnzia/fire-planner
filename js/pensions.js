@@ -39,3 +39,26 @@ export function pensionNetEstimate(country, grossMonthly) {
   if (!c || !(grossMonthly > 0)) return 0;
   return Math.round(grossMonthly * (1 - c.deduction));
 }
+
+// ── Pension rights per working year (v8.27) ────────────────────────────────
+// The amounts typed above are what you have EARNED SO FAR. When your gross pay is
+// set, each further year you work (today until your stop age) adds rights in the
+// country you live in that year, in today's money, at that year's gross pay.
+// Germany 2026: earnings points = min(gross, 101,400) / 51,944 (provisional average
+// pay 2026) × 42.52 €/month per point (from 1 July 2026). France: basic pension
+// 50% × min(gross, PASS 48,060) × 4 quarters / 172 (full rate at the pension age you
+// set) + Agirc-Arrco points = (6.20% × T1 + 17.00% × T2) / 20.1877 € (purchase price
+// 2025) × 1.4386 €/yr per point (since Nov 2024). Gross €/month, before the deduction.
+export const ACCRUAL = {
+  DE: { bbg: 101400, avgPay: 51944, pointValue: 42.52 },
+  FR: { pass: 48060, quarters: 172, t1: 0.062, t2: 0.17, buy: 20.1877, value: 1.4386 },
+};
+export function accrualGrossMonthly(country, grossYear) {
+  const g = Math.max(0, +grossYear || 0);
+  if (country === 'DE') { const a = ACCRUAL.DE; return Math.min(g, a.bbg) / a.avgPay * a.pointValue; }
+  if (country === 'FR') {
+    const a = ACCRUAL.FR, t1 = Math.min(g, a.pass), t2 = Math.max(0, Math.min(g, 8 * a.pass) - a.pass);
+    return 0.5 * t1 * 4 / a.quarters / 12 + (a.t1 * t1 + a.t2 * t2) / a.buy * a.value / 12;
+  }
+  return 0;
+}
