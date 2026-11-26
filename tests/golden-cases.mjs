@@ -64,7 +64,8 @@ export function prodGl(over = {}) {
     soloShared: 0.7 * (3200 + 200), pension2Amt: 300, pension2Age: 64,
     pensionsMore: [{ amt: 150, age: 66 }],
     rentMoves: [{ from: 2029, rent: 1600 }],
-    residence: [{ from: null, tax: 0.185, col: 1 }, { from: 2040, tax: 0.3, col: 0.9 }], taxRate: 0.185,
+    residence: [{ from: null, country: 'DE', tax: 0.185, col: 1 }, { from: 2040, country: 'FR', tax: 0.3, col: 0.9 }], taxRate: 0.185,
+    healthGainMonthly: 1600,   // v8.26: health insurance presets by country, until the first pension
     ...over,
   });
 }

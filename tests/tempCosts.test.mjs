@@ -86,9 +86,12 @@ test('two-person: your part of the costs that end is between 0 and all of them; 
 });
 
 test('nothing moves without costs that end, and fixed mode never moves', () => {
-  for (const c of goldenCases().filter(c => c.gl.wdMode === 'fixed' || (!c.sc.hasChild && !c.sc.hasProp))) {
+  const health = gl => gl.healthAfterStop != null || gl.healthGainMonthly != null;   // v8.26: health is a cost that ends too
+  for (const c of goldenCases().filter(c => c.gl.wdMode === 'fixed' || (!c.sc.hasChild && !c.sc.hasProp && !health(c.gl)))) {
     assert.equal(project(c.sc, c.gl).tempPV, 0, c.name);
   }
+  for (const c of goldenCases().filter(c => c.gl.wdMode === 'swr' && health(c.gl)))
+    assert.ok(project(c.sc, c.gl).tempPV > 0, c.name);
 });
 
 test('earliest stop age: with a mortgage it no longer waits for the payoff year', () => {
