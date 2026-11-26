@@ -65,14 +65,15 @@ js/
                         automatic stop ages (earliestStopAge / withStopAges,
                         run once by recalc; Monte Carlo reuses them), the Scenarios
                         grid result cells (scenarioGridResults /
-                        renderScenarioGrid) and the Results summary tiles.
+                        the Results summary tiles (renderSummaryTiles: since v8.32
+                        the only place scenario results show).
     charts.js           Projection & allocation charts (Chart.js) and shared palette.
                         buildChart(projs, gl, bands) draws the MC range around the plan.
     table.js            Year-by-year detail table + CSV export.
     mcTab.js            Monte Carlo on the Results tab (v8.30): background runs
                         (markMcStale → scheduleMcRun → worker, latest wins, results
                         keyed by input generation), mcBandsFor (chart range),
-                        mcHeadlineHTML (tile line), the grid row, How sure tiles
+                        mcHeadlineHTML (tile line), How sure tiles
                         and the distribution tile (histogram).
     explanation.js      Explanation tab: scenario-tailored story — lede + stat tiles,
                         visual phase timeline, per-phase chapter cards (today's-€
@@ -134,7 +135,7 @@ form inputs ──getGlobals()/getScenario()──▶ plain gl/sc objects
 recalc() ──────────────▶ renderers (cards, charts, table, labels)
    │                                          ▲
    ├── markMcStale() (before drawing) ... scheduleMcRun() ──600 ms──▶ mcWorker.js
-   │        results arrive per scenario ──▶ mcTab paints tiles, grid row, chart range
+   │        results arrive per scenario ──▶ mcTab paints tiles, chart range
    └── scheduleSave() → localStorage → Supabase ┘ (applyState on load/sync)
 ```
 

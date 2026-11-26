@@ -1,12 +1,12 @@
-import { activePlan } from "./planLine.js?v=8.31";
-import { el, numVal } from "../util.js?v=8.31";
-import { state, features } from "../state.js?v=8.31";
-import { getScenarioName } from "../inputs.js?v=8.31";
-import { recalc } from "../recalc.js?v=8.31";
-import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js?v=8.31";
-import { renderTable } from "./table.js?v=8.31";
-import { renderSummaryTiles } from "./cards.js?v=8.31";
-import { resizeMcCharts, mcBandsFor, paintMcActive } from "./mcTab.js?v=8.31";
+import { activePlan } from "./planLine.js?v=8.32";
+import { el, numVal } from "../util.js?v=8.32";
+import { state, features } from "../state.js?v=8.32";
+import { getScenarioName } from "../inputs.js?v=8.32";
+import { recalc } from "../recalc.js?v=8.32";
+import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js?v=8.32";
+import { renderTable } from "./table.js?v=8.32";
+import { renderSummaryTiles } from "./cards.js?v=8.32";
+import { resizeMcCharts, mcBandsFor, paintMcActive } from "./mcTab.js?v=8.32";
 
 // ── TAB SWITCHING ──────────────────────────────────────────────────────────
 export function switchTab(name) {
@@ -114,7 +114,7 @@ export function setActiveScenario(idx) {
   state.activeScIdx = idx;
   updateLabels();
   if (state.lastProjs && state.lastGl && state.lastScenarios) {
-    renderSummaryTiles(state.lastProjs, state.lastGl, state.lastScenarios);
+    renderSummaryTiles(state.lastProjs, state.lastGl, state.lastScenarios, state.lastStops);
     buildChart(state.lastProjs, state.lastGl, mcBandsFor(idx));
     paintMcActive();
     buildFlowChart(state.lastProjs, state.lastGl);

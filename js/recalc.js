@@ -1,22 +1,22 @@
-import { el, eur, numVal } from "./util.js?v=8.31";
-import { state } from "./state.js?v=8.31";
-import { getGlobals, getScenario } from "./inputs.js?v=8.31";
-import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.31";
-import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.31";
-import { renderTable } from "./ui/table.js?v=8.31";
-import { renderExplanation } from "./ui/explanation.js?v=8.31";
-import { updateLabels } from "./ui/controls.js?v=8.31";
-import { markMcStale, scheduleMcRun, mcBandsFor } from "./ui/mcTab.js?v=8.31";
-import { scheduleSave } from "./sync.js?v=8.31";
-import { renderIssues } from "./ui/issues.js?v=8.31";
-import { renderPlans } from "./ui/plans.js?v=8.31";
-import { renderSpendReadout } from "./ui/spending.js?v=8.31";
-import { renderAssumptions } from "./ui/situation.js?v=8.31";
-import { renderCheckin } from "./ui/ibkr.js?v=8.31";
-import { renderResNotes, renderPropReadout } from "./ui/housing.js?v=8.31";
-import { renderUpdatePanel } from "./ui/versions.js?v=8.31";
-import { renderTiles } from "./ui/tiles.js?v=8.31";
-import { renderDefaults } from "./ui/defaults.js?v=8.31";
+import { el, eur, numVal } from "./util.js?v=8.32";
+import { state } from "./state.js?v=8.32";
+import { getGlobals, getScenario } from "./inputs.js?v=8.32";
+import { renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.32";
+import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.32";
+import { renderTable } from "./ui/table.js?v=8.32";
+import { renderExplanation } from "./ui/explanation.js?v=8.32";
+import { updateLabels } from "./ui/controls.js?v=8.32";
+import { markMcStale, scheduleMcRun, mcBandsFor } from "./ui/mcTab.js?v=8.32";
+import { scheduleSave } from "./sync.js?v=8.32";
+import { renderIssues } from "./ui/issues.js?v=8.32";
+import { renderPlans } from "./ui/plans.js?v=8.32";
+import { renderSpendReadout } from "./ui/spending.js?v=8.32";
+import { renderAssumptions } from "./ui/situation.js?v=8.32";
+import { renderCheckin } from "./ui/ibkr.js?v=8.32";
+import { renderResNotes, renderPropReadout } from "./ui/housing.js?v=8.32";
+import { renderUpdatePanel } from "./ui/versions.js?v=8.32";
+import { renderTiles } from "./ui/tiles.js?v=8.32";
+import { renderDefaults } from "./ui/defaults.js?v=8.32";
 
 // ── RECALC ──────────────────────────────────────────────────────────────────
 export function recalc() {
@@ -35,7 +35,6 @@ export function recalc() {
   const stops=withStopAges([1,2,3,4,5].map(s=>getScenario(s,gl)),gl);
   const scenarios=stops.map(x=>x.sc);
   const projs=stops.map(x=>x.proj);
-  renderScenarioGrid(projs,gl,scenarios,stops);
   renderIssues(scenarios,gl);
   renderPlans(gl);
   state.lastProjs=projs; state.lastGl=gl; state.lastScenarios=scenarios; state.lastStops=stops;
@@ -46,7 +45,7 @@ export function recalc() {
   renderTiles(gl);
   buildChart(projs,gl,mcBandsFor(state.activeScIdx)); buildFlowChart(projs,gl); renderTable(projs,gl);
   updateLabels();
-  renderSummaryTiles(projs,gl,scenarios);
+  renderSummaryTiles(projs,gl,scenarios,stops);
   renderExplanation(projs,gl,scenarios);
   // v8.30: the range runs in the background for the new inputs (debounced, latest wins).
   scheduleMcRun();

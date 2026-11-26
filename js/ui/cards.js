@@ -1,10 +1,10 @@
-import { el, eur, fmtK } from "../util.js?v=8.31";
-import { scenarioIssues } from "../checks.js?v=8.31";
-import { state } from "../state.js?v=8.31";
-import { getScenarioName } from "../inputs.js?v=8.31";
-import { vsPlanFor } from "./planLine.js?v=8.31";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.31";
-import { mcHeadlineHTML } from "./mcTab.js?v=8.31";
+import { el, eur, fmtK } from "../util.js?v=8.32";
+import { scenarioIssues } from "../checks.js?v=8.32";
+import { state } from "../state.js?v=8.32";
+import { getScenarioName } from "../inputs.js?v=8.32";
+import { vsPlanFor } from "./planLine.js?v=8.32";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.32";
+import { mcHeadlineHTML } from "./mcTab.js?v=8.32";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -131,8 +131,8 @@ export function withStopAges(scenarios, gl) {
   });
 }
 
-// Scenario grid (v8, Scenarios tab): the few result cells shown under each
-// scenario column. Every figure comes from computeCardMetrics, the single source
+// Scenario results (v8; since v8.32 shown on the Results tiles only, the
+// Scenarios tab models life events). The few result figures per scenario. Every figure comes from computeCardMetrics, the single source
 // shared with the Results tiles (AUDIT.md T8): never re-derive a number here.
 export function scenarioGridResults(sc, gl, proj, stop) {
   const m = computeCardMetrics(sc, gl, proj);
@@ -173,25 +173,6 @@ export function scenarioGridResults(sc, gl, proj, stop) {
     lasts: depletionAge == null ? 'to ' + gl.lifeExp + '+' : 'runs out at ' + depletionAge,
     equity, equityText,
   };
-}
-
-// Writes the result rows of the scenario grid. Cells are plain text; colour comes
-// from the ok/err classes, so no value is ever interpolated into HTML.
-export function renderScenarioGrid(projs, gl, scenarios, stops) {
-  let anyProp = false;
-  scenarios.forEach((sc, i) => {
-    const n = i + 1, r = scenarioGridResults(sc, gl, projs[i], stops ? stops[i] : null);
-    const set = (key, text, cls) => {
-      const c = el('scr' + n + '_' + key); if (!c) return;
-      c.textContent = text; c.classList.remove('ok', 'err', 'muted', 'age'); if (cls) c.classList.add(cls);
-    };
-    set('age', r.stopAgeText, r.missing.length ? 'muted' : (r.stopFound ? 'age' : 'err'));
-    set('margin', r.marginText, r.missing.length ? 'muted' : (r.margin >= 0 ? 'ok' : 'err'));
-    set('lasts', r.lasts, r.missing.length ? 'muted' : (r.lastsOk ? 'ok' : 'err'));
-    set('equity', r.equityText, r.equity == null || r.missing.length ? 'muted' : '');
-    if (sc.hasProp) anyProp = true;
-  });
-  const eq = el('scgEquityRow'); if (eq) eq.hidden = !anyProp;
 }
 
 export function vsPlanRowHTML(m) {
@@ -238,37 +219,50 @@ export function fireNumRowHTML(m, gl, cc) {
   return '<div class="sc-result-row"><span class="k">'+(m.two ? 'FIRE Number (you)' : 'FIRE Number')+'</span><span class="v '+cc+'">'+eur(m.fireTarget)+adj+'</span></div>';
 }
 
-export function renderSummaryTiles(projs, gl, scenarios) {
+// Results tiles (v8.32): the only place scenario results are shown. The Scenarios
+// tab models life events only. Each row appears once and only when it says
+// something the others don't: margin sits next to net worth at stop, "money lasts"
+// only when it runs out, home equity only for scenarios that buy. All numbers come
+// from scenarioGridResults → computeCardMetrics (AUDIT.md T8: one source).
+const tileEsc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+export function renderSummaryTiles(projs, gl, scenarios, stops) {
   const row = el('scSummaryRow');
   if (!row) return;
   const CV = ['s1c','s2c','s3c','s4c','s5c'];
+  const swr = gl.wdMode === 'swr';
+  const rowHTML = (k, v, cls, title) => '<div class="sc-result-row"'+(title?' title="'+tileEsc(title)+'"':'')+'><span class="k">'+k+'</span><span class="v'+(cls?' '+cls:'')+'">'+v+'</span></div>';
   let html = '';
   projs.forEach((proj, i) => {
-    const sc = scenarios[i], cv = CV[i], name = getScenarioName(i);
-    const m = computeCardMetrics(sc, gl, proj);   // same numbers as the scenario cards
-    let chip, metricRow;
-    if (gl.wdMode === 'swr') {
-      chip = '<span class="ms-chip '+(m.incomeOk?'ok':'err')+'">'+(m.incomeOk?'\u2713 Funded':'\u00d7 Short')+'</span>';
-      metricRow = '<div class="sc-result-row"><span class="k">Monthly income</span><span class="v '+(m.incomeOk?'ok':'err')+'">'+eur(m.netMonthly)+' <span class="tgt">/ '+eur(m.targetMonthly)+'</span></span></div>';
-    } else {
-      chip = '<span class="ms-chip '+(m.ok?'ok':'err')+'">'+(m.ok?'\u2713 On Track':'\u00d7 Gap')+'</span>';
-      metricRow = '<div class="sc-result-row"><span class="k">FIRE Number</span><span class="v">'+eur(m.fireTarget)+'</span></div>';
+    const sc = scenarios[i], cv = CV[i], name = tileEsc(getScenarioName(i));
+    const m = computeCardMetrics(sc, gl, proj);
+    const r = scenarioGridResults(sc, gl, proj, stops ? stops[i] : null);
+    const missing = r.missing.length > 0;
+    const chip = missing
+      ? '<span class="ms-chip err">\u26a0 Missing input</span>'
+      : swr ? '<span class="ms-chip '+(m.incomeOk?'ok':'err')+'">'+(m.incomeOk?'\u2713 Funded':'\u00d7 Short')+'</span>'
+            : '<span class="ms-chip '+(m.ok?'ok':'err')+'">'+(m.ok?'\u2713 On Track':'\u00d7 Gap')+'</span>';
+    let body = rowHTML('Stop age', r.stopAgeText, missing ? 'muted' : (r.stopFound ? '' : 'err'),
+      'The first age at which this scenario is funded, worked out by trying every age from today to 75.');
+    if (!missing) {
+      body += vsPlanRowHTML(m);
+      body += swr
+        ? rowHTML('Monthly income', eur(m.netMonthly)+' <span class="tgt">/ '+eur(m.targetMonthly)+'</span>', m.incomeOk?'ok':'err')
+        : rowHTML('FIRE Number', eur(m.fireTarget));
+      body += rowHTML('NW at stop', eur(m.portRet)+' <span class="tgt '+(r.margin>=0?'ok':'err')+'">'+r.marginText+'</span>', '',
+        'Net worth when you stop, and its margin over the FIRE number at that age.');
+      if (sc.hasProp) body += rowHTML('Home equity', r.equityText, r.equity == null ? 'muted' : '',
+        'The home\u2019s value minus the loan left when you stop. In your net worth, not in the FIRE number.');
+      body += twoRowsHTML(m, true) + infeasibleRowHTML(m);
+      if (!r.lastsOk) body += rowHTML('Money lasts', r.lasts, 'err');
     }
+    body += mcHeadlineHTML(i);            // v8.30: the Monte Carlo chance (mcTab.js)
     html +=
       '<div class="sc-summary-tile'+(i===state.activeScIdx?' active':'')+'" style="border-top:2.5px solid var(--'+cv+')" onclick="setActiveScenario('+i+')">' +
         '<div class="tile-hd">' +
           '<span style="font-size:13px;font-weight:700;color:var(--'+cv+')">'+name+'</span>' +
           chip +
         '</div>' +
-        '<div class="sc-result-rows" style="margin-top:6px">' +
-          '<div class="sc-result-row"><span class="k">Retire age</span><span class="v">'+sc.retAge+' &middot; '+m.retYear+'</span></div>' +
-          vsPlanRowHTML(m) +
-          metricRow +
-          '<div class="sc-result-row"><span class="k">NW at retirement</span><span class="v">'+eur(m.portRet)+'</span></div>' +
-          twoRowsHTML(m, true) +
-          infeasibleRowHTML(m) +
-          mcHeadlineHTML(i) +            // v8.30: the Monte Carlo chance (mcTab.js)
-        '</div>' +
+        '<div class="sc-result-rows" style="margin-top:6px">' + body + '</div>' +
       '</div>';
   });
   row.innerHTML = html;

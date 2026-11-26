@@ -139,7 +139,7 @@ Windfalls appear nowhere here — by design (I8).
 ## Who consumes `project()` — change it and you change all of them
 
 `js/recalc.js` `recalc()` runs it for all five scenarios and fans the results out to:
-`renderScenarioGrid`/`renderSummaryTiles` via `computeCardMetrics` (`js/ui/cards.js`),
+`renderSummaryTiles` (v8.32: the only results view) via `computeCardMetrics` (`js/ui/cards.js`),
 `buildChart`/`buildFlowChart` (`js/ui/charts.js` — `values`, `fireTarget`, `rows`,
 `retYear`), `renderTable` (`js/ui/table.js` — every `rows[]` field plus `values` and
 `allocations`). `runMonteCarlo` in `js/montecarlo.js` calls it once per simulated path

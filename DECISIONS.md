@@ -5,6 +5,16 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.32 Scenarios tab = life events only; results on the Results tiles
+
+- **The Scenarios tab models life events only** (names and switches). Its result rows
+  (earliest stop age, margin, money lasts, chance it lasts, home equity) are gone.
+- **Everything moved to the Results tiles, without redundancy:** stop age; margin
+  shown next to net worth at stop (no separate row); home equity only for scenarios
+  that buy; money lasts only when it runs out before life expectancy (a funded stop
+  age lasts by definition, and the chance it lasts says the rest); a missing input
+  shows as the chip, not a number.
+
 ## 2026-11-26 · v8.31 Distribution moves into How sure; coverage fan removed
 
 - **The distribution histogram is a tile inside How sure** (ending net worth in fixed

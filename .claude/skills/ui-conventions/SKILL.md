@@ -63,15 +63,15 @@ may be undefined — a top-level call breaks the whole app at load with a confus
 
 1. `getGlobals()` → `gl`; update portfolio pills and calc-time header.
 2. `getScenario(s, gl)` for s = 1..5, then `project(sc, gl)` for each → `projs[]`.
-3. `renderScenarioGrid(projs, gl, scenarios)` fills the result rows of the Scenarios grid.
+3. (v8.32) No results on the Scenarios grid any more: it models life events only.
 4. Cache `state.lastProjs / lastGl / lastScenarios` (used by `setActiveScenario` and
    `downloadCSV` to re-render without recomputing).
 5. `markMcStale()` — BEFORE anything draws: MC results on screen were computed for
    the previous inputs (AUDIT.md T5); bumps the input generation so the range, tile
-   lines, grid row and How sure tiles paint dimmed ("Updating the range…"). Never
+   lines and How sure tiles paint dimmed ("Updating the range…"). Never
    remove this call.
 6. `buildChart(projs, gl, mcBandsFor(active))`, `buildFlowChart(projs, gl)`,
-   `renderTable(projs, gl)`, `updateLabels()`, `renderSummaryTiles(projs, gl, scenarios)`.
+   `renderTable(projs, gl)`, `updateLabels()`, `renderSummaryTiles(projs, gl, scenarios, stops)`.
 7. `scheduleMcRun()` — v8.30: debounced background Monte Carlo (js/mcWorker.js).
 8. `scheduleSave()` — persists to localStorage and debounces a Supabase sync.
 
@@ -83,12 +83,13 @@ without a recalc, also call it from `setActiveScenario` in `js/ui/controls.js` u
 ## One source for card/tile numbers (AUDIT.md T8)
 
 `computeCardMetrics(sc, gl, proj)` in `js/ui/cards.js` is the single source of every
-financial figure shown on the Scenarios grid AND the Results summary tiles
+financial figure shown on the Results summary tiles (and, via `scenarioGridResults`,
+their stop age / margin / money-lasts / equity rows)
 (`netMonthly`, `targetMonthly`, `fireTarget`, `coastNow`, `depletionYear`, `vsPlan`, …).
 The two views duplicated ~60 lines of this logic once and drifted (T8). **Never compute
 a display financial figure inline in a renderer** — extend `computeCardMetrics` (or the
 shared row helpers `vsPlanRowHTML`/`infeasibleRowHTML`/`fireNumRowHTML`) and consume the
-result in both `scenarioGridResults` and `renderSummaryTiles`. Check the agreement matrix in
+result through `scenarioGridResults` in `renderSummaryTiles`. Check the agreement matrix in
 the `financial-invariants` skill before touching it.
 
 ## Chart.js conventions
@@ -122,8 +123,8 @@ the `financial-invariants` skill before touching it.
   scenario's `retAge` to its earliest funded age; `recalc()` calls it once and
   `mcTab.js` reuses `state.lastScenarios`. `s{n}_ret` is now a hidden input that only keeps the saved value.
 - Element id conventions: per-scenario inputs are `s{n}_ret` (hidden), `s{n}_inc`, `s{n}_chgYear`,
-  `s{n}_chgInc`, names `sc{n}name`, toggle switches `tog{n}_partner|prop|child`, card
-  grid result cells `scr{n}_status|target|nw|lasts|household`, n = 1..5 (v8 grid;
+  `s{n}_chgInc`, names `sc{n}name`, toggle switches `tog{n}_partner|prop|child`,
+  n = 1..5 (v8 grid; no `scr{n}_*` result cells since v8.32;
   the old `ms{n}` cards are gone, and `tests/markup.test.mjs` fails if they return). `getScenario(s, gl)` in `js/inputs.js` reads them.
 - Colours: CSS custom properties `--s1c…--s5c` (+ alpha variants `--s1a…--s5a`) in
   `css/styles.css` `:root`; `SC_COLORS` in `js/ui/cards.js` maps index → `s1…s5` class

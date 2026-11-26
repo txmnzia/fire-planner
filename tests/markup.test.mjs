@@ -43,7 +43,7 @@ test('markup: every inline handler (HTML and renderers) is bound on window in ma
 test('scenario grid: every row has one label and five cells, in scenario order', () => {
   const panel = html.slice(html.indexOf('id="tab-panel-scenarios"'), html.indexOf('/tab-panel-scenarios'));
   const rows = panel.split('<div class="scg-row').slice(1);
-  assert.ok(rows.length >= 7, 'rows found: ' + rows.length);
+  assert.ok(rows.length >= 3, 'rows found: ' + rows.length);
   for (const r of rows) {
     const body = r.slice(0, r.indexOf('    </div>\n'));
     assert.equal((body.match(/class="scg-lbl"/g) || []).length, 1, 'one label');
@@ -52,21 +52,28 @@ test('scenario grid: every row has one label and five cells, in scenario order',
   }
 });
 
-test('scenario grid: every per-scenario control and result cell exists once', () => {
+test('scenario grid: every per-scenario control exists once', () => {
   for (let n = 1; n <= 5; n++) {
     for (const id of ['sc' + n + 'name', 's' + n + '_ret', 's' + n + '_inc', 's' + n + '_chgYear', 's' + n + '_chgInc',
-      'tog' + n + '_partner', 'tog' + n + '_prop', 'tog' + n + '_child',
-      'scr' + n + '_age', 'scr' + n + '_margin', 'scr' + n + '_lasts'])
+      'tog' + n + '_partner', 'tog' + n + '_prop', 'tog' + n + '_child'])
       assert.equal(count(id), 1, id);
   }
   assert.equal(count('scgHouseholdRow'), 0);
 });
 
-test('scenario grid: the renderer writes exactly the result cells the markup has', () => {
+test('v8.32: the Scenarios tab models life events only; results live on the Results tiles', () => {
+  const panel = html.slice(html.indexOf('id="tab-panel-scenarios"'), html.indexOf('/tab-panel-scenarios'));
+  assert.ok(!/id="scr\d_/.test(panel), 'no result cell left on the Scenarios tab');
+  assert.ok(!/scg-r-out|Results per scenario|scgEquityRow|scgMcLbl/.test(panel));
+  assert.ok(!/renderScenarioGrid/.test(read('js/recalc.js') + read('js/ui/cards.js')));
+  // the tiles take their figures from the shared scenario results (T8)
   const cards = read('js/ui/cards.js');
-  const fn = cards.slice(cards.indexOf('export function renderScenarioGrid'));
-  const keys = [...fn.slice(0, fn.indexOf('\n}\n')).matchAll(/set\('(\w+)'/g)].map(m => m[1]).sort();
-  assert.deepEqual(keys, ['age', 'equity', 'lasts', 'margin']);
+  const fn = cards.slice(cards.indexOf('export function renderSummaryTiles'));
+  assert.match(fn, /scenarioGridResults\(sc, gl, proj, stops \? stops\[i\] : null\)/);
+  assert.match(fn, /computeCardMetrics\(sc, gl, proj\)/);
+  for (const k of ['Stop age', 'NW at stop', 'Home equity', 'Money lasts']) assert.ok(fn.includes("'" + k + "'"), k);
+  assert.match(read('js/recalc.js'), /renderSummaryTiles\(projs,gl,scenarios,stops\)/);
+  assert.match(read('js/ui/controls.js'), /renderSummaryTiles\(state\.lastProjs, state\.lastGl, state\.lastScenarios, state\.lastStops\)/);
 });
 
 test('scenario grid: stop ages are automatic (no input, saved value kept hidden for old builds)', () => {
@@ -94,9 +101,8 @@ test('v8.30 (#21): Monte Carlo lives on Results, runs by itself, settings in Ass
   // v8.31: the distribution is a tile inside How sure
   const sure = html.slice(html.indexOf('id="mcSure"'), html.indexOf('Revenue &amp; Costs'));
   assert.ok(sure.includes('id="mcHistChart"'), 'histogram inside How sure');
-  for (const id of ['mcStatus', 'mcSure', 'mcTiles', 'mcHistTile', 'mcHistChart', 'mcSureInfo', 'legBands', 'scgMcLbl'])
+  for (const id of ['mcStatus', 'mcSure', 'mcTiles', 'mcHistTile', 'mcHistChart', 'mcSureInfo', 'legBands'])
     assert.equal(count(id), 1, id);
-  for (let n = 1; n <= 5; n++) assert.equal(count('scr' + n + '_chance'), 1, 'scr' + n + '_chance');
   // settings sit in the Assumptions tile and rerun through recalc
   const assump = html.slice(html.indexOf('id="tile-assump-body"'), html.indexOf('class="assump-foot"'));
   for (const id of ['mcSims', 'mcBlock']) {

@@ -626,7 +626,9 @@ the rent that stops: it shows your **rent today**, entered once in the Housing t
 The Scenarios tab is one grid: labels once on the left, one column per scenario.
 Rows: the scenario **name**, the three **life events** (with partner, buy property,
 have a child, each an on/off switch per scenario), one switch row per **windfall**
-and per **pay change** set up as plans, per planned rent and move abroad (v8.17), and the **result** rows below.
+and per **pay change** set up as plans, per planned rent and move abroad (v8.17). Since v8.32 the
+Scenarios tab models life events only: what each scenario gives is shown once, on the
+**Results tiles** (table below).
 
 **Stop ages are automatic (v8.1).** There is no stop-age input: each scenario stops
 at its **earliest funded age**. `earliestStopAge()` in `js/ui/cards.js` projects
@@ -640,21 +642,29 @@ shown at 75. `withStopAges()` runs once in `recalc()` and Monte Carlo reuses tho
 scenarios (`state.lastScenarios`), so every view shows the same age. The old `s{n}_ret` values stay saved (hidden) for
 older builds.
 
+Results tile rows (v8.32; each row once, and only when it adds something):
+
 | Row | Meaning | Source |
 |---|---|---|
-| Earliest stop age | first funded age · its year | `earliestStopAge()` |
-| Margin when you stop | net worth at that age − FIRE number at that age | `computeCardMetrics()` (`portRet`, `fireTarget`) |
-| Money lasts | "to {life expectancy}+" or "runs out at {age}" | `computeCardMetrics().depletionYear` |
+| Chip | ✓ On Track / × Gap (fixed), ✓ Funded / × Short (%), ⚠ Missing input | `computeCardMetrics()` |
+| Stop age | earliest funded age · its year; "not by 75" in red | `earliestStopAge()` |
+| vs Plan | years ahead/behind the frozen plan (only with a plan) | `computeCardMetrics().vsPlan` |
+| FIRE Number (fixed) / Monthly income (%) | target, or income / budget at stop | `computeCardMetrics()` |
+| NW at stop + margin | net worth at that age, and its margin over the FIRE number | `computeCardMetrics()` (`portRet`, `fireTarget`) |
+| Home equity | value − loan left at stop (scenarios that buy) | `homeEquityAt()` |
+| Your FIRE (partner on) | your target / your net worth | `computeCardMetrics().two` |
+| ⚠ Underfunded | savings exhausted before the stop (only then) | `computeCardMetrics().infeasibleYear` |
+| Money lasts | "runs out at {age}", only when it does not reach life expectancy | `computeCardMetrics().depletionYear` |
+| Chance it lasts / Years on budget | Monte Carlo headline | `mcHeadlineHTML()` |
 
 A large margin usually means a cost that ends soon after an earlier age (a
 mortgage's last year, a child's last dependent year) kept that earlier age from
 being funded: in % mode the FIRE number prices the year-one budget as permanent.
 
-(The Household FIRE row was removed in v8.8.) Every cell comes from `scenarioGridResults()` in
-`js/ui/cards.js`, which only formats `computeCardMetrics()`: the grid and the
-Results tiles can never disagree. Rows have fixed heights, so switching anything
-never shifts the layout; on a phone the label column stays pinned and the scenario
-columns scroll sideways.
+(The Household FIRE row was removed in v8.8.) The tile figures come from
+`scenarioGridResults()` in `js/ui/cards.js`, which only formats `computeCardMetrics()`.
+Grid rows have fixed heights, so switching anything never shifts the layout; on a
+phone the label column stays pinned and the scenario columns scroll sideways.
 
 **Missing inputs never show as a number.** `js/checks.js` flags spending that was
 never entered: a partner scenario while both your own spending and the joint
@@ -1213,7 +1223,7 @@ default, except one that ended in the closed year or before); (3) overdue check-
 | D — With Partner | 42 | ✓ | ✗ | ✗ | Joint income, joint spending |
 | E — Full Picture | varies | ✓ | ✓ | ✓ | All add-ons enabled |
 
-You can rename scenarios and switch life events, windfalls and pay changes per scenario on the Scenarios grid; the stop age follows automatically.
+You can rename scenarios and switch life events, windfalls and pay changes per scenario on the Scenarios grid; the stop age follows automatically and shows on the Results tiles.
 
 ---
 
@@ -1309,7 +1319,7 @@ These deliberately separate **how often** you fall short from **how far**: a pla
 #### Where it shows (Results tab, v8.30)
 
 - **Portfolio Projection** — the solid line stays the deterministic plan (your own return assumptions, the same numbers as the tiles and the year-by-year table). Around it, the active scenario's Monte Carlo range of the same net-worth series: 25–75th percentile (darker) and 10–90th (light). The top of the light band is capped at 110% of the highest of the plan, the target and the 75th percentile so lucky late-life histories don't flatten the plan; the tooltip shows the exact ranges. The MC median is not drawn (it would disagree slightly with the table below).
-- **Scenario tiles and the Scenarios grid** — one headline per scenario: *Chance it lasts to {life expectancy}* (Fixed) or *Years on budget* (SWR), green ≥ 90%, amber 75–90%, red < 75%.
+- **Scenario tiles** — one headline per scenario: *Chance it lasts to {life expectancy}* (Fixed) or *Years on budget* (SWR), green ≥ 90%, amber 75–90%, red < 75%.
 - **How sure** — the four metric tiles above for the active scenario, plus the distribution tile below.
 - **Distribution tile** (inside How sure, v8.31) — Fixed: real ending net worth per history (the lowest bucket in red); SWR: each history's lifetime budget coverage, coloured green / amber / red around the 100% line. The (i) next to *How sure* explains what the numbers mean in the current mode. The SWR budget-coverage fan chart was removed in v8.31 as redundant with the range on the projection chart and the tiles.
 
