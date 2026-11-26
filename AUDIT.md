@@ -448,13 +448,13 @@ The owner's figures are not recorded here (rule 7).
 |---|---|---|---|
 | F1 | Money sold **before you stop** (purchase cash, years with pay below costs) paid no capital-gains tax | optimistic: net worth at the stop age too high by 1–6%, up to +1 year | **Fixed v8.24**: such sales pay tax on their gain part (`row.sold`, `row.taxPaid`) |
 | F2 | With the partner, the first retirement row's budget ≠ `yearOneBudget`: his share-income was 4% of the whole portfolio, including the set-aside | MC optimistic vs the card (2–7%) | **Fixed v8.24**: share-income = pension + draw on (portfolio − reserve) + costs that end; tested at the FIRE number |
-| F3 | The stricter % mode rule nets a later cost rise against a later pension; % mode cannot borrow from the future, so years in between can be short | optimistic (a few %) | **Open: owner decision** |
+| F3 | The stricter % mode rule nets a later cost rise against a later pension; % mode cannot borrow from the future, so years in between can be short | optimistic (a few %) | **Fixed v8.25 (owner: every year funded)**: a stop age is funded only if no retirement row is below its budget (`m.shortYear`) |
 | F4 | `swrIncome` (MC funding ratio, Explanation) counted 4% of the set-aside as available income | optimistic: MC ratio +10–17 points during loan/child years | **Fixed v8.24**: reserve schedule; draw on the rest only |
 | F5 | The set-aside used a flat tax gross-up (v8.5 rule not applied) | optimistic: 0.1–1% of the target | **Fixed v8.24**: `risingTaxMult` |
 | F6 | % mode FIRE number left out a home bought **after** the stop age | optimistic: up to ~10% of the target | **Fixed v8.24**: `purchasePV` in both % branches and in `tempPV` |
-| F7 | When she stops before her pension, the year-one rule prices that gap for life; the target jumps and funded is not monotone in the stop age | pessimistic, local | **Open: owner decision** |
-| F8 | Her pension is used gross while his are net | optimistic, small | **Open: owner decision** |
-| F9 | Purchase price: the engine reads it as the purchase-year price; the year-end rollover treats it as today's money (+inflation) | ambiguous | **Open: owner decision** |
+| F7 | When she stops before her pension, the year-one rule prices that gap for life; the target jumps and funded is not monotone in the stop age | pessimistic, local | **Resolved v8.25** by the every-year verdict: funded is monotone in the stop age for all golden households (tested) |
+| F8 | Her pension is used gross while his are net | optimistic, small | **Fixed v8.25 (owner: net)**: `partnerPensionCountry`, `pensionNet` |
+| F9 | Purchase price: the engine reads it as the purchase-year price; the year-end rollover treats it as today's money (+inflation) | ambiguous | **Fixed v8.25 (owner: today's money)**: `priceAtBuy` inflates it to the purchase year; a home you own keeps the price paid |
 | T1 | The year table hid her contribution and ownership charges, so its rows did not add up to net flow | display | **Fixed v8.24** |
 | T2 | The Explanation tab re-derived the budget (no ownership charges; a Simple-model leftover `ppenOff`) | display | **Fixed v8.24**: one `rowCost(row)` |
 | T3 | Card mixed portfolio definitions: chip and margin included cash, the verdict did not | display | **Fixed v8.24**: `m.portForTarget` (cash excluded in % mode) for verdict, chip and margin |
@@ -490,4 +490,4 @@ The owner's figures are not recorded here (rule 7).
 - **Monotonicity:** in money invested, spending and tax.
 - **Engines agree:** Monte Carlo with deterministic returns equals the projection; a frozen plan read against itself shows a zero gap.
 - **Coverage:** 32 production-shaped golden households: rent inside the joint account, a move abroad, charges, yearly items, her real share, two pensions plus one from another country, a rent move.
-- **Pending decisions:** F3 and F7 are recorded as `test.todo`.
+- **Owner decisions (v8.25):** every retirement year funded, stop age monotone, her pension net, price in today's money — all tested.

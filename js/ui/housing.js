@@ -1,15 +1,15 @@
 // Housing moves and where you live (v8.11). Two dynamic lists on My Situation:
 // planned rents (state.rentMoves) and planned moves abroad (state.residence),
 // plus the rent-today edit that keeps the joint transfers consistent.
-import { el, eur } from "../util.js?v=8.24";
-import { state, features } from "../state.js?v=8.24";
-import { recalc } from "../recalc.js?v=8.24";
-import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.24";
-import { NEW_PLAN_OFF } from "./plans.js?v=8.24";
-import { COUNTRY_TAX } from "../taxTable.js?v=8.24";
-import { countryNote, rentMoveNoEffect } from "../countries.js?v=8.24";
-import { mortgageSchedule, purchaseCostFor, mortgageBalanceAt, mortgagePaymentAt, homeEquityAt } from "../engine.js?v=8.24";
-import { undoOwner } from "./versions.js?v=8.24";
+import { el, eur } from "../util.js?v=8.25";
+import { state, features } from "../state.js?v=8.25";
+import { recalc } from "../recalc.js?v=8.25";
+import { buildYpick, fmtMoney, cleanMoney } from "./situation.js?v=8.25";
+import { NEW_PLAN_OFF } from "./plans.js?v=8.25";
+import { COUNTRY_TAX } from "../taxTable.js?v=8.25";
+import { countryNote, rentMoveNoEffect } from "../countries.js?v=8.25";
+import { mortgageSchedule, purchaseCostFor, mortgageBalanceAt, mortgagePaymentAt, homeEquityAt, priceAtBuy } from "../engine.js?v=8.25";
+import { undoOwner } from "./versions.js?v=8.25";
 
 const YNOW = new Date().getFullYear();
 const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
@@ -180,7 +180,9 @@ export function renderPropReadout(gl) {
     '<div>Buying costs ' + (gl.propTxCostPct * 100).toFixed(1) + '% <span class="tgt">' + (el('propTxCostPct')?.value === '' ? '(default of the country you live in that year)' : '(your value)') + '</span></div>'];
   // v8.21: your cash at purchase, from the engine's own purchase cost (with the partner: minus her share)
   const cash = purchaseCostFor(gl, { hasPartner: true });
-  lines.push('<div>Your cash needed: <b>' + eur(cash) + '</b> <span class="tgt">(' + (gl.propDownPct * 100).toFixed(0) + '% down payment + ' + (gl.propTxCostPct * 100).toFixed(1) +
+  // v8.25: the price is typed in today's money and paid inflated to the purchase year
+  if (gl.propBuyYear > gl.baseYear) lines.unshift('<div>Price in ' + gl.propBuyYear + ': <b>' + eur(priceAtBuy(gl)) + '</b> <span class="tgt">(' + eur(gl.propPrice) + ' in today\u2019s money, grown with inflation)</span></div>');
+  lines.push('<div>Your cash needed in ' + gl.propBuyYear + ': <b>' + eur(cash) + '</b> <span class="tgt">(' + (gl.propDownPct * 100).toFixed(0) + '% down payment + ' + (gl.propTxCostPct * 100).toFixed(1) +
     '% buying costs' + (gl.propHerShare > 0 ? ', minus her ' + Math.round(gl.propHerShare * 100) + '%; ' + eur(purchaseCostFor(gl, { hasPartner: false })) + ' if you buy alone' : '') + ')</span></div>');
   if (gl.propCharges > 0) lines.push('<div>Ownership charges + upkeep ' + eur(gl.propCharges) + '/month, for good <span class="tgt">(shared like the joint costs with her)</span></div>');
   host.innerHTML = lines.join('');

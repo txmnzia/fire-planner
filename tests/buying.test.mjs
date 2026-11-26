@@ -60,7 +60,8 @@ test('her share of the down payment + buying costs: only in scenarios with her',
 test('home equity: price growing with inflation minus the loan left', () => {
   const g = gl({ inflation: 0.02 });
   assert.equal(homeEquityAt(g, sc(), 2029), 0);
-  assert.ok(Math.abs(homeEquityAt(g, sc(), 2040) - (300000 * Math.pow(1.02, 10) - 120000)) < 1e-6);
+  // v8.25: the price is today's money, paid at 300k × 1.02^4 in 2030; the loan scales with it
+  assert.ok(Math.abs(homeEquityAt(g, sc(), 2040) - (300000 * Math.pow(1.02, 14) - 120000 * Math.pow(1.02, 4))) < 1e-6);
   assert.equal(homeEquityAt(g, sc({ hasProp: false }), 2040), 0);
 });
 

@@ -18,12 +18,28 @@ const flat = over => baseGl({ stockRet: 0, bondRet: 0, inflation: 0, gainFrac: 0
   cashReturn: 0, pensionAmt: 0, windfalls: [], invested: 300000, samPersonalNow: 1500, samPersonalRet: 1500, soloShared: 500, ...over });   // v8.23 one model: alone = 1,500 own + 500 if alone = 2,000
 const flatSc = over => baseSc({ income: 4000, ...over });
 
-test('hand-computed: earliest stop age is 35 + 13 = 48 (% mode)', () => {
-  const r = earliestStopAge(flatSc(), flat());
+// v8.25: in % mode funded means EVERY retirement year is on budget (owner's decision,
+// audit 2026-11 F3). With no returns a % draw shrinks the portfolio every year, so the
+// % mode hand cases use a 4% return: drawing 4% then keeps the portfolio level.
+// Start 300k, save 24k/yr at year end: P(n) = 300k × 1.04^n + 24k × (1.04^n − 1)/0.04
+// = 900k × 1.04^n − 600k. Funded when P(n) × 4% ≥ 24k, i.e. P(n) ≥ 600k:
+// 1.04^n ≥ 4/3 → n ≥ ln(4/3)/ln(1.04) = 7.33 → 8 years → 43 (P(8) = 631,712; P(7) = 584,339).
+const grow4 = over => flat({ stockRet: 0.04, bondRet: 0.04, ...over });
+const P = n => 900000 * Math.pow(1.04, n) - 600000;
+test('hand-computed: earliest stop age is 35 + 8 = 43 (% mode, 4% returns)', () => {
+  const r = earliestStopAge(flatSc(), grow4());
   assert.equal(r.found, true);
-  assert.equal(r.age, 48);
-  assert.equal(r.proj.values[13], 300000 + 24000 * 13);   // 612k at the start of the stop year
-  assert.equal(isFunded(flatSc({ retAge: 47 }), flat(), project(flatSc({ retAge: 47 }), flat())), false); // 588k
+  assert.equal(r.age, 43);
+  assert.ok(Math.abs(r.proj.values[8] - P(8)) < 1);
+  assert.equal(isFunded(flatSc({ retAge: 42 }), grow4(), project(flatSc({ retAge: 42 }), grow4())), false); // 584k
+});
+test('% mode with no returns: funded only once 4% still covers the budget in the LAST year (hand-computed)', () => {
+  // each retirement year draws 24k from a portfolio that does not grow; the last row
+  // (age 90) must still have 4% × portfolio ≥ 24k, i.e. ≥ 600k left:
+  // 300k + 24k(a − 35) − 24k(90 − a) ≥ 600k → 48k·a ≥ 3,300k → a ≥ 68.75 → 69
+  // (the year-one rule alone said 48)
+  const r = earliestStopAge(flatSc(), flat());
+  assert.equal(r.found, true); assert.equal(r.age, 69);
 });
 
 test('hand-computed: fixed mode on the same household', () => {
@@ -65,12 +81,13 @@ test('property, all 192 golden households: the age found is funded and the year 
   }
 });
 
-test('the grid shows the age and the margin = net worth at stop - FIRE number', () => {
-  const r = earliestStopAge(flatSc(), flat());
-  const g = scenarioGridResults(r.sc, flat(), r.proj, r);
-  assert.equal(g.stopAgeText, '48 · 2039');
-  assert.equal(g.margin, 612000 - r.proj.fireTarget);
-  assert.equal(g.marginText, '+' + fmtK(612000 - r.proj.fireTarget));
+test('the grid shows the age and the margin = invested at stop - FIRE number', () => {
+  const r = earliestStopAge(flatSc(), grow4());
+  const g = scenarioGridResults(r.sc, grow4(), r.proj, r);
+  assert.equal(g.stopAgeText, '43 · 2034');
+  assert.equal(r.proj.fireTarget, 600000);                  // 2,000 × 12 / 4%, no tax
+  assert.ok(Math.abs(g.margin - (P(8) - 600000)) < 1);      // +31,712
+  assert.equal(g.marginText, '+' + fmtK(g.margin));
 });
 
 test('withStopAges: a scenario with a missing input is not searched', () => {
@@ -123,20 +140,13 @@ test('v8.19 stricter rule: the FIRE number includes the later rise of your cost 
   assert.equal(f.laterRise, false); assert.equal(f.fireTarget, f.fireTargetAdj);
 });
 
-test('v8.19 stricter rule: a stop age is funded only when the portfolio reaches that number (hand-computed)', () => {
-  // she earns until 60 instead; you take home 6,000 → you save 6,000 − 3,000 = 3,000/month = 36,000 a year
-  // (while both work: your cost is your own 1,000 + the joint costs she does not pay; paysIn 0 → pro rata).
-  // FIRE number at any stop age before 60: 600,000 + 10 × 12,000 (60–69) + 20 × 12 × 2,000 × (0.5 − share70) ≈ 819,411.
-  // Year-one rule alone: funded at 44 (624,000 → 2,080/month ≥ 2,000). Stricter: 300,000 + 36,000 × n ≥ 819,411 → n = 15 → 50.
-  const g = flat2({ partnerRetAge: 60 }), s = baseSc({ income: 6000, hasPartner: true });
-  const r = earliestStopAge(s, g);
-  assert.equal(r.found, true); assert.equal(r.age, 50);
+test('v8.19 stricter rule: the FIRE number includes her later drop in share (hand-computed)', () => {
+  // she earns until 60: FIRE number at any stop age before 60 = 600,000 + 10 × 12,000 (60–69)
+  // + 20 × 12 × 2,000 × (0.5 − share70) ≈ 819,411 (no returns, so plain sums)
+  const g = flat2({ partnerRetAge: 60 });
   const at = a => project(baseSc({ income: 6000, hasPartner: true, retAge: a }), g);
   const c70 = 1000 + Math.sqrt(2e6), share70 = 1000 / (1000 + c70);
   assert.ok(Math.abs(at(44).fireTarget - (720000 + 20 * 12 * 2000 * (0.5 - share70))) <= 1);
   assert.equal(at(60).values[24], 300000 + 36000 * 24);    // 1,164,000 at 59 still working: the saving rate is as stated
-  assert.equal(at(50).values[15], 840000);                   // stop year 2041: ≥ 819,411
-  assert.equal(at(49).values[14], 804000);                   // one year earlier: short
-  assert.equal(isFunded(baseSc({ income: 6000, hasPartner: true, retAge: 49 }), g, at(49)), false);
   assert.equal(isFunded(baseSc({ income: 6000, hasPartner: true, retAge: 44 }), g, at(44)), false);   // year-one would say yes
 });

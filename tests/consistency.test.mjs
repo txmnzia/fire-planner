@@ -138,7 +138,7 @@ test('card: funded, the Your FIRE chip and the sign of the margin say the same t
     if (m.two) assert.equal(m.two.partialOk, funded, c.name);
     const margin = m.portForTarget - m.fireTarget, tol = m.fireTarget * 0.06;   // the card's draw uses start-of-year values (README)
     if (funded) assert.ok(margin >= -tol, `${c.name} funded but margin ${Math.round(margin)}`);
-    else if (!m.laterRise) assert.ok(margin <= tol, `${c.name} short but margin ${Math.round(margin)}`);
+    else if (!m.laterRise && m.shortYear == null) assert.ok(margin <= tol, `${c.name} short but margin ${Math.round(margin)}`);
   }
 });
 
@@ -197,5 +197,27 @@ test('the production branches are in the frozen households (rent in joint, moves
 });
 
 // Pending owner decisions (audit 2026-11 F3, F7): written down so they are not lost.
-test.todo('% mode: funded means no retirement year below its budget (F3: later cost rise vs later pension, pending decision)');
-test.todo('stop age is monotone: funded at a ⇒ funded at a + 1 (F7: her stop before her pension prices a gap for life, pending decision)');
+test('% mode: funded means no retirement year below its budget (owner decision, audit F3)', () => {
+  for (const c of CASES.filter(c => c.gl.wdMode === 'swr')) {
+    const r = earliestStopAge(c.sc, c.gl); if (!r.found) continue;
+    const i = r.proj.retYear - r.proj.years[0];
+    for (const row of r.proj.rows.slice(i)) assert.ok(!(row.swrTarget > 0) || row.swrIncome >= row.swrTarget * 0.999, `${c.name} ${row.yr}`);
+  }
+  // the a13 shape: a later cost rise before a later pension is short in between → not funded
+  const g = baseGl({ partnerModel: 'two', stockRet: 0.04, bondRet: 0.04, inflation: 0, gainFrac: 0, taxRate: 0, cash: 0, cashReturn: 0, windfalls: [],
+    invested: 600000, samPersonalNow: 1000, samPersonalRet: 1000, sharedNow: 2000, sharedRet: 2000, partnerPaysIn: 0, partnerInc: 2000,
+    partnerRetAge: 60, partnerPension: 1000, partnerPensionAge: 60, partnerAgeOff: 0, pensionAmt: 1500, pensionAge: 63, yearlyItems: 0, soloShared: 1400 });
+  const sc = baseSc({ income: 0, hasPartner: true, retAge: 50 }), p = project(sc, { ...g, currentAge: 50, baseYear: 2026 });
+  assert.equal(isFunded(sc, { ...g, currentAge: 50 }, p), false);
+});
+
+test('stop age is monotone: funded at a ⇒ funded at a + 1 (golden households)', () => {
+  for (const c of CASES.filter(c => c.gl.wdMode === 'swr')) {
+    let was = false;
+    for (let a = 38; a <= 70; a++) {
+      const sc = { ...c.sc, retAge: a }, f = isFunded(sc, c.gl, project(sc, c.gl));
+      if (was) assert.ok(f, `${c.name}: funded at ${a - 1} but not at ${a}`);
+      was = was || f;
+    }
+  }
+});

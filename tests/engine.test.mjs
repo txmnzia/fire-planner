@@ -53,12 +53,13 @@ test('annuityPV: matches closed-form ordinary growing annuity', () => {
 
 test('mortgageAnnual: zero rate amortises linearly', () => {
   const gl = makeGl({ propPrice: 300000, propDownPct: 0.2, propMortgageRate: 0, propMortgageTerm: 25 });
-  assert.equal(mortgageAnnual(gl), 240000 / 25);
+  // v8.25: price in today's money, bought in 2032 at 2% inflation → borrowed 240,000 × 1.02^6
+  assert.ok(Math.abs(mortgageAnnual(gl) - 240000 * Math.pow(1.02, 6) / 25) < 1e-6);
 });
 
 test('mortgageAnnual: standard annuity payment for 3.5% / 25y', () => {
   const gl = makeGl();
-  const principal = 300000 * 0.8, mr = 0.035 / 12, nm = 300;
+  const principal = 300000 * Math.pow(1.02, 6) * 0.8, mr = 0.035 / 12, nm = 300;   // price grown to 2032 (v8.25)
   const expected = principal * mr * Math.pow(1 + mr, nm) / (Math.pow(1 + mr, nm) - 1) * 12;
   assert.ok(Math.abs(mortgageAnnual(gl) - expected) < 1e-6);
 });

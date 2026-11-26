@@ -5,6 +5,20 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.25 Four audit decisions
+
+- **% mode: every retirement year funded.** A stop age counts as funded only if no year
+  of the deterministic projection falls below its budget (% mode cannot borrow from a
+  pension that starts later). The grid says "Short in <year>" when only a later year is
+  short. Side effect: the stop age is now monotone (audit F7 resolved).
+- **The purchase price is today's money**, paid grown with inflation to the purchase
+  year (house prices assumed to follow inflation, 0% real); a home you own keeps the
+  price paid. *Rejected:* "price in the purchase year".
+- **Her pension is used net** like yours (country deduction; her pension row has a
+  country, default Germany).
+- Germany's rate on equity-ETF gains stays 18.5% (26.375% × 70% after the 30% partial
+  exemption); church tax and the yearly allowance are not modelled.
+
 ## 2026-11-26 · v8.24 Audit fixes (fresh-eyes review)
 
 - **Every sale pays tax**, including before you stop (purchase cash, low-pay years).
@@ -15,8 +29,8 @@ old one, so the history stays readable. No personal figures here (CLAUDE.md rule
 - **Display:** the year table adds up (her contribution, ownership, the reserve); the
   Explanation tab uses one cost definition; the card's verdict, chip and margin share
   one basis (cash outside the FIRE number in % mode).
-- Effect on the owner's scenarios: C, D and E stop one year later (the untaxed sales
-  were optimistic); FIRE numbers +€8–33k. Open decisions: AUDIT.md 2026-11 F3, F7, F8, F9.
+- Direction: stop ages can only move later (the untaxed sales and the double-counted
+  reserve were optimistic). Open decisions: AUDIT.md 2026-11 F3, F7, F8, F9.
 
 ## 2026-11-26 · v8.23 The Simple model's code is gone
 
@@ -77,9 +91,8 @@ old one, so the history stays readable. No personal figures here (CLAUDE.md rule
 
 - **The plan uses net pensions** (the owner: "what ends up in my bank account, not
   considering income tax"). Typed gross as printed; Germany −12.4%, France −9.1% (health
-  and social charges). Income tax is still not deducted. *Effect on the owner's
-  scenarios:* stop ages unchanged (his pension starts after he stops, so the headline
-  target gives it no credit); the target that credits pensions rose by about €7–19k.
+  and social charges). Income tax is still not deducted. A pension that starts after
+  the stop age gets no credit in the headline target, so only the adjusted target moves.
 - **"+ Add a country"** under Germany and France: country, gross amount, start age,
   and the % taken off at payout (no preset outside Germany and France: empty = 0%).
   Same row layout as Germany and France; included in the year-end inflation rollover.

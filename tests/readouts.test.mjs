@@ -19,7 +19,7 @@ test('buying: your cash needed = price × (down payment + buying costs) × (1 �
   const gl = { partnerModel: 'two', propPrice: 400000, propDownPct: 0.2, propTxCostPct: 0.08, propHerShare: 0.1 };
   assert.ok(Math.abs(purchaseCostFor(gl, { hasPartner: true }) - 100800) < 1e-6);     // 400k × 28% = 112k, × 90%
   assert.ok(Math.abs(purchaseCostFor(gl, { hasPartner: false }) - 112000) < 1e-6);
-  assert.match(read('js/ui/housing.js'), /Your cash needed: <b>' \+ eur\(cash\)/);
+  assert.match(read('js/ui/housing.js'), /Your cash needed in ' \+ gl\.propBuyYear \+ ': <b>' \+ eur\(cash\)/);
 });
 
 test('partner: pro rata today = her take-home ÷ both take-homes', () => {

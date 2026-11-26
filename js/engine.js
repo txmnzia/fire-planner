@@ -32,8 +32,16 @@ function balanceAfter(P, rate, pay, months) {
 // The loan: payment while the rate is fixed (pay1, €/yr) and after it (pay2, at
 // propRateAfter on the balance left, same end date). Fixed for the whole loan
 // when propFixedYears is empty or ≥ the term, or no rate after is given.
+// The purchase price is typed in today's money (v8.25, owner's decision, audit
+// 2026-11 F9): the plan pays it inflated to the purchase year. A home you own keeps
+// the price you paid (a past fact, never re-inflated).
+export function priceAtBuy(gl) {
+  const p = gl.propPrice || 0;
+  if (gl.homeOwned) return p;
+  return p*Math.pow(1+(gl.inflation || 0), Math.max(0, (gl.propBuyYear || 0) - (gl.baseYear || 0)));
+}
 export function mortgageSchedule(gl) {
-  const P = (gl.propPrice || 0)*(1 - gl.propDownPct), n = (gl.propMortgageTerm || 0)*12;
+  const P = priceAtBuy(gl)*(1 - gl.propDownPct), n = (gl.propMortgageTerm || 0)*12;
   const p1 = annuityPay(P, gl.propMortgageRate, n);
   const F = gl.propFixedYears > 0 ? Math.min(n, Math.round(gl.propFixedYears*12)) : n;
   const r2 = gl.propRateAfter;
@@ -49,7 +57,7 @@ export function mortgagePaymentAt(gl, yr) {
 }
 // Loan left at the start of calendar year yr.
 export function mortgageBalanceAt(gl, yr) {
-  if (!(gl.propPrice > 0) || yr <= gl.propBuyYear) return yr === gl.propBuyYear ? (gl.propPrice || 0)*(1 - gl.propDownPct) : 0;
+  if (!(gl.propPrice > 0) || yr <= gl.propBuyYear) return yr === gl.propBuyYear ? priceAtBuy(gl)*(1 - gl.propDownPct) : 0;
   const s = mortgageSchedule(gl), P = s.principal, m = Math.min(gl.propMortgageTerm*12, (yr - gl.propBuyYear)*12);
   const F = s.fixedYears*12;
   if (m <= F) return balanceAfter(P, gl.propMortgageRate, s.pay1/12, m);
@@ -66,19 +74,19 @@ export function ownershipAnnual(gl, sc, yr) {
 // the portfolio you import, so the plan never charges it again.
 export function purchaseCostFor(gl, sc) {
   if (gl.homeOwned) return 0;
-  const all = (gl.propPrice || 0)*(gl.propDownPct + gl.propTxCostPct);
+  const all = priceAtBuy(gl)*(gl.propDownPct + gl.propTxCostPct);
   return sc.hasPartner ? all*(1 - (gl.propHerShare || 0)) : all;
 }
 // Your home equity at the start of yr (nominal): the price, growing with inflation
 // from the purchase year (no real price growth assumed), minus the loan left.
 export function homeEquityAt(gl, sc, yr) {
   if (!sc.hasProp || !(gl.propPrice > 0) || yr < gl.propBuyYear) return 0;
-  return gl.propPrice*Math.pow(1+gl.inflation, yr - gl.propBuyYear) - mortgageBalanceAt(gl, yr);
+  return priceAtBuy(gl)*Math.pow(1+gl.inflation, yr - gl.propBuyYear) - mortgageBalanceAt(gl, yr);
 }
 
 export function mortgageAnnual(gl) {
   if (!(gl.propPrice > 0) || !(gl.propMortgageTerm > 0)) return 0;
-  const principal = gl.propPrice*(1-gl.propDownPct);
+  const principal = priceAtBuy(gl)*(1-gl.propDownPct);
   const nm = gl.propMortgageTerm*12;
   if (!(gl.propMortgageRate > 0)) return principal/nm*12;
   const mr = gl.propMortgageRate/12;
@@ -582,7 +590,7 @@ export function computeFireTarget(fromAge, sc, gl, taxMult, opts) {
     // one-time purchase cost if property is bought during retirement
     if (gl.propBuyYear >= fromYear) {
       const nDelayPurch = gl.propBuyYear - fromYear;
-      const purchaseCost = gl.propPrice * (gl.propDownPct + gl.propTxCostPct);
+      const purchaseCost = priceAtBuy(gl) * (gl.propDownPct + gl.propTxCostPct);
       pv += (purchaseCost * taxMult) / Math.pow(1+rFrom, nDelayPurch);
     }
     // ongoing mortgage payments (flat, g=0) — active from max(propBuyYear, fromYear) to propBuyYear+mortgageTerm

@@ -132,3 +132,13 @@ test('v8.19 wiring: the form is gross, the engine gets net; saved and rolled ove
   assert.deepEqual(pensionReadoutRows({ de: 800, deAge: 67, fr: 0, frAge: 64 }, [{ country: 'PT', amt: 300, age: 66, ded: null }]).map(r => [r.country, r.net]),
     [['DE', 701], ['PT', 300]]);
 });
+
+test('v8.25: her pension is used net like yours (owner decision, audit 2026-11 F8)', async () => {
+  const { pensionNet } = await import('../js/pensions.js');
+  assert.ok(Math.abs(pensionNet('DE', 400) - 350.4) < 1e-9);     // 400 × (1 − 12.4%)
+  assert.equal(pensionNet('XX', 400), 400);                         // other country: as printed
+  const src = f => readFileSync(new URL('../' + f, import.meta.url), 'utf8');
+  assert.match(src('js/inputs.js'), /partnerPension:\s+pensionNet\(optStr\("partnerPensionCountry", "DE"\), numVal\("partnerPension",0\)\)/);
+  assert.match(src('js/sync.js'), /'partnerPensionCountry'/);
+  assert.match(src('index.html'), /<select id="partnerPensionCountry"/);
+});

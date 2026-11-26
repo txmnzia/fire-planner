@@ -1,9 +1,9 @@
-import { el, eur, fmtK } from "../util.js?v=8.24";
-import { scenarioIssues } from "../checks.js?v=8.24";
-import { state } from "../state.js?v=8.24";
-import { getScenarioName } from "../inputs.js?v=8.24";
-import { vsPlanFor } from "./planLine.js?v=8.24";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.24";
+import { el, eur, fmtK } from "../util.js?v=8.25";
+import { scenarioIssues } from "../checks.js?v=8.25";
+import { state } from "../state.js?v=8.25";
+import { getScenarioName } from "../inputs.js?v=8.25";
+import { vsPlanFor } from "./planLine.js?v=8.25";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.25";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -75,6 +75,13 @@ export function computeCardMetrics(sc, gl, proj) {
     // (cash is a reserve outside it), so every comparison with it leaves cash out
     m.portForTarget = portRet - cashAtRet;
     if (m.laterRise) m.incomeOk = m.incomeOk && m.portForTarget >= proj.fireTarget;
+    // v8.25 (owner's decision, audit 2026-11 F3): funded means EVERY retirement year
+    // is on budget, not only the first: % mode cannot borrow from a pension that
+    // starts later. First year where the draw + other income falls short of the
+    // budget (0.1% tolerance for rounding); null = none.
+    const short = proj.rows.findIndex((r, i) => i >= iRet && r.phase === 'ret' && r.swrTarget > 0 && r.swrIncome < r.swrTarget * 0.999);
+    m.shortYear = short >= 0 ? proj.rows[short].yr : null;
+    if (m.shortYear != null) m.incomeOk = false;
     if (m.two) { m.two.partialNW = m.portForTarget; m.two.partialOk = m.incomeOk; }
   } else {
     m.portForTarget = portRet;   // fixed mode: cash is spent like the rest
@@ -136,7 +143,7 @@ export function scenarioGridResults(sc, gl, proj, stop) {
   const gap = swr ? Math.max(0, m.targetMonthly - m.netMonthly) : Math.max(0, -m.surplus);
   const status = funded
     ? (swr ? '\u2713 Funded' : '\u2713 +' + fmtK(m.surplus))
-    : (swr ? '\u00d7 Short ' + fmtK(gap) + '/mo' : '\u00d7 Gap ' + fmtK(gap));
+    : (swr ? (gap > 0 ? '\u00d7 Short ' + fmtK(gap) + '/mo' : '\u00d7 Short in ' + m.shortYear) : '\u00d7 Gap ' + fmtK(gap));
   const depletionAge = m.depletionYear != null ? gl.currentAge + m.depletionYear - gl.baseYear : null;
   const stopFound = stop ? !!stop.found : true;
   const stopAgeText = sc.retAge + ' \u00b7 ' + m.retYear;

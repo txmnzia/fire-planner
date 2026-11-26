@@ -57,3 +57,20 @@ test('saved and synced; the grid hides the switch; Your home layout', () => {
   assert.match(read('js/ui/housing.js'), /'Your home '/);
   assert.match(read('js/checks.js'), /!gl\.homeOwned && !\(gl\.propRentSaved > 0\)/);
 });
+
+test('v8.25: the purchase price is in today\'s money, paid inflated to the purchase year (hand-computed)', async () => {
+  const { priceAtBuy, purchaseCostFor, mortgageSchedule, homeEquityAt } = await import('../js/engine.js');
+  const g = { propPrice: 300000, propBuyYear: 2032, baseYear: 2026, inflation: 0.02, propDownPct: 0.2, propTxCostPct: 0.08,
+    propMortgageRate: 0, propMortgageTerm: 25, partnerModel: 'two' };
+  const nominal = 300000 * Math.pow(1.02, 6);                  // 337,849 in 2032
+  assert.ok(Math.abs(priceAtBuy(g) - nominal) < 1e-6);
+  assert.ok(Math.abs(purchaseCostFor(g, {}) - nominal * 0.28) < 1e-6);               // 94,598
+  assert.ok(Math.abs(mortgageSchedule(g).principal - nominal * 0.8) < 1e-6);         // 270,279 borrowed
+  assert.ok(Math.abs(homeEquityAt(g, { hasProp: true }, 2032) - nominal * 0.2) < 1e-6);   // equity = down payment in the purchase year
+  // bought this year or in the past: no inflation; a home you own keeps the price paid
+  assert.equal(priceAtBuy({ ...g, propBuyYear: 2026 }), 300000);
+  assert.equal(priceAtBuy({ ...g, propBuyYear: 2020 }), 300000);
+  assert.equal(priceAtBuy({ ...g, homeOwned: true }), 300000);
+  // a year-end rollover (price +2%, today moves on) leaves the purchase-year price unchanged
+  assert.ok(Math.abs(priceAtBuy({ ...g, propPrice: 306000, baseYear: 2027 }) - nominal) < 1e-6);
+});

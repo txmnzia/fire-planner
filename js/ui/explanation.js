@@ -1,9 +1,9 @@
-import { el, eur } from "../util.js?v=8.24";
-import { state } from "../state.js?v=8.24";
-import { getScenarioName } from "../inputs.js?v=8.24";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, project, pensionMonthlyAt, pensionList, taxRateAt, scGl, rowCost } from "../engine.js?v=8.24";
-import { computeCardMetrics } from "./cards.js?v=8.24";
-import { FLOW_COLORS } from "./charts.js?v=8.24";
+import { el, eur } from "../util.js?v=8.25";
+import { state } from "../state.js?v=8.25";
+import { getScenarioName } from "../inputs.js?v=8.25";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, project, pensionMonthlyAt, pensionList, taxRateAt, scGl, rowCost, priceAtBuy } from "../engine.js?v=8.25";
+import { computeCardMetrics } from "./cards.js?v=8.25";
+import { FLOW_COLORS } from "./charts.js?v=8.25";
 
 // ── EXPLANATION TAB ──────────────────────────────────────────────────────────
 // "Your plan, explained": turns the selected scenario's projection into a
@@ -157,14 +157,14 @@ export function renderExplanation(projs, gl, scenarios) {
     const base = project({ ...sc, hasProp: false }, gl);
     const iRet = Math.min(Math.max(0, retIdx), lastIdx);
     const dFire = proj.fireTarget - base.fireTarget, dNw = (vals[iRet] || 0) - (base.values[iRet] || 0);
-    const upfront = Math.round(gl.propPrice * (gl.propDownPct + gl.propTxCostPct));
+    const upfront = Math.round(priceAtBuy(gl) * (gl.propDownPct + gl.propTxCostPct));
     const mortMo = Math.round(((rows.find(r => r.mortgagePayment > 0) || {}).mortgagePayment || 0) / 12);
     const rws = row("Upfront (deposit + fees)", eur(upfront) + ' <span class="tgt">' + (past ? "already paid" : gl.propBuyYear) + "</span>") +
       row("Mortgage", eur(mortMo) + '/mo <span class="tgt">for ' + gl.propMortgageTerm + "y</span>") +
       row("Rent you stop paying", "&minus;" + eur(gl.propRentSaved) + '/mo <span class="tgt">today\'s €</span>', "ok") +
       row("Effect on FIRE number", signed(dFire), dFire > 0 ? "err" : dFire < 0 ? "ok" : "") +
       row("Net worth at retirement", signed(dNw) + ' <span class="tgt">equity not counted</span>');
-    addEv(pIdx, "&#x1F3E0;", past ? "You already own your home" : "You buy a " + eur(gl.propPrice) + " home",
+    addEv(pIdx, "&#x1F3E0;", past ? "You already own your home" : "You buy a " + eur(Math.round(priceAtBuy(gl))) + " home",
       "The planner tracks only the <strong>cash flows</strong> — deposit &amp; fees up front, the mortgage, the rent you stop paying — not the home's resale value. So the net-worth line dips at purchase and the equity you build isn't shown.", "", rws);
     const pfIdx = pIdx + gl.propMortgageTerm;
     if (pfIdx > 0 && pfIdx <= lastIdx) {

@@ -1,8 +1,8 @@
-import { el, numVal, optVal } from "./util.js?v=8.24";
-import { state, features } from "./state.js?v=8.24";
-import { effectiveFeatures } from "./checks.js?v=8.24";
-import { payChangesFor } from "./payChanges.js?v=8.24";
-import { pensionNet, pensionsMoreNet } from "./pensions.js?v=8.24";
+import { el, numVal, optVal } from "./util.js?v=8.25";
+import { state, features } from "./state.js?v=8.25";
+import { effectiveFeatures } from "./checks.js?v=8.25";
+import { payChangesFor } from "./payChanges.js?v=8.25";
+import { pensionNet, pensionsMoreNet } from "./pensions.js?v=8.25";
 
 
 // Optional money field: null when empty (unlike optVal, 0 is a valid value).
@@ -12,6 +12,7 @@ function optNum(id) {
 }
 
 // ── GLOBALS ────────────────────────────────────────────────────────────────
+const optStr = (id, d) => { const e = el(id); return e && e.value ? e.value : d; };
 export function currentAgeFromDOB() {
   const s = el("dob").value; if (!s) return 30;
   const dob = new Date(s), ref = new Date(numVal("baseYear",2026),0,1);
@@ -28,16 +29,16 @@ export function getWindfalls() {
     .filter(w => !isNaN(w.yr) && !isNaN(w.amt) && w.amt > 0);
 }
 
-export { COUNTRY_TAX } from "./taxTable.js?v=8.24";
-import { COUNTRY_TAX } from "./taxTable.js?v=8.24";
+export { COUNTRY_TAX } from "./taxTable.js?v=8.25";
+import { COUNTRY_TAX } from "./taxTable.js?v=8.25";
 // Legacy saved states stored the numeric rate as the select value; map to a country code.
 export const LEGACY_RATE_TO_CODE = { "30":"FR", "28":"PT", "26":"ES", "32":"NL", "0":"BE", "33":"IE",
                               "15":"GR", "10":"HR", "19":"PL", "25":"SI", "20":"EE", "27":"DK" };
 
 // Living alone costs about 70% of what two people spend: SOLO_SHARE lives in the
 // engine since v8.11 (one constant); re-exported for older importers.
-import { SOLO_SHARE, residenceAt } from "./engine.js?v=8.24";
-import { buildResidence, normaliseRentMoves, buyCostPreset, plansForScenario } from "./countries.js?v=8.24";
+import { SOLO_SHARE, residenceAt } from "./engine.js?v=8.25";
+import { buildResidence, normaliseRentMoves, buyCostPreset, plansForScenario } from "./countries.js?v=8.25";
 export { SOLO_SHARE };
 // v8.7: yearly items (€/yr, shared) count in the default too, as a monthly amount.
 export function soloSharedFrom(entered, sharedNow, yearlyItems) {
@@ -90,7 +91,8 @@ export function getGlobals() {
     // global partner config
     partnerInc:        numVal("partnerInc",0),
     partnerRetAge:     numVal("partnerRetAge",45),
-    partnerPension:    numVal("partnerPension",0),
+    // v8.25 (owner's decision, audit 2026-11 F8): her pension net like yours
+    partnerPension:    pensionNet(optStr("partnerPensionCountry", "DE"), numVal("partnerPension",0)),
     partnerPensionAge: numVal("partnerPensionAge",67),
     partnerAgeOff,
     // v8.8: one partner model. Spending = four numbers off your accounts; the

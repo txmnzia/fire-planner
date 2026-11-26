@@ -32,12 +32,12 @@ test('grid results: texts follow the numbers', () => {
     assert.equal(r.status.startsWith('✓'), r.funded, c.name + ' status symbol');
     if (c.gl.wdMode === 'swr') {
       const gap = m.targetMonthly - m.netMonthly;            // monthly shortfall, hand rule
-      assert.equal(r.status, r.funded ? '✓ Funded' : '× Short ' + fmtK(gap) + '/mo');
+      assert.equal(r.status, r.funded ? '✓ Funded' : gap > 0 ? '× Short ' + fmtK(gap) + '/mo' : '× Short in ' + m.shortYear);
     } else {
       assert.equal(r.status, r.funded ? '✓ +' + fmtK(m.surplus) : '× Gap ' + fmtK(-m.surplus));
     }
     if (r.funded) assert.equal(r.gap, 0, c.name + ' funded means no gap');
-    else assert.ok(r.gap > 0, c.name + ' short means a positive gap');
+    else assert.ok(r.gap > 0 || m.shortYear != null, c.name + ' short means a positive gap or a later short year');
   }
 });
 

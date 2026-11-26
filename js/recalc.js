@@ -1,21 +1,21 @@
-import { el, eur, numVal } from "./util.js?v=8.24";
-import { state } from "./state.js?v=8.24";
-import { getGlobals, getScenario } from "./inputs.js?v=8.24";
-import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.24";
-import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.24";
-import { renderTable } from "./ui/table.js?v=8.24";
-import { renderExplanation } from "./ui/explanation.js?v=8.24";
-import { updateLabels } from "./ui/controls.js?v=8.24";
-import { markMcStale } from "./ui/mcTab.js?v=8.24";
-import { scheduleSave } from "./sync.js?v=8.24";
-import { renderIssues } from "./ui/issues.js?v=8.24";
-import { renderPlans } from "./ui/plans.js?v=8.24";
-import { renderSpendReadout } from "./ui/spending.js?v=8.24";
-import { renderAssumptions } from "./ui/situation.js?v=8.24";
-import { renderCheckin } from "./ui/ibkr.js?v=8.24";
-import { renderResNotes, renderPropReadout } from "./ui/housing.js?v=8.24";
-import { renderUpdatePanel } from "./ui/versions.js?v=8.24";
-import { renderTiles } from "./ui/tiles.js?v=8.24";
+import { el, eur, numVal } from "./util.js?v=8.25";
+import { state } from "./state.js?v=8.25";
+import { getGlobals, getScenario } from "./inputs.js?v=8.25";
+import { renderScenarioGrid, renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.25";
+import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.25";
+import { renderTable } from "./ui/table.js?v=8.25";
+import { renderExplanation } from "./ui/explanation.js?v=8.25";
+import { updateLabels } from "./ui/controls.js?v=8.25";
+import { markMcStale } from "./ui/mcTab.js?v=8.25";
+import { scheduleSave } from "./sync.js?v=8.25";
+import { renderIssues } from "./ui/issues.js?v=8.25";
+import { renderPlans } from "./ui/plans.js?v=8.25";
+import { renderSpendReadout } from "./ui/spending.js?v=8.25";
+import { renderAssumptions } from "./ui/situation.js?v=8.25";
+import { renderCheckin } from "./ui/ibkr.js?v=8.25";
+import { renderResNotes, renderPropReadout } from "./ui/housing.js?v=8.25";
+import { renderUpdatePanel } from "./ui/versions.js?v=8.25";
+import { renderTiles } from "./ui/tiles.js?v=8.25";
 
 // ── RECALC ──────────────────────────────────────────────────────────────────
 export function recalc() {

@@ -148,7 +148,8 @@ first entry).
 | Her take-home / month | `partnerInc` | — (0) | EUR/month | Sets her share of shared costs once one of you stops working (or your pay changes). Never added to your income |
 | Age she stops working | `partnerRetAge` | 45 | years | Her age; her salary stops then |
 | Her year of birth | `partnerBirthYear` | — (same as you) | year | Optional; shifts when her stop and pension ages are reached |
-| Her pension / month | `partnerPension` | — (0) | EUR/month | From her pension age |
+| Her pension / month | `partnerPension` | — (0) | EUR/month | Gross as printed, from her pension age; used net of its country's charges like yours (v8.25) |
+| Her pension country | `partnerPensionCountry` | DE | code | DE −12.4%, FR −9.1%, XX = other, as printed (v8.25) |
 | Her pension age | `partnerPensionAge` | 67 | years | |
 
 Removed in v8.8 (still carried in saved payloads, never read): `spendNow`, `spendRet`,
@@ -495,6 +496,20 @@ regime. Verify the rate for your own situation and asset type.
 
 ---
 
+### Funded means every year (% mode, v8.25)
+
+A stop age is funded in % mode when the card's first-year income covers the first-year
+budget **and** no later retirement year of the deterministic projection falls short:
+`swrIncome ≥ swrTarget` (0.1% rounding tolerance) for every row from the stop year on
+(`computeCardMetrics`: `m.shortYear`; audit 2026-11 F3). With no returns a % draw
+shrinks the portfolio every year:
+
+```
+e.g. 0% returns, 2,000/month, start 300k, saving 24k/yr: funded at a when the last year
+(age 90) still has 4% × portfolio ≥ 24k: 300k + 24k(a − 35) − 24k(90 − a) ≥ 600k → a = 69
+(the first-year rule alone said 48). With 4% returns: 900k × 1.04^n − 600k ≥ 600k → 43.
+```
+
 ### The reserve for costs that end (% mode, v8.24)
 
 The FIRE number sets aside, at present value, the costs that end (child costs, the
@@ -838,6 +853,18 @@ In **SWR mode**, child costs are added to the monthly **target** shown on the sc
 ---
 
 ## Property Model
+
+**Price (v8.25):** typed in today's money; the plan pays it grown with inflation to the
+purchase year (`priceAtBuy`: price × (1 + inflation)^(buy year − plan year)), and the
+loan, the cash and the equity all start from that figure. House prices are assumed to
+follow inflation (0% real). A home you own keeps the price paid. The year-end rollover
+raises a planned price with the other today's-money amounts, so the purchase-year price
+does not move:
+
+```
+e.g. 300,000 today, bought in 2032 from 2026 at 2%: 300,000 × 1.02^6 = 337,849
+     cash at 20% + 8% = 94,598; loan 270,279
+```
 
 When you toggle **"With Property"** for a scenario, three cash flows are modeled:
 

@@ -2,11 +2,11 @@
 // (plans). A tile shows a one-line summary and opens in place; one open tile per
 // lane. The fields inside are the same inputs as before (same ids), so saving,
 // sync and the engine are untouched. The impact panel sits beside the lanes.
-import { ownerFigures } from "./housing.js?v=8.24";
-import { el, eur } from "../util.js?v=8.24";
-import { state } from "../state.js?v=8.24";
-import { refreshedText } from "./spending.js?v=8.24";
-import { plansSetUp } from "../checks.js?v=8.24";
+import { ownerFigures } from "./housing.js?v=8.25";
+import { el, eur } from "../util.js?v=8.25";
+import { state } from "../state.js?v=8.25";
+import { refreshedText } from "./spending.js?v=8.25";
+import { plansSetUp } from "../checks.js?v=8.25";
 
 const OPEN_KEY = 'fire_open_tiles';
 const k = v => '€' + (v >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : v >= 1e4 ? Math.round(v / 1000) + 'k' : Math.round(v).toLocaleString('en-GB'));
@@ -70,7 +70,7 @@ export function renderTiles(gl) {
   const sel = el('retCountry'), ctry = sel ? (sel.options[sel.selectedIndex] || {}).text || '' : '';
   put('tile-where', ctry.replace(/\s+[\d.]+%$/, '').trim() + ' · ' + Math.round(gl.taxRate * 1000) / 10 + '% on gains', '');
   put('tile-you', 'age ' + gl.currentAge + ' · plan until ' + gl.lifeExp, '');
-  put('tile-partner', 'her take-home ' + k(gl.partnerInc) + '/month · stops at ' + gl.partnerRetAge + (gl.partnerPension > 0 ? ' · pension ' + k(gl.partnerPension) + ' from ' + gl.partnerPensionAge : ''), '');
+  put('tile-partner', 'her take-home ' + k(gl.partnerInc) + '/month · stops at ' + gl.partnerRetAge + (gl.partnerPension > 0 ? ' · pension ' + k(gl.partnerPension) + ' net from ' + gl.partnerPensionAge : ''), '');
   put('tile-assump', 'stocks ' + (gl.stockRet * 100).toFixed(1).replace('.0', '') + '% · bonds ' + (gl.bondRet * 100).toFixed(1).replace('.0', '') + '% · inflation ' + (gl.inflation * 100).toFixed(1).replace('.0', '') + '% · ' + (gl.wdMode === 'swr' ? 'draw ' + (gl.swr * 100).toFixed(1).replace('.0', '') + '%' : 'fixed amount'), '');
 
   const up = plansSetUp(gl);
