@@ -62,7 +62,10 @@ export function ownershipAnnual(gl, sc, yr) {
   return gl.propCharges*12*Math.pow(1+gl.inflation, yr - gl.baseYear);
 }
 // Your part of the down payment + buying costs: with your partner she pays her share.
+// v8.22: once the purchase is confirmed (gl.homeOwned) the cash has already left
+// the portfolio you import, so the plan never charges it again.
 export function purchaseCostFor(gl, sc) {
+  if (gl.homeOwned) return 0;
   const all = (gl.propPrice || 0)*(gl.propDownPct + gl.propTxCostPct);
   return isTwoPerson(gl) && sc.hasPartner ? all*(1 - (gl.propHerShare || 0)) : all;
 }

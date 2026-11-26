@@ -26,7 +26,8 @@ export const TODAY_MONEY = [
 // fields: the saved field values (strings); closingYear: the year being closed;
 // inflation: decimal. Returns the proposed changes [{id, label, from, to, checked}].
 // more: pensions from other countries (v8.19), [{country, amt}] → ids 'pm:<index>'.
-export function yearEndChanges(fields, closingYear, inflation, more) {
+// owned (v8.22): the price of a home you own is a past fact, never raised.
+export function yearEndChanges(fields, closingYear, inflation, more, owned) {
   const refreshed = stamp => stamp && /^\d{4}-/.test(fields[stamp] || '') && +fields[stamp].slice(0, 4) >= closingYear;
   const pm = (more || []).map((p, i) => ({ p, i })).filter(({ p }) => p.amt > 0).map(({ p, i }) => {
     const r = refreshed('pensionUpdated');
@@ -34,7 +35,7 @@ export function yearEndChanges(fields, closingYear, inflation, more) {
              why: r ? 'refreshed in ' + closingYear : 'not refreshed in ' + closingYear };
   });
   return [...TODAY_MONEY
-    .filter(f => fields[f.id] !== undefined && fields[f.id] !== '' && +fields[f.id] > 0)
+    .filter(f => fields[f.id] !== undefined && fields[f.id] !== '' && +fields[f.id] > 0 && !(owned && f.id === 'propPrice'))
     .map(f => {
       const from = +fields[f.id];
       return { id: f.id, label: f.label, from, to: Math.round(from * (1 + inflation)),

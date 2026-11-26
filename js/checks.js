@@ -28,7 +28,7 @@ export function scenarioIssues(sc, gl) {
   const out = spendingIssues(sc, gl);
   // Buying without today's rent: the mortgage is added on top of a rent that
   // never stops. Cautious, so the numbers still show; the banner names it.
-  if (sc.hasProp && !(gl.propRentSaved > 0)) out.push(ISSUES.rentNow);
+  if (sc.hasProp && !gl.homeOwned && !(gl.propRentSaved > 0)) out.push(ISSUES.rentNow);   // v8.22: an owner pays no rent
   if (sc.hasProp && !(gl.propCharges > 0)) out.push(ISSUES.ownCharges);
   return out;
 }
@@ -53,7 +53,8 @@ export function plansSetUp(gl) {
 }
 export function effectiveFeatures(feat, gl) {
   const up = plansSetUp(gl);
-  return { partner: !!feat.partner, prop: !!feat.prop && up.prop, child: !!feat.child && up.child };
+  // v8.22: a confirmed purchase is a fact: on in every scenario
+  return { partner: !!feat.partner, prop: (!!feat.prop || !!gl.homeOwned) && up.prop, child: !!feat.child && up.child };
 }
 
 // Every distinct issue across the scenarios, for the banner.

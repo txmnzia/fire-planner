@@ -2,20 +2,20 @@
 // version and what it does to the five scenarios, Save update / Undo all, the
 // update log (compare, restore), the first-run review and "Did this happen?".
 // Edits still autosave as before; a version is a dated copy you can go back to.
-import { activePlan } from "./planLine.js?v=8.21";
-import { el, eur } from "../util.js?v=8.21";
-import { state, features } from "../state.js?v=8.21";
-import { recalc } from "../recalc.js?v=8.21";
-import { collectState, applyState } from "../sync.js?v=8.21";
-import { getScenarioName } from "../inputs.js?v=8.21";
+import { activePlan } from "./planLine.js?v=8.22";
+import { el, eur } from "../util.js?v=8.22";
+import { state, features } from "../state.js?v=8.22";
+import { recalc } from "../recalc.js?v=8.22";
+import { collectState, applyState } from "../sync.js?v=8.22";
+import { getScenarioName } from "../inputs.js?v=8.22";
 import { snapshotOf, resultsOf, diffFields, diffLists, changeCount, impactLines, impactRows, addVersion,
-         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.21";
-import { rentShift } from "./housing.js?v=8.21";
-import { updateToggleUI } from "./controls.js?v=8.21";
-import { revealField } from "./tiles.js?v=8.21";
-import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.21";
-import { renderNwHistory } from "./nwHistory.js?v=8.21";
-import { refreshedText } from "./spending.js?v=8.21";
+         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.22";
+import { rentShift } from "./housing.js?v=8.22";
+import { updateToggleUI } from "./controls.js?v=8.22";
+import { revealField } from "./tiles.js?v=8.22";
+import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.22";
+import { renderNwHistory } from "./nwHistory.js?v=8.22";
+import { refreshedText } from "./spending.js?v=8.22";
 
 const fmtDay = ts => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -83,6 +83,35 @@ export function ensureFirstVersion() {
   }
 }
 
+// ── Your home (v8.22) ───────────────────────────────────────────────────────
+// Confirming the purchase makes it a fact: on in every scenario, its cash never
+// charged again (it already left the portfolio), and no more rent: rent today
+// goes to 0 and the joint transfers drop by it, split like today (as for a move).
+// From then on the joint transfers are kept WITHOUT the loan and home charges:
+// the plan adds those itself, split like the joint costs.
+export function becomeOwner(propBefore) {
+  const rent = parseFloat(el("propRentSaved").value) || 0;
+  const s = rentShift(rent, 0, parseFloat(el("samPaysIn").value) || 0, parseFloat(el("partnerPaysIn").value) || 0);
+  if (s) { setMoney("samPaysIn", Math.max(0, s.you)); setMoney("partnerPaysIn", Math.max(0, s.she)); }
+  setMoney("propRentSaved", 0);
+  state.home = { since: parseInt(el("propBuyYear").value) || new Date().getFullYear(), rentBefore: rent, propBefore: propBefore || [] };
+}
+// Back to a plan (a confirmation made by mistake): rent and transfers come back.
+export function undoOwner() {
+  const h = state.home; if (!h) return;
+  if (h.rentBefore > 0) {
+    const you = parseFloat(el("samPaysIn").value) || 0, she = parseFloat(el("partnerPaysIn").value) || 0, j = you + she;
+    const her = j > 0 ? she / j : 0;
+    setMoney("samPaysIn", Math.round(you + h.rentBefore * (1 - her))); setMoney("partnerPaysIn", Math.round(she + h.rentBefore * her));
+    setMoney("propRentSaved", h.rentBefore);
+  }
+  // the switches go back to the scenarios that had the plan on before
+  if (Array.isArray(h.propBefore)) for (let s = 1; s <= 5; s++) features[s].prop = h.propBefore.includes(s);
+  state.home = null;
+  updateToggleUI && updateToggleUI();
+  recalc();
+}
+
 // ── "Did this happen?" answers ──────────────────────────────────────────────
 function setMoney(id, v) { const h = el(id), d = el(id + "_disp"); if (!h) return; h.value = String(v); if (d && d._paintCur) d._paintCur(); }
 export function answerPrompt(key, yes) {
@@ -103,7 +132,7 @@ export function answerPrompt(key, yes) {
       state.residence = rebaseResidence(state.residence, i);
     } else p.from = y + 1;
   } else if (kind === "buy") {
-    if (yes) { for (let s = 1; s <= 5; s++) features[s].prop = true; }
+    if (yes) { const before = [1, 2, 3, 4, 5].filter(s => features[s].prop); for (let s = 1; s <= 5; s++) features[s].prop = true; becomeOwner(before); }
     else { const h = el("propBuyYear"); h.value = String(y + 1); }
   } else if (kind === "child") {
     if (yes) { for (let s = 1; s <= 5; s++) features[s].child = true; }
@@ -123,7 +152,7 @@ export function answerPrompt(key, yes) {
 function yearEndHtml(gl) {
   const closing = gl.baseYear;
   const fields = collectState().fields;
-  const ch = yearEndChanges(fields, closing, gl.inflation, state.pensionsMore);
+  const ch = yearEndChanges(fields, closing, gl.inflation, state.pensionsMore, !!state.home);
   const nw = Math.round((state.ibkrTotal || 0) + (gl.cash || 0));
   const overdue = [["Portfolio", state.ibkrAsOf, 92], ["Spending", fields.spendUpdated, 183], ["Pensions", fields.pensionUpdated, 365]]
     .filter(([, d, days]) => !d || refreshedText(d, new Date(), days).stale).map(([n]) => n);
@@ -141,7 +170,7 @@ export function applyYearEnd() {
   const closing = gl.baseYear, fields = collectState().fields;
   const nw = parseFloat(String(el("yeNw")?.value || "").replace(/[^\d.]/g, ""));
   const picked = new Set([...document.querySelectorAll("[data-ye]")].filter(c => c.checked).map(c => c.dataset.ye));
-  for (const c of yearEndChanges(fields, closing, gl.inflation, state.pensionsMore)) if (picked.has(c.id)) {
+  for (const c of yearEndChanges(fields, closing, gl.inflation, state.pensionsMore, !!state.home)) if (picked.has(c.id)) {
     if (c.id.startsWith('pm:')) { const p = state.pensionsMore[+c.id.slice(3)]; if (p) p.amt = c.to; }
     else setMoney(c.id, c.to);
   }

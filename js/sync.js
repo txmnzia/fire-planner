@@ -1,16 +1,16 @@
-import { el } from "./util.js?v=8.21";
-import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.21";
-import { state, features } from "./state.js?v=8.21";
-import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.21";
-import { recalc } from "./recalc.js?v=8.21";
-import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.21";
-import { renderNwHistory } from "./ui/nwHistory.js?v=8.21";
-import { refreshSituationControls } from "./ui/situation.js?v=8.21";
-import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.21";
-import { db } from "./db.js?v=8.21";
-import { migrateSpending } from "./spendMigration.js?v=8.21";
-import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.21";
-import { normalisePensionsMore } from "./pensions.js?v=8.21";
+import { el } from "./util.js?v=8.22";
+import { normalisePayChanges, migrateFromFields } from "./payChanges.js?v=8.22";
+import { state, features } from "./state.js?v=8.22";
+import { LEGACY_RATE_TO_CODE } from "./inputs.js?v=8.22";
+import { recalc } from "./recalc.js?v=8.22";
+import { renderHoldings, renderCheckin } from "./ui/ibkr.js?v=8.22";
+import { renderNwHistory } from "./ui/nwHistory.js?v=8.22";
+import { refreshSituationControls } from "./ui/situation.js?v=8.22";
+import { updateAge, onWdMode, updateToggleUI } from "./ui/controls.js?v=8.22";
+import { db } from "./db.js?v=8.22";
+import { migrateSpending } from "./spendMigration.js?v=8.22";
+import { normaliseRentMoves, normaliseResidence } from "./countries.js?v=8.22";
+import { normalisePensionsMore } from "./pensions.js?v=8.22";
 
 // ── STATE + SYNC ────────────────────────────────────────────────────────────
 const SYNC_FIELDS = [
@@ -71,6 +71,7 @@ export function collectState() {
     rentMoves: state.rentMoves,
     pensionsMore: state.pensionsMore,
     planId: state.planId,
+    home: state.home,
     residence: state.residence,
     versions: state.versions,
     review: state.review,
@@ -154,6 +155,7 @@ function applyStateInner(data) {
   state.rentMoves = normaliseRentMoves(data.rentMoves);
   state.pensionsMore = normalisePensionsMore(data.pensionsMore);   // v8.19
   state.planId = typeof data.planId === 'string' ? data.planId : null;   // v8.20
+  state.home = data.home && typeof data.home === 'object' ? { since: +data.home.since || null, rentBefore: +data.home.rentBefore || 0, propBefore: Array.isArray(data.home.propBefore) ? data.home.propBefore.map(Number).filter(n => n >= 1 && n <= 5) : [] } : null;   // v8.22
   state.residence = normaliseResidence(data.residence);
   renderNwHistory();
   refreshSituationControls();

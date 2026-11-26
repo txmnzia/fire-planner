@@ -1,8 +1,8 @@
-import { el, numVal, optVal } from "./util.js?v=8.21";
-import { state, features } from "./state.js?v=8.21";
-import { effectiveFeatures } from "./checks.js?v=8.21";
-import { payChangesFor } from "./payChanges.js?v=8.21";
-import { pensionNet, pensionsMoreNet } from "./pensions.js?v=8.21";
+import { el, numVal, optVal } from "./util.js?v=8.22";
+import { state, features } from "./state.js?v=8.22";
+import { effectiveFeatures } from "./checks.js?v=8.22";
+import { payChangesFor } from "./payChanges.js?v=8.22";
+import { pensionNet, pensionsMoreNet } from "./pensions.js?v=8.22";
 
 
 // Optional money field: null when empty (unlike optVal, 0 is a valid value).
@@ -28,16 +28,16 @@ export function getWindfalls() {
     .filter(w => !isNaN(w.yr) && !isNaN(w.amt) && w.amt > 0);
 }
 
-export { COUNTRY_TAX } from "./taxTable.js?v=8.21";
-import { COUNTRY_TAX } from "./taxTable.js?v=8.21";
+export { COUNTRY_TAX } from "./taxTable.js?v=8.22";
+import { COUNTRY_TAX } from "./taxTable.js?v=8.22";
 // Legacy saved states stored the numeric rate as the select value; map to a country code.
 export const LEGACY_RATE_TO_CODE = { "30":"FR", "28":"PT", "26":"ES", "32":"NL", "0":"BE", "33":"IE",
                               "15":"GR", "10":"HR", "19":"PL", "25":"SI", "20":"EE", "27":"DK" };
 
 // Living alone costs about 70% of what two people spend: SOLO_SHARE lives in the
 // engine since v8.11 (one constant); re-exported for older importers.
-import { SOLO_SHARE, residenceAt } from "./engine.js?v=8.21";
-import { buildResidence, normaliseRentMoves, buyCostPreset, plansForScenario } from "./countries.js?v=8.21";
+import { SOLO_SHARE, residenceAt } from "./engine.js?v=8.22";
+import { buildResidence, normaliseRentMoves, buyCostPreset, plansForScenario } from "./countries.js?v=8.22";
 export { SOLO_SHARE };
 // v8.7: yearly items (€/yr, shared) count in the default too, as a monthly amount.
 export function soloSharedFrom(entered, sharedNow, yearlyItems) {
@@ -125,6 +125,7 @@ export function getGlobals() {
     propFixedYears:   optNum("propFixedYears"),
     propRateAfter:    optNum("propRateAfter") == null ? null : optNum("propRateAfter")/100,
     propCharges:      numVal("propCharges",0),
+    homeOwned:        !!state.home,   // v8.22: purchase confirmed ("Your home")
     propHerShare:     Math.max(0, Math.min(1, numVal("propHerShare",0)/100)),
     propMortgageRate: numVal("propMortgageRate",3.5)/100,
     propMortgageTerm: numVal("propMortgageTerm",25),

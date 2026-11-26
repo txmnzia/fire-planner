@@ -2,10 +2,11 @@
 // (plans). A tile shows a one-line summary and opens in place; one open tile per
 // lane. The fields inside are the same inputs as before (same ids), so saving,
 // sync and the engine are untouched. The impact panel sits beside the lanes.
-import { el, eur } from "../util.js?v=8.21";
-import { state } from "../state.js?v=8.21";
-import { refreshedText } from "./spending.js?v=8.21";
-import { plansSetUp } from "../checks.js?v=8.21";
+import { ownerFigures } from "./housing.js?v=8.22";
+import { el, eur } from "../util.js?v=8.22";
+import { state } from "../state.js?v=8.22";
+import { refreshedText } from "./spending.js?v=8.22";
+import { plansSetUp } from "../checks.js?v=8.22";
 
 const OPEN_KEY = 'fire_open_tiles';
 const k = v => '€' + (v >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : v >= 1e4 ? Math.round(v / 1000) + 'k' : Math.round(v).toLocaleString('en-GB'));
@@ -73,7 +74,10 @@ export function renderTiles(gl) {
   put('tile-assump', 'stocks ' + (gl.stockRet * 100).toFixed(1).replace('.0', '') + '% · bonds ' + (gl.bondRet * 100).toFixed(1).replace('.0', '') + '% · inflation ' + (gl.inflation * 100).toFixed(1).replace('.0', '') + '% · ' + (gl.wdMode === 'swr' ? 'draw ' + (gl.swr * 100).toFixed(1).replace('.0', '') + '%' : 'fixed amount'), '');
 
   const up = plansSetUp(gl);
-  put('tile-buy', up.prop ? k(gl.propPrice) + ' in ' + gl.propBuyYear : 'not set up: type a price', '');
+  if (gl.homeOwned) {   // v8.22: "Your home"
+    const f = ownerFigures(gl);
+    put('tile-buy', 'loan left ' + k(f.loanLeft) + (f.payNow > 0 ? ' · ' + k(f.payNow) + '/month' + (f.changes ? ' · fixed until ' + f.fixedEnd : '') : ' · paid off') + ' · equity ' + k(f.equity), '');
+  } else put('tile-buy', up.prop ? k(gl.propPrice) + ' in ' + gl.propBuyYear : 'not set up: type a price', '');
   put('tile-child', up.child ? 'born ' + gl.childBirthYear + (gl.childCostYearly > 0 ? ' · ' + k(gl.childCostYearly) + '/year' : '') : 'not set up: type a yearly cost', '');
   const pc = state.payChanges || [];
   put('tile-paychg', pc.length ? pc.map(p => (p.name || 'change') + ' from ' + p.from).join(' · ') : 'none: a 4-day week, a break, a new job', '');

@@ -1,12 +1,12 @@
-import { activePlan } from "./planLine.js?v=8.21";
-import { el, numVal } from "../util.js?v=8.21";
-import { state, features } from "../state.js?v=8.21";
-import { getScenarioName } from "../inputs.js?v=8.21";
-import { recalc } from "../recalc.js?v=8.21";
-import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js?v=8.21";
-import { renderTable } from "./table.js?v=8.21";
-import { renderSummaryTiles } from "./cards.js?v=8.21";
-import { resizeMcCharts } from "./mcTab.js?v=8.21";
+import { activePlan } from "./planLine.js?v=8.22";
+import { el, numVal } from "../util.js?v=8.22";
+import { state, features } from "../state.js?v=8.22";
+import { getScenarioName } from "../inputs.js?v=8.22";
+import { recalc } from "../recalc.js?v=8.22";
+import { FIRE_LINE, buildChart, buildFlowChart, resizeResultsCharts } from "./charts.js?v=8.22";
+import { renderTable } from "./table.js?v=8.22";
+import { renderSummaryTiles } from "./cards.js?v=8.22";
+import { resizeMcCharts } from "./mcTab.js?v=8.22";
 
 // ── TAB SWITCHING ──────────────────────────────────────────────────────────
 export function switchTab(name) {

@@ -3,7 +3,7 @@
 // results at that moment; the UI (js/ui/versions.js) stores them in the saved
 // row (payload.versions, additive) and renders the impact panel and the log.
 
-import { pathOf } from "./planVsActual.js?v=8.21";
+import { pathOf } from "./planVsActual.js?v=8.22";
 export const MAX_VERSIONS = 30;
 
 // The state a version keeps: everything the payload has except the versions
@@ -35,7 +35,7 @@ export function diffFields(a, b) {
     .map(id => ({ id, from: String(fa[id] ?? ''), to: String(fb[id] ?? '') }));
 }
 // Lists and switches that changed (plans, moves, scenario switches, mode).
-const LISTS = { windfalls: 'Windfalls', payChanges: 'Pay changes', rentMoves: 'Planned rents', pensionsMore: 'Other pensions',
+const LISTS = { windfalls: 'Windfalls', payChanges: 'Pay changes', rentMoves: 'Planned rents', pensionsMore: 'Other pensions', home: 'Your home',
   residence: 'Planned moves abroad', features: 'Scenario switches', nwHistory: 'Net-worth history', wdMode: 'Withdrawal strategy' };
 export function diffLists(a, b) {
   return Object.keys(LISTS).filter(k => JSON.stringify((a || {})[k] ?? null) !== JSON.stringify((b || {})[k] ?? null)).map(k => LISTS[k]);

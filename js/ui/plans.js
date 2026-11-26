@@ -1,12 +1,12 @@
 // Plans tab (v8.3): which plans are set up, shown on the plan cards and in the
 // scenario grid (a plan that is not set up has no switch there). The rule itself
 // lives in js/checks.js (plansSetUp), which also gates the calculation.
-import { el, eur, fmtK } from "../util.js?v=8.21";
-import { state, features } from "../state.js?v=8.21";
-import { rentMoveNoEffect } from "../countries.js?v=8.21";
-import { recalc } from "../recalc.js?v=8.21";
-import { isComplete } from "../payChanges.js?v=8.21";
-import { plansSetUp } from "../checks.js?v=8.21";
+import { el, eur, fmtK } from "../util.js?v=8.22";
+import { state, features } from "../state.js?v=8.22";
+import { rentMoveNoEffect } from "../countries.js?v=8.22";
+import { recalc } from "../recalc.js?v=8.22";
+import { isComplete } from "../payChanges.js?v=8.22";
+import { plansSetUp } from "../checks.js?v=8.22";
 
 const NAMES = { prop: "Buying a home", child: "Child" };
 
@@ -145,7 +145,10 @@ export function renderPlans(gl) {
       badge.textContent = up[k] ? "· set up" : "· not set up, no switch in Scenarios";
       badge.classList.toggle("off", !up[k]);
     }
-    const row = el("scgRow_" + k); if (row) row.hidden = !up[k];
+    // v8.22: a home you own is a fact, not a switch
+    const owned = k === "prop" && gl.homeOwned;
+    if (badge && owned) { badge.textContent = "· yours since " + ((state.home && state.home.since) || gl.propBuyYear); badge.classList.remove("off"); }
+    const row = el("scgRow_" + k); if (row) row.hidden = !up[k] || owned;
     if (!up[k]) hidden.push(NAMES[k]);
   }
   const note = el("scgHiddenPlans");

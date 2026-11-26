@@ -969,6 +969,14 @@ today + new rent); Buying a home shows your cash needed (`purchaseCostFor`); Par
 the pro-rata share her income gives today next to what she really pays. The update log
 folds what each save changed, field by field.
 
+**Your home (v8.22).** Answering "Yes" to "Did you buy your home?" stores `state.home`
+(`gl.homeOwned`): the purchase is on in every scenario (`effectiveFeatures`), its cash is
+never charged again (`purchaseCostFor` returns 0: it already left the imported
+portfolio), rent today becomes 0 and the joint transfers drop by the old rent (split like
+today, `rentShift`). The loan (`mortgagePaymentAt`), charges and equity run as before.
+From then on the joint transfers exclude the loan payment and home charges, which the
+plan adds itself. The Buying a home tile becomes "Your home" in the Now lane.
+
 The impact panel (v8.18.5) is one narrow column: per scenario its stop age (saved → now)
 and its FIRE target now (€1.41M) with an up/down icon when it moved by more than 0.5%
 since the saved version (`impactRows` in `js/versionsCore.js`), then Save / Undo.

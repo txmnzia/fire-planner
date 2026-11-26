@@ -1,11 +1,11 @@
 // Spending refresh (v8.7): read-outs under the four spending numbers and the
 // "last refreshed" date. The numbers come from the engine (investNowMonthly), so
 // the read-out is the same calculation the projection uses in year one.
-import { el, eur, numVal } from "../util.js?v=8.21";
-import { investNowMonthly, partnerShare } from "../engine.js?v=8.21";
-import { pensionReadoutRows } from "./pensions.js?v=8.21";
-import { depositCheck } from "../ibkr.js?v=8.21";
-import { state } from "../state.js?v=8.21";
+import { el, eur, numVal } from "../util.js?v=8.22";
+import { investNowMonthly, partnerShare } from "../engine.js?v=8.22";
+import { pensionReadoutRows } from "./pensions.js?v=8.22";
+import { depositCheck } from "../ibkr.js?v=8.22";
+import { state } from "../state.js?v=8.22";
 
 export const REFRESH_FIELDS = ['samPersonalNow', 'samPaysIn', 'partnerPaysIn', 'yearlyItems'];
 export const STALE_DAYS = 183;
@@ -39,6 +39,7 @@ export function renderSpendReadout(gl) {
   const n = investNowMonthly(gl, takeHome);
   const lines = [];
   const rent = gl.propRentSaved || 0;
+  if (gl.homeOwned) lines.push('<span class="tgt">You own your home: keep the loan payment and home charges out of these transfers; the plan adds them.</span>');
   if (gl.sharedNow > 0) lines.push('Joint account <b>' + eur(gl.sharedNow) + '/month</b>' + (rent > 0 ? ', of which rent ' + eur(rent) + ' (from Rent today)' : ''));
   lines.push('Her share of shared costs today: <b>' + Math.round(n.share * 100) + '%</b> ' +
     '(what she pays in), about ' + eur(n.contrib) + '/mo with yearly items');

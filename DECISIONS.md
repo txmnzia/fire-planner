@@ -5,6 +5,19 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.22 Your home
+
+- **"Yes, we bought" makes the purchase a fact:** on in every scenario (the grid row
+  goes), its cash is never charged again (it already left the portfolio you import),
+  rent today goes to 0 and the joint transfers drop by the rent, split like today.
+- **The Buying a home tile becomes "Your home"** in the Now lane (the rent tile hides):
+  loan left, payment until the fixed rate ends and after, payoff year, equity today.
+  Her share of the cash and "rent that stops" hide.
+- **Rule from then on:** keep the loan payment and home charges out of the joint
+  transfers; the plan adds them, split like the joint costs (Spending says so). The
+  year-end rollover never raises the price of a home you own.
+- "Not bought after all" undoes it: rent, transfers and the scenario switches return.
+
 ## 2026-11-26 · v8.21 Read-outs and log details
 
 - **Read-outs** (from the v8 stories; no number changes): Flat move "joint account after

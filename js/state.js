@@ -8,6 +8,7 @@ export const state = {
   nwHistory: [],   // [{year,val,income,spend}] manual net-worth snapshots for plan-vs-actual
   windfalls: [],
   payChanges: [],
+  home: null,         // v8.22: { since, rentBefore } once the purchase is confirmed ("Your home")
   planId: null,       // v8.20: the saved version used as "the plan" (null = default pick)
   pensionsMore: [],   // [{country, amt (gross), age, ded}] pensions from other countries (v8.19)
   rentMoves: [],   // [{from, rent}] planned rent changes (v8.11)
