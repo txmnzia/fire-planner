@@ -1,8 +1,8 @@
-import { el, fmtK } from "../util.js?v=8.32";
-import { state } from "../state.js?v=8.32";
-import { getScenarioName } from "../inputs.js?v=8.32";
-import { runMonteCarloOrdered, mcPct } from "../montecarlo.js?v=8.32";
-import { COLORS, GC, buildChart } from "./charts.js?v=8.32";
+import { el, fmtK } from "../util.js?v=8.33";
+import { state } from "../state.js?v=8.33";
+import { getScenarioName } from "../inputs.js?v=8.33";
+import { runMonteCarloOrdered, mcPct } from "../montecarlo.js?v=8.33";
+import { COLORS, GC, buildChart } from "./charts.js?v=8.33";
 
 // Monte Carlo on the Results tab (v8.30, issue #21). No Run button: every
 // recalc() marks the results stale and schedules a run in a module worker
@@ -62,7 +62,7 @@ function startRun(){
   if (useWorker && typeof Worker !== 'undefined') {
     try {
       if (worker) worker.terminate();                   // latest wins: drop the older run
-      worker = new Worker(new URL("../mcWorker.js?v=8.32", import.meta.url), { type: 'module' });
+      worker = new Worker(new URL("../mcWorker.js?v=8.33", import.meta.url), { type: 'module' });
       worker.onmessage = e => {
         const m = e.data; if (m.gen !== gen) return;
         if (m.error) { console.error('Monte Carlo worker:', m.error); fallback(); return; }

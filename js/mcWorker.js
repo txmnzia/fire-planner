@@ -3,7 +3,7 @@
 // It only relays: all the maths is montecarlo.js → engine.js, the same pure code
 // the tests cover. One message in = one run; the page terminates this worker when
 // newer inputs arrive (latest wins), so there is no cancellation logic here.
-import { runMonteCarloOrdered } from "./montecarlo.js?v=8.32";
+import { runMonteCarloOrdered } from "./montecarlo.js?v=8.33";
 
 self.onmessage = (e) => {
   const { gen, scenarios, gl, cfg, order } = e.data;

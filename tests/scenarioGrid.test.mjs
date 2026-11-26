@@ -3,7 +3,7 @@
 // and the cell texts follow from those numbers by hand-checkable rules.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { project } from '../js/engine.js';
+import { project, homeEquityAt } from '../js/engine.js';
 import { computeCardMetrics, scenarioGridResults } from '../js/ui/cards.js';
 import { state } from '../js/state.js';
 import { fmtK, stepClamp } from '../js/util.js';
@@ -101,4 +101,36 @@ test('stepClamp: steps, clamps and recovers from blanks', () => {
   assert.equal(stepClamp('abc', 0, 30, 75), 30);
   assert.equal(stepClamp('90', 0, 30, 75), 75);
   assert.equal(stepClamp('12', 0, 30, 75), 30);
+});
+
+// v8.33 tile metrics (owner's choice): net worth at stop incl. home, progress today.
+test('tile metrics: progress today = holdings today ÷ FIRE number deflated to today', () => {
+  // Fixed mode, stop at 45 (10 years from 35), 2% inflation: the FIRE number is in
+  // euros of 2036, so today's equivalent is target / 1.02^10. Cash counts in fixed mode.
+  const gl = baseGl({ wdMode: 'fixed' }), sc = baseSc({ retAge: 45 });
+  const p = project(sc, gl), m = computeCardMetrics(sc, gl, p);
+  const expected = (150000 + 10000) / (p.fireTarget / Math.pow(1.02, 10));
+  assert.ok(Math.abs(m.progressNow - expected) < 1e-12);
+  // % mode compares the invested portfolio only (cash is outside the FIRE number, T3)
+  const gl2 = baseGl({ wdMode: 'swr' }), p2 = project(sc, gl2), m2 = computeCardMetrics(sc, gl2, p2);
+  assert.ok(Math.abs(m2.progressNow - 150000 / (p2.fireTarget / Math.pow(1.02, 10))) < 1e-12);
+  // a target of 0 (missing spending) gives no progress figure rather than ∞
+  const m3 = computeCardMetrics(sc, gl, { ...p, fireTarget: 0 });
+  assert.equal(m3.progressNow, null);
+});
+
+test('tile metrics: net worth at stop = portfolio + cash + home equity (scenarios that buy)', () => {
+  const gl = baseGl({ wdMode: 'fixed' });
+  for (const hasProp of [false, true]) {
+    const sc = baseSc({ retAge: 45, hasProp }), p = project(sc, gl), m = computeCardMetrics(sc, gl, p);
+    const portAtStop = p.values[45 - 35];                 // start-of-year net worth in 2036
+    const equity = hasProp ? homeEquityAt(gl, sc, 2036) : 0;   // bought in 2032, before the stop
+    assert.equal(m.homeEquity, equity);
+    assert.ok(Math.abs(m.netWorthAtStop - (portAtStop + equity)) < 1e-6);
+    if (hasProp) assert.ok(equity > 0, 'a 2032 purchase has equity by 2036');
+  }
+  // stop before the purchase year: no home yet
+  const sc = baseSc({ retAge: 36, hasProp: true }), p = project(sc, gl), m = computeCardMetrics(sc, gl, p);
+  assert.equal(m.homeEquity, 0);
+  assert.equal(m.netWorthAtStop, m.portRet);
 });

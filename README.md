@@ -642,20 +642,22 @@ shown at 75. `withStopAges()` runs once in `recalc()` and Monte Carlo reuses tho
 scenarios (`state.lastScenarios`), so every view shows the same age. The old `s{n}_ret` values stay saved (hidden) for
 older builds.
 
-Results tile rows (v8.32; each row once, and only when it adds something):
+Results tile rows (v8.33: the owner's choice of FIRE metrics; each row once):
 
 | Row | Meaning | Source |
 |---|---|---|
 | Chip | ✓ On Track / × Gap (fixed), ✓ Funded / × Short (%), ⚠ Missing input | `computeCardMetrics()` |
 | Stop age | earliest funded age · its year; "not by 75" in red | `earliestStopAge()` |
 | vs Plan | years ahead/behind the frozen plan (only with a plan) | `computeCardMetrics().vsPlan` |
-| FIRE Number (fixed) / Monthly income (%) | target, or income / budget at stop | `computeCardMetrics()` |
-| NW at stop + margin | net worth at that age, and its margin over the FIRE number | `computeCardMetrics()` (`portRet`, `fireTarget`) |
-| Home equity | value − loan left at stop (scenarios that buy) | `homeEquityAt()` |
-| Your FIRE (partner on) | your target / your net worth | `computeCardMetrics().two` |
+| FIRE Number | portfolio needed at the stop age (% mode: also the lower figure crediting pensions) | `proj.fireTarget` via `fireNumRowHTML()` |
+| NW at stop | portfolio + cash + **home equity** at the stop age (scenarios that buy: "incl. home €x"). Context only: the FIRE number is compared with the portfolio | `computeCardMetrics().netWorthAtStop` |
+| Progress today | today's holdings ÷ FIRE number deflated to today's money (`fireTarget / (1+inflation)^(stop age − age)`); fixed mode counts cash, % mode leaves it out, as the verdict does | `computeCardMetrics().progressNow` |
 | ⚠ Underfunded | savings exhausted before the stop (only then) | `computeCardMetrics().infeasibleYear` |
 | Money lasts | "runs out at {age}", only when it does not reach life expectancy | `computeCardMetrics().depletionYear` |
 | Chance it lasts / Years on budget | Monte Carlo headline | `mcHeadlineHTML()` |
+
+Progress depends on the scenario: a later stop age has a smaller FIRE number in
+today's money, so the same holdings show as more progress.
 
 A large margin usually means a cost that ends soon after an earlier age (a
 mortgage's last year, a child's last dependent year) kept that earlier age from

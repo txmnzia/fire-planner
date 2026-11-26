@@ -71,7 +71,8 @@ test('v8.32: the Scenarios tab models life events only; results live on the Resu
   const fn = cards.slice(cards.indexOf('export function renderSummaryTiles'));
   assert.match(fn, /scenarioGridResults\(sc, gl, proj, stops \? stops\[i\] : null\)/);
   assert.match(fn, /computeCardMetrics\(sc, gl, proj\)/);
-  for (const k of ['Stop age', 'NW at stop', 'Home equity', 'Money lasts']) assert.ok(fn.includes("'" + k + "'"), k);
+  for (const k of ['Stop age', 'NW at stop', 'Progress today', 'Money lasts']) assert.ok(fn.includes("'" + k + "'"), k);
+  assert.ok(!/twoRowsHTML\(/.test(fn.slice(0, fn.indexOf('\n}\n'))), 'v8.33: no duplicate Your FIRE row on the tile');
   assert.match(read('js/recalc.js'), /renderSummaryTiles\(projs,gl,scenarios,stops\)/);
   assert.match(read('js/ui/controls.js'), /renderSummaryTiles\(state\.lastProjs, state\.lastGl, state\.lastScenarios, state\.lastStops\)/);
 });

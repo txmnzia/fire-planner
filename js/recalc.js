@@ -1,22 +1,22 @@
-import { el, eur, numVal } from "./util.js?v=8.32";
-import { state } from "./state.js?v=8.32";
-import { getGlobals, getScenario } from "./inputs.js?v=8.32";
-import { renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.32";
-import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.32";
-import { renderTable } from "./ui/table.js?v=8.32";
-import { renderExplanation } from "./ui/explanation.js?v=8.32";
-import { updateLabels } from "./ui/controls.js?v=8.32";
-import { markMcStale, scheduleMcRun, mcBandsFor } from "./ui/mcTab.js?v=8.32";
-import { scheduleSave } from "./sync.js?v=8.32";
-import { renderIssues } from "./ui/issues.js?v=8.32";
-import { renderPlans } from "./ui/plans.js?v=8.32";
-import { renderSpendReadout } from "./ui/spending.js?v=8.32";
-import { renderAssumptions } from "./ui/situation.js?v=8.32";
-import { renderCheckin } from "./ui/ibkr.js?v=8.32";
-import { renderResNotes, renderPropReadout } from "./ui/housing.js?v=8.32";
-import { renderUpdatePanel } from "./ui/versions.js?v=8.32";
-import { renderTiles } from "./ui/tiles.js?v=8.32";
-import { renderDefaults } from "./ui/defaults.js?v=8.32";
+import { el, eur, numVal } from "./util.js?v=8.33";
+import { state } from "./state.js?v=8.33";
+import { getGlobals, getScenario } from "./inputs.js?v=8.33";
+import { renderSummaryTiles, withStopAges } from "./ui/cards.js?v=8.33";
+import { buildChart, buildFlowChart } from "./ui/charts.js?v=8.33";
+import { renderTable } from "./ui/table.js?v=8.33";
+import { renderExplanation } from "./ui/explanation.js?v=8.33";
+import { updateLabels } from "./ui/controls.js?v=8.33";
+import { markMcStale, scheduleMcRun, mcBandsFor } from "./ui/mcTab.js?v=8.33";
+import { scheduleSave } from "./sync.js?v=8.33";
+import { renderIssues } from "./ui/issues.js?v=8.33";
+import { renderPlans } from "./ui/plans.js?v=8.33";
+import { renderSpendReadout } from "./ui/spending.js?v=8.33";
+import { renderAssumptions } from "./ui/situation.js?v=8.33";
+import { renderCheckin } from "./ui/ibkr.js?v=8.33";
+import { renderResNotes, renderPropReadout } from "./ui/housing.js?v=8.33";
+import { renderUpdatePanel } from "./ui/versions.js?v=8.33";
+import { renderTiles } from "./ui/tiles.js?v=8.33";
+import { renderDefaults } from "./ui/defaults.js?v=8.33";
 
 // ── RECALC ──────────────────────────────────────────────────────────────────
 export function recalc() {

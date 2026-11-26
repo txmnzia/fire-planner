@@ -1,10 +1,10 @@
-import { el, eur, fmtK } from "../util.js?v=8.32";
-import { scenarioIssues } from "../checks.js?v=8.32";
-import { state } from "../state.js?v=8.32";
-import { getScenarioName } from "../inputs.js?v=8.32";
-import { vsPlanFor } from "./planLine.js?v=8.32";
-import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.32";
-import { mcHeadlineHTML } from "./mcTab.js?v=8.32";
+import { el, eur, fmtK } from "../util.js?v=8.33";
+import { scenarioIssues } from "../checks.js?v=8.33";
+import { state } from "../state.js?v=8.33";
+import { getScenarioName } from "../inputs.js?v=8.33";
+import { vsPlanFor } from "./planLine.js?v=8.33";
+import { portReturnAt, yearOneBudget, yearOnePermBudget, partnerContributionNote, project, pensionMonthlyAt, taxRateAt, homeEquityAt, scGl } from "../engine.js?v=8.33";
+import { mcHeadlineHTML } from "./mcTab.js?v=8.33";
 
 // ── MILESTONE RENDER ───────────────────────────────────────────────────────
 const SC_COLORS=["s1","s2","s3","s4","s5"];
@@ -90,6 +90,17 @@ export function computeCardMetrics(sc, gl, proj) {
     m.ok = m.surplus >= 0;
     if (m.two) m.two.partialOk = m.ok;
   }
+  // v8.33 tile figures (owner's choice of FIRE metrics, DECISIONS 2026-11-26).
+  // Net worth at stop INCLUDING the home: portfolio + cash + home equity. Not the
+  // basis of any verdict (the FIRE number is a portfolio number), shown for context.
+  m.homeEquity = homeEquityAt(gl, sc, retYear);
+  m.netWorthAtStop = portRet + m.homeEquity;
+  // Progress today: what you hold today against the FIRE number in today's money
+  // (the target is in euros of the stop year, so it is deflated over the years to
+  // the stop). Same basis as the verdict: % mode leaves cash out, fixed mode keeps it.
+  const holdNow = (gl.invested || 0) + (gl.wdMode === 'swr' ? 0 : (gl.cash || 0));
+  const targetToday = proj.fireTarget / Math.pow(1 + gl.inflation, nAccum);
+  m.progressNow = targetToday > 0 ? holdNow / targetToday : null;
   return m;
 }
 
@@ -221,9 +232,8 @@ export function fireNumRowHTML(m, gl, cc) {
 
 // Results tiles (v8.32): the only place scenario results are shown. The Scenarios
 // tab models life events only. Each row appears once and only when it says
-// something the others don't: margin sits next to net worth at stop, "money lasts"
-// only when it runs out, home equity only for scenarios that buy. All numbers come
-// from scenarioGridResults → computeCardMetrics (AUDIT.md T8: one source).
+// something the others don't (v8.33: the owner's metric choice). All numbers come
+// from computeCardMetrics / scenarioGridResults (AUDIT.md T8: one source).
 const tileEsc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 export function renderSummaryTiles(projs, gl, scenarios, stops) {
   const row = el('scSummaryRow');
@@ -241,18 +251,22 @@ export function renderSummaryTiles(projs, gl, scenarios, stops) {
       ? '<span class="ms-chip err">\u26a0 Missing input</span>'
       : swr ? '<span class="ms-chip '+(m.incomeOk?'ok':'err')+'">'+(m.incomeOk?'\u2713 Funded':'\u00d7 Short')+'</span>'
             : '<span class="ms-chip '+(m.ok?'ok':'err')+'">'+(m.ok?'\u2713 On Track':'\u00d7 Gap')+'</span>';
+    // v8.33: the owner's FIRE metrics, each once: stop age, vs plan, FIRE number,
+    // net worth at stop incl. home, progress today, then warnings only when they
+    // apply, then the Monte Carlo chance.
     let body = rowHTML('Stop age', r.stopAgeText, missing ? 'muted' : (r.stopFound ? '' : 'err'),
       'The first age at which this scenario is funded, worked out by trying every age from today to 75.');
     if (!missing) {
       body += vsPlanRowHTML(m);
-      body += swr
-        ? rowHTML('Monthly income', eur(m.netMonthly)+' <span class="tgt">/ '+eur(m.targetMonthly)+'</span>', m.incomeOk?'ok':'err')
-        : rowHTML('FIRE Number', eur(m.fireTarget));
-      body += rowHTML('NW at stop', eur(m.portRet)+' <span class="tgt '+(r.margin>=0?'ok':'err')+'">'+r.marginText+'</span>', '',
-        'Net worth when you stop, and its margin over the FIRE number at that age.');
-      if (sc.hasProp) body += rowHTML('Home equity', r.equityText, r.equity == null ? 'muted' : '',
-        'The home\u2019s value minus the loan left when you stop. In your net worth, not in the FIRE number.');
-      body += twoRowsHTML(m, true) + infeasibleRowHTML(m);
+      body += fireNumRowHTML(m, gl, '');
+      const home = sc.hasProp
+        ? (m.retYear < gl.propBuyYear ? ' <span class="tgt">buys in '+gl.propBuyYear+'</span>' : ' <span class="tgt">incl. home '+fmtK(m.homeEquity)+'</span>')
+        : '';
+      body += rowHTML('NW at stop', eur(m.netWorthAtStop)+home, '',
+        'Portfolio + cash + home equity (home value minus the loan left) when you stop. The FIRE number is compared with the portfolio only.');
+      if (m.progressNow != null) body += rowHTML('Progress today', Math.round(m.progressNow*100)+'% <span class="tgt">of FIRE nb</span>', m.progressNow >= 1 ? 'ok' : '',
+        'What you hold today as a share of this scenario\u2019s FIRE number in today\u2019s money (the number deflated from the stop year).');
+      body += infeasibleRowHTML(m);
       if (!r.lastsOk) body += rowHTML('Money lasts', r.lasts, 'err');
     }
     body += mcHeadlineHTML(i);            // v8.30: the Monte Carlo chance (mcTab.js)

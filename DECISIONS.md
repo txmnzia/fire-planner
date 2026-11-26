@@ -5,6 +5,20 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.33 The FIRE metrics on a Results tile (chosen by the owner)
+
+- **Kept:** stop age, FIRE number, chance it lasts, vs plan.
+- **Net worth at stop now includes the home** (portfolio + cash + home equity), on
+  purpose different from the portfolio the FIRE number is compared with. The separate
+  margin and home-equity rows are gone.
+- **New: progress today** = today's holdings ÷ the FIRE number in today's money
+  (deflated from the stop year; cash counted as the verdict counts it).
+- **Dropped:** monthly income vs budget in % mode (the chip still says Funded/Short),
+  the "Your FIRE" partner row (it repeated the FIRE number and net worth).
+- *Not added (no preference):* Coast FIRE, savings rate, years of spending covered,
+  withdrawal rate at stop.
+- Warnings stay, only when they apply: underfunded, money runs out.
+
 ## 2026-11-26 · v8.32 Scenarios tab = life events only; results on the Results tiles
 
 - **The Scenarios tab models life events only** (names and switches). Its result rows
