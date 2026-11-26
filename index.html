@@ -9,13 +9,13 @@
 <title>FIRE Planner v2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=8.28.1">
+<link rel="stylesheet" href="css/styles.css?v=8.28.2">
 </head>
 <body>
 <a href="#tab-panel-situation" class="sr-only">Skip to main content</a>
 
 <header class="hdr" role="banner">
-  <div class="logo">FIRE Planner <span class="logo-tag">v8.28.1</span></div>
+  <div class="logo">FIRE Planner <span class="logo-tag">v8.28.2</span></div>
   <div class="hdr-right">
     <span class="hdr-time" id="calcTime">&#x2014;</span>
     <button class="sync-btn" id="syncBtn" onclick="openSyncModal()" aria-label="Sync settings" title="Sync settings" data-state="idle">
@@ -124,32 +124,32 @@
       </button>
       <div class="tile-body subj-body" id="tile-where-body" hidden>
 <div class="frows"><div class="frow"><div class="frow-l">Country today <button type="button" class="info-btn" title="Where you live now. Gains you sell are taxed at this country&#x2019;s rate until a planned move below. Rates are flat approximations on the gain part of a sale.">&#x24D8;</button></div><div class="frow-c"><span class="frow-grp"><div class="inp fc fc-sel"><select id="retCountry" oninput="recalc()" onchange="recalc()">
-          <option value="FR" selected>&#x1F1EB;&#x1F1F7; France 30%</option>
-          <option value="PT">&#x1F1F5;&#x1F1F9; Portugal 28%</option>
-          <option value="ES">&#x1F1EA;&#x1F1F8; Spain 26%</option>
-          <option value="DE">&#x1F1E9;&#x1F1EA; Germany 18.5%</option>
-          <option value="IT">&#x1F1EE;&#x1F1F9; Italy 26%</option>
-          <option value="NL">&#x1F1F3;&#x1F1F1; Netherlands 32%</option>
-          <option value="BE">&#x1F1E7;&#x1F1EA; Belgium 0%</option>
-          <option value="LU">&#x1F1F1;&#x1F1FA; Luxembourg 0%</option>
-          <option value="AT">&#x1F1E6;&#x1F1F9; Austria 28%</option>
-          <option value="IE">&#x1F1EE;&#x1F1EA; Ireland 33%</option>
-          <option value="GR">&#x1F1EC;&#x1F1F7; Greece 15%</option>
-          <option value="CY">&#x1F1E8;&#x1F1FE; Cyprus 0%</option>
-          <option value="MT">&#x1F1F2;&#x1F1F9; Malta 0%</option>
-          <option value="HR">&#x1F1ED;&#x1F1F7; Croatia 10%</option>
-          <option value="HU">&#x1F1ED;&#x1F1FA; Hungary 15%</option>
-          <option value="RO">&#x1F1F7;&#x1F1F4; Romania 10%</option>
-          <option value="BG">&#x1F1E7;&#x1F1EC; Bulgaria 10%</option>
-          <option value="PL">&#x1F1F5;&#x1F1F1; Poland 19%</option>
-          <option value="SI">&#x1F1F8;&#x1F1EE; Slovenia 25%</option>
-          <option value="EE">&#x1F1EA;&#x1F1EA; Estonia 20%</option>
-          <option value="LV">&#x1F1F1;&#x1F1FB; Latvia 20%</option>
-          <option value="LT">&#x1F1F1;&#x1F1F9; Lithuania 15%</option>
-          <option value="SK">&#x1F1F8;&#x1F1F0; Slovakia 19%</option>
-          <option value="SE">&#x1F1F8;&#x1F1EA; Sweden 30%</option>
-          <option value="DK">&#x1F1E9;&#x1F1F0; Denmark 27%</option>
-          <option value="FI">&#x1F1EB;&#x1F1EE; Finland 30%</option>
+          <option value="FR" selected>&#x1F1EB;&#x1F1F7; France</option>
+          <option value="PT">&#x1F1F5;&#x1F1F9; Portugal</option>
+          <option value="ES">&#x1F1EA;&#x1F1F8; Spain</option>
+          <option value="DE">&#x1F1E9;&#x1F1EA; Germany</option>
+          <option value="IT">&#x1F1EE;&#x1F1F9; Italy</option>
+          <option value="NL">&#x1F1F3;&#x1F1F1; Netherlands</option>
+          <option value="BE">&#x1F1E7;&#x1F1EA; Belgium</option>
+          <option value="LU">&#x1F1F1;&#x1F1FA; Luxembourg</option>
+          <option value="AT">&#x1F1E6;&#x1F1F9; Austria</option>
+          <option value="IE">&#x1F1EE;&#x1F1EA; Ireland</option>
+          <option value="GR">&#x1F1EC;&#x1F1F7; Greece</option>
+          <option value="CY">&#x1F1E8;&#x1F1FE; Cyprus</option>
+          <option value="MT">&#x1F1F2;&#x1F1F9; Malta</option>
+          <option value="HR">&#x1F1ED;&#x1F1F7; Croatia</option>
+          <option value="HU">&#x1F1ED;&#x1F1FA; Hungary</option>
+          <option value="RO">&#x1F1F7;&#x1F1F4; Romania</option>
+          <option value="BG">&#x1F1E7;&#x1F1EC; Bulgaria</option>
+          <option value="PL">&#x1F1F5;&#x1F1F1; Poland</option>
+          <option value="SI">&#x1F1F8;&#x1F1EE; Slovenia</option>
+          <option value="EE">&#x1F1EA;&#x1F1EA; Estonia</option>
+          <option value="LV">&#x1F1F1;&#x1F1FB; Latvia</option>
+          <option value="LT">&#x1F1F1;&#x1F1F9; Lithuania</option>
+          <option value="SK">&#x1F1F8;&#x1F1F0; Slovakia</option>
+          <option value="SE">&#x1F1F8;&#x1F1EA; Sweden</option>
+          <option value="DK">&#x1F1E9;&#x1F1F0; Denmark</option>
+          <option value="FI">&#x1F1EB;&#x1F1EE; Finland</option>
         </select></div></span><span class="frow-grp"><span class="frow-sep">tax on gains <button type="button" class="info-btn" title="Empty = the country&#x2019;s preset. Type a rate to override it; the note below then marks it as yours.">&#x24D8;</button></span><span class="unit-wrap fc fc-num"><input type="number" id="taxNow" step="0.5" min="0" max="60" placeholder="" oninput="recalc()" onchange="recalc()"><span class="u">%</span></span></span></div></div><div class="frow"><div class="frow-l">Taxed as <button type="button" class="info-btn" title="For the take-home estimated from a gross pay (planned pay changes). Married or PACS: taxed together with your partner (Germany: splitting; France: 2 parts). A child counts from its birth year in scenarios with the child.">&#x24D8;</button></div><div class="frow-c"><div class="inp fc fc-sel"><select id="taxHousehold" oninput="recalc()" onchange="recalc()"><option value="single" selected>Not married</option><option value="joint">Married or PACS</option></select></div></div></div><div class="frow"><div class="frow-l">Health insurance once you stop <button type="button" class="info-btn" title="What you pay for health insurance from your stop age until your first state pension starts (after that it is inside the pension deduction). Today's money, per month. Empty = the estimate for the country you live in that year (see below).">&#x24D8;</button></div><div class="frow-c"><div class="inp cur fc"><span class="pre">&#x20AC;</span><input type="text" inputmode="decimal" autocomplete="off" class="cur-in" data-target="healthAfterStop" id="healthAfterStop_disp" placeholder=""><input type="hidden" id="healthAfterStop" value=""><span class="suf">/mo</span></div></div></div></div><div class="spend-readout" id="healthReadout" aria-live="polite"></div>
       </div>
     </section>
@@ -509,6 +509,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=8.28.1"></script>
+<script type="module" src="js/main.js?v=8.28.2"></script>
 </body>
 </html>

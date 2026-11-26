@@ -120,3 +120,11 @@ test('v8.28.1 transparency: no empty field says "preset"/"estimate"/"same"/"all"
     assert.match(def, new RegExp("ph\\('" + id + "'"), id);
   assert.match(readFileSync(new URL('../js/recalc.js', import.meta.url), 'utf8'), /renderDefaults\(gl\)/);
 });
+
+test('v8.28.2: the country lists show the country only (the rate is the tax-on-gains field)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const sel = html.slice(html.indexOf('<select id="retCountry"'), html.indexOf('</select>', html.indexOf('<select id="retCountry"')));
+  assert.ok((sel.match(/<option /g) || []).length >= 20);
+  assert.doesNotMatch(sel, /%<\/option>/);
+});
