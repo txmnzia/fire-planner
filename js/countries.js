@@ -1,18 +1,20 @@
 // Where you live (v8.11, pure): country presets for tax on gains and the
 // residence periods the engine reads (gl.residence). Rates are flat-rate
 // approximations on the GAIN part of a sale (README "Tax"); not tax advice.
-import { COUNTRY_TAX } from "./taxTable.js?v=8.29";
+import { COUNTRY_TAX } from "./taxTable.js?v=8.29.1";
 
 // One line per country on where its rate comes from and what is left out.
 export const COUNTRY_NOTES = {
   AL: "15% on capital gains (2023 income tax law), worldwide income. Low confidence.",
   AD: "Gains on shares and funds are exempt for holdings of 25% or less. Passive residence requires about €600k invested.",
   AR: "15% schedular tax on foreign securities gains. Personal-assets wealth tax not modelled.",
+  AU: "Temporary residents: 0% on foreign assets; permanent residents: 50% discount then marginal rates, ≈5% at this level. Retiree visas are closed to new applicants.",
   AT: "27.5% flat. Reporting funds only; their deemed yearly distributions are not modelled. Self-declared with a foreign broker.",
   BE: "New capital-gains tax from 2026: 10% on gains after 31 Dec 2025, about €10k a year exempt (≈6.7% average at €30k of gain). Stock-exchange tax on sales not modelled.",
   BR: "15% flat on realised offshore investment gains (Law 14.754/2023).",
   BG: "Exempt when sold on an EU/EEA regulated market (e.g. Xetra); otherwise 10% on 90% of the gain (9%).",
   KH: "20% capital gains tax being phased in from 2026; enforcement on foreign assets unclear. Low confidence.",
+  CA: "Half of the gain taxed at marginal rates, ≈10–13% at this level; cost basis stepped up on arrival. No retiree visa.",
   CL: "Foreign income exempt the first 3 years (extendable), then progressive income tax: about 5–10% at this level. Low confidence.",
   CO: "15% occasional-gain tax on assets held over 2 years (otherwise up to 39%). Wealth tax not modelled.",
   CR: "Territorial system: foreign gains are not taxed. Rentista or pensionado residence.",
@@ -33,6 +35,7 @@ export const COUNTRY_NOTES = {
   ID: "Foreign gains taxed at progressive 5–35%, ≈20% at this level. Retiree visa from 55. Low confidence.",
   IE: "Exit tax on funds 38% in 2026 (35% from 2027), and a deemed sale every 8 years (not modelled). No loss offset.",
   IT: "26% on ETF gains (capital income: losses cannot offset them). 0.2% foreign-asset tax (IVAFE) not modelled.",
+  JP: "Separate 20.315% tax on securities gains. No retiree visa.",
   LV: "Capital income tax 25.5% since 2025.",
   LT: "2026 reform: 15% only on holdings over 5 years, otherwise taxed with other income (20% at this level). Medium-low confidence.",
   LU: "Gains on securities held over 6 months (stake under 10%) are exempt.",
@@ -44,6 +47,7 @@ export const COUNTRY_NOTES = {
   ME: "15% capital gains tax, worldwide income. Low confidence.",
   MA: "Worldwide income; 20% on gains on foreign securities. Low confidence.",
   NL: "Box 3: 36% on a 6% deemed return, ≈2.16% of assets above €59,357 every year whether you sell or not. A rate on gains only approximates it.",
+  NZ: "4-year exemption for new residents, then the foreign-fund regime: 5% deemed return × marginal rate, ≈1.6% of value a year (≈30% of the return). Low confidence.",
   MK: "10% flat on capital gains (a rise to 15% announced, postponed). Low confidence.",
   PA: "Territorial system: foreign gains are not taxed. Friendly Nations or pensionado visa.",
   PY: "Territorial system: foreign gains are not taxed.",
@@ -53,17 +57,22 @@ export const COUNTRY_NOTES = {
   PT: "28% flat on gains. The NHR regime is closed and IFICI does not cover retirees.",
   RO: "16% on gains through a non-Romanian broker from 2026, plus a capped 10% health contribution (CASS).",
   RS: "15% capital gains tax, worldwide income.",
+  SG: "No capital gains tax. No residence route for retirees.",
   SK: "Gains on listed securities held over 1 year are exempt (ETF units not confirmed). Medium-low confidence.",
   SI: "25% under 5 years of holding, 20% at 5–10, 15% at 10–15, 0% after 15 years.",
   ZA: "40% of the gain taxed at marginal rates after a R50k exclusion: ≈10–14% at this level.",
+  KR: "22% on overseas share gains above KRW 2.5m; residents under 5 years are taxed only on foreign income brought in. Hard to obtain residence.",
   ES: "Savings scale 19% to €6k, 21% to €50k, then 23–30%. Not modelled: wealth and solidarity taxes.",
   LK: "Individual capital gains tax 15% from June 2026; foreign assets likely in scope. Low confidence.",
   SE: "30% in a normal account, plus ≈0.12% a year on fund value. An ISK account (≈1% of value a year) is not modelled.",
   CH: "Private capital gains are exempt. Not modelled: wealth tax, income tax on the funds' reinvested dividends.",
+  TW: "Foreign income falls only under the minimum tax (threshold ≈NT$7.5m): 0% at this level. Hard to obtain residence.",
   TH: "Since 2024 foreign income is taxed when brought into Thailand: 0–35%, ≈12% on average at this level. An LTR visa may give 0%. Low confidence.",
   TN: "10% on securities gains, worldwide income. Low confidence.",
   TR: "20-year exemption on foreign income and gains for people resident from 2026 (no Turkish residence in the 3 prior years); otherwise 15–40%.",
   AE: "No personal income tax. Retirement visa from 55; under 55 via a property-investor visa.",
+  GB: "4-year exemption for new arrivals (FIG regime), then capital gains tax 18% (24% for higher-rate taxpayers); ETFs need reporting-fund status. No retirement visa for EU citizens since Brexit.",
+  US: "Foreign ETFs fall under the punitive PFIC rules (up to 37% + interest charge, + 3.8% investment-income tax): buy US-domiciled funds instead. No retiree visa.",
   UY: "Foreign gains taxed at 12% since 2024, but new residents get an 11-year holiday.",
   VN: "Worldwide income; rules for foreign securities gains unclear. No retiree visa. Low confidence.",
 };

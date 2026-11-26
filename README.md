@@ -491,7 +491,7 @@ To compute the required **gross** withdrawal to meet a **net** spending need:
 GrossWithdrawal = NetSpending / (1 − currentGainFrac × taxRate)
 ```
 
-**Tax rates by country** (v8.29): 61 realistic retirement countries, listed by name,
+**Tax rates by country** (v8.29): 70 retirement countries, listed by name,
 each with one rate on the **gain part** of a sale (`COUNTRY_TAX` in `js/taxTable.js`) and a
 note on where it comes from and what it leaves out (`COUNTRY_NOTES` in `js/countries.js`,
 shown under Where you live). Researched for 2026 for one profile: an EU citizen who
@@ -501,7 +501,7 @@ at that level; territorial systems, remittance rules and long tax holidays give 
 holding-period exemptions assume long-held lots. Examples: France 31.4% (flat tax with
 the 2026 social charges), Germany 18.5%, Spain 21%, Portugal 28%, Belgium 10% (new 2026
 tax), Ireland 38% (fund exit tax), Netherlands 36% (box 3, approximated), Thailand 12%,
-Malaysia, Panama, Costa Rica, Georgia, UAE 0%. Taxes that do not fit a rate on gains are
+Malaysia, Panama, Costa Rica, Georgia, UAE 0%, Japan 20.3%, UK 18% (after a 4-year exemption), US 40% (PFIC rules on European funds). Taxes that do not fit a rate on gains are
 not modelled (wealth taxes, yearly taxes on unrealised gains in the Netherlands, Denmark
 and Ireland), and notes flag low-confidence rates. Not tax advice: type your own rate in
 **tax on gains** to override. Germany's yearly fund tax is modelled (below).

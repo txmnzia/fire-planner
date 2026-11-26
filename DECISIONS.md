@@ -5,6 +5,12 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.29.1 Western countries added
+
+- Japan, United Kingdom, United States, Canada, Australia, New Zealand, Singapore, South
+  Korea and Taiwan are in the list too (70 countries), with notes on residence limits and
+  fund rules (e.g. US PFIC rules on European ETFs).
+
 ## 2026-11-26 · v8.29 Realistic retirement countries, sorted by name
 
 - **61 countries** where an EU early retiree can realistically live (e.g. Thailand,

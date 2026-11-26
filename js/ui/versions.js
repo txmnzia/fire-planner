@@ -2,20 +2,20 @@
 // version and what it does to the five scenarios, Save update / Undo all, the
 // update log (compare, restore), the first-run review and "Did this happen?".
 // Edits still autosave as before; a version is a dated copy you can go back to.
-import { activePlan } from "./planLine.js?v=8.29";
-import { el, eur } from "../util.js?v=8.29";
-import { state, features } from "../state.js?v=8.29";
-import { recalc } from "../recalc.js?v=8.29";
-import { collectState, applyState } from "../sync.js?v=8.29";
-import { getScenarioName, resolvePay } from "../inputs.js?v=8.29";
+import { activePlan } from "./planLine.js?v=8.29.1";
+import { el, eur } from "../util.js?v=8.29.1";
+import { state, features } from "../state.js?v=8.29.1";
+import { recalc } from "../recalc.js?v=8.29.1";
+import { collectState, applyState } from "../sync.js?v=8.29.1";
+import { getScenarioName, resolvePay } from "../inputs.js?v=8.29.1";
 import { snapshotOf, resultsOf, diffFields, diffLists, changeCount, impactLines, impactRows, addVersion,
-         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.29";
-import { rentShift } from "./housing.js?v=8.29";
-import { updateToggleUI } from "./controls.js?v=8.29";
-import { revealField } from "./tiles.js?v=8.29";
-import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.29";
-import { renderNwHistory } from "./nwHistory.js?v=8.29";
-import { refreshedText } from "./spending.js?v=8.29";
+         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.29.1";
+import { rentShift } from "./housing.js?v=8.29.1";
+import { updateToggleUI } from "./controls.js?v=8.29.1";
+import { revealField } from "./tiles.js?v=8.29.1";
+import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.29.1";
+import { renderNwHistory } from "./nwHistory.js?v=8.29.1";
+import { refreshedText } from "./spending.js?v=8.29.1";
 
 const fmtDay = ts => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
