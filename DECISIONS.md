@@ -5,6 +5,15 @@ for each and what was rejected. The formulas themselves live in README.md; past 
 in AUDIT.md. When a decision here changes, add a new entry rather than rewriting the
 old one, so the history stays readable. No personal figures here (CLAUDE.md rule 7).
 
+## 2026-11-26 · v8.21 Read-outs and log details
+
+- **Read-outs** (from the v8 stories; no number changes): Flat move "joint account after
+  the move" (joint today − rent today + new rent); Buying a home "your cash needed"
+  (`purchaseCostFor`: price × (down payment + buying costs), minus her share);
+  Partner "pro rata today would be X%" next to what she really pays.
+- **Update log:** each entry folds "What changed", field by field (old → new), with the
+  names the Changes tab shows. Check-in date stamps are left out (noise).
+
 ## 2026-11-26 · v8.20 Plan vs actual against a frozen plan
 
 - **The plan is frozen when saved** (spec reviewed by the owner): every saved version

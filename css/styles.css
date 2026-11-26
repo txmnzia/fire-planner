@@ -552,6 +552,7 @@ button.wd-pill{font:inherit;font-size:12px;}
 .item-hd .dp-del,.item-c .dp-del{margin-left:auto;}
 .item-note{font-size:11.5px;line-height:1.45;color:var(--sec);}
 .item-note.warn{color:var(--warn,#f59e0b);}
+.item-note.info{color:var(--sec);}
 .tile-body .dp-row{padding:10px 12px;gap:10px;}
 .tile-body .dp-main{flex-wrap:wrap;}
 .dp-src{font-size:11px;color:var(--muted);padding:0 2px;}
@@ -574,6 +575,9 @@ button.wd-pill{font:inherit;font-size:12px;}
 .up-actions{gap:8px;}
 .up-actions input{min-width:0;flex:1 1 160px;height:36px;}
 .impact-toggle{display:none;}
+.up-what{flex-basis:100%;font-size:11.5px;color:var(--sec);}
+.up-what summary{cursor:pointer;color:var(--muted);}
+.up-what div{padding:2px 0 0 12px;overflow-wrap:anywhere;}
 .plan-tag{font-size:10.5px;font-weight:600;color:var(--s1c);border:1px solid currentColor;border-radius:4px;padding:0 5px;margin-left:4px;}
 
 @media(max-width:1359px){

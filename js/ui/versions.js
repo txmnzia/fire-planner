@@ -2,20 +2,20 @@
 // version and what it does to the five scenarios, Save update / Undo all, the
 // update log (compare, restore), the first-run review and "Did this happen?".
 // Edits still autosave as before; a version is a dated copy you can go back to.
-import { activePlan } from "./planLine.js?v=8.20.1";
-import { el, eur } from "../util.js?v=8.20.1";
-import { state, features } from "../state.js?v=8.20.1";
-import { recalc } from "../recalc.js?v=8.20.1";
-import { collectState, applyState } from "../sync.js?v=8.20.1";
-import { getScenarioName } from "../inputs.js?v=8.20.1";
+import { activePlan } from "./planLine.js?v=8.21";
+import { el, eur } from "../util.js?v=8.21";
+import { state, features } from "../state.js?v=8.21";
+import { recalc } from "../recalc.js?v=8.21";
+import { collectState, applyState } from "../sync.js?v=8.21";
+import { getScenarioName } from "../inputs.js?v=8.21";
 import { snapshotOf, resultsOf, diffFields, diffLists, changeCount, impactLines, impactRows, addVersion,
-         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.20.1";
-import { rentShift } from "./housing.js?v=8.20.1";
-import { updateToggleUI } from "./controls.js?v=8.20.1";
-import { revealField } from "./tiles.js?v=8.20.1";
-import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.20.1";
-import { renderNwHistory } from "./nwHistory.js?v=8.20.1";
-import { refreshedText } from "./spending.js?v=8.20.1";
+         duePrompts, rebaseResidence, reviewItems } from "../versionsCore.js?v=8.21";
+import { rentShift } from "./housing.js?v=8.21";
+import { updateToggleUI } from "./controls.js?v=8.21";
+import { revealField } from "./tiles.js?v=8.21";
+import { yearEndChanges, closeYearHistory } from "../yearEnd.js?v=8.21";
+import { renderNwHistory } from "./nwHistory.js?v=8.21";
+import { refreshedText } from "./spending.js?v=8.21";
 
 const fmtDay = ts => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -24,7 +24,18 @@ function currentResults() {
   if (!state.lastScenarios || !state.lastProjs) return [];
   return resultsOf(state.lastScenarios, state.lastProjs, state.lastStops, [0, 1, 2, 3, 4].map(getScenarioName));
 }
+// v8.21: a field's name as the Changes tab shows it: its caption, plus the word
+// before it when it is not the first box of its line ("Her take-home · until age").
 function labelOf(id) {
+  const f = el(id + "_disp") || el(id), row = f && f.closest(".frow");
+  if (row) {
+    const cap = (row.querySelector(".frow-l")?.textContent || "").replace(/[ⓘ\u24D8]/g, "").replace(/\s+/g, " ").trim();
+    let n = f; while (n.parentElement && !n.parentElement.classList.contains("frow-c") && !n.parentElement.classList.contains("frow-grp")) n = n.parentElement;
+    let p = n.previousElementSibling, sep = "";
+    while (p) { if (p.classList.contains("frow-sep")) { sep = p.textContent.replace(/[ⓘ\u24D8]/g, "").trim(); break; } p = p.previousElementSibling; }
+    if (!sep && n.parentElement?.classList.contains("frow-grp")) sep = (n.parentElement.querySelector(".frow-sep")?.textContent || "").replace(/[ⓘ\u24D8]/g, "").trim();
+    if (cap) return sep ? cap + " \u00b7 " + sep : cap;
+  }
   const l = document.querySelector('label[for="' + id + '_disp"], label[for="' + id + '"]');
   const t = l ? l.textContent.replace(/[ⓘ]/g, "").replace(/\s+/g, " ").trim() : id;
   return t.replace(/\s*\d[\d.,]*\s*(%|yrs|mo|×)?$/, "").trim() || id;
@@ -234,12 +245,18 @@ export function renderUpdatePanel(gl) {
       const eff = older ? impactLines(older.results, x.results) : [];
       const sinceNow = impactLines(x.results, now);
       const isPlan = plan && plan.id === x.id, hasPath = (x.results || []).some(r => r && r.path);
+      // v8.21: what this save changed, field by field (old → new), folded
+      const fs = older ? diffFields(older.snapshot, x.snapshot).filter(f => !/Updated$/.test(f.id)) : [];
+      const ls = older ? diffLists(older.snapshot, x.snapshot) : [];
+      const what = fs.length + ls.length ? '<details class="up-what"><summary>What changed (' + (fs.length + ls.length) + ')</summary>' +
+        fs.map(f => "<div>" + esc(labelOf(f.id)) + ": <s>" + esc(f.from || "empty") + "</s> \u2192 <b>" + esc(f.to || "empty") + "</b></div>").join("") +
+        ls.map(l => "<div>" + esc(l) + " changed</div>").join("") + "</details>" : "";
       return '<div class="up-entry' + (isPlan ? ' is-plan' : '') + '"><div><b>' + fmtDay(x.ts) + "</b> · " + esc(x.note || (x.changes ? x.changes + " changes" : "version")) +
         (isPlan ? ' <span class="plan-tag">the plan</span>' : "") +
         (eff.length ? ' <span class="tgt">' + esc(eff.join("; ")) + "</span>" : "") + "</div>" +
         '<div class="up-btns">' + (hasPath && !isPlan ? '<button type="button" class="dp-add" data-plan="' + x.id + '" title="Compare your actual net worth with what this version expected">Use as plan</button>' : "") +
         (j > 0 ? '<button type="button" class="dp-add" data-restore="' + x.id + '">Restore</button>' : "") + "</div>" +
-        (j > 0 ? '<div class="tgt">Compared with today: ' + esc(sinceNow.join("; ") || "same results") + "</div>" : "") + "</div>";
+        (j > 0 ? '<div class="tgt">Compared with today: ' + esc(sinceNow.join("; ") || "same results") + "</div>" : "") + what + "</div>";
     }).join("") + "</details>";
   }
   host.innerHTML = h;

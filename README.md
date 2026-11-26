@@ -964,6 +964,11 @@ banner or the review opens its tile. On a phone the lanes stack and the impact p
 bar at the bottom ("N changes · biggest effect"), tap to open. The inputs and their ids are
 unchanged, so saving, sync and the engine are untouched.
 
+Read-outs (v8.21): Flat move shows the joint account after the move (joint today − rent
+today + new rent); Buying a home shows your cash needed (`purchaseCostFor`); Partner shows
+the pro-rata share her income gives today next to what she really pays. The update log
+folds what each save changed, field by field.
+
 The impact panel (v8.18.5) is one narrow column: per scenario its stop age (saved → now)
 and its FIRE target now (€1.41M) with an up/down icon when it moved by more than 0.5%
 since the saved version (`impactRows` in `js/versionsCore.js`), then Save / Undo.

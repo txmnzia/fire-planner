@@ -1,11 +1,11 @@
 // Spending refresh (v8.7): read-outs under the four spending numbers and the
 // "last refreshed" date. The numbers come from the engine (investNowMonthly), so
 // the read-out is the same calculation the projection uses in year one.
-import { el, eur, numVal } from "../util.js?v=8.20.1";
-import { investNowMonthly } from "../engine.js?v=8.20.1";
-import { pensionReadoutRows } from "./pensions.js?v=8.20.1";
-import { depositCheck } from "../ibkr.js?v=8.20.1";
-import { state } from "../state.js?v=8.20.1";
+import { el, eur, numVal } from "../util.js?v=8.21";
+import { investNowMonthly, partnerShare } from "../engine.js?v=8.21";
+import { pensionReadoutRows } from "./pensions.js?v=8.21";
+import { depositCheck } from "../ibkr.js?v=8.21";
+import { state } from "../state.js?v=8.21";
 
 export const REFRESH_FIELDS = ['samPersonalNow', 'samPaysIn', 'partnerPaysIn', 'yearlyItems'];
 export const STALE_DAYS = 183;
@@ -34,6 +34,7 @@ export function renderSpendReadout(gl) {
     if (ut) { ut.textContent = upd.text; ut.classList.toggle('stale', upd.stale); ut.title = upd.stale ? 'Overdue: time for a refresh' : ''; }
   }
   renderPensionReadout(gl);
+  renderPartnerReadout(gl);
   const takeHome = numVal('baseIncome', 0);
   const n = investNowMonthly(gl, takeHome);
   const lines = [];
@@ -48,6 +49,18 @@ export function renderSpendReadout(gl) {
   if (dc) lines.push((dc.flagged ? '<span class="warn">\u26a0 ' : '') + 'Deposits at IBKR: ' + eur(dc.perMonth) + '/month over the last ' + dc.months +
     ' months of statements, vs ' + eur(n.invest) + ' on paper' + (dc.flagged ? ' (more than 20% apart)</span>' : ''));
   host.innerHTML = lines.map(l => '<div>' + l + '</div>').join('');
+}
+
+// Partner read-out (v8.21): the pro-rata share her income gives today, next to what
+// she really pays in. Pro rata is the rule once one of you stops working or your pay
+// changes (README, partner model); the real share applies while both work as today.
+export function renderPartnerReadout(gl) {
+  const host = el('partnerReadout'); if (!host) return;
+  const you = numVal('baseIncome', 0);
+  if (!(gl.partnerInc > 0) || !(you > 0)) { host.innerHTML = ''; return; }
+  const pro = partnerShare(gl.partnerInc, you), real = investNowMonthly(gl, you).share;
+  host.innerHTML = '<div>Pro rata today would be <b>' + Math.round(pro * 100) + '%</b> <span class="tgt">(her ' + eur(gl.partnerInc) + ' \u00f7 both ' + eur(gl.partnerInc + you) + ')</span>; she really pays <b>' + Math.round(real * 100) + '%</b> of the joint costs.</div>' +
+    '<div class="tgt">Pro rata is used once one of you stops working or your pay changes.</div>';
 }
 
 // Pension read-out (v8.19): the net the plan uses, next to each gross amount typed.

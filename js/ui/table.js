@@ -1,5 +1,5 @@
-import { el, fmtK } from "../util.js?v=8.20.1";
-import { state } from "../state.js?v=8.20.1";
+import { el, fmtK } from "../util.js?v=8.21";
+import { state } from "../state.js?v=8.21";
 
 // ── TABLE ──────────────────────────────────────────────────────────────────
 export function renderTable(projs,gl) {
