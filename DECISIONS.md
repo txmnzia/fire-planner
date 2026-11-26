@@ -275,9 +275,8 @@ old one, so the history stays readable. No personal figures here (CLAUDE.md rule
   housing and child costs. No invented cost-of-living presets: 100% until you type one.
 - **Germany's preset is 18.5%** (equity-fund partial exemption), not 26%.
 - **Bug fixed: buying while living alone saved 100% of the rent** although only 70% of
-  it was in the "if alone" costs; it now saves the 70%. On the owner's values this moves
-  the Solo scenario's stop age from 40 to 43 (fixed mode 39 to 41); partner scenarios
-  are unchanged.
+  it was in the "if alone" costs; it now saves the 70%. Solo stop ages can move a few
+  years later; partner scenarios are unchanged.
 - **The retirement % change no longer applies to rent** (rent is explicit now).
 - Today's country stays what was saved (no number moves); the review banner asks
   where you live today and when you move.
@@ -315,8 +314,8 @@ old one, so the history stays readable. No personal figures here (CLAUDE.md rule
   while you both work **and your pay is today's**; otherwise her income ÷ both incomes.
   *Why the pay condition:* what she pays in is today's arrangement between today's
   incomes. Without it, a scenario where your pay drops (or parental leave) kept her at
-  today's low share and pushed one stop age from 57 to 70 on the owner's values. With
-  it, every stop age is unchanged.
+  today's low share and could push a stop age back by many years. With it, stop ages
+  are unchanged.
 - **Household FIRE removed**, with her savings, her own spending, her unrealized gain
   and the "could she manage alone" check. *Why:* the owner never looks at it and she
   does not plan to stop working; your stop ages only ever used your own FIRE number.
